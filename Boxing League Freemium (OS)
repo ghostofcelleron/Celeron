@@ -1,0 +1,370 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI",
+    ThemeColor = Color3.fromRGB(100, 100, 200),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local farmtab = win:Tab("Farms")
+local misctab = win:Tab("Others")
+local funtab = win:Tab("Fun Stuff")
+
+maintab:Label("Script Made By Celeron, UI Created By DaffyDev!")
+
+maintab:Slider("Player Speed", 12.5, 8, 25, function(v)
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+
+if localPlayer and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+    if v == 8 then
+        localPlayer.Character.Humanoid.WalkSpeed = 16
+    else
+        localPlayer.Character.Humanoid.WalkSpeed = v
+    end
+end
+end)
+
+maintab:Slider("Player Jump-Power", 50, 30, 125, function(v)
+if localPlayer and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+    if v == 30 then
+        localPlayer.Character.Humanoid.Jumppower = 50
+    else
+        localPlayer.Character.Humanoid.Jumppower = v
+    end
+end
+end)
+
+maintab:Button("Daily Rewards (req. Group)", function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(40, 24, 113)
+    task.wait(0.1)
+    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.1)
+    game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end)
+
+
+maintab:Button("Always Win Clash", function(v)
+
+    _G.alwaysWinClashToggled = not _G.alwaysWinClashToggled
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Always Win Clash",
+        Text = _G.alwaysWinClashToggled and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+
+    local players = game:GetService("Players")
+    local localPlayer = players.LocalPlayer
+    local playerGui = localPlayer:WaitForChild("PlayerGui")
+    local virtualInputManager = game:GetService("VirtualInputManager")
+    local RunService = game:GetService("RunService")
+
+    local function processZN(zn)
+        local labels = { "B1", "B2", "B3", "B4" }
+        local shiftlockPosition = UDim2.new(0.64, 0, 0.32, 0)
+
+        for _, labelName in ipairs(labels) do
+            local label = zn:FindFirstChild(labelName)
+            if label and label:IsA("ImageLabel") then
+                local originalPosition = label.Position
+                label.Position = shiftlockPosition
+
+                local mcButton = label:FindFirstChild("MC")
+                if mcButton and mcButton:IsA("ImageButton") then
+                    local mxValue = mcButton:FindFirstChild("MX")
+                    if mxValue and mxValue:IsA("IntValue") then
+                        local centerX = mcButton.AbsolutePosition.X + (mcButton.AbsoluteSize.X / 2)
+                        local centerY = mcButton.AbsolutePosition.Y + (mcButton.AbsoluteSize.Y / 2)
+
+                        while mxValue.Value > 0 do
+                            virtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
+                            virtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
+                            RunService.Heartbeat:Wait()
+                        end
+                    end
+                end
+                label.Position = originalPosition
+            end
+        end
+    end
+
+    local function mainLoop()
+        while _G.alwaysWinClashToggled do
+            local vs = playerGui:FindFirstChild("VS")
+            local zn = vs and vs:FindFirstChild("ZN")
+            if zn then
+                processZN(zn)
+                task.wait(10)
+            else
+                RunService.Heartbeat:Wait()
+            end
+        end
+    end
+
+    if _G.alwaysWinClashToggled then
+        mainLoop()
+    end
+end)
+
+_G.alwaysWinClashToggled = _G.alwaysWinClashToggled or false
+
+
+maintab:Button("Auto Kick-Grab", function()
+local players = game:GetService("Players")
+local runService = game:GetService("RunService")
+local virtualInputManager = game:GetService("VirtualInputManager")
+
+local localPlayer = players.LocalPlayer
+local localCharacter = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+
+_G.isMonitoring = _G.isMonitoring or false
+
+local function holdLeftControl()
+    virtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
+    task.wait(0.5)
+    virtualInputManager:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
+end
+
+local function holdGrab()
+    virtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
+    task.wait(0.1)
+    virtualInputManager:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
+end
+
+local function monitorNearbyPlayers()
+    for _, player in pairs(players:GetPlayers()) do
+        if player ~= localPlayer and player.Character then
+            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+            local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+            local localRootPart = localCharacter:FindFirstChild("HumanoidRootPart")
+
+            if humanoid and rootPart and localRootPart then
+                local distance = (rootPart.Position - localRootPart.Position).Magnitude
+
+                if distance <= 3 then
+				for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
+                        if track.Animation.AnimationId == "rbxassetid://3738476938" then
+                    holdGrab()
+                    return
+                end
+				end
+				end
+
+                if distance <= 5 then
+                    for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
+                        if track.Animation.AnimationId == "rbxassetid://3738476938" then
+                            holdLeftControl()
+                            return
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function toggleMonitoring()
+    _G.isMonitoring = not _G.isMonitoring
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Kick Grabber",
+        Text = _G.isMonitoring and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+end
+
+if _G.isMonitoring then
+    runService.Heartbeat:Connect(function()
+        monitorNearbyPlayers()
+    end)
+end
+
+toggleMonitoring()
+end)
+local players = game:GetService("Players")
+local userInputService = game:GetService("UserInputService")
+local tweenService = game:GetService("TweenService")
+local localPlayer = players.LocalPlayer
+local localCharacter = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+local humanoidRootPart = localCharacter:WaitForChild("HumanoidRootPart")
+
+local animationIdToDetect = "rbxassetid://3738476938"
+local dashLength = 30
+local lastInput = nil
+
+maintab:Slider("test", 30, 20, 40, function(v)
+print("hi")
+end)
+
+maintab:Textbox("test", function(v)
+    print("indev.")
+end)
+
+local players = game:GetService("Players")
+local virtualUser = game:GetService("VirtualUser")
+local starterGui = game:GetService("StarterGui")
+local localPlayer = players.LocalPlayer
+
+local antiAFKEnabled = false
+
+local function toggleAntiAFK()
+    antiAFKEnabled = not antiAFKEnabled
+    if antiAFKEnabled then
+        starterGui:SetCore("SendNotification", {
+            Title = "Anti-AFK",
+            Text = "Anti-AFK enabled.",
+            Duration = 5
+        })
+        localPlayer.Idled:Connect(function()
+            virtualUser:CaptureController()
+            virtualUser:ClickButton2(Vector2.new(0, 0))
+        end)
+    else
+        starterGui:SetCore("SendNotification", {
+            Title = "Anti-AFK",
+            Text = "Anti-AFK disabled.",
+            Duration = 5
+        })
+    end
+end
+
+farmtab:Button("Anti-AFK", function()
+    toggleAntiAFK()
+end)
+
+farmtab:Button('Strength Farm', function()
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+local virtualInputManager = game:GetService("VirtualInputManager")
+local starterGui = game:GetService("StarterGui")
+
+_G.isToggled = _G.isToggled or false
+
+local function strengthFarm()
+    localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-107, 35, 129)
+    task.wait(0.5)
+    virtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.1)
+    virtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+    
+    while _G.isToggled do
+        task.wait(0.5)
+        virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+        task.wait(0.1)
+        virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+    end
+end
+
+local function toggleStrengthFarm()
+    _G.isToggled = not _G.isToggled
+    starterGui:SetCore("SendNotification", {
+        Title = "Strength Farm",
+        Text = _G.isToggled and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+
+    if _G.isToggled then
+        strengthFarm()
+    end
+end
+
+toggleStrengthFarm()
+end)
+
+farmtab:Button("AFK Strength Farm", function()
+local localPlayer = game:GetService("Players").LocalPlayer
+local virtualInputManager = game:GetService("VirtualInputManager")
+local machinery = game:GetService("Workspace").Machinery
+
+local grabParts = {machinery.GRAB1.GridPart, machinery.GRAB2.GridPart, machinery.GRAB3.GridPart}
+local teleportSuccess = false
+
+for _, gridPart in ipairs(grabParts) do
+    if gridPart then
+        local localCharacter = localPlayer.Character
+        if localCharacter and localCharacter:FindFirstChild("HumanoidRootPart") then
+            local localRootPart = localCharacter.HumanoidRootPart
+            local distance = (localRootPart.Position - gridPart.Position).Magnitude
+            if distance > 0.2 then
+                localRootPart.CFrame = gridPart.CFrame
+                task.wait(0.5)
+                virtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                task.wait(0.1)
+                virtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                teleportSuccess = true
+                break
+            end
+        end
+    end
+end
+
+if not teleportSuccess then
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Farm Method Failed.",
+        Text = "No available pull-up bars found.",
+        Duration = 3
+    })
+end
+end)
+
+farmtab:Button("AFK Endurance Farm", function()
+local localPlayer = game:GetService("Players").LocalPlayer
+local virtualInputManager = game:GetService("VirtualInputManager")
+local machinery = game:GetService("Workspace").Machinery
+
+local function teleportToAvailablePush()
+    local character = localPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+    local rootPart = character.HumanoidRootPart
+    local pushParts = {machinery.PUSH1.GridPart, machinery.PUSH2.GridPart, machinery.PUSH3.GridPart}
+
+    for _, gridPart in ipairs(pushParts) do
+        local playersNearby = false
+
+        for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local playerDistance = (player.Character.HumanoidRootPart.Position - gridPart.Position).Magnitude
+                if playerDistance <= 0.2 then
+                    playersNearby = true
+                    break
+                end
+            end
+        end
+
+        if not playersNearby then
+            rootPart.CFrame = gridPart.CFrame
+            task.wait(1)
+            virtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+            task.wait(0.1)
+            virtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+            return
+        end
+    end
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Farm Method Failed.",
+        Text = "No available pushup areas.",
+        Duration = 3
+    })
+end
+
+teleportToAvailablePush()
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Temporary Void Teleport (REJOIN IF BUGGED)", function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(22, -418, 299)
+end)
+
+misctab:Button("Destroy GUI", function()
+    win:Exit()
+end)
+
+misctab:Button("Leave Game", function()
+    game:Shutdown()
+end)
