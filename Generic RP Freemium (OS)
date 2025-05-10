@@ -524,208 +524,142 @@ end)
 local UtilityGroup = Tab2:CreateGroupbox("Utilities", "Right")
 
 UtilityGroup:CreateButton("GRG Teleport Tool", function()
-    local Player = game.Players.LocalPlayer
-    local Backpack = Player:WaitForChild("Backpack")
+local Player = game.Players.LocalPlayer
+local Backpack = Player:WaitForChild("Backpack")
 
-    local teleportTool = Instance.new("Tool")
-    teleportTool.Name = "GRG Teleport"
-    teleportTool.RequiresHandle = false
-    teleportTool.Parent = Backpack
+local teleportTool = Instance.new("Tool")
+teleportTool.Name = "GRG Teleport"
+teleportTool.RequiresHandle = false
+teleportTool.Parent = Backpack
 
+local function WorkingTp()
+    Player.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+end
+
+teleportTool.Activated:Connect(function()
+    local mouse = Player:GetMouse()
+    local targetPosition = mouse.Hit.p
+    WorkingTp()
+    task.wait(0.5)
+    Player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
+end)
+end)
+
+local Teleports = Tab2:CreateGroupbox("Teleports", "Left")
+
+Teleports:CreateButton("Spawn", function()
     local function WorkingTp()
-        for i, partfr in pairs(Player.Character:GetChildren()) do 
-            if partfr:IsA("BasePart") then 
-                if Player.Team == "Doctor" then
-                    firetouchinterest(partfr, workspace._VisualMap.GuardBase.GuardCollision.GUARDONLY, 0) 
-                    task.wait() 
-                    firetouchinterest(partfr, workspace._VisualMap.GuardBase.GuardCollision.GUARDONLY, 1) 
-                else
-                    firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 0) 
-                    task.wait() 
-                    firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 1) 
-                end 
-            end 
-        end 
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
-
-    teleportTool.Activated:Connect(function()
-        local mouse = Player:GetMouse()
-        local targetPosition = mouse.Hit.p
-        WorkingTp()
-        task.wait(0.5)
-        Player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-    end)
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1, 23, 399)
 end)
-
-
-UtilityGroup:CreateButton("Food GUI", function()
-    local Player = game.Players.LocalPlayer
-    local Character = Player.Character or Player.CharacterAdded:Wait()
-    local UIS = game:GetService("UserInputService")
-    local StarterGui = game:GetService("StarterGui")
-
-    local function sendNotification()
-        StarterGui:SetCore("SendNotification", {
-            Title = "GUI Hidden.",
-            Text = "Click Z To Unhide.",
-            Duration = 5,
-        })
-    end
-
-    local function createNotification()
-        local screenGui = Instance.new("ScreenGui")
-        screenGui.Parent = Player:WaitForChild("PlayerGui")
-
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(0, 300, 0, 260)
-        frame.Position = UDim2.new(1, -320, 1, -280)
-        frame.AnchorPoint = Vector2.new(1, 1)
-        frame.BackgroundTransparency = 0.64
-        frame.BackgroundColor3 = Color3.new(0, 0, 0)
-        frame.BorderSizePixel = 0
-        frame.Parent = screenGui
-        frame.Visible = true
-
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(0.8, 0, 0.2, 0)
-        titleLabel.Position = UDim2.new(0.05, 0, 0.05, 0)
-        titleLabel.Text = "Food GUI"
-        titleLabel.TextSize = 24
-        titleLabel.Font = Enum.Font.SourceSansBold
-        titleLabel.TextColor3 = Color3.new(0.75, 0.75, 0.75)
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.TextStrokeTransparency = 0
-        titleLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-        titleLabel.Parent = frame
-
-        local options = {"Ramen", "NormalFood", "Bloxy", "Peanuts"}
-        local positions = {
-            Ramen = Vector3.new(-159, 4, 32),
-            NormalFood = Vector3.new(-6, 23, 352),
-            Bloxy = Vector3.new(-34, 24, 426),
-            Peanuts = Vector3.new(-195, 29, 5),
-        }
-        for i, option in ipairs(options) do
-            local button = Instance.new("TextButton")
-            button.Size = UDim2.new(0.4, 0, 0.2, 0)
-            button.Position = UDim2.new(0.05 + ((i - 1) % 2) * 0.5 - 0.006, 0, 0.3 + math.floor((i - 1) / 2) * 0.25, 0)
-            button.Text = option
-            button.TextSize = 20
-            button.Font = Enum.Font.SourceSans
-            button.TextColor3 = Color3.new(1, 1, 1)
-            button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-            button.BorderSizePixel = 0
-            button.Parent = frame
-
-            button.MouseButton1Click:Connect(function()
-                Character.HumanoidRootPart.CFrame = CFrame.new(positions[option])
-            end)
-        end
-
-        local minimizeButton = Instance.new("TextButton")
-        minimizeButton.Size = UDim2.new(0.1, 0, 0.2, 0)
-        minimizeButton.Position = UDim2.new(0.75, -10, 0.05, 0)
-        minimizeButton.Text = "-"
-        minimizeButton.TextSize = 20
-        minimizeButton.Font = Enum.Font.SourceSansBold
-        minimizeButton.TextColor3 = Color3.new(0.5, 0.5, 0.5)
-        minimizeButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-        minimizeButton.BorderSizePixel = 0
-        minimizeButton.Parent = frame
-
-        minimizeButton.MouseButton1Click:Connect(function()
-            frame.Visible = false
-            sendNotification()
-        end)
-
-        UIS.InputBegan:Connect(function(input)
-            if input.KeyCode == Enum.KeyCode.Z then
-                frame.Visible = not frame.Visible
-            end
-        end)
-    end
-
-    createNotification()
-end)
-
-local Teleports = Tab2:CreateGroupbox("Teleports (Retry if fails!)", "Left")
 
 Teleports:CreateButton("Leader Tower", function()
-local function WorkingTp()
-for i, partfr in pairs(game.Players.LocalPlayer.Character:GetChildren()) do 
-if partfr:IsA("BasePart") then
-firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 0) task.wait() firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 1) end end end
-WorkingTp()
-task.wait(0.25)
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(41, 43, 426)
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-0, 45, 460)
+end)
+
+Teleports:CreateButton("Barbarian Doctor", function()
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-63, -1, -1267)
 end)
 
 Teleports:CreateButton("Arena", function()
-local function WorkingTp()
-for i, partfr in pairs(game.Players.LocalPlayer.Character:GetChildren()) do 
-if partfr:IsA("BasePart") then
-firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 0) task.wait() firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 1) end end end
-WorkingTp()
-task.wait(0.25)
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-185, 35, 45)
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-312, 41, 338)
 end)
 
 Teleports:CreateButton("Cafe", function()
-local function WorkingTp()
-for i, partfr in pairs(game.Players.LocalPlayer.Character:GetChildren()) do 
-if partfr:IsA("BasePart") then
-firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 0) task.wait() firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 1) end end end
-WorkingTp()
-task.wait(0.25)
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-47, 25, 423)
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-92, 27, 302)
 end)
 
 Teleports:CreateButton("Karl's Karts", function()
-local function WorkingTp()
-for i, partfr in pairs(game.Players.LocalPlayer.Character:GetChildren()) do 
-if partfr:IsA("BasePart") then
-firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 0) task.wait() firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 1) end end end
-WorkingTp()
-task.wait(0.25)
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(349, 3, -100)
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-258, 26, 462)
 end)
 
 Teleports:CreateButton("Council Area", function()
-local function WorkingTp()
-for i, partfr in pairs(game.Players.LocalPlayer.Character:GetChildren()) do 
-if partfr:IsA("BasePart") then
-firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 0) task.wait() firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 1) end end end
-WorkingTp()
-task.wait(0.25)
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(308, 59, 430)
-end)
-
-Teleports:CreateButton("Spawn", function()
-local function WorkingTp()
-for i, partfr in pairs(game.Players.LocalPlayer.Character:GetChildren()) do 
-if partfr:IsA("BasePart") then
-firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 0) task.wait() firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 1) end end end
-WorkingTp()
-task.wait(0.25)
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(41, 23, 415)
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1, 46, 625)
 end)
 
 Teleports:CreateButton("Barbarian Town", function()
-local function WorkingTp()
-for i, partfr in pairs(game.Players.LocalPlayer.Character:GetChildren()) do 
-if partfr:IsA("BasePart") then
-firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 0) task.wait() firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 1) end end end
-WorkingTp()
-task.wait(0.25)
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(1, -1, -1001)
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 7, -1299)
 end)
 
 Teleports:CreateButton("Doctor Store", function()
-local function WorkingTp()
-for i, partfr in pairs(game.Players.LocalPlayer.Character:GetChildren()) do 
-if partfr:IsA("BasePart") then
-firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 0) task.wait() firetouchinterest(partfr, workspace._VisualMap.DoctorBase.DocCollision.DOCONLY, 1) end end end
-WorkingTp()
-task.wait(0.25)
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(23, 23, 284)
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-19, 29, 240)
+end)
+
+Teleports:CreateButton("Food Store", function()
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(73, 23, 312)
+end)
+
+Teleports:CreateButton("Jester Stage", function()
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(74, 25, 242)
+end)
+
+Teleports:CreateButton("Mountains", function()
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-407, 159, 181)
+end)
+
+Teleports:CreateButton("Town Ramp", function()
+    local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+    end
+    WorkingTp()
+    task.wait(0.25)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(99, 72, -57)
 end)
