@@ -2,7 +2,7 @@ local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
-    ThemeColor = Color3.fromRGB(200, 85, 200),
+    ThemeColor = Color3.fromRGB(100, 100, 250),
     StartupSound = "rbxassetid://3320590485",
     ThemeFont = Enum.Font.FredokaOne
 })
@@ -351,9 +351,11 @@ local plr = game.Players.LocalPlayer
 				end
 			end)
 
+maintab:Button("Metavision", function()
+loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
+end)
+
 funtab:Button("Don Lorenzo (Nagi)", function()
-wait(1)
-print("loaded don lorenzo script")
 local StarterGui = game:GetService("StarterGui")
 
 StarterGui:SetCore("SendNotification", {
@@ -543,7 +545,8 @@ function onKeyPress(inputObject, gameProcessedEvent)
 		end
 	end
 end
-
+wait(1)
+print("loaded don lorenzo script")
 UserInputService.InputBegan:connect(onKeyPress)
 end)
 
@@ -626,4 +629,8 @@ end)
 
 misctab:Button("Gallery Area (secret)", function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(109, 66, 3337)
+end)
+
+misctab:Button("Middle Field", function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-540, 3, 1274)
 end)
