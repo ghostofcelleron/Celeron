@@ -1,0 +1,127 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (Flee The Facility)",
+    ThemeColor = Color3.fromRGB(255, 124, 100),
+    StartupSound = "rbxassetid://3320590485",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local tpstab = win:Tab("Areas")
+local funtab = win:Tab("Fun")
+local misctab = win:Tab("Misc")
+
+maintab:Label("Script Made By Celeron!")
+
+maintab:Button("Reverse Freezer Technique (USE IN FREEZER)", function()
+game.Players.LocalPlayer.Character.Head:Destroy()
+end)
+maintab:Button("Random Computer", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/tdUC169t",true))()
+end)
+maintab:Button("Random Exit", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/AsJaDdwq",true))()
+end)
+tpstab:Button("Spawn", function()
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(111.20410919189453, 8.207777976989746, -413.4593811035156))
+end)
+tpstab:Button("Map Voting", function()
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(147.83396911621094, 5.999999523162842, -349.55047607421875))
+end)
+tpstab:Button("Cave", function()
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(279.4504089355469, -11.000000953674316, -366.7091369628906))
+end)
+tpstab:Button("Under Spawn", function()
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(107, -6, -423))
+end)
+funtab:Button("FE Audio Control", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/3dWP6BW4"))()
+end)
+funtab:Button("Jerk Tool", function()
+local plr = game:GetService("Players").LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local hum = char:FindFirstChild("Humanoid") or char:WaitForChild("Humanoid")
+local anim = hum:FindFirstChildOfClass("Animator") or hum:WaitForChild("Animator")
+local pack = plr:FindFirstChild("Backpack") or plr:WaitForChild("Backpack")
+
+if workspace:FindFirstChild("aaa") then
+    workspace:FindFirstChild("aaa"):Destroy()
+end
+
+local function getmodel()
+    return hum.RigType == Enum.HumanoidRigType.R15 and "R15" or "R6"
+end
+
+local function Notify(Title, Text, Duration)
+    game:GetService('StarterGui'):SetCore('SendNotification', {
+        Title = Title,
+        Text = Text or '',
+        Duration = Duration}
+    )
+end
+
+Notify("Script Made By Sai", "My discord is: skondoooo92", 20)
+
+local animation = Instance.new("Animation")
+animation.Name = "aaa"
+animation.Parent = workspace
+
+animation.AnimationId = getmodel() == "R15" and "rbxassetid://698251653" or "rbxassetid://72042024"
+
+local tool = Instance.new("Tool")
+tool.Name = "Jerk"
+tool.RequiresHandle = false
+tool.Parent = pack
+
+local doing = false
+local animtrack = nil
+
+tool.Equipped:Connect(function()
+    doing = true
+    while doing do
+        if not animtrack then
+            animtrack = anim:LoadAnimation(animation)
+        end
+
+        animtrack:Play()
+        animtrack:AdjustSpeed(0.7)
+        animtrack.TimePosition = 0.6
+
+        task.wait(0.1)
+        while doing and animtrack and animtrack.TimePosition < 0.7 do
+            task.wait(0.05)
+        end
+
+        if animtrack then
+            animtrack:Stop()
+            animtrack:Destroy()
+            animtrack = nil
+        end
+    end
+end)
+
+tool.Unequipped:Connect(function()
+    doing = false
+    if animtrack then
+        animtrack:Stop()
+        animtrack:Destroy()
+        animtrack = nil
+    end
+end)
+
+hum.Died:Connect(function()
+    doing = false
+    if animtrack then
+        animtrack:Stop()
+        animtrack:Destroy()
+        animtrack = nil
+    end
+end)
+end)
+misctab:Button("Trading Servers (Min. Level 6)", function()
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(64.84588623046875, 3.999999761581421, -306.64068603515625))
+end)
+misctab:Button("Infinite Yield", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
