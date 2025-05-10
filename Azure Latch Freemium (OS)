@@ -1,13 +1,20 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/WetCheezit/Bracket-V2/main/src.lua"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
-local Window, MainGUI = Library:CreateWindow("Azure Latch (via Celeron!)")
-local Tab1 = Window:CreateTab("General")
+local win = ui:Create({
+    Name = "Celeron's GUI (Azure Latch)",
+    ThemeColor = Color3.fromRGB(200, 85, 200),
+    StartupSound = "rbxassetid://3320590485",
+    ThemeFont = Enum.Font.FredokaOne
+})
 
-local Groupbox1 = Tab1:CreateGroupbox("Main Controls", "Left")
+local maintab = win:Tab("Main")
+local funtab = win:Tab("Movesets")
+local misctab = win:Tab("Misc")
 
-local Groupbox2 = Tab1:CreateGroupbox("Custom Movesets", "Right")
+maintab:Label("Script Made By Celeron, UI Created By Daffy!")
+funtab:Label("Custom Movesets, Not Actual Unlocks!")
 
-local FarmGoalsButton = Groupbox1:CreateButton("Farm Goals", function()
+maintab:Button("Auto-Goal (BLATANT)", function()
     _G.AUTO_GOAL = not _G.AUTO_GOAL
     if _G.AUTO_GOAL then
         game.StarterGui:SetCore("SendNotification", {
@@ -25,7 +32,7 @@ local FarmGoalsButton = Groupbox1:CreateButton("Farm Goals", function()
     end
 end)
 
-local AlwaysBallButton = Groupbox1:CreateButton("Always Ball", function()
+maintab:Button("Always Ball (BLATANT)", function()
     _G.ALWAYS_BALL_ACTIVE = not _G.ALWAYS_BALL_ACTIVE
     if _G.ALWAYS_BALL_ACTIVE then
         game.StarterGui:SetCore("SendNotification", {
@@ -79,7 +86,6 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local ContentProvider = game:GetService("ContentProvider")
 
-
 local isClicking = false
 local isEnabled = false
 
@@ -120,55 +126,7 @@ local function teleportToBall()
     end
 end
 
-local function toggleGetUltimate()
-    isEnabled = not isEnabled
-    isClicking = isEnabled
-    if isEnabled then
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "Get Ultimate",
-            Text = "Activated!",
-            Duration = 5
-        })
-
-        preloadAssets()
-
-        spawn(function()
-            while isClicking do
-                emulateClickAtMousePosition()
-                wait(0.05)
-            end
-        end)
-
-        spawn(function()
-            while isClicking do
-                teleportToBall()
-                wait(0.1)
-            end
-        end)
-    else
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "Get Ultimate",
-            Text = "Deactivated!",
-            Duration = 5
-        })
-
-        isClicking = false
-    end
-end
-
-local ButtonUltimate = Groupbox1:CreateButton("Get Ultimate (Toggle: V)", function()
-    toggleGetUltimate()
-end)
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-
-    if input.KeyCode == Enum.KeyCode.V then
-        toggleGetUltimate()
-    end
-end)
-
-local ButtonGoToBall = Groupbox1:CreateButton("Go to Ball", function()
+maintab:Button("Go to Ball", function()
     local Players = game:GetService("Players")
     local VirtualInputManager = game:GetService("VirtualInputManager")
     local LocalPlayer = Players.LocalPlayer
@@ -209,37 +167,7 @@ local ButtonGoToBall = Groupbox1:CreateButton("Go to Ball", function()
     StealBall()
 end)
 
-local ButtonManualScore = Groupbox1:CreateButton("Score (Manual)", function()
-    local coordinateA = Vector3.new(303, 3, -1369)
-    local coordinateB = Vector3.new(179, 3, -1830)
-
-    local function teleportToPosition(position)
-        local LocalCharacter = game.Players.LocalPlayer.Character
-        local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
-
-        if LocalHumanoidRootPart then
-            LocalHumanoidRootPart.CFrame = CFrame.new(position)
-        else
-            warn("Failed to find HumanoidRootPart. Teleportation aborted.")
-        end
-    end
-
-    local function checkTeamAndTeleport()
-        local teamName = game.Players.LocalPlayer.Team and game.Players.LocalPlayer.Team.Name
-
-        if teamName == "A" then
-            teleportToPosition(coordinateB)
-        elseif teamName == "B" then
-            teleportToPosition(coordinateA)
-        else
-            warn("Error: Unable to find team.")
-        end
-    end
-
-    checkTeamAndTeleport()
-end)
-
-local ButtonBringBall = Groupbox1:CreateButton("Bring Ball", function()
+maintab:Button("Bring Ball", function()
     local LocalPlayer = game.Players.LocalPlayer
     local function HasBall()
         local LocalCharacter = LocalPlayer.Character
@@ -289,7 +217,39 @@ local ButtonBringBall = Groupbox1:CreateButton("Bring Ball", function()
     end)
 end)
 
-local ButtonBreakBall = Groupbox1:CreateButton("Break Ball", function()
+maintab:Button("Manual Score", function()
+    local coordinateA = Vector3.new(303, 3, -1369)
+    local coordinateB = Vector3.new(179, 3, -1830)
+
+    local function teleportToPosition(position)
+        local LocalCharacter = game.Players.LocalPlayer.Character
+        local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+
+        if LocalHumanoidRootPart then
+            LocalHumanoidRootPart.CFrame = CFrame.new(position)
+        else
+            warn("Failed to find HumanoidRootPart. Teleportation aborted.")
+        end
+    end
+
+    local function checkTeamAndTeleport()
+        local teamName = game.Players.LocalPlayer.Team and game.Players.LocalPlayer.Team.Name
+
+        if teamName == "A" then
+            teleportToPosition(coordinateB)
+        elseif teamName == "B" then
+            teleportToPosition(coordinateA)
+        else
+            warn("Error: Unable to find team.")
+        end
+    end
+
+    checkTeamAndTeleport()
+end)
+
+
+
+maintab:Button("Break Ball (must have ball)", function()
     local baseplatePosition = Vector3.new(-190, 14866, 492)
     local partSize = Vector3.new(10, 1, 10)
     local gap = 0
@@ -311,14 +271,94 @@ local ButtonBreakBall = Groupbox1:CreateButton("Break Ball", function()
         CFrame.new(baseplatePosition + Vector3.new(0, 100000000000000, 0))
 end)
 
-local DonLorenzoButton = Groupbox2:CreateButton("Don Lorenzo Set", function()
+maintab:Button("Barou Devour (Guranteed Goal)", function()
+local plr = game.Players.LocalPlayer
+
+			local function countEnimTeamMembers()
+				local op = game.Teams:FindFirstChild("A")
+				if plr.Team == game.Teams:FindFirstChild("A") then
+					op = game.Teams:FindFirstChild("B")
+				end
+				local count = 0
+				for _, player in ipairs(game.Players:GetPlayers()) do
+					if player.Team == op then
+						count += 1
+					end
+				end
+				return count
+			end
+			
+			local function getTwoRandomEnemies()
+				local enemies = {}
+				local op = game.Teams:FindFirstChild("A")
+				if plr.Team == game.Teams:FindFirstChild("A") then
+					op = game.Teams:FindFirstChild("B")
+				end
+				
+				for _, player in ipairs(game.Players:GetPlayers()) do
+					if player ~= plr and player.Team == op then
+						table.insert(enemies, player)
+					end
+				end
+				
+				for i = #enemies, 2, -1 do
+					local j = math.random(1, i)
+					enemies[i], enemies[j] = enemies[j], enemies[i]
+				end
+
+				return enemies[1], enemies[2]
+			end
+			
+			if countEnimTeamMembers() >= 2 then
+				local p1, p2 = getTwoRandomEnemies()
+				if not p1 or not p2 then return end
+				
+				local op = game.Teams:FindFirstChild("A")
+				if plr.Team == game.Teams:FindFirstChild("A") then
+					op = game.Teams:FindFirstChild("B")
+				end
+
+				local function tpToPlayer(targetPlayer)
+					local char = plr.Character or plr.CharacterAdded:Wait()
+					local root = char:WaitForChild("HumanoidRootPart")
+					local targetRoot = targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+					if root and targetRoot then
+						root.CFrame = targetRoot.CFrame
+					end
+				end
+
+				tpToPlayer(p1)
+				task.wait(0.3)
+				tpToPlayer(p2)
+				
+				wait(0.3)
+				
+				if plr.Team == game.Teams:FindFirstChild("A") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-625, 3, 925)
+				elseif plr.Team == game.Teams:FindFirstChild("B") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-588, 3, 1643)
+				end
+			end
+end)
+
+maintab:Button("Shidou Back-Heel (Guranteed w/ Ult!)", function()
+local plr = game.Players.LocalPlayer
+				if plr.Team == game.Teams:FindFirstChild("A") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-625, 3, 925)
+				elseif plr.Team == game.Teams:FindFirstChild("B") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-588, 3, 1643)
+				end
+			end)
+
+funtab:Button("Don Lorenzo (Nagi)", function()
 wait(1)
 print("loaded don lorenzo script")
 local StarterGui = game:GetService("StarterGui")
 
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
-    Text = "brought to you by daffy!",
+    Text = "brought to you by celeron!",
     Duration = 5,
     Button1 = "OK",
 })
@@ -505,4 +545,85 @@ function onKeyPress(inputObject, gameProcessedEvent)
 end
 
 UserInputService.InputBegan:connect(onKeyPress)
+end)
+
+funtab:Button("Ronaldo (Shidou)", function()
+
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Credits",
+    Text = "brought to you by celeron!",
+    Duration = 5,
+    Button1 = "OK",
+})
+wait(1)
+local plr = game.Players.LocalPlayer
+local char = plr.Character
+local hum = char.Humanoid
+local root = char.HumanoidRootPart
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+
+local bicycle1 = Instance.new("Animation")
+bicycle1.AnimationId = "rbxassetid://126734456236034"
+local bicycleDB = false
+local bicycle = hum:LoadAnimation(bicycle1)
+bicycle.Priority = Enum.AnimationPriority.Action2
+
+local dribble1 = Instance.new("Animation")
+dribble1.AnimationId = "rbxassetid://95054281301535"
+local dribbleDB = false
+local dribble = hum:LoadAnimation(dribble1)
+dribble.Priority = Enum.AnimationPriority.Action2
+
+local assets = game:GetService("ReplicatedStorage").Resources.ronaldo.bicyclekick
+
+local function haveBall()
+	local Football = char and char:FindFirstChild("Ball")
+	return Football ~= nil
+end
+
+function onKeyPress(inputObject, gameProcessedEvent)
+	if not gameProcessedEvent then
+		if inputObject.KeyCode == Enum.KeyCode.Two then
+			
+			if not haveBall() then return end
+			if bicycleDB == false then
+				bicycleDB = true
+				
+				bicycle:Play()
+				
+				wait(0.7)
+				
+				local boom = assets.vfx2:Clone()
+				boom.Parent = root
+				boom.vfx2:FindFirstChild("RONALDO!!!!"):Emit(1)
+				game.Debris:AddItem(boom, 3)
+				
+				wait(19)
+				bicycleDB = false
+			end
+		end
+	end
+end
+
+UserInputService.InputBegan:connect(onKeyPress)
+
+print("loaded RONALDO SUIII script")
+end)
+
+funtab:Button("Trolling Moveset", function()
+local char = game.Players.LocalPlayer.Character
+char.Animate.run.RunAnim.AnimationId = "rbxassetid://75407325346911"
+char.Animate.walk.WalkAnim.AnimationId = "rbxassetid://75407325346911"
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Gallery Area (secret)", function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(109, 66, 3337)
 end)
