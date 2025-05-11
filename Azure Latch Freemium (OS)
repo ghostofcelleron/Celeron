@@ -10,9 +10,12 @@ local win = ui:Create({
 local maintab = win:Tab("Main")
 local funtab = win:Tab("Movesets")
 local misctab = win:Tab("Misc")
+local helptab = win:Tab("Info")
 
-maintab:Label("Script Made By Celeron!")
+maintab:Label("Script Made By Celeron + Daffy!")
 funtab:Label("Custom Movesets, Not Actual Unlocks!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Left Alt")
 
 maintab:Button("Auto-Goal (BLATANT)", function()
     _G.AUTO_GOAL = not _G.AUTO_GOAL
@@ -633,4 +636,28 @@ end)
 
 misctab:Button("Middle Field", function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-540, 3, 1274)
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/xSDwMhae")
 end)
