@@ -2,7 +2,7 @@ local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
-    ThemeColor = Color3.fromRGB(100, 100, 250),
+    ThemeColor = Color3.fromRGB(200, 85, 200),
     StartupSound = "rbxassetid://3320590485",
     ThemeFont = Enum.Font.FredokaOne
 })
