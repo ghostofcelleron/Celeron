@@ -1,7 +1,7 @@
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
-    Name = "Celeron's GUI (Boxing League)",
+    Name = "Celeron's GUI",
     ThemeColor = Color3.fromRGB(100, 100, 200),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne
@@ -10,7 +10,7 @@ local win = ui:Create({
 local maintab = win:Tab("Main")
 local farmtab = win:Tab("Farms")
 local misctab = win:Tab("Others")
-local funtab = win:Tab("Fun Stuff")
+local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron, UI Created By DaffyDev!")
 
@@ -367,4 +367,28 @@ end)
 
 misctab:Button("Leave Game", function()
     game:Shutdown()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/xSDwMhae")
 end)
