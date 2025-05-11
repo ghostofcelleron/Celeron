@@ -2,7 +2,7 @@ local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
-    ThemeColor = Color3.fromRGB(200, 85, 200),
+    ThemeColor = Color3.fromRGB(100, 85, 174),
     StartupSound = "rbxassetid://3320590485",
     ThemeFont = Enum.Font.FredokaOne
 })
@@ -16,6 +16,10 @@ maintab:Label("Script Made By Celeron + Daffy!")
 funtab:Label("Custom Movesets, Not Actual Unlocks!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Left Alt")
+
+maintab:Button("Metavision", function()
+loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
+end)
 
 maintab:Button("Auto-Goal (BLATANT)", function()
     _G.AUTO_GOAL = not _G.AUTO_GOAL
@@ -230,8 +234,6 @@ maintab:Button("Manual Score", function()
 
         if LocalHumanoidRootPart then
             LocalHumanoidRootPart.CFrame = CFrame.new(position)
-        else
-            warn("Failed to find HumanoidRootPart. Teleportation aborted.")
         end
     end
 
@@ -242,8 +244,6 @@ maintab:Button("Manual Score", function()
             teleportToPosition(coordinateB)
         elseif teamName == "B" then
             teleportToPosition(coordinateA)
-        else
-            warn("Error: Unable to find team.")
         end
     end
 
@@ -253,7 +253,7 @@ end)
 
 
 maintab:Button("Break Ball (must have ball)", function()
-    local baseplatePosition = Vector3.new(-190, 14866, 492)
+    local baseplatePosition = Vector3.new(-190, 14864566, 492)
     local partSize = Vector3.new(10, 1, 10)
     local gap = 0
 
@@ -274,7 +274,7 @@ maintab:Button("Break Ball (must have ball)", function()
         CFrame.new(baseplatePosition + Vector3.new(0, 100000000000000, 0))
 end)
 
-maintab:Button("Barou Devour (Guranteed Goal)", function()
+maintab:Button("Barou Auto Devour", function()
 local plr = game.Players.LocalPlayer
 
 			local function countEnimTeamMembers()
@@ -345,18 +345,31 @@ local plr = game.Players.LocalPlayer
 			end
 end)
 
-maintab:Button("Shidou Back-Heel (Guranteed w/ Ult!)", function()
+maintab:Button("Shidou Back-Heel", function()
 local plr = game.Players.LocalPlayer
 				if plr.Team == game.Teams:FindFirstChild("A") then
 					plr.Character.HumanoidRootPart.Position = Vector3.new(-625, 3, 925)
 				elseif plr.Team == game.Teams:FindFirstChild("B") then
 					plr.Character.HumanoidRootPart.Position = Vector3.new(-588, 3, 1643)
 				end
+				wait(0.25)
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
 			end)
 
-maintab:Button("Metavision", function()
-loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
+maintab:Button("Isagi U-20 Goal", function()
+local plr = game.Players.LocalPlayer
+				if plr.Team == game.Teams:FindFirstChild("A") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-539, 3, 996)
+				elseif plr.Team == game.Teams:FindFirstChild("B") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-537, 3, 1557)
+				end
+				wait(0.5)
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Three, false, game)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Three, false, game)
 end)
+
+
 
 funtab:Button("Don Lorenzo (Nagi)", function()
 local StarterGui = game:GetService("StarterGui")
