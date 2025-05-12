@@ -9,7 +9,7 @@ local win = ui:Create({
 
 local maintab = win:Tab("Main")
 local tpstab = win:Tab("Areas")
-local funtab = win:Tab("Fun")
+local funtab = win:Tab("Misc")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
@@ -19,11 +19,277 @@ helptab:Label("Show / Hide GUI: Right Alt")
 maintab:Button("Reverse Freezer Technique (USE IN FREEZER)", function()
 game.Players.LocalPlayer.Character.Head:Destroy()
 end)
+
 maintab:Button("Random Computer", function()
-    loadstring(game:HttpGet("https://pastebin.com/raw/tdUC169t",true))()
+local function findAllPartsByName(parent, name)
+    local parts = {}
+    for _, obj in pairs(parent:GetChildren()) do
+        if obj.Name == name and obj:IsA("Model") then
+            table.insert(parts, obj)
+        end
+        if #obj:GetChildren() > 0 then
+            local foundParts = findAllPartsByName(obj, name)
+            for _, found in pairs(foundParts) do
+                table.insert(parts, found)
+            end
+        end
+    end
+    return parts
+end
+
+local recentComputers = {}
+
+local function getRandomComputer()
+    local computerTableModels = findAllPartsByName(game.Workspace, "ComputerTable")
+
+    if #computerTableModels > 0 then
+        local validComputers = {}
+
+        for _, computer in pairs(computerTableModels) do
+            if not table.find(recentComputers, computer) then
+                table.insert(validComputers, computer)
+            end
+        end
+
+        if #validComputers == 0 then
+            recentComputers = {}
+            validComputers = computerTableModels
+        end
+
+        local randomIndex = math.random(1, #validComputers)
+        return validComputers[randomIndex]
+    end
+    return nil
+end
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+local chosenComputer = getRandomComputer()
+
+if chosenComputer and chosenComputer.PrimaryPart then
+    local targetPosition = chosenComputer.PrimaryPart.Position + Vector3.new(0, 5, 0)
+    rootPart.CFrame = CFrame.new(targetPosition)
+
+    table.insert(recentComputers, chosenComputer)
+    if #recentComputers > 3 then
+        table.remove(recentComputers, 1)
+    end
+end
 end)
+
 maintab:Button("Random Exit", function()
-    loadstring(game:HttpGet("https://pastebin.com/raw/AsJaDdwq",true))()
+local function findAllModelsByName(parent, name)
+    local models = {}
+    for _, obj in pairs(parent:GetChildren()) do
+        if obj.Name == name and obj:IsA("Model") then
+            table.insert(models, obj)
+        end
+        if #obj:GetChildren() > 0 then
+            local foundModels = findAllModelsByName(obj, name)
+            for _, found in pairs(foundModels) do
+                table.insert(models, found)
+            end
+        end
+    end
+    return models
+end
+
+local exitDoorModels = findAllModelsByName(game.Workspace, "ExitDoor")
+
+if #exitDoorModels > 0 then
+    local randomIndex = math.random(1, #exitDoorModels)
+    local exitDoor = exitDoorModels[randomIndex]
+
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local rootPart = character:WaitForChild("HumanoidRootPart")
+
+    local pivotCFrame = exitDoor:GetPivot()
+    local behindDoorCFrame = pivotCFrame * CFrame.new(0, 0, -5)
+    rootPart.CFrame = behindDoorCFrame
+end
+end)
+maintab:Button("Random Freezer", function()
+local function findAllPartsByName(parent, name)
+    local parts = {}
+    for _, obj in pairs(parent:GetChildren()) do
+        if obj.Name == name and obj:IsA("Model") then
+            table.insert(parts, obj)
+        end
+        if #obj:GetChildren() > 0 then
+            local foundParts = findAllPartsByName(obj, name)
+            for _, found in pairs(foundParts) do
+                table.insert(parts, found)
+            end
+        end
+    end
+    return parts
+end
+
+local freezePodModels = findAllPartsByName(game.Workspace, "FreezePod")
+
+if #freezePodModels > 0 then
+    local randomIndex = math.random(1, #freezePodModels)
+    local randomFreezePod = freezePodModels[randomIndex]
+
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local rootPart = character:WaitForChild("HumanoidRootPart")
+
+    if randomFreezePod.PrimaryPart then
+        local targetPosition = randomFreezePod.PrimaryPart.Position + Vector3.new(0, 5, 0)
+        rootPart.CFrame = CFrame.new(targetPosition)
+    end
+end
+end)
+
+maintab:Button("Player ESP", function()
+local function highlightTorso(player)
+    if player ~= game.Players.LocalPlayer then
+        local character = player.Character
+        if character then
+            local torso = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+            if torso then
+                local highlight = Instance.new("Highlight")
+                highlight.Adornee = torso
+                highlight.FillColor = Color3.new(1, 0, 0) -- Red fill
+                highlight.OutlineColor = Color3.new(1, 1, 1) -- White outline
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                highlight.Parent = torso
+            end
+        end
+    end
+end
+
+for _, player in pairs(game.Players:GetPlayers()) do
+    highlightTorso(player)
+end
+
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        highlightTorso(player)
+    end)
+end)
+end)
+
+
+maintab:Button("Computer ESP", function()
+local function findAllPartsByName(parent, name)
+    local parts = {}
+    for _, obj in pairs(parent:GetChildren()) do
+        if obj.Name == name and obj:IsA("Model") then
+            table.insert(parts, obj)
+        end
+        if #obj:GetChildren() > 0 then
+            local foundParts = findAllPartsByName(obj, name)
+            for _, found in pairs(foundParts) do
+                table.insert(parts, found)
+            end
+        end
+    end
+    return parts
+end
+
+local function highlightModel(model)
+    if model.PrimaryPart then
+        local highlight = Instance.new("Highlight")
+        highlight.Adornee = model
+        highlight.FillColor = Color3.new(0, 250, 0)
+        highlight.OutlineColor = Color3.new(1, 1, 1)
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = model
+    end
+end
+
+local computerTableModels = findAllPartsByName(game.Workspace, "ComputerTable")
+
+if #computerTableModels > 0 then
+    for _, computerTable in pairs(computerTableModels) do
+        highlightModel(computerTable)
+    end
+end
+end)
+
+maintab:Button("Freezer ESP", function()
+local function findAllPartsByName(parent, name)
+    local parts = {}
+    for _, obj in pairs(parent:GetChildren()) do
+        if obj.Name == name and obj:IsA("Model") then
+            table.insert(parts, obj)
+        end
+        if #obj:GetChildren() > 0 then
+            local foundParts = findAllPartsByName(obj, name)
+            for _, found in pairs(foundParts) do
+                table.insert(parts, found)
+            end
+        end
+    end
+    return parts
+end
+
+local function highlightModel(model)
+    if model.PrimaryPart then
+        local highlight = Instance.new("Highlight")
+        highlight.Adornee = model
+        highlight.FillColor = Color3.new(0, 0, 250)
+        highlight.OutlineColor = Color3.new(1, 1, 1)
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = model
+    end
+end
+
+local freezePodModels = findAllPartsByName(game.Workspace, "FreezePod")
+
+if #freezePodModels > 0 then
+    for _, freezePod in pairs(freezePodModels) do
+        highlightModel(freezePod)
+    end
+end
+end)
+
+maintab:Button("Exit-Door ESP", function()
+local function findAllPartsByName(parent, name)
+    local parts = {}
+    for _, obj in pairs(parent:GetChildren()) do
+        if obj.Name == name and obj:IsA("Model") then
+            table.insert(parts, obj)
+        end
+        if #obj:GetChildren() > 0 then
+            local foundParts = findAllPartsByName(obj, name)
+            for _, found in pairs(foundParts) do
+                table.insert(parts, found)
+            end
+        end
+    end
+    return parts
+end
+
+local function highlightLight(part)
+    if part then
+        local highlight = Instance.new("Highlight")
+        highlight.Adornee = part
+        highlight.FillColor = Color3.new(1, 1, 0)
+        highlight.OutlineTransparency = 1
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = part
+    end
+end
+
+local exitDoorModels = findAllPartsByName(game.Workspace, "ExitDoor")
+
+if #exitDoorModels > 0 then
+    for _, exitDoor in pairs(exitDoorModels) do
+        local lightPart = exitDoor:FindFirstChild("Light")
+        if lightPart then
+            highlightLight(lightPart)
+        end
+    end
+end
+end)
+funtab:Button("FE Audio Control", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/3dWP6BW4"))()
 end)
 tpstab:Button("Spawn", function()
     game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(111.20410919189453, 8.207777976989746, -413.4593811035156))
@@ -36,9 +302,6 @@ tpstab:Button("Cave", function()
 end)
 tpstab:Button("Under Spawn", function()
     game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(107, -6, -423))
-end)
-funtab:Button("FE Audio Control", function()
-    loadstring(game:HttpGet("https://pastebin.com/raw/3dWP6BW4"))()
 end)
 tpstab:Button("Trading Servers (Min. Level 6)", function()
     game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(64.84588623046875, 3.999999761581421, -306.64068603515625))
