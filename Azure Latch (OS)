@@ -15,7 +15,7 @@ local helptab = win:Tab("Info")
 maintab:Label("Script Made By Celeron + Daffy!")
 funtab:Label("Custom Movesets, Not Actual Unlocks!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
-helptab:Label("Show / Hide GUI: Left Alt")
+helptab:Label("Show / Hide GUI: Right Alt")
 
 maintab:Button("Metavision", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
