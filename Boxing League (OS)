@@ -12,7 +12,8 @@ local farmtab = win:Tab("Farms")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
-maintab:Label("Script Made By Celeron, UI Created By DaffyDev!")
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("Show / Hide GUI: Right Alt")
 
 maintab:Slider("Player Speed", 12.5, 8, 25, function(v)
 local players = game:GetService("Players")
