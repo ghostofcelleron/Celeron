@@ -225,8 +225,8 @@ maintab:Button("Bring Ball", function()
 end)
 
 maintab:Button("Manual Score", function()
-    local coordinateA = Vector3.new(303, 3, -1369)
-    local coordinateB = Vector3.new(179, 3, -1830)
+    local coordinateA = Vector3.new(-552, 3, 1730)
+    local coordinateB = Vector3.new(-549, 3, 818)
 
     local function teleportToPosition(position)
         local LocalCharacter = game.Players.LocalPlayer.Character
