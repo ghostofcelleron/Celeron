@@ -1,74 +1,55 @@
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
-local textLabel = Instance.new("TextLabel")
-textLabel.Parent = screenGui
-textLabel.Size = UDim2.new(0, 250, 0, 100)
-textLabel.Position = UDim2.new(0, 10, 0, 10)
-textLabel.BackgroundTransparency = 1
-textLabel.TextScaled = true
-textLabel.Font = Enum.Font.SourceSansBold
-textLabel.Text = "Loading..."
-textLabel.TextColor3 = Color3.new(1, 1, 1)
+local win = ui:Create({
+    Name = "Celeron's GUI (GRG Freemium)",
+    ThemeColor = Color3.fromRGB(100, 85, 174),
+    StartupSound = "rbxassetid://3320590485",
+    ThemeFont = Enum.Font.FredokaOne
+})
 
-local fps = 0
-local deltaTime = 0
-local clicks = 0
-local cps = 0
+local maintab = win:Tab("Main")
+local tpstab = win:Tab("Teleports")
+local farmtab = win:Tab("Farms")
+local helptab = win:Tab("Info")
 
-local function getPing()
-    return math.random(30, 150)
-end
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
 
-local function getRainbowColor(time)
-    local r = math.sin(time * 2 + 0) * 0.5 + 0.5
-    local g = math.sin(time * 2 + 2) * 0.5 + 0.5
-    local b = math.sin(time * 2 + 4) * 0.5 + 0.5
-    return Color3.new(r, g, b)
-end
+maintab:Slider("Player Speed", 18, 16, 30, function(v)
+    local Player = game.Players.LocalPlayer
+    local Character = Player.Character or Player.CharacterAdded:Wait()
+    local Humanoid = Character:FindFirstChild("Humanoid")
 
-task.spawn(function()
-    while true do
+    if Humanoid then
+        Humanoid.WalkSpeed = v
 
-        local ping = getPing()
-        cps = clicks
-        clicks = 0
-
-        textLabel.Text = string.format("FPS: %d\nCPS: %d\nPing: %d ms", fps, cps, ping)
-
-        task.wait(1)
+        task.spawn(function()
+            while true do
+                Humanoid.WalkSpeed = v
+                task.wait(0.05)
+            end
+        end)
     end
 end)
 
-game:GetService("UserInputService").InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        clicks += 1
+maintab:Slider("Player Jump Height", 30, 15, 70, function(v)
+    local Player = game.Players.LocalPlayer
+    local Character = Player.Character or Player.CharacterAdded:Wait()
+    local Humanoid = Character:FindFirstChild("Humanoid")
+
+    if Humanoid then
+        Humanoid.JumpPower = v
+
+        task.spawn(function()
+            while true do
+                Humanoid.JumpPower = v
+                task.wait(0.05)
+            end
+        end)
     end
 end)
 
-game:GetService("RunService").RenderStepped:Connect(function(delta)
-    fps = math.floor(1 / delta)
-    textLabel.TextColor3 = getRainbowColor(tick())
-end)
-
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/WetCheezit/Bracket-V2/main/src.lua"))()
-
-local Window, MainGUI = Library:CreateWindow("Generic RP Freemium (via Celeron!)")
-
-local UIS = game:GetService("UserInputService")
-
-local RunService = game:GetService("RunService")
-
-UIS.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
-        MainGUI.Enabled = not MainGUI.Enabled
-    end
-end)
-
-local Tab1 = Window:CreateTab("Basic")
-local Tab2 = Window:CreateTab("Misc")
-
-local CombatGroup = Tab1:CreateGroupbox("Combat Settings", "Left")
 
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
@@ -110,198 +91,51 @@ local function followPlayer(playerName)
 end
 
 UIS.InputBegan:Connect(function(input, gameProcessed)
-    if input.KeyCode == Enum.KeyCode.X and not gameProcessed then
+    if input.KeyCode == Enum.KeyCode.Z and not gameProcessed then
         stopFollow = true
         StarterGui:SetCore("SendNotification", {
             Title = "Kill Player",
-            Text = "Target cancelled.",
+            Text = "Targeting stopped.",
             Duration = 3,
         })
     end
 end)
 
-local playerDropdownOptions = {}
-for _, player in ipairs(Players:GetPlayers()) do
-    table.insert(playerDropdownOptions, player.Name)
-end
-
-CombatGroup:CreateDropdown("Kill Player", playerDropdownOptions, function(selectedPlayer)
-    followPlayer(selectedPlayer)
+maintab:Textbox("Kill Player", function(v)
+    stopFollow = false
+    followPlayer(v)
 end)
 
-Players.PlayerAdded:Connect(function(player)
-    table.insert(playerDropdownOptions, player.Name)
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-    for i, name in ipairs(playerDropdownOptions) do
-	        if name == player.Name then
-			            table.remove(playerDropdownOptions, i)
-						            break
-									        end
-											    end
-												end)
-
-												local loopKillActive = false
-
-local function loopKillPlayer(playerName)
-    loopKillActive = true
-    while loopKillActive do
-        followPlayer(playerName)
-        task.wait(0.5)
-    end
-end
-
-CombatGroup:CreateDropdown("Loopkill Player", playerDropdownOptions, function(selectedPlayer)
-    loopKillActive = not loopKillActive
-
-    if loopKillActive then
-        StarterGui:SetCore("SendNotification", {
-            Title = "Loopkill",
-            Text = "Loopkill started on " .. selectedPlayer,
-            Duration = 3,
-        })
-        task.spawn(function()
-            loopKillPlayer(selectedPlayer)
-        end)
-    else
-        loopKillActive = false
-        StarterGui:SetCore("SendNotification", {
-            Title = "Loopkill",
-            Text = "Loopkill stopped.",
-            Duration = 3,
-        })
-    end
-end)
-
-CombatGroup:CreateButton("Auto-Heal", function()
-    autoHealEnabled = not autoHealEnabled
-    if autoHealEnabled then
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "Auto-Heal";
-            Text = "Enabled.";
-            Duration = 3;
-        })
-    else
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "Auto-Heal";
-            Text = "Disabled.";
-            Duration = 3;
-        })
-    end
-end)
-
-local VirtualInputManager = game:GetService("VirtualInputManager")
+maintab:Button("GRG Teleport Tool", function(v)
 local Player = game.Players.LocalPlayer
 local Backpack = Player:WaitForChild("Backpack")
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
 
-local itemsToEquip = { "Popcorn", "Good Food", "Best Food", "Ramen", "Basic Food", "Peanut" }
+local teleportTool = Instance.new("Tool")
+teleportTool.Name = "GRG Teleport"
+teleportTool.RequiresHandle = false
+teleportTool.Parent = Backpack
 
-local function equipAndClick()
-    for _, itemName in pairs(itemsToEquip) do
-        local item = Backpack:FindFirstChild(itemName)
-        if item then
-            Player.Character.Humanoid:EquipTool(item)
-            task.wait(0.5)
-            for click = 1, 3 do
-                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                task.wait(0.1)
-                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-                task.wait(4.5)
-            end
-        end
-    end
+local function WorkingTp()
+    Player.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
 end
 
-task.spawn(function()
-    while true do
-        if autoHealEnabled and Humanoid.Health < 75 then
-            equipAndClick()
-        end
-        task.wait(1)
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if toggleActive and lockedPlayerTorso then
-        local predictedPosition = predictPosition(lockedPlayerTorso)
-        Camera.CFrame = CFrame.new(Camera.CFrame.Position, predictedPosition)
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if toggleActive and lockedPlayerTorso then
-        local predictedPosition = predictPosition(lockedPlayerTorso)
-        Camera.CFrame = CFrame.new(Camera.CFrame.Position, predictedPosition)
-    end
-	local autoHealEnabled = false
-end)
-
-CombatGroup:CreateButton("Camlock (Toggle: Z)", function()
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-
-local toggleActive = false
-local lockedPlayerTorso = nil
-local predictionMultiplier = 0.2
-
-local function getClosestPlayer()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    local localCharacter = LocalPlayer.Character
-    local localHumanoidRootPart = localCharacter and localCharacter:FindFirstChild("HumanoidRootPart")
-
-    if localHumanoidRootPart then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer then
-                local character = player.Character
-                local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
-                if humanoidRootPart then
-                    local distance = (localHumanoidRootPart.Position - humanoidRootPart.Position).Magnitude
-                    if distance < shortestDistance then
-                        shortestDistance = distance
-                        closestPlayer = humanoidRootPart
-                    end
-                end
-            end
-        end
-    end
-
-    return closestPlayer
-end
-
-local function predictPosition(part)
-    local velocity = part.Velocity
-    local predictedPosition = part.Position + velocity * predictionMultiplier
-    return predictedPosition
-end
-
-local UIS = game:GetService("UserInputService")
-UIS.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.Z then
-        toggleActive = not toggleActive
-
-        if toggleActive then
-            lockedPlayerTorso = getClosestPlayer()
-        else
-            lockedPlayerTorso = nil
-        end
-    end
+teleportTool.Activated:Connect(function()
+    local mouse = Player:GetMouse()
+    local targetPosition = mouse.Hit.p
+    WorkingTp()
+    task.wait(0.25)
+    Player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
 end)
 end)
 
 local InfiniteJumpEnabled = false
 
-CombatGroup:CreateButton("Infinite Jump", function()
+maintab:Button("Infinite Jump", function(v)
     InfiniteJumpEnabled = not InfiniteJumpEnabled
 
     StarterGui:SetCore("SendNotification", {
         Title = "Infinite Jump",
-        Text = InfiniteJumpEnabled and "Infinite Jump Enabled" or "Infinite Jump Disabled",
+        Text = InfiniteJumpEnabled and "Infinite Jump Enabled." or "Infinite Jump Disabled.",
         Duration = 3,
     })
 end)
@@ -319,7 +153,7 @@ end)
 
 local ESPEnabled = false
 
-CombatGroup:CreateButton("ESP", function()
+maintab:Button("ESP", function(v)
     ESPEnabled = not ESPEnabled
 
     if ESPEnabled then
@@ -368,186 +202,14 @@ CombatGroup:CreateButton("ESP", function()
     end
 end)
 
-CombatGroup:CreateButton("Escape Jail", function()
+maintab:Button("Escape Jail", function(v)
 local args = { [1] = "Peasant" }
 game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 9e9):WaitForChild("FriendSpawn", 9e9):FireServer(unpack(args))
 end)
 
-CombatGroup:CreateSlider("WalkSpeed", 16, 28, 20, function(value)
-local Player = game.Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:FindFirstChild("Humanoid")
-
-if Humanoid then
-    Humanoid.WalkSpeed = value
-
-    task.spawn(function()
-        while true do
-            if Humanoid.WalkSpeed ~= value then
-                Humanoid.WalkSpeed = value
-            end
-            task.wait(0.5)
-        end
-    end)
-end
-end)
-
-CombatGroup:CreateSlider("JumpPower", 50, 80, 65, function(value)
-local Player = game.Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:FindFirstChild("Humanoid")
-
-if Humanoid then
-    Humanoid.JumpPower = value
-
-    task.spawn(function()
-        while true do
-            if Humanoid.JumpPower ~= value then
-                Humanoid.JumpPower = value
-            end
-            task.wait(0.5)
-        end
-    end)
-end
-end)
 
 
-
-local CombatGroup = Tab1:CreateGroupbox("Money Options", "Right")
-
-local autoHealEnabled = false
-local toggleActive = false
-local loopTask = nil
-local teleportDistance = 2
-local currentTargetPlayerName = nil
-
-CombatGroup:CreateButton("Tree Farm (1P)", function()
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local rootPart = character:WaitForChild("HumanoidRootPart")
-
-local farming = false
-local toggleKey = Enum.KeyCode.M
-local visitedTrees = {}
-
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
-task.spawn(function()
-    while true do
-        humanoid.WalkSpeed = 25
-        task.wait(0.1)
-    end
-end)
-
-local function findClosestTree()
-    local closestTreeMiddle = nil
-    local shortestDistance = math.huge
-
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("Model") and obj:FindFirstChild("Middle") and not visitedTrees[obj.Middle] then
-            local distance = (obj.Middle.Position - rootPart.Position).Magnitude
-            if distance < shortestDistance then
-                shortestDistance = distance
-                closestTreeMiddle = obj.Middle
-            end
-        end
-    end
-
-    return closestTreeMiddle
-end
-
-local function spinAndClick(treeMiddle)
-    task.spawn(function()
-        while workspace:FindFirstChild(treeMiddle.Name) do
-            rootPart.CFrame = rootPart.CFrame * CFrame.Angles(0, math.rad(15), 0)
-            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-            VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-            task.wait(0.25)
-        end
-    end)
-end
-
-local function farmTree()
-    while farming do
-        local closestTreeMiddle = findClosestTree()
-        if closestTreeMiddle then
-            humanoid:MoveTo(closestTreeMiddle.Position)
-            local connection
-            connection = game:GetService("RunService").Heartbeat:Connect(function()
-                if not workspace:FindFirstChild(closestTreeMiddle.Name) then
-                    connection:Disconnect()
-                    visitedTrees[closestTreeMiddle] = true
-                    return
-                end
-
-                local distance = (closestTreeMiddle.Position - rootPart.Position).Magnitude
-                if distance <= 3 then
-                    humanoid:MoveTo(rootPart.Position)
-                    connection:Disconnect()
-                    spinAndClick(closestTreeMiddle)
-                end
-            end)
-        else
-            task.wait(1)
-        end
-    end
-end
-
-game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == toggleKey then
-        farming = not farming
-        if farming then
-            farmTree()
-        end
-    end
-end)
-
-local backpack = player:WaitForChild("Backpack")
-
-local function checkForAxeTools()
-    for _, item in pairs(backpack:GetChildren()) do
-        if item:IsA("Tool") and string.find(item.Name, "Axe") then
-            return true
-        end
-    end
-    return false
-end
-
-while true do
-    checkForAxeTools()
-    task.wait(1)
-end
-end)
-
-local UtilityGroup = Tab2:CreateGroupbox("Utilities", "Right")
-
-UtilityGroup:CreateButton("GRG Teleport Tool", function()
-local Player = game.Players.LocalPlayer
-local Backpack = Player:WaitForChild("Backpack")
-
-local teleportTool = Instance.new("Tool")
-teleportTool.Name = "GRG Teleport"
-teleportTool.RequiresHandle = false
-teleportTool.Parent = Backpack
-
-local function WorkingTp()
-    Player.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-end
-
-teleportTool.Activated:Connect(function()
-    local mouse = Player:GetMouse()
-    local targetPosition = mouse.Hit.p
-    WorkingTp()
-    task.wait(0.5)
-    Player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-end)
-end)
-
-local Teleports = Tab2:CreateGroupbox("Teleports", "Left")
-
-Teleports:CreateButton("Spawn", function()
+tpstab:Button("Spawn", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -556,7 +218,7 @@ Teleports:CreateButton("Spawn", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1, 23, 399)
 end)
 
-Teleports:CreateButton("Leader Tower", function()
+tpstab:Button("Leader Tower", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -565,7 +227,7 @@ Teleports:CreateButton("Leader Tower", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-0, 45, 460)
 end)
 
-Teleports:CreateButton("Barbarian Doctor", function()
+tpstab:Button("Barbarian Doctor", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -574,7 +236,7 @@ Teleports:CreateButton("Barbarian Doctor", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-63, -1, -1267)
 end)
 
-Teleports:CreateButton("Arena", function()
+tpstab:Button("Arena", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -583,7 +245,7 @@ Teleports:CreateButton("Arena", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-312, 41, 338)
 end)
 
-Teleports:CreateButton("Cafe", function()
+tpstab:Button("Cafe", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -592,7 +254,7 @@ Teleports:CreateButton("Cafe", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-92, 27, 302)
 end)
 
-Teleports:CreateButton("Karl's Karts", function()
+tpstab:Button("Karl's Karts", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -601,7 +263,7 @@ Teleports:CreateButton("Karl's Karts", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-258, 26, 462)
 end)
 
-Teleports:CreateButton("Council Area", function()
+tpstab:Button("Council Area", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -610,7 +272,7 @@ Teleports:CreateButton("Council Area", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1, 46, 625)
 end)
 
-Teleports:CreateButton("Barbarian Town", function()
+tpstab:Button("Barbarian Town", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -619,7 +281,7 @@ Teleports:CreateButton("Barbarian Town", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 7, -1299)
 end)
 
-Teleports:CreateButton("Doctor Store", function()
+tpstab:Button("Doctor Store", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -628,7 +290,7 @@ Teleports:CreateButton("Doctor Store", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-19, 29, 240)
 end)
 
-Teleports:CreateButton("Food Store", function()
+tpstab:Button("Jester Stage", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -637,7 +299,7 @@ Teleports:CreateButton("Food Store", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(73, 23, 312)
 end)
 
-Teleports:CreateButton("Jester Stage", function()
+tpstab:Button("Jester Stage", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -646,7 +308,7 @@ Teleports:CreateButton("Jester Stage", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(74, 25, 242)
 end)
 
-Teleports:CreateButton("Mountains", function()
+tpstab:Button("Mountains", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
@@ -655,7 +317,7 @@ Teleports:CreateButton("Mountains", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-407, 159, 181)
 end)
 
-Teleports:CreateButton("Town Ramp", function()
+tpstab:Button("Town Ramp", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
