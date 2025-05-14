@@ -369,73 +369,6 @@ local plr = game.Players.LocalPlayer
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Three, false, game)
 end)
 
-funtab:Button("Overtime Cinematics", function()
-local vals = game.ReplicatedStorage.workspace
-local timer = vals.timer
-local ingame = vals.roundstart
- 
-local music1Isagi = game:GetService("ReplicatedStorage").Resources.isagi["isagi themeover"]
-local music2Sae = game:GetService("ReplicatedStorage").Resources.sae["sae one shot match theme"]
- 
-local gui = Instance.new("ScreenGui")
-gui.ScreenInsets = Enum.ScreenInsets.None
-gui.Name = "overtimethang"
-gui.Parent = game.Players.LocalPlayer.PlayerGui
- 
-local image = Instance.new("ImageLabel")
-image.AnchorPoint = Vector2.new(0.5, 0.5)
-image.Position = UDim2.new(0.5, 0,0.5, 0)
-image.Size = UDim2.new(1.2, 0,1.2, 0)
-image.Image = "rbxassetid://11030033771"
-image.ImageTransparency = 0.8
-image.BackgroundTransparency = 1
-image.Parent = gui
- 
-local overtime = false
- 
-task.spawn(function()
-	while wait(0.05) do
-		image.Visible = overtime
- 
-		if overtime == true then
-			if game.Workspace.CurrentCamera.CameraType == Enum.CameraType.Custom then
-				game.TweenService:Create(game.Workspace.CurrentCamera, TweenInfo.new(0.2), {FieldOfView = 100}):Play()
-			end
- 
-			if image.Rotation == 0 then
-				image.Rotation = 180
-			else
-				image.Rotation = 0
-			end
-		end
-	end
-end)
- 
-timer.Changed:Connect(function()
-	if timer.Value == 1 then
-		if ingame.Value == true then
-			wait(1)
-			overtime = true
- 
-			repeat
-				music1Isagi:Play()
-				task.wait(50)
-				music2Sae:Play()
-				task.wait(58)
-			until ingame.Value == false
-		end
- 
-	elseif ingame.Value == false then
- 
-		game.TweenService:Create(game.Workspace.CurrentCamera, TweenInfo.new(0.2), {FieldOfView = 70}):Play()
-		overtime = false
-		music1Isagi:Stop()
-		music2Sae:Stop()
- 
-	end
-end)
-end)
-
 funtab:Button("Don Lorenzo (Nagi)", function()
 local StarterGui = game:GetService("StarterGui")
 
@@ -706,6 +639,73 @@ end)
 
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Overtime Cinematics", function()
+local vals = game.ReplicatedStorage.workspace
+local timer = vals.timer
+local ingame = vals.roundstart
+ 
+local music1Isagi = game:GetService("ReplicatedStorage").Resources.isagi["isagi themeover"]
+local music2Sae = game:GetService("ReplicatedStorage").Resources.sae["sae one shot match theme"]
+ 
+local gui = Instance.new("ScreenGui")
+gui.ScreenInsets = Enum.ScreenInsets.None
+gui.Name = "overtimethang"
+gui.Parent = game.Players.LocalPlayer.PlayerGui
+ 
+local image = Instance.new("ImageLabel")
+image.AnchorPoint = Vector2.new(0.5, 0.5)
+image.Position = UDim2.new(0.5, 0,0.5, 0)
+image.Size = UDim2.new(1.2, 0,1.2, 0)
+image.Image = "rbxassetid://11030033771"
+image.ImageTransparency = 0.8
+image.BackgroundTransparency = 1
+image.Parent = gui
+ 
+local overtime = false
+ 
+task.spawn(function()
+	while wait(0.05) do
+		image.Visible = overtime
+ 
+		if overtime == true then
+			if game.Workspace.CurrentCamera.CameraType == Enum.CameraType.Custom then
+				game.TweenService:Create(game.Workspace.CurrentCamera, TweenInfo.new(0.2), {FieldOfView = 100}):Play()
+			end
+ 
+			if image.Rotation == 0 then
+				image.Rotation = 180
+			else
+				image.Rotation = 0
+			end
+		end
+	end
+end)
+ 
+timer.Changed:Connect(function()
+	if timer.Value == 1 then
+		if ingame.Value == true then
+			wait(1)
+			overtime = true
+ 
+			repeat
+				music1Isagi:Play()
+				task.wait(50)
+				music2Sae:Play()
+				task.wait(58)
+			until ingame.Value == false
+		end
+ 
+	elseif ingame.Value == false then
+ 
+		game.TweenService:Create(game.Workspace.CurrentCamera, TweenInfo.new(0.2), {FieldOfView = 70}):Play()
+		overtime = false
+		music1Isagi:Stop()
+		music2Sae:Stop()
+ 
+	end
+end)
 end)
 
 misctab:Button("Gallery Area (secret)", function()
