@@ -189,7 +189,31 @@ maintab:Button("Grab Ball (GOALKEEPER)", function()
     StealBall()
 end)
 
-maintab:Button("Go to Ball", function()
+maintab:Button("Get Center-Field", function()
+local args = {
+    buffer.fromstring("\013\001\001\000B")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+
+local args = {
+    buffer.fromstring("\013\001\001\000B")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args)) 
+end)
+
+maintab:Button("Get Goalie", function()
+local args = {
+    buffer.fromstring("\013\005\001\000B")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+
+local args = {
+    buffer.fromstring("\013\005\001\000A")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args)) 
+end)
+
+maintab:Button("Steal Ball", function()
     local Players = game:GetService("Players")
     local VirtualInputManager = game:GetService("VirtualInputManager")
     local LocalPlayer = Players.LocalPlayer
