@@ -133,6 +133,62 @@ local function teleportToBall()
     end
 end
 
+maintab:Button("Grab Ball (GOALKEEPER)", function()
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+
+    local function HasBall()
+        local LocalCharacter = LocalPlayer.Character
+        local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball")
+        return Football ~= nil
+    end
+
+    local function StealBall()
+        while not HasBall() do
+            local LocalCharacter = LocalPlayer.Character
+            local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+            local Football = workspace.Terrain:FindFirstChild("Ball")
+
+            if LocalHumanoidRootPart and Football then
+                LocalHumanoidRootPart.CFrame = CFrame.new(-531, 3, 851)
+                task.wait(0.1)
+                LocalHumanoidRootPart.CFrame = CFrame.new(-531, 3, 851)
+                task.wait(0.1)
+                LocalHumanoidRootPart.CFrame = Football.CFrame * CFrame.new(0, 0, -3)
+            end
+
+            for _, OtherPlayer in pairs(Players:GetPlayers()) do
+                if OtherPlayer.Name ~= LocalPlayer.Name then
+                    local OtherCharacter = OtherPlayer.Character
+                    local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+                    local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+
+                    if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                        LocalHumanoidRootPart.CFrame = CFrame.new(-531, 3, 851)
+                        task.wait(0.15)
+                        LocalHumanoidRootPart.CFrame = CFrame.new(-531, 3, 851)
+                        task.wait(0.15)
+                        LocalHumanoidRootPart.CFrame = OtherFootball.CFrame * CFrame.new(0, 0, -3)
+
+                        local args = {
+                            buffer.fromstring("\024\001"),
+                            {
+                                {
+                                    "slice"
+                                }
+                            }
+                        }
+                        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                    end
+                end
+            end
+            wait(0.3)
+        end
+    end
+
+    StealBall()
+end)
+
 maintab:Button("Go to Ball", function()
     local Players = game:GetService("Players")
     local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -367,6 +423,34 @@ local plr = game.Players.LocalPlayer
 				wait(0.5)
                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Three, false, game)
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Three, false, game)
+end)
+
+maintab:Textbox("Character Picker", function(v)
+
+local validNames = {
+    ["rin"] = "\019\003\000rin",
+    ["aiku"] = "\019\004\000aiku",
+    ["barou"] = "\019\005\000barou",
+    ["sae"] = "\019\003\000sae",
+    ["kaiser"] = "\019\006\000kaiser",
+    ["don"] = "\019\010\000donlorenzo",
+    ["nagi"] = "\019\004\000nagi",
+    ["shidou"] = "\019\006\000shidou",
+    ["isagi"] = "\019\005\000isagi"
+}
+
+local function checkAndFire(v)
+    local match = validNames[v]
+    if match then
+        local args = { buffer.fromstring(match) }
+        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+        print("Fired event for:", v)
+    else
+        print("No match found for:", v)
+    end
+end
+
+checkAndFire(v)
 end)
 
 funtab:Button("Don Lorenzo (Nagi)", function()
