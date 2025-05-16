@@ -88,6 +88,79 @@ maintab:Button("Always Ball (BLATANT)", function()
     end
 end)
 
+maintab:Button("No Steal Cooldown", function()
+local userInputService = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local starterGui = game:GetService("StarterGui")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local rootPart = character:FindFirstChild("HumanoidRootPart")
+
+local activeSlide = false
+
+local function notify(message)
+    starterGui:SetCore("SendNotification", {
+        Title = "Slide System",
+        Text = message,
+        Duration = 2
+    })
+end
+
+notify("Enabled")
+
+local function startSlide()
+    if humanoid and rootPart and not activeSlide then
+        activeSlide = true
+        notify("No Steal CD")
+
+        local animator = humanoid:FindFirstChildOfClass("Animator")
+        if not animator then
+            animator = Instance.new("Animator")
+            animator.Parent = humanoid
+        end
+
+        local animation = Instance.new("Animation")
+        animation.AnimationId = "rbxassetid://109744655458082"
+        local animationTrack = animator:LoadAnimation(animation)
+        animationTrack:Play()
+
+        local slideDistance = 57
+        local slideTime = 0.65
+        local velocityMagnitude = slideDistance / slideTime
+
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(9000, 0, 9000)
+        bodyVelocity.Parent = rootPart
+
+        local startTime = tick()
+        local connection
+
+        connection = runService.Heartbeat:Connect(function()
+            local elapsedTime = tick() - startTime
+            if elapsedTime < slideTime then
+                local faceDirection = rootPart.CFrame.LookVector.Unit
+                local leftOffset = rootPart.CFrame.RightVector.Unit * -0.3
+                local slideDirection = (faceDirection + leftOffset).Unit
+                bodyVelocity.Velocity = slideDirection * velocityMagnitude
+            else
+                connection:Disconnect()
+                bodyVelocity:Destroy()
+                activeSlide = false
+            end
+        end)
+    end
+end
+
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.Q then
+            startSlide()
+        end
+    end
+end)
+end)
+
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
