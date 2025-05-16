@@ -29,7 +29,102 @@ maintab:Button("Auto-Goal (BLATANT)", function()
             Text = "Activated!",
             Duration = 5
         })
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/lnwskibidi/Roblox/main/AzureLatch.lua"))()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local MapFolder = workspace:WaitForChild("map")
+local AGoal = MapFolder:WaitForChild("Agoal")
+local BGoal = MapFolder:WaitForChild("Bgoal")
+
+local LocalPlayer = Players.LocalPlayer
+
+local function IsInGame()
+    local LocalCharacter = LocalPlayer.Character
+    if not LocalCharacter then return end
+
+    local StateFolder = LocalCharacter:FindFirstChild("state")
+    if not StateFolder then return end
+
+    local InGameValue = StateFolder:FindFirstChild("ingame")
+    if not InGameValue then return end
+
+    return InGameValue.Value
+end
+
+local function DisableCollisionBoxes()
+    local MapFolder = workspace:FindFirstChild("map")
+    if not MapFolder then return end
+
+    local GkBarriar = MapFolder:FindFirstChild("gkbarriar")
+    local AGoal = MapFolder:FindFirstChild("Agoal")
+    local BGoal = MapFolder:FindFirstChild("Bgoal")
+
+    if GkBarriar then
+        local ABarriar = GkBarriar:FindFirstChild("A")
+        local BBarriar = GkBarriar:FindFirstChild("B")
+
+        if ABarriar then ABarriar.CanCollide = false end
+        if BBarriar then BBarriar.CanCollide = false end
+    end
+
+    if AGoal then AGoal.CanCollide = false end
+    if BGoal then BGoal.CanCollide = false end
+end
+
+local function StealBall()
+    local LocalCharacter = LocalPlayer.Character
+    local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+    local Football = workspace.Terrain:FindFirstChild("Ball")
+
+    if LocalHumanoidRootPart and Football then
+        LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position.X, 0, Football.Position.Z)
+    end
+    
+    for _, OtherPlayer in pairs(Players:GetPlayers()) do
+        if OtherPlayer.Name ~= LocalPlayer.Name then
+            local OtherCharacter = OtherPlayer.Character
+            local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+            local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+            if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Q, false, game)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
+            end
+        end
+    end
+end
+
+local function HasBall()
+    local LocalCharacter = LocalPlayer.Character
+    local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball")
+    if Football then
+        return true
+    end
+    return false
+end
+
+coroutine.resume(coroutine.create(function()
+    RunService.RenderStepped:Connect(function()
+        if not _G.AUTO_GOAL then return end
+        pcall(function()
+            if not IsInGame() == true then return end
+            DisableCollisionBoxes()
+            StealBall()
+            if HasBall() == true then
+                local LocalCharacter = LocalPlayer.Character
+                local LocalRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+                local Goal = LocalPlayer.Team.Name == "A" and BGoal or AGoal
+
+                if not LocalRootPart then return end
+                LocalRootPart.CFrame = Goal.CFrame
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+            end
+        end)
+    end)
+end))
     else
         game.StarterGui:SetCore("SendNotification", {
             Title = "Farm Goals",
@@ -302,6 +397,79 @@ maintab:Button("Bring Ball", function()
             LocalHumanoidRootPart.CFrame = originalPosition
         end
     end)
+end)
+
+local userInputService = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local rootPart = character:FindFirstChild("HumanoidRootPart")
+
+_G.SLIDE_ACTIVE = true -- Global toggle for script activation
+local activeSlide = false
+local slideConnection
+
+local function toggleSlide()
+    if not _G.SLIDE_ACTIVE then return end -- Stop if the script is disabled
+
+    if humanoid and rootPart then
+        if activeSlide then
+            -- Stop sliding
+            if slideConnection then slideConnection:Disconnect() end
+            rootPart:FindFirstChildOfClass("BodyVelocity")?.Destroy()
+            activeSlide = false
+        else
+            -- Start sliding
+            activeSlide = true
+
+            local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+
+            local animation = Instance.new("Animation")
+            animation.AnimationId = "rbxassetid://109744655458082"
+            local animationTrack = animator:LoadAnimation(animation)
+            animationTrack:Play()
+
+            local slideDistance = 57
+            local slideTime = 0.65
+            local velocityMagnitude = slideDistance / slideTime
+
+            local bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(9000, 0, 9000)
+            bodyVelocity.Parent = rootPart
+
+            local startTime = tick()
+
+            slideConnection = runService.Heartbeat:Connect(function()
+                local elapsedTime = tick() - startTime
+                if elapsedTime < slideTime then
+                    local faceDirection = rootPart.CFrame.LookVector.Unit
+                    local leftOffset = rootPart.CFrame.RightVector.Unit * -0.3
+                    local slideDirection = (faceDirection + leftOffset).Unit
+                    bodyVelocity.Velocity = slideDirection * velocityMagnitude
+                else
+                    slideConnection:Disconnect()
+                    bodyVelocity:Destroy()
+                    activeSlide = false
+                end
+            end)
+        end
+    end
+end
+
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.Q and _G.SLIDE_ACTIVE then
+        toggleSlide()
+    end
+end)
+
+maintab:Button("No Slide Cooldown (visual)", function()
+    _G.SLIDE_ACTIVE = not _G.SLIDE_ACTIVE
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "No Slide Cooldown",
+        Text = _G.SLIDE_ACTIVE and "Activated." or "Deactivated.",
+        Duration = 5
+    })
 end)
 
 maintab:Button("Manual Score", function()
@@ -753,15 +921,15 @@ misctab:Button("Overtime Cinematics", function()
 local vals = game.ReplicatedStorage.workspace
 local timer = vals.timer
 local ingame = vals.roundstart
-
+ 
 local music1Isagi = game:GetService("ReplicatedStorage").Resources.isagi["isagi themeover"]
 local music2Sae = game:GetService("ReplicatedStorage").Resources.sae["sae one shot match theme"]
-
+ 
 local gui = Instance.new("ScreenGui")
 gui.ScreenInsets = Enum.ScreenInsets.None
 gui.Name = "overtimethang"
 gui.Parent = game.Players.LocalPlayer.PlayerGui
-
+ 
 local image = Instance.new("ImageLabel")
 image.AnchorPoint = Vector2.new(0.5, 0.5)
 image.Position = UDim2.new(0.5, 0,0.5, 0)
@@ -770,56 +938,49 @@ image.Image = "rbxassetid://11030033771"
 image.ImageTransparency = 0.8
 image.BackgroundTransparency = 1
 image.Parent = gui
-
+ 
 local overtime = false
-
+ 
 task.spawn(function()
-    while wait(0.05) do
-        image.Visible = overtime
-        
-        if overtime == true then
-            if game.Workspace.CurrentCamera.CameraType == Enum.CameraType.Custom then
-                game.TweenService:Create(game.Workspace.CurrentCamera, TweenInfo.new(0.2), {FieldOfView = 100}):Play()
-            end
-            
-            if image.Rotation == 0 then
-                image.Rotation = 180
-            else
-                image.Rotation = 0
-            end
-        end
-    end
+	while wait(0.05) do
+		image.Visible = overtime
+ 
+		if overtime == true then
+			if game.Workspace.CurrentCamera.CameraType == Enum.CameraType.Custom then
+				game.TweenService:Create(game.Workspace.CurrentCamera, TweenInfo.new(0.2), {FieldOfView = 100}):Play()
+			end
+ 
+			if image.Rotation == 0 then
+				image.Rotation = 180
+			else
+				image.Rotation = 0
+			end
+		end
+	end
 end)
-
+ 
 timer.Changed:Connect(function()
-    if timer.Value == 0 and ingame.Value == true then
-        overtime = true
-        
-        repeat
-            music1Isagi:Play()
-            for i = 1, 50 do
-                task.wait(1)
-                if ingame.Value == false then
-                    break
-                end
-            end
-            music2Sae:Play()
-            for i = 1, 58 do
-                task.wait(1)
-                if ingame.Value == false then
-                    break
-                end
-            end
-        until ingame.Value == false
-        
-    elseif ingame.Value == false then
-        
-        overtime = false
-        music1Isagi:Stop()
-        music2Sae:Stop()
-        game.TweenService:Create(game.Workspace.CurrentCamera, TweenInfo.new(0.2), {FieldOfView = 70}):Play()
-        
-    end
+	if timer.Value == 1 then
+		if ingame.Value == true then
+			wait(1)
+			overtime = true
+ 
+			repeat
+				music1Isagi:Play()
+				task.wait(50)
+				music2Sae:Play()
+				task.wait(58)
+			until ingame.Value == false
+		end
+ 
+	elseif ingame.Value == false then
+ 
+		game.TweenService:Create(game.Workspace.CurrentCamera, TweenInfo.new(0.2), {FieldOfView = 70}):Play()
+		overtime = false
+		music1Isagi:Stop()
+		music2Sae:Stop()
+ 
+	end
 end)
 end)
 
