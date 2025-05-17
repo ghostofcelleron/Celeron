@@ -88,74 +88,227 @@ maintab:Button("Always Ball (BLATANT)", function()
     end
 end)
 
-maintab:Button("No Steal Cooldown", function()
+maintab:Button("Auto-Dribble", function()
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+local ANIMATION_ID = "rbxassetid://109744655458082"
+
+_G.toggleDetection = not _G.toggleDetection
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Auto-Dribble",
+    Text = _G.toggleDetection and "Enabled." or "Disabled.",
+    Duration = 3
+})
+
+local function checkNearbyPlayers()
+    if not _G.toggleDetection then return end
+
+    local myHRP = character and character:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
+
+    for _, target in ipairs(Players:GetPlayers()) do
+        if target ~= player and target.Character and target.Team ~= player.Team then
+            local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
+            local targetHumanoid = target.Character:FindFirstChild("Humanoid")
+            local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
+
+            if targetHRP and targetAnimator then
+                local distance = (myHRP.Position - targetHRP.Position).Magnitude
+
+                if distance <= 35 then
+                    for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
+                        if track.Animation.AnimationId == ANIMATION_ID then
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                            task.wait(0.05)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                            return
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(checkNearbyPlayers)
+end)
+
+maintab:Button("Auto-Fake Volley", function()
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+local ANIMATION_ID = "rbxassetid://109744655458082"
+
+_G.toggleVolleyFake = not _G.toggleVolleyFake
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Auto-Fake Volley",
+    Text = _G.toggleVolleyFake and "Enabled." or "Disabled.",
+    Duration = 3
+})
+
+local function checkNearbyPlayers()
+    if not _G.toggleVolleyFake then return end
+
+    local myHRP = character and character:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
+
+    for _, target in ipairs(Players:GetPlayers()) do
+        if target ~= player and target.Character and target.Team ~= player.Team then
+            local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
+            local targetHumanoid = target.Character:FindFirstChild("Humanoid")
+            local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
+
+            if targetHRP and targetAnimator then
+                local distance = (myHRP.Position - targetHRP.Position).Magnitude
+
+                if distance <= 35 then
+                    for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
+                        if track.Animation.AnimationId == ANIMATION_ID then
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
+                            task.wait(0.05)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
+                            return
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(checkNearbyPlayers)
+end)
+
+maintab:Button("No Rush Cooldown", function()
 local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
 local starterGui = game:GetService("StarterGui")
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:FindFirstChildOfClass("Humanoid")
-local rootPart = character:FindFirstChild("HumanoidRootPart")
+local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+local rootPart = character and character:FindFirstChild("HumanoidRootPart")
 
-local activeSlide = false
+_G.ForwardRushEnabled = not _G.ForwardRushEnabled
 
-local function notify(message)
-    starterGui:SetCore("SendNotification", {
-        Title = "Slide System",
-        Text = message,
-        Duration = 2
-    })
-end
+starterGui:SetCore("SendNotification", {
+    Title = "No Rush CD",
+    Text = _G.ForwardRushEnabled and "Enabled." or "Disabled.",
+    Duration = 2
+})
 
-notify("Enabled")
-
-local function startSlide()
-    if humanoid and rootPart and not activeSlide then
-        activeSlide = true
-        notify("No Steal CD")
-
-        local animator = humanoid:FindFirstChildOfClass("Animator")
-        if not animator then
-            animator = Instance.new("Animator")
-            animator.Parent = humanoid
-        end
-
+local function forwardRush()
+    if humanoid and rootPart and _G.ForwardRushEnabled then
+        local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
         local animation = Instance.new("Animation")
-        animation.AnimationId = "rbxassetid://109744655458082"
+        animation.AnimationId = "rbxassetid://79394729551302"
         local animationTrack = animator:LoadAnimation(animation)
         animationTrack:Play()
 
-        local slideDistance = 57
-        local slideTime = 0.65
-        local velocityMagnitude = slideDistance / slideTime
+        local rushTime = 0.65
+        local rushDistance = 45
+        local stepSize = rushDistance / (rushTime * 60)
 
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.MaxForce = Vector3.new(9000, 0, 9000)
-        bodyVelocity.Parent = rootPart
+        local originalWalkSpeed = humanoid.WalkSpeed
+        humanoid.WalkSpeed = 3
 
-        local startTime = tick()
+        local elapsedTime = 0
         local connection
 
-        connection = runService.Heartbeat:Connect(function()
-            local elapsedTime = tick() - startTime
-            if elapsedTime < slideTime then
-                local faceDirection = rootPart.CFrame.LookVector.Unit
-                local leftOffset = rootPart.CFrame.RightVector.Unit * -0.3
-                local slideDirection = (faceDirection + leftOffset).Unit
-                bodyVelocity.Velocity = slideDirection * velocityMagnitude
+        connection = runService.RenderStepped:Connect(function(dt)
+            if elapsedTime < rushTime then
+                rootPart.CFrame = rootPart.CFrame * CFrame.new(0, 0, -stepSize)
+                elapsedTime = elapsedTime + dt
             else
                 connection:Disconnect()
-                bodyVelocity:Destroy()
-                activeSlide = false
+                humanoid.WalkSpeed = originalWalkSpeed
             end
         end)
     end
 end
 
 userInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        if input.KeyCode == Enum.KeyCode.Q then
-            startSlide()
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.F and _G.ForwardRushEnabled then
+        forwardRush()
+		local SoundService = game:GetService("SoundService")
+		local sound = Instance.new("Sound")
+		sound.SoundId = "rbxassetid://105267293181745"
+		sound.Parent = SoundService
+		sound.Looped = false
+		sound:Play()
+    end
+end)
+end)
+
+maintab:Button("No Side Dash Cooldown", function()
+local userInputService = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local starterGui = game:GetService("StarterGui")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+
+_G.SideDashEnabled = not _G.SideDashEnabled
+
+starterGui:SetCore("SendNotification", {
+    Title = "No Side Dash CD",
+    Text = _G.SideDashEnabled and "Enabled." or "Disabled.",
+    Duration = 2
+})
+
+local function playDashSound()
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://71212694698006"
+    sound.Parent = rootPart
+    sound.Looped = false
+    sound:Play()
+    sound.Ended:Connect(function() sound:Destroy() end) 
+end
+
+local function sideDash(direction)
+    if humanoid and rootPart and _G.SideDashEnabled then
+        local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+        local animation = Instance.new("Animation")
+
+        if direction == "right" then
+            animation.AnimationId = "rbxassetid://114016332539655"
+            rootPart.CFrame = rootPart.CFrame * CFrame.new(12, 0, 0)
+        elseif direction == "left" then
+            animation.AnimationId = "rbxassetid://100207093237932"
+            rootPart.CFrame = rootPart.CFrame * CFrame.new(-12, 0, 0)
+        else
+            return
+        end
+
+        local animationTrack = animator:LoadAnimation(animation)
+        animationTrack:Play()
+        
+        playDashSound()
+    end
+end
+
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.Q then
+        local isAHeld = userInputService:IsKeyDown(Enum.KeyCode.A)
+        local isDHeld = userInputService:IsKeyDown(Enum.KeyCode.D)
+
+        if isDHeld then
+            sideDash("right")
+        elseif isAHeld then
+            sideDash("left")
         end
     end
 end)
