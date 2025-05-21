@@ -119,7 +119,7 @@ local function checkNearbyPlayers()
             if targetHRP and targetAnimator then
                 local distance = (humanoidRootPart.Position - targetHRP.Position).Magnitude
 
-                if distance <= 27.5 then
+                if distance <= 35 then
                     local playingTracks = targetAnimator:GetPlayingAnimationTracks()
                     for _, track in ipairs(playingTracks) do
                         if track.Animation.AnimationId == ANIMATION_ID then
