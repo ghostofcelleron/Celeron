@@ -123,11 +123,11 @@ local function checkNearbyPlayers()
                     local playingTracks = targetAnimator:GetPlayingAnimationTracks()
                     for _, track in ipairs(playingTracks) do
                         if track.Animation.AnimationId == ANIMATION_ID then
-local drib = {
-buffer.fromstring("\024\001"),
-{{"dribble",false}}
-}
-game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(drib))
+                            local drib = {
+                                buffer.fromstring("\024\001"),
+                                {{"dribble", false}}
+                            }
+                            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(drib))
                         end
                     end
                 end
