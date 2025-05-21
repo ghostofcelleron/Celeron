@@ -90,16 +90,16 @@ end)
 
 maintab:Button("Auto-Dribble", function()
 local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 local ANIMATION_ID = "rbxassetid://109744655458082"
 
-_G.toggleDetection = not _G.toggleDetection
+_G.toggleDetection = not (_G.toggleDetection or false)
 
 StarterGui:SetCore("SendNotification", {
     Title = "Auto-Dribble",
@@ -110,9 +110,6 @@ StarterGui:SetCore("SendNotification", {
 local function checkNearbyPlayers()
     if not _G.toggleDetection then return end
 
-    local myHRP = character and character:FindFirstChild("HumanoidRootPart")
-    if not myHRP then return end
-
     for _, target in ipairs(Players:GetPlayers()) do
         if target ~= player and target.Character and target.Team ~= player.Team then
             local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
@@ -120,15 +117,17 @@ local function checkNearbyPlayers()
             local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
 
             if targetHRP and targetAnimator then
-                local distance = (myHRP.Position - targetHRP.Position).Magnitude
+                local distance = (humanoidRootPart.Position - targetHRP.Position).Magnitude
 
-                if distance <= 35 then
-                    for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
+                if distance <= 27.5 then
+                    local playingTracks = targetAnimator:GetPlayingAnimationTracks()
+                    for _, track in ipairs(playingTracks) do
                         if track.Animation.AnimationId == ANIMATION_ID then
-                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-                            task.wait(0.05)
-                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-                            return
+                            local drib = {
+                                "\024\001",
+                                {{"dribble", false}}
+                            }
+                            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(drib))
                         end
                     end
                 end
@@ -137,8 +136,11 @@ local function checkNearbyPlayers()
     end
 end
 
-RunService.RenderStepped:Connect(checkNearbyPlayers)
+RunService.Heartbeat:Connect(checkNearbyPlayers)
 end)
+
+
+
 
 maintab:Button("Auto-Fake Volley", function()
 local Players = game:GetService("Players")
@@ -652,17 +654,24 @@ local plr = game.Players.LocalPlayer
 			end
 end)
 
-maintab:Button("Shidou Back-Heel", function()
+maintab:Button("Nagi Dream Goal", function()
 local plr = game.Players.LocalPlayer
-				if plr.Team == game.Teams:FindFirstChild("A") then
-					plr.Character.HumanoidRootPart.Position = Vector3.new(-625, 3, 925)
-				elseif plr.Team == game.Teams:FindFirstChild("B") then
-					plr.Character.HumanoidRootPart.Position = Vector3.new(-588, 3, 1643)
-				end
-				wait(0.25)
-                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
-                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
-			end)
+if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+    local hrp = plr.Character.HumanoidRootPart
+    
+    if plr.Team == game.Teams:FindFirstChild("A") then
+        hrp.CFrame = CFrame.new(-459, 3, 862)
+    elseif plr.Team == game.Teams:FindFirstChild("B") then
+        hrp.CFrame = CFrame.new(-611, 3, 1682) * CFrame.Angles(0, math.rad(180), 0)
+    end
+    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+    plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+    wait(0.2)
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
+end
+end)
 
 maintab:Button("Isagi U-20 Goal", function()
 local plr = game.Players.LocalPlayer
@@ -675,6 +684,18 @@ local plr = game.Players.LocalPlayer
                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Three, false, game)
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Three, false, game)
 end)
+
+maintab:Button("Shidou Back-Heel Goal", function()
+local plr = game.Players.LocalPlayer
+				if plr.Team == game.Teams:FindFirstChild("A") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-625, 3, 925)
+				elseif plr.Team == game.Teams:FindFirstChild("B") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-588, 3, 1643)
+				end
+				wait(0.25)
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
+			end)
 
 maintab:Textbox("Character Picker", function(v)
 
@@ -968,13 +989,39 @@ end)
 
 funtab:Button("Trolling Moveset", function()
 local char = game.Players.LocalPlayer.Character
-char.Animate.run.RunAnim.AnimationId = "rbxassetid://75407325346911"
-char.Animate.walk.WalkAnim.AnimationId = "rbxassetid://75407325346911"
+local plr = game.Players.LocalPlayer
+local hotbar = plr.PlayerGui.Hotbar
+
+char.Animate.run.RunAnim.AnimationId = "rbxassetid://117921992582675"
+char.Animate.walk.WalkAnim.AnimationId = "rbxassetid://117921992582675"
+
+local flowTexts = {
+    ["nagi"] = "mcdonalds application",
+    ["isagi"] = "2 loving parents",
+    ["sae"] = "aura farmer",
+    ["rin"] = "luke warm",
+    ["donlorenzo"] = "gimme... dih...",
+    ["kaiser"] = "clown of isagi's story",
+    ["shidou"] = "faggot",
+    ["aiku"] = "dih snake",
+    ["barou"] = "barou barou kun",
+}
+
+if flowTexts[plr:GetAttribute("style")] then
+    hotbar.MagicHealth.TextLabel.Text = flowTexts[plr:GetAttribute("style")]
+else
+    hotbar.MagicHealth.TextLabel.Text = "you dont exist"
+end
+
+hotbar.MagicHealth.ModeText.Text = ""
+hotbar.MagicHealth.Health.Frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0) 
 end)
 
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
+
+
 
 misctab:Button("Overtime Cinematics", function()
 local vals = game.ReplicatedStorage.workspace
@@ -1048,6 +1095,70 @@ timer.Changed:Connect(function()
         
     end
 end)
+end)
+
+local bgmusicdb = false
+misctab:Button("Background Music", function()
+    if bgmusicdb == false then
+        bgmusicdb = true
+        local plr = game.Players.LocalPlayer
+        local char = plr.Character
+        local hum = char.Humanoid
+
+        local music = {
+            "rbxassetid://126478006472705",
+            "rbxassetid://138210588552041",
+            "rbxassetid://137856744878500",
+            "rbxassetid://97581213878614",
+            "rbxassetid://71371939631022",
+            "rbxassetid://119592773299545",
+            "rbxassetid://134456641764445",
+            "rbxassetid://100509882059819",
+            "rbxassetid://128623853689708",
+            "rbxassetid://70979311703713",
+            "rbxassetid://92420662159372",
+            "rbxassetid://97837345641106",
+            "rbxassetid://102469310336986",
+            "rbxassetid://101851803743361",
+        }
+
+
+        if game.SoundService:FindFirstChild("BGMusic") then
+            game.SoundService.BGMusic:Destroy()
+        end
+        local sfx = Instance.new("Sound")
+        sfx.Name = "BGMusic"
+        sfx.Parent = game.SoundService
+        sfx.SoundId = music[math.random(1, #music)]
+
+        task.spawn(function()
+            while hum do
+                sfx:Play()
+                wait(sfx.TimeLength)
+                sfx.SoundId = music[math.random(1, #music)]
+            end
+        end)
+
+        task.spawn(function()
+            while hum do
+                task.wait()
+
+                if game:GetService("ReplicatedStorage").workspace.awaken.Value ~= nil then
+                    sfx:Pause()
+                else
+                    sfx:Resume()
+                end
+            end
+        end)
+
+        hum.Died:Connect(function()
+            sfx:Destroy()
+        end)
+    end
+end) 
+
+misctab:Button("Crowd shuts up for once, holy they yell all the time its so god damn annoying, azure latch needs to add a mute button for the love of god", function()
+game:GetService("SoundService")["football-crowd-3-69245"].Volume = 0
 end)
 
 misctab:Button("Gallery Area (secret)", function()
