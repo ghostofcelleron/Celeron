@@ -7,9 +7,10 @@ local win = ui:Create({
     ThemeFont = Enum.Font.FredokaOne
 })
 
-local maintab = win:Tab("Main")
+local maintab = win:Tab("Main (Blatant)")
+local maintab2 = win:Tab("Main (Silent)")
+local misctab = win:Tab("Others")
 local funtab = win:Tab("Movesets")
-local misctab = win:Tab("Misc")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
@@ -21,7 +22,7 @@ maintab:Button("Metavision", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
 end)
 
-maintab:Button("Auto-Goal (BLATANT)", function()
+maintab:Button("Auto-Goal", function()
     _G.AUTO_GOAL = not _G.AUTO_GOAL
     if _G.AUTO_GOAL then
         game.StarterGui:SetCore("SendNotification", {
@@ -39,7 +40,7 @@ maintab:Button("Auto-Goal (BLATANT)", function()
     end
 end)
 
-maintab:Button("Always Ball (BLATANT)", function()
+maintab:Button("Always Ball", function()
     _G.ALWAYS_BALL_ACTIVE = not _G.ALWAYS_BALL_ACTIVE
     if _G.ALWAYS_BALL_ACTIVE then
         game.StarterGui:SetCore("SendNotification", {
@@ -88,7 +89,7 @@ maintab:Button("Always Ball (BLATANT)", function()
     end
 end)
 
-maintab:Button("Auto-Dribble", function()
+maintab2:Button("Auto-Dribble", function()
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
@@ -96,10 +97,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart") -- Cache HRP early
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 local ANIMATION_ID = "rbxassetid://109744655458082"
 
-_G.toggleDetection = not (_G.toggleDetection or false) -- Ensure `_G.toggleDetection` is initialized
+_G.toggleDetection = not (_G.toggleDetection or false)
 
 StarterGui:SetCore("SendNotification", {
     Title = "Auto-Dribble",
@@ -139,7 +140,7 @@ end
 RunService.Heartbeat:Connect(checkNearbyPlayers)
 end)
 
-maintab:Button("Auto-Fake Volley", function()
+maintab2:Button("Auto-Fake Volley", function()
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local StarterGui = game:GetService("StarterGui")
@@ -189,6 +190,125 @@ local function checkNearbyPlayers()
 end
 
 RunService.RenderStepped:Connect(checkNearbyPlayers)
+end)
+
+maintab:Button("Hide Ace Eater", function()
+local char = game.Players.LocalPlayer.Character
+local ogAnim = char.Animate.idle.Animation1.AnimationId
+
+local UserInputService = game:GetService("UserInputService")
+local starterGui = game:GetService("StarterGui")
+
+_G.HideAce = not _G.HideAce
+
+local function sendNotification(status)
+    starterGui:SetCore("SendNotification", {
+        Title = "Hide Ace Toggle",
+        Text = status,
+        Duration = 3
+    })
+end
+
+function onKeyPress(inputObject, gameProcessedEvent)
+    if not gameProcessedEvent and _G.HideAce then
+        if inputObject.KeyCode == Enum.KeyCode.Five and game.Players.LocalPlayer:GetAttribute("style") == "donlorenzo" then 
+            task.wait(0.1)
+            for _, track in ipairs(char.Humanoid:GetPlayingAnimationTracks()) do
+                if track.Animation.AnimationId == "rbxassetid://108103339994438" then
+                    track:Stop()
+                    break
+                end
+            end
+        end
+    end
+end
+
+UserInputService.InputBegan:Connect(onKeyPress)
+
+sendNotification(_G.HideAce and "Enabled." or "Disabled.")
+end)
+
+maintab:Button("Team Goal (YOUR GOAL)", function()
+local plr = game.Players.LocalPlayer
+				if plr.Team == game.Teams:FindFirstChild("A") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-538, 3, 1603)
+				elseif plr.Team == game.Teams:FindFirstChild("B") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-535, 3, 946)
+				end
+end)
+
+maintab:Button("Auto QuickTimeEvent", function()
+local runService = game:GetService("RunService")
+local players = game:GetService("Players")
+local virtualInputManager = game:GetService("VirtualInputManager")
+local starterGui = game:GetService("StarterGui")
+local player = players.LocalPlayer
+
+_G.QuickTimeEvent = not _G.QuickTimeEvent
+
+local function sendNotification(status)
+    starterGui:SetCore("SendNotification", {
+        Title = "QuickTimeEvent",
+        Text = status,
+        Duration = 3
+    })
+end
+
+local function getAllTextLabels(parent)
+    local textLabels = {}
+    for _, descendant in ipairs(parent:GetDescendants()) do
+        if descendant:IsA("TextLabel") then
+            table.insert(textLabels, descendant)
+        end
+    end
+    return textLabels
+end
+
+local function convertNumberToKeyText(text)
+    local numberMap = {
+        ["1"] = "One",
+        ["2"] = "Two",
+        ["3"] = "Three",
+        ["4"] = "Four",
+        ["5"] = "Five",
+        ["6"] = "Six",
+        ["7"] = "Seven",
+        ["8"] = "Eight",
+        ["9"] = "Nine",
+        ["0"] = "Zero"
+    }
+    return numberMap[text] or text
+end
+
+local function checkQTE()
+    if _G.QuickTimeEvent and player and player:FindFirstChild("PlayerGui") then
+        local qteGui = player.PlayerGui:FindFirstChild("Qte")
+
+        if qteGui and qteGui:FindFirstChild("QTE") and qteGui.QTE:FindFirstChild("Frame") then
+            local qteFrame = qteGui.QTE.Frame
+
+            if qteFrame.Size.X.Scale <= 0.740000169 and qteFrame.Size.X.Scale >= 0.720000019 and
+               qteFrame.Size.Y.Scale <= 0.74999999 and qteFrame.Size.Y.Scale >= 0.720000019 then
+
+                local textLabels = getAllTextLabels(qteGui.QTE)
+                
+                for _, label in ipairs(textLabels) do
+                    local keyText = convertNumberToKeyText(label.Text)
+                    local keyToPress = Enum.KeyCode[keyText]
+
+                    if keyToPress then
+                        virtualInputManager:SendKeyEvent(true, keyToPress, false, game)
+                        virtualInputManager:SendKeyEvent(false, keyToPress, false, game)
+                    end
+                end
+            end
+        end
+    end
+end
+
+runService.RenderStepped:Connect(checkQTE)
+
+sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
 maintab:Button("No Rush Cooldown", function()
@@ -360,62 +480,65 @@ local function teleportToBall()
 end
 
 maintab:Button("Grab Ball (GOALKEEPER)", function()
-    local Players = game:GetService("Players")
-    local LocalPlayer = Players.LocalPlayer
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
-    local function HasBall()
+local function HasBall()
+    local LocalCharacter = LocalPlayer.Character
+    local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball")
+    return Football ~= nil
+end
+
+local function StealBall()
+    while not HasBall() do
         local LocalCharacter = LocalPlayer.Character
-        local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball")
-        return Football ~= nil
-    end
+        local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+        local Football = workspace.Terrain:FindFirstChild("Ball")
 
-    local function StealBall()
-        while not HasBall() do
-            local LocalCharacter = LocalPlayer.Character
-            local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
-            local Football = workspace.Terrain:FindFirstChild("Ball")
+        if LocalHumanoidRootPart and Football then
+            LocalHumanoidRootPart.CFrame = Football.CFrame * CFrame.new(0, 0, 0)
+            task.wait(0.05)
 
-            if LocalHumanoidRootPart and Football then
-                LocalHumanoidRootPart.CFrame = CFrame.new(-531, 3, 851)
-                task.wait(0.1)
-                LocalHumanoidRootPart.CFrame = CFrame.new(-531, 3, 851)
-                task.wait(0.1)
-                LocalHumanoidRootPart.CFrame = Football.CFrame * CFrame.new(0, 0, -3)
-            end
+            LocalHumanoidRootPart.CFrame = CFrame.new(-531, 3, 851)
+            task.wait(0.05)
 
-            for _, OtherPlayer in pairs(Players:GetPlayers()) do
-                if OtherPlayer.Name ~= LocalPlayer.Name then
-                    local OtherCharacter = OtherPlayer.Character
-                    local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
-                    local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+            LocalHumanoidRootPart.CFrame = Football.CFrame * CFrame.new(0, 0, 0)
+            task.wait(0.05)
+        end
 
-                    if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
-                        LocalHumanoidRootPart.CFrame = CFrame.new(-531, 3, 851)
-                        task.wait(0.15)
-                        LocalHumanoidRootPart.CFrame = CFrame.new(-531, 3, 851)
-                        task.wait(0.15)
-                        LocalHumanoidRootPart.CFrame = OtherFootball.CFrame * CFrame.new(0, 0, -3)
+        for _, OtherPlayer in pairs(Players:GetPlayers()) do
+            if OtherPlayer.Name ~= LocalPlayer.Name then
+                local OtherCharacter = OtherPlayer.Character
+                local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+                local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
 
-                        local args = {
-                            buffer.fromstring("\024\001"),
+                if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                    LocalHumanoidRootPart.CFrame = Football.CFrame * CFrame.new(0, 0, -3)
+                    task.wait(0.05)
+
+                    LocalHumanoidRootPart.CFrame = CFrame.new(-531, 3, 851)
+                    task.wait(0.05)
+
+                    local args = {
+                        buffer.fromstring("\024\001"),
+                        {
                             {
-                                {
-                                    "slice"
-                                }
+                                "slice"
                             }
                         }
-                        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-                    end
+                    }
+                    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
                 end
             end
-            wait(0.3)
         end
+        task.wait(0.05)
     end
+end
 
-    StealBall()
+StealBall()
 end)
 
-maintab:Button("Get Center-Field", function()
+maintab2:Button("Get Center-Field", function()
 local args = {
     buffer.fromstring("\013\001\001\000B")
 }
@@ -427,7 +550,7 @@ local args = {
 game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args)) 
 end)
 
-maintab:Button("Get Goalie", function()
+maintab2:Button("Get Goalie", function()
 local args = {
     buffer.fromstring("\013\005\001\000B")
 }
@@ -556,9 +679,7 @@ maintab:Button("Manual Score", function()
     checkTeamAndTeleport()
 end)
 
-
-
-maintab:Button("Break Ball (must have ball)", function()
+maintab:Button("Break Ball (Req. Ball)", function()
     local baseplatePosition = Vector3.new(-190, 14864566, 492)
     local partSize = Vector3.new(10, 1, 10)
     local gap = 0
@@ -580,7 +701,7 @@ maintab:Button("Break Ball (must have ball)", function()
         CFrame.new(baseplatePosition + Vector3.new(0, 100000000000000, 0))
 end)
 
-maintab:Button("Barou Auto Devour", function()
+maintab:Button("Barou Devour Goal", function()
 local plr = game.Players.LocalPlayer
 
 			local function countEnimTeamMembers()
@@ -694,7 +815,7 @@ local plr = game.Players.LocalPlayer
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
 			end)
 
-maintab:Textbox("Character Picker", function(v)
+maintab2:Textbox("Character Picker", function(v)
 
 local validNames = {
     ["rin"] = "\019\003\000rin",
@@ -1014,11 +1135,18 @@ hotbar.MagicHealth.ModeText.Text = ""
 hotbar.MagicHealth.Health.Frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0) 
 end)
 
-misctab:Button("Infinite Yield", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+misctab:Button("Mute Crowd", function()
+game:GetService("SoundService")["football-crowd-3-69245"].Volume = 0
 end)
 
 
+misctab:Button("Middle Field", function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-540, 3, 1274)
+end)
+
+misctab:Button("Gallery Area (secret)", function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(109, 66, 3337)
+end)
 
 misctab:Button("Overtime Cinematics", function()
 local vals = game.ReplicatedStorage.workspace
@@ -1152,18 +1280,10 @@ misctab:Button("Background Music", function()
             sfx:Destroy()
         end)
     end
-end) 
-
-misctab:Button("Crowd shuts up for once, holy they yell all the time its so god damn annoying, azure latch needs to add a mute button for the love of god", function()
-game:GetService("SoundService")["football-crowd-3-69245"].Volume = 0
 end)
 
-misctab:Button("Gallery Area (secret)", function()
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(109, 66, 3337)
-end)
-
-misctab:Button("Middle Field", function()
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-540, 3, 1274)
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
 
 helptab:Button("Copy Owner Discord Username", function()
