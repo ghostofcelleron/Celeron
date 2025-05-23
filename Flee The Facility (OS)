@@ -54,7 +54,21 @@ while _G.AutomaticHackingEnabled do
 end
 end)
 
-maintab:Button("Self-Revive (USE IN FREEZER)", function()
+maintab:Button("Anti-Freezer (USE AS SOON AS ROPED)", function()
+local player = game:GetService("Players").LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+local targetCFrame = CFrame.new(111.20410919189453, 8.207777976989746, -413.4593811035156)
+
+if character and character.PrimaryPart then
+    for i = 1, 240 do
+        character:SetPrimaryPartCFrame(targetCFrame)
+        task.wait(0.05)
+    end
+end
+end)
+
+maintab:Button("Self-Revive (LAST RESORT, USE IN FREEZER)", function()
 local player = game:GetService("Players").LocalPlayer
 local character = player.Character
 
@@ -98,7 +112,7 @@ if targetSpawnPad then
 end
 end)
 
-maintab:Button("Random Computer", function()
+maintab:Button("Random Computer TP", function()
 local function findAllPartsByName(parent, name)
     local parts = {}
     for _, obj in pairs(parent:GetChildren()) do
@@ -157,7 +171,7 @@ if chosenComputer and chosenComputer.PrimaryPart then
 end
 end)
 
-maintab:Button("Random Exit", function()
+maintab:Button("Random Exit TP", function()
 local function findAllModelsByName(parent, name)
     local models = {}
     for _, obj in pairs(parent:GetChildren()) do
@@ -189,7 +203,7 @@ if #exitDoorModels > 0 then
     rootPart.CFrame = behindDoorCFrame
 end
 end)
-maintab:Button("Random Freezer", function()
+maintab:Button("Random Freezer TP", function()
 local function findAllPartsByName(parent, name)
     local parts = {}
     for _, obj in pairs(parent:GetChildren()) do
@@ -232,8 +246,8 @@ local function highlightTorso(player)
             if torso then
                 local highlight = Instance.new("Highlight")
                 highlight.Adornee = torso
-                highlight.FillColor = Color3.new(1, 0, 0) -- Red fill
-                highlight.OutlineColor = Color3.new(1, 1, 1) -- White outline
+                highlight.FillColor = Color3.new(1, 0, 0)
+                highlight.OutlineColor = Color3.new(1, 1, 1)
                 highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                 highlight.Parent = torso
             end
