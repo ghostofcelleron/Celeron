@@ -235,7 +235,9 @@ maintab2:Button("Auto Counter (Kaiser)", function()
 
     local STEAL_DISTANCE = {
         ["rbxassetid://133382731392749"] = 12,
-        ["rbxassetid://109744655458082"] = 25
+        ["rbxassetid://109744655458082"] = 25,
+        ["rbxassetid://86531017806623"] = 12,
+        ["rbxassetid://113088324958896"] = 12
     }
 
     _G.toggleCounter = not _G.toggleCounter
@@ -298,7 +300,9 @@ maintab2:Button("Auto Nutmeg (Sae)", function()
 
     local STEAL_DISTANCE = {
         ["rbxassetid://133382731392749"] = 12,
-        ["rbxassetid://109744655458082"] = 25
+        ["rbxassetid://109744655458082"] = 25,
+        ["rbxassetid://86531017806623"] = 12,
+        ["rbxassetid://113088324958896"] = 12
     }
 
     _G.toggleNutmeg = not _G.toggleNutmeg
