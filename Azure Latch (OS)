@@ -206,7 +206,7 @@ local function checkNearbyPlayers()
             if targetHRP and targetAnimator then
                 local distance = (myHRP.Position - targetHRP.Position).Magnitude
 
-                if distance <= 35 then
+                if distance <= 20 then
                     for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
                         if track.Animation.AnimationId == ANIMATION_ID then
                             VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
@@ -258,7 +258,7 @@ local function checkNearbyPlayers()
             if targetHRP and targetAnimator then
                 local distance = (myHRP.Position - targetHRP.Position).Magnitude
 
-                if distance <= 35 then
+                if distance <= 20 then
                     for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
                         if track.Animation.AnimationId == ANIMATION_ID then
                             VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Four, false, game)
@@ -310,7 +310,7 @@ local function checkNearbyPlayers()
             if targetHRP and targetAnimator then
                 local distance = (myHRP.Position - targetHRP.Position).Magnitude
 
-                if distance <= 35 then
+                if distance <= 20 then
                     for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
                         if track.Animation.AnimationId == ANIMATION_ID then
                             VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
