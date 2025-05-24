@@ -195,14 +195,6 @@ local animationIdToDetect = "rbxassetid://3738476938"
 local dashLength = 30
 local lastInput = nil
 
-maintab:Slider("test", 30, 20, 40, function(v)
-print("hi")
-end)
-
-maintab:Textbox("test", function(v)
-    print("indev.")
-end)
-
 local players = game:GetService("Players")
 local virtualUser = game:GetService("VirtualUser")
 local starterGui = game:GetService("StarterGui")
