@@ -234,7 +234,7 @@ maintab2:Button("Auto Counter (Kaiser)", function()
     local character = player.Character or player.CharacterAdded:Wait()
 
     local STEAL_DISTANCE = {
-        ["rbxassetid://133382731392749"] = 17,
+        ["rbxassetid://86531017806623"] = 25,
         ["rbxassetid://109744655458082"] = 35
     }
 
@@ -297,7 +297,7 @@ maintab2:Button("Auto Nutmeg (Sae)", function()
     local character = player.Character or player.CharacterAdded:Wait()
 
     local STEAL_DISTANCE = {
-        ["rbxassetid://133382731392749"] = 17,
+        ["rbxassetid://86531017806623"] = 25,
         ["rbxassetid://109744655458082"] = 35
     }
 
