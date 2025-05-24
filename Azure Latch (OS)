@@ -233,7 +233,10 @@ maintab2:Button("Auto Counter (Kaiser)", function()
     local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
 
-    local ANIMATION_ID = "rbxassetid://109744655458082"
+    local STEAL_DISTANCE = {
+        ["rbxassetid://133382731392749"] = 12,
+        ["rbxassetid://109744655458082"] = 25
+    }
 
     _G.toggleCounter = not _G.toggleCounter
 
@@ -258,19 +261,21 @@ maintab2:Button("Auto Counter (Kaiser)", function()
                 if targetHRP and targetAnimator then
                     local distance = (myHRP.Position - targetHRP.Position).Magnitude
 
-                    if distance <= 20 then
-                        for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
-                            if track.Animation.AnimationId == ANIMATION_ID then
-                                local args = {
-                                    buffer.fromstring("\024\001"),
-                                    {
+                    for animationId, detectionRange in pairs(STEAL_DISTANCE) do
+                        if distance <= detectionRange then
+                            for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
+                                if track.Animation.AnimationId == animationId then
+                                    local args = {
+                                        buffer.fromstring("\024\001"),
                                         {
-                                            "skill4"
+                                            {
+                                                "skill4"
+                                            }
                                         }
                                     }
-                                }
-                                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-                                return
+                                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                                    return
+                                end
                             end
                         end
                     end
@@ -291,7 +296,10 @@ maintab2:Button("Auto Nutmeg (Sae)", function()
     local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
 
-    local ANIMATION_ID = "rbxassetid://109744655458082"
+    local STEAL_DISTANCE = {
+        ["rbxassetid://133382731392749"] = 12,
+        ["rbxassetid://109744655458082"] = 25
+    }
 
     _G.toggleNutmeg = not _G.toggleNutmeg
 
@@ -316,19 +324,21 @@ maintab2:Button("Auto Nutmeg (Sae)", function()
                 if targetHRP and targetAnimator then
                     local distance = (myHRP.Position - targetHRP.Position).Magnitude
 
-                    if distance <= 20 then
-                        for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
-                            if track.Animation.AnimationId == ANIMATION_ID then
-                                local args = {
-                                    buffer.fromstring("\024\001"),
-                                    {
+                    for animationId, detectionRange in pairs(STEAL_DISTANCE) do
+                        if distance <= detectionRange then
+                            for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
+                                if track.Animation.AnimationId == animationId then
+                                    local args = {
+                                        buffer.fromstring("\024\001"),
                                         {
-                                            "skill2"
+                                            {
+                                                "skill2"
+                                            }
                                         }
                                     }
-                                }
-                                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-                                return
+                                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                                    return
+                                end
                             end
                         end
                     end
