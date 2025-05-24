@@ -3,7 +3,7 @@ local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 local win = ui:Create({
     Name = "Celeron's GUI (Generic RP)",
     ThemeColor = Color3.fromRGB(36, 36, 34),
-    StartupSound = "rbxassetid://3320590485",
+    StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne
 })
 
