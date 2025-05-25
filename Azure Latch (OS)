@@ -173,55 +173,66 @@ RunService.Heartbeat:Connect(checkNearbyPlayers)
 end)
 
 maintab2:Button("Auto Fake Volley (Nagi)", function()
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local StarterGui = game:GetService("StarterGui")
-local RunService = game:GetService("RunService")
+    local Players = game:GetService("Players")
+    local StarterGui = game:GetService("StarterGui")
+    local RunService = game:GetService("RunService")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
 
-local ANIMATION_ID = "rbxassetid://109744655458082"
+    local STEAL_DISTANCE = {
+        ["rbxassetid://86531017806623"] = 25,
+        ["rbxassetid://109744655458082"] = 35
+    }
 
-_G.toggleVolleyFake = not _G.toggleVolleyFake
+    _G.toggleCounter = not _G.toggleCounter
 
-StarterGui:SetCore("SendNotification", {
-    Title = "Auto-Fake Volley",
-    Text = _G.toggleVolleyFake and "Enabled." or "Disabled.",
-    Duration = 3
-})
+    StarterGui:SetCore("SendNotification", {
+        Title = "Auto-Counter",
+        Text = _G.toggleCounter and "Enabled." or "Disabled.",
+        Duration = 3
+    })
 
-local function checkNearbyPlayers()
-    if not _G.toggleVolleyFake then return end
+    local function checkNearbyPlayers()
+        if not _G.toggleCounter then return end
 
-    local myHRP = character and character:FindFirstChild("HumanoidRootPart")
-    if not myHRP then return end
+        local myHRP = character and character:FindFirstChild("HumanoidRootPart")
+        if not myHRP then return end
 
-    for _, target in ipairs(Players:GetPlayers()) do
-        if target ~= player and target.Character and target.Team ~= player.Team then
-            local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
-            local targetHumanoid = target.Character:FindFirstChild("Humanoid")
-            local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
+        for _, target in ipairs(Players:GetPlayers()) do
+            if target ~= player and target.Character and target.Team ~= player.Team then
+                local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
+                local targetHumanoid = target.Character:FindFirstChild("Humanoid")
+                local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
 
-            if targetHRP and targetAnimator then
-                local distance = (myHRP.Position - targetHRP.Position).Magnitude
+                if targetHRP and targetAnimator then
+                    local distance = (myHRP.Position - targetHRP.Position).Magnitude
 
-                if distance <= 20 then
-                    for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
-                        if track.Animation.AnimationId == ANIMATION_ID then
-                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.One, false, game)
-                            task.wait(0.05)
-                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.One, false, game)
-                            return
+                    for animationId, detectionRange in pairs(STEAL_DISTANCE) do
+                        if distance <= detectionRange then
+                            for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
+                                if track.Animation.AnimationId == animationId then
+                                    local args = {
+                                        buffer.fromstring("\024\001"),
+                                        {
+                                            {
+                                                "skill"
+                                            }
+                                        }
+                                    }
+                                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                                    return
+                                end
+                            end
                         end
                     end
                 end
             end
         end
     end
-end
 
-RunService.RenderStepped:Connect(checkNearbyPlayers)
+    RunService.RenderStepped:Connect(checkNearbyPlayers)
 end)
 
 maintab2:Button("Auto Counter (Kaiser)", function()
