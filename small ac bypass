@@ -6,6 +6,8 @@ end
 
 BypassAC()
 
+wait(1)
+
 local CoreGui = game:GetService("CoreGui")
 
 for _, gui in ipairs(CoreGui:GetChildren()) do
