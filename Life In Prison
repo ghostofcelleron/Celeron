@@ -1,1 +1,844 @@
-a
+if not _G.HasScriptRun then
+    _G.HasScriptRun = true
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/anticheat%20bypass%20(BY%20CAZAN)", true))()
+    print("Anti-Cheat has been bypassed!")
+end
+
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (Life in Prison)",
+    ThemeColor = Color3.fromRGB(20, 20, 20),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local function withTeleportBack(callback)
+    return function()
+        local p = game.Players.LocalPlayer
+        local char = p.Character or p.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local originalCFrame = hrp.CFrame
+
+        callback()
+
+        task.delay(0.6, function()
+            if hrp and hrp.Parent then
+                hrp.CFrame = originalCFrame
+            end
+        end)
+    end
+end
+
+local chartab = win:Tab("Character")
+local maintab = win:Tab("Main")
+local admintab = win:Tab("Admin")
+local itemsTab = win:Tab("Items")
+local teleportTab = win:Tab("Teleports")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+itemsTab:Label("Manually Grab The Gun, And You Will Be Teleported Back!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+
+if localPlayer and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+    local humanoid = localPlayer.Character.Humanoid
+
+    humanoid.WalkSpeed = 18
+    humanoid.JumpPower = 50
+
+    local function updateStats()
+        humanoid.WalkSpeed = targetSpeed
+        humanoid.JumpPower = jumpVelocity
+    end
+
+    chartab:Slider("Player Speed", 18, 5, 250, function(v)
+        targetSpeed = v
+        updateStats()
+    end)
+
+    chartab:Slider("Player Jump-Power", 50, 25, 250, function(v)
+        jumpVelocity = v
+        updateStats()
+    end)
+end
+
+chartab:Button("CFrame Flight", function()
+local workspace = game:GetService("Workspace")
+local players = game:GetService("Players")
+local runService = game:GetService("RunService")
+local userInputService = game:GetService("UserInputService")
+local localPlayer = players.LocalPlayer
+local starterGui = game:GetService("StarterGui")
+local camera = workspace.CurrentCamera
+
+local flyingSpeed = 175
+_G.isFlying = not _G.isFlying
+
+starterGui:SetCore("SendNotification", {
+    Title = "CFrame Flight",
+    Text = _G.isFlying and "Enabled." or "Disabled.",
+    Duration = 3
+})
+
+workspace.Gravity = _G.isFlying and 0 or 196.2
+
+if _G.isFlying and localPlayer and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    local humanoidRootPart = localPlayer.Character.HumanoidRootPart
+    local humanoid = localPlayer.Character:FindFirstChild("Humanoid")
+
+    humanoid.PlatformStand = true
+
+    local connection
+    connection = runService.RenderStepped:Connect(function(deltaTime)
+        if not _G.isFlying then
+            connection:Disconnect()
+            workspace.Gravity = 196.2
+            humanoid.PlatformStand = false
+            return
+        end
+
+        humanoidRootPart.Velocity = Vector3.zero
+        humanoidRootPart.RotVelocity = Vector3.zero
+
+        local flyDirection = camera.CFrame.LookVector
+        local strafeDirection = camera.CFrame.RightVector
+        local movement = Vector3.zero
+
+        if userInputService:IsKeyDown(Enum.KeyCode.W) then
+            movement += flyDirection * flyingSpeed * deltaTime
+        elseif userInputService:IsKeyDown(Enum.KeyCode.S) then
+            movement -= flyDirection * flyingSpeed * deltaTime
+        end
+
+        if userInputService:IsKeyDown(Enum.KeyCode.A) then
+            movement -= strafeDirection * flyingSpeed * deltaTime
+        elseif userInputService:IsKeyDown(Enum.KeyCode.D) then
+            movement += strafeDirection * flyingSpeed * deltaTime
+        end
+
+        humanoidRootPart.CFrame = CFrame.lookAt(humanoidRootPart.Position, humanoidRootPart.Position + flyDirection)
+        humanoidRootPart.CFrame += movement
+    end)
+end
+
+end)
+
+admintab:Textbox("Ban Player (Hold Bat!)", function(v)
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
+
+local targetPlayer = Players:FindFirstChild(v)
+if not targetPlayer or not targetPlayer.Character then return end
+
+task.spawn(function()
+    while targetPlayer and targetPlayer.Character do
+        local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+        local head = targetPlayer.Character:FindFirstChild("Head")
+        if not humanoid or humanoid.Health <= -1000 or not head then break end
+
+        local character = Players.LocalPlayer.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+        if character and hrp then
+            for _, weaponName in ipairs({"Bat", "Knife", "Baton", "Scissors"}) do
+                local weapon = character:FindFirstChild(weaponName)
+                if weapon then
+                    RemoteEvent:FireServer(11, weapon, head, hrp.Position)
+                end
+            end
+        end
+
+        task.wait(0.01)
+    end
+end)
+end)
+
+admintab:Button("Ban Everyone (Hold Bat!)", function()
+    getgenv().G_banserver = not getgenv().G_banserver
+
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Ban Everyone (Bat)",
+        Text = getgenv().G_banserver and "Enabled." or "Disabled.",
+        Duration = 2
+    })
+
+    if not getgenv().G_banserver then return end
+
+    task.spawn(function()
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
+        local localPlayer = Players.LocalPlayer
+        local weapons = {"Bat"}
+
+        while getgenv().G_banserver do
+            local character = localPlayer.Character
+            local hrp = character and character:FindFirstChild("HumanoidRootPart")
+            if not character or not hrp then
+                task.wait(0.01)
+                continue
+            end
+
+            for _, targetPlayer in pairs(Players:GetPlayers()) do
+                if targetPlayer ~= localPlayer then
+                    local targetChar = targetPlayer.Character
+                    local humanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
+                    local head = targetChar and targetChar:FindFirstChild("Head")
+
+                    if humanoid and humanoid.Health > 0 and head then
+                        for _, weaponName in ipairs(weapons) do
+                            local weapon = character:FindFirstChild(weaponName)
+                            if weapon then
+                                RemoteEvent:FireServer(11, weapon, head, hrp.Position)
+                            end
+                        end
+                    end
+                end
+            end
+
+            task.wait(0.01)
+        end
+    end)
+end)
+
+maintab:Textbox("Kill Player (Fists)", function(v)
+    local targetPlayer = game:GetService("Players"):FindFirstChild(v)
+    local RemoteEvent = game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("RemoteEvent")
+
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+        task.spawn(function()
+            while true do
+                local character = targetPlayer.Character
+                if not character then break end
+
+                local head = character:FindFirstChild("Head")
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if not head or not humanoid or humanoid.Health <= 0 then break end
+
+                RemoteEvent:FireServer(28, head)
+                RemoteEvent:FireServer(28, head)
+                task.wait(0.03)
+            end
+        end)
+    end
+end)
+
+maintab:Textbox("Kill Player (Melee)", function(v)
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
+
+local targetPlayer = Players:FindFirstChild(v)
+if not targetPlayer or not targetPlayer.Character then return end
+
+task.spawn(function()
+    while targetPlayer and targetPlayer.Character do
+        local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+        local head = targetPlayer.Character:FindFirstChild("Head")
+        if not humanoid or humanoid.Health <= 0 or not head then break end
+
+        local character = Players.LocalPlayer.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+        if character and hrp then
+            for _, weaponName in ipairs({"Bat", "Knife", "Baton", "Scissors"}) do
+                local weapon = character:FindFirstChild(weaponName)
+                if weapon then
+                    RemoteEvent:FireServer(11, weapon, head, hrp.Position)
+                end
+            end
+        end
+
+        task.wait(0.1)
+    end
+end)
+end)
+
+getgenv().G_fistaura = false
+
+maintab:Button("Kill Aura (Fists)", function()
+    getgenv().G_fistaura = not getgenv().G_fistaura
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Kill Aura (Fists)",
+        Text = getgenv().G_fistaura and "Enabled." or "Disabled.",
+        Duration = 2
+    })
+
+    if not getgenv().G_fistaura then return end
+
+    task.spawn(function()
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
+        local localPlayer = Players.LocalPlayer
+
+        while getgenv().G_fistaura do
+            local character = localPlayer.Character
+            if not character then task.wait(0.1) continue end
+
+            local hrp = character:FindFirstChild("HumanoidRootPart")
+            if not hrp then task.wait(0.1) continue end
+
+            local closestPlayer = nil
+            local closestDistance = math.huge
+
+            for _, targetPlayer in pairs(Players:GetPlayers()) do
+                if targetPlayer ~= localPlayer then
+                    local targetChar = targetPlayer.Character
+                    local humanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
+                    local head = targetChar and targetChar:FindFirstChild("Head")
+                    if humanoid and humanoid.Health > 0 and head then
+                        local dist = (hrp.Position - head.Position).Magnitude
+                        if dist <= 50 and dist < closestDistance then
+                            closestDistance = dist
+                            closestPlayer = targetPlayer
+                        end
+                    end
+                end
+            end
+
+            if closestPlayer then
+                local targetChar = closestPlayer.Character
+                local humanoid = targetChar:FindFirstChildOfClass("Humanoid")
+                local head = targetChar:WaitForChild("Head")
+
+                while humanoid and humanoid.Health > 0 and getgenv().G_fistaura do
+                    local distance = (hrp.Position - head.Position).Magnitude
+                    if distance > 50 then break end
+
+                    RemoteEvent:FireServer(28, head)
+                    RemoteEvent:FireServer(28, head)
+                    task.wait(0.03)
+                end
+            else
+                task.wait(0.1)
+            end
+        end
+    end)
+end)
+
+getgenv().G_killaura = false
+
+maintab:Button("Kill Aura (Melee)", function()
+    getgenv().G_killaura = not getgenv().G_killaura
+
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Kill Aura (Melee)",
+        Text = getgenv().G_killaura and "Enabled." or "Disabled.",
+        Duration = 2
+    })
+
+    if not getgenv().G_killaura then return end
+
+    task.spawn(function()
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
+        local localPlayer = Players.LocalPlayer
+        local weapons = {"Bat", "Knife", "Baton", "Scissors"}
+
+        while getgenv().G_killaura do
+            local character = localPlayer.Character
+            local hrp = character and character:FindFirstChild("HumanoidRootPart")
+            if not character or not hrp then
+                task.wait(0.01)
+                continue
+            end
+
+            for _, targetPlayer in pairs(Players:GetPlayers()) do
+                if targetPlayer ~= localPlayer then
+                    local targetChar = targetPlayer.Character
+                    local humanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
+                    local head = targetChar and targetChar:FindFirstChild("Head")
+
+                    if humanoid and humanoid.Health > 0 and head then
+                        local distance = (hrp.Position - head.Position).Magnitude
+                        if distance <= 50 then
+                            for _, weaponName in ipairs(weapons) do
+                                local weapon = character:FindFirstChild(weaponName)
+                                if weapon then
+                                    RemoteEvent:FireServer(11, weapon, head, hrp.Position)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+
+            task.wait(0.01)
+        end
+    end)
+end)
+
+getgenv().G_fistkill = false
+
+maintab:Button("Server Killer (Fists)", function()
+    getgenv().G_fistkill = not getgenv().G_fistkill
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Server Killer (Fists)",
+        Text = getgenv().G_fistkill and "Enabled." or "Disabled.",
+        Duration = 2
+    })
+
+    if not getgenv().G_fistkill then return end
+
+    task.spawn(function()
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
+        local localPlayer = Players.LocalPlayer
+
+        while getgenv().G_fistkill do
+            local character = localPlayer.Character
+            if not character then task.wait(0.1) continue end
+
+            local hrp = character:FindFirstChild("HumanoidRootPart")
+            if not hrp then task.wait(0.1) continue end
+
+            local closestPlayer = nil
+            local closestDistance = math.huge
+
+            for _, targetPlayer in pairs(Players:GetPlayers()) do
+                if targetPlayer ~= localPlayer then
+                    local targetChar = targetPlayer.Character
+                    local humanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
+                    local head = targetChar and targetChar:FindFirstChild("Head")
+                    if humanoid and humanoid.Health > 0 and head then
+                        local dist = (hrp.Position - head.Position).Magnitude
+                        if dist < closestDistance then
+                            closestDistance = dist
+                            closestPlayer = targetPlayer
+                        end
+                    end
+                end
+            end
+
+            if closestPlayer then
+                local targetChar = closestPlayer.Character
+                local humanoid = targetChar:FindFirstChildOfClass("Humanoid")
+                local head = targetChar:WaitForChild("Head")
+
+                while humanoid and humanoid.Health > 0 and getgenv().G_fistaura do
+                    local args = {
+                        28,
+                        head
+                    }
+                    RemoteEvent:FireServer(unpack(args))
+                    RemoteEvent:FireServer(unpack(args))
+                    task.wait(0.03)
+                end
+            else
+                task.wait(0.1)
+            end
+        end
+    end)
+end)
+
+getgenv().G_killserver = false
+
+maintab:Button("Server Killer (Melee)", function()
+    getgenv().G_killserver = not getgenv().G_killserver
+
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Server Killer (Melee)",
+        Text = getgenv().G_killserver and "Enabled." or "Disabled.",
+        Duration = 2
+    })
+
+    if not getgenv().G_killserver then return end
+
+    task.spawn(function()
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
+        local localPlayer = Players.LocalPlayer
+        local weapons = {"Bat", "Knife", "Baton", "Scissors"}
+
+        while getgenv().G_killserver do
+            local character = localPlayer.Character
+            local hrp = character and character:FindFirstChild("HumanoidRootPart")
+            if not character or not hrp then
+                task.wait(0.1)
+                continue
+            end
+
+            for _, targetPlayer in pairs(Players:GetPlayers()) do
+                if targetPlayer ~= localPlayer then
+                    local targetChar = targetPlayer.Character
+                    local humanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
+                    local head = targetChar and targetChar:FindFirstChild("Head")
+
+                    if humanoid and humanoid.Health > 0 and head then
+                        for _, weaponName in ipairs(weapons) do
+                            local weapon = character:FindFirstChild(weaponName)
+                            if weapon then
+                                RemoteEvent:FireServer(11, weapon, head, hrp.Position)
+                            end
+                        end
+                    end
+                end
+            end
+
+            task.wait(0.25)
+        end
+    end)
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+itemsTab:Button("Bat (Melee)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    hrp.CFrame = CFrame.new(824, 103, -676)
+    task.wait(0.1)
+
+    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Bat")
+
+    hrp.CFrame = originalCFrame
+end)
+
+itemsTab:Button("Knife (Melee)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    hrp.CFrame = CFrame.new(-663, 103, -96)
+    task.wait(0.1)
+
+    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Knife")
+
+    hrp.CFrame = originalCFrame
+end)
+
+itemsTab:Button("Hammer (Melee)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    hrp.CFrame = CFrame.new(-693, 103, -153)
+    task.wait(0.1)
+
+    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Knife")
+
+    hrp.CFrame = originalCFrame
+end)
+
+itemsTab:Button("M9 (Pistol)", function()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+local originalCFrame = hrp.CFrame
+local targetCFrame = CFrame.new(-729, 105, -5)
+
+hrp.CFrame = targetCFrame
+
+task.spawn(function()
+    repeat
+        task.wait(0.1)
+    until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("M9")
+
+    if hrp then
+        hrp.CFrame = originalCFrame
+    end
+end)
+end)
+
+itemsTab:Button("SPAS (Shotgun)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    local targetCFrame = CFrame.new(-729, 105, -5)
+
+    hrp.CFrame = targetCFrame
+
+    task.spawn(function()
+        repeat
+            task.wait(0.1)
+        until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("SPAS")
+
+        if hrp then
+            hrp.CFrame = originalCFrame
+        end
+    end)
+end)
+
+itemsTab:Button("FAL (Assault Rifle)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    local targetCFrame = CFrame.new(-729, 105, -5)
+
+    hrp.CFrame = targetCFrame
+
+    task.spawn(function()
+        repeat
+            task.wait(0.1)
+        until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("FAL")
+
+        if hrp then
+            hrp.CFrame = originalCFrame
+        end
+    end)
+end)
+
+
+itemsTab:Button("TEC-9 (Pistol)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    hrp.CFrame = CFrame.new(-722, 105, 34)
+    task.wait(0.1)
+
+    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("TEC-9")
+
+    hrp.CFrame = originalCFrame
+end)
+
+itemsTab:Button("AK-74 (Assault Rifle)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    hrp.CFrame = CFrame.new(822, 103, -687)
+    task.wait(0.1)
+
+    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("AK-74")
+
+    hrp.CFrame = originalCFrame
+end)
+
+itemsTab:Button("M1 Carabine (Rifle)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    hrp.CFrame = CFrame.new(319, 33, 712)
+    task.wait(0.1)
+
+    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("M1 Carabine")
+
+    hrp.CFrame = originalCFrame
+end)
+
+itemsTab:Button("Uzi (SMG)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    hrp.CFrame = CFrame.new(845, 103, -716)
+    task.wait(0.1)
+
+    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("UZI")
+
+    hrp.CFrame = originalCFrame
+end)
+
+itemsTab:Button("M79 (Grenade Launcher)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    hrp.CFrame = CFrame.new(441, 200, -231)
+    task.wait(0.1)
+
+    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("M79")
+
+    hrp.CFrame = originalCFrame
+end)
+
+itemsTab:Button("Mini Gun (SPECIAL)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    hrp.CFrame = CFrame.new(686, 32, 643)
+    task.wait(0.1)
+
+    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Minigun")
+
+    hrp.CFrame = originalCFrame
+end)
+
+itemsTab:Button("Multi-Rocket Launcher (SPECIAL)", function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    local originalCFrame = hrp.CFrame
+    hrp.CFrame = CFrame.new(-641, 49, 773)
+    task.wait(0.1)
+
+    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Quad Launcher")
+
+    hrp.CFrame = originalCFrame
+end)
+
+function teleportPlayer(targetPosition)
+    local player = game:GetService("Players").LocalPlayer
+    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
+    end
+end
+
+teleportTab:Button("Armory", function()
+    teleportPlayer(Vector3.new(-729, 105, 1))
+end)
+
+teleportTab:Button("Cafeteria", function()
+    teleportPlayer(Vector3.new(-841, 105, 8))
+end)
+
+teleportTab:Button("Cellblock", function()
+    teleportPlayer(Vector3.new(-809, 105, -96))
+end)
+
+teleportTab:Button("Yard", function()
+    teleportPlayer(Vector3.new(-737, 103, -166))
+end)
+
+teleportTab:Button("Max Yard", function()
+    teleportPlayer(Vector3.new(-908, 103, -67))
+end)
+
+teleportTab:Button("Soccer", function()
+    teleportPlayer(Vector3.new(-777, 103, -160))
+end)
+
+teleportTab:Button("Bridge Control", function()
+    teleportPlayer(Vector3.new(-220, 105, 7))
+end)
+
+teleportTab:Button("Doctor Store", function()
+    teleportPlayer(Vector3.new(415, 33, -19))
+end)
+
+teleportTab:Button("Vehicle Spawner", function()
+    teleportPlayer(Vector3.new(646, 32, 82))
+end)
+
+teleportTab:Button("Bunker", function()
+    teleportPlayer(Vector3.new(-725, 33, 611))
+end)
+
+teleportTab:Button("Crim Base Yard", function()
+    teleportPlayer(Vector3.new(788, 102, -641))
+end)
+
+teleportTab:Button("Crim Base", function()
+    teleportPlayer(Vector3.new(828, 103, -687))
+end)
+
+teleportTab:Button("Barn", function()
+    teleportPlayer(Vector3.new(281, 32, -825))
+end)
+
+teleportTab:Button("UFO", function()
+    teleportPlayer(Vector3.new(-206, 214, -1385))
+end)
+
+teleportTab:Button("Outside Prison", function()
+    teleportPlayer(Vector3.new(-465, 103, 7))
+end)
+
+teleportTab:Button("Prison Entrance", function()
+    teleportPlayer(Vector3.new(-584, 103, -7))
+end)
+
+teleportTab:Button("Prison Watchtower", function()
+    teleportPlayer(Vector3.new(-710, 124, -190))
+end)
+
+teleportTab:Button("Criminal Outpost", function()
+    teleportPlayer(Vector3.new(-169, 33, 751))
+end)
+
+teleportTab:Button("Gun Shop", function()
+    teleportPlayer(Vector3.new(291, 33, 712))
+end)
+
+teleportTab:Button("Safe Area", function()
+    teleportPlayer(Vector3.new(-869, 276, -812))
+end)
+
+teleportTab:Button("Sky Bridge", function()
+    teleportPlayer(Vector3.new(609, 199, -403))
+end)
+
+teleportTab:Button("Sky Watch", function()
+    teleportPlayer(Vector3.new(438, 200, -230))
+end)
+
+teleportTab:Button("Under Bridge", function()
+    teleportPlayer(Vector3.new(-131, 72, 44))
+end)
+
+teleportTab:Button("Breakroom", function()
+    teleportPlayer(Vector3.new(-931, 105, 158))
+end)
+
+teleportTab:Button("Cazan's Home", function()
+teleportPlayer(Vector3.new(633, -39, 114))
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/xSDwMhae")
+end)
