@@ -1326,6 +1326,83 @@ StarterGui:SetCore("SendNotification", {
     Button1 = "OK",
 })
 task.wait(1)
+
+local userInput = game:GetService("UserInputService")
+local workspace = game:GetService("Workspace")
+local players = game:GetService("Players")
+local player = players.LocalPlayer
+local char = player.Character
+local hum = char:FindFirstChild("Humanoid")
+local root = char:FindFirstChild("HumanoidRootPart")
+
+local specialAnim = Instance.new("Animation")
+specialAnim.AnimationId = "rbxassetid://99863640587448"
+
+local function playSpecialAnimation()
+    if hum then
+        local animator = hum:FindFirstChild("Animator") or Instance.new("Animator", hum)
+        local track = animator:LoadAnimation(specialAnim)
+        track.Priority = Enum.AnimationPriority.Action
+        track:Play()
+    end
+end
+
+userInput.InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == Enum.KeyCode.G then
+        local stateFlow = workspace:FindFirstChild("characters") 
+                          and workspace.characters:FindFirstChild(player.Name)
+                          and workspace.characters[player.Name]:FindFirstChild("state")
+                          and workspace.characters[player.Name].state:FindFirstChild("flow")
+        
+        if stateFlow and stateFlow.Value == 100 then
+            wait(1)
+            playSpecialAnimation()
+        end
+    end
+end)
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local aura = replicatedStorage:FindFirstChild("Resources") and replicatedStorage.Resources:FindFirstChild("ronaldo") and replicatedStorage.Resources.ronaldo:FindFirstChild("Aura")
+
+if aura and humanoidRootPart then
+    local auraModel = Instance.new("Model")
+    auraModel.Name = "RonaldoAura"
+    auraModel.Parent = workspace
+
+    local bodyParts = {
+        character:FindFirstChild("HumanoidRootPart"),
+        character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso"),
+        character:FindFirstChild("LeftUpperArm") or character:FindFirstChild("Left Arm"),
+        character:FindFirstChild("RightUpperArm") or character:FindFirstChild("Right Arm"),
+        character:FindFirstChild("LeftUpperLeg") or character:FindFirstChild("Left Leg"),
+        character:FindFirstChild("RightUpperLeg") or character:FindFirstChild("Right Leg"),
+        character:FindFirstChild("Head")
+    }
+
+    for _, particleEmitter in pairs(aura:GetDescendants()) do
+        if particleEmitter:IsA("ParticleEmitter") then
+            particleEmitter.Enabled = true
+        end
+    end
+
+    for _, bodyPart in pairs(bodyParts) do
+        if bodyPart then
+            local auraAttachment = aura:Clone()
+            auraAttachment.Parent = auraModel
+            auraAttachment.CFrame = bodyPart.CFrame
+
+            local weld = Instance.new("WeldConstraint")
+            weld.Part0 = bodyPart
+            weld.Part1 = auraAttachment
+            weld.Parent = bodyPart
+        end
+    end
+end
+
 local plr = game.Players.LocalPlayer
 local char = plr.Character
 local hum = char.Humanoid
@@ -1378,6 +1455,115 @@ function onKeyPress(inputObject, gameProcessedEvent)
 end
 
 UserInputService.InputBegan:connect(onKeyPress)
+
+local userInput = game:GetService("UserInputService")
+local workspace = game:GetService("Workspace")
+local players = game:GetService("Players")
+local player = players.LocalPlayer
+local charsFolder = workspace:FindFirstChild("characters")
+local charModel = charsFolder and charsFolder:FindFirstChild(player.Name)
+local rootPart = charModel and charModel:FindFirstChild("HumanoidRootPart")
+
+local lastUseTime = 0
+local cooldown = 7.5
+
+local function updateToolName()
+    local gui = player:FindFirstChild("PlayerGui")
+    if gui then
+        local hotbar = gui:FindFirstChild("Hotbar")
+        if hotbar then
+            local backpack = hotbar:FindFirstChild("Backpack")
+            if backpack then
+                local hotbarSkills = backpack:FindFirstChild("Hotbar")
+                if hotbarSkills then
+                    local skill1 = hotbarSkills:FindFirstChild("skill1")
+                    local skill2 = hotbarSkills:FindFirstChild("skill2")
+
+                    if skill1 then
+                        local base1 = skill1:FindFirstChild("Base")
+                        if base1 then
+                            local toolName1 = base1:FindFirstChild("ToolName")
+                            if toolName1 and toolName1:IsA("TextLabel") then
+                                toolName1.Text = "CR7 Dribble"
+                            end
+
+                            local reuse1 = base1:FindFirstChild("Reuse")
+                            if reuse1 and reuse1:IsA("TextLabel") then
+                                reuse1.Text = "Variant"
+                            end
+                        end
+                    end
+
+                    if skill2 then
+                        local base2 = skill2:FindFirstChild("Base")
+                        if base2 then
+                            local toolName2 = base2:FindFirstChild("ToolName")
+                            if toolName2 and toolName2:IsA("TextLabel") then
+                                toolName2.Text = "Bicycle Kick"
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function activate()
+    if not workspace.characters[player.Name]:FindFirstChild("Ball") then return end
+
+    local currentTime = tick()
+    if currentTime - lastUseTime < cooldown then return end
+    lastUseTime = currentTime
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://88322771999430"
+
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://132960304435042"
+    sound.Volume = 1
+    sound.Parent = rootPart
+
+    local humanoid = charModel:FindFirstChild("Humanoid")
+    if humanoid and rootPart then
+        local animator = humanoid:FindFirstChild("Animator") or Instance.new("Animator", humanoid)
+        local track = animator:LoadAnimation(anim)
+
+        sound:Play()
+        track:Play()
+        task.wait(1.5)
+
+        local dist = 225
+        local speed = 0.725
+        local moved = 0
+
+        local conn
+        conn = game:GetService("RunService").RenderStepped:Connect(function(deltaTime)
+            if moved >= dist then
+                conn:Disconnect()
+                local tweenService = game:GetService("TweenService")
+                local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                local slideTween = tweenService:Create(rootPart, tweenInfo, {CFrame = rootPart.CFrame + (rootPart.CFrame.LookVector * 25)})
+                slideTween:Play()
+                return
+            end
+
+            local forward = rootPart.CFrame.LookVector
+            rootPart.CFrame = rootPart.CFrame + (forward * speed)
+            moved = moved + speed
+        end)
+    end
+end
+
+userInput.InputBegan:Connect(function(input, processed)
+    if not processed then
+        if input.KeyCode == Enum.KeyCode.One then
+            activate()
+        end
+    end
+end)
+
+updateToolName()
 
 print("loaded RONALDO SUIII script")
 end)
