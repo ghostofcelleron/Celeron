@@ -978,6 +978,10 @@ if humanoidRootPart then
 end
 end)
 
+maintab:Button("Permanent Break Ball (CAN'T BE REVERSED!)", function()
+game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(-603, -422, -2081))
+end)
+
 maintab:Button("Barou Devour Goal", function()
 local plr = game.Players.LocalPlayer
 
@@ -1533,8 +1537,8 @@ local function activate()
         track:Play()
         task.wait(1.5)
 
-        local dist = 225
-        local speed = 0.725
+        local dist = 165
+        local speed = 0.5
         local moved = 0
 
         local conn
