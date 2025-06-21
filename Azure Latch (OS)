@@ -16,13 +16,31 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
-maintab2:Label("Enable And Disable The ")
+maintab2:Label("Set The Auto-Counter Number To Your Character's Counter Move!")
 funtab:Label("Custom Movesets, Not Actual Unlocks!")
 emotetab:Label("The Sounds Are Client Sided, The Emotes Are Visible!")
 teleporttab:Label("Map Teleports, No Prerequisites To Use!")
 misctab:Label("Miscellaneous Features, They Give No Advantages In-Game!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
+
+helptab:Button("Show Keybinds", function()
+    local StarterGui = game:GetService("StarterGui")
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Keybinds",
+        Text = "Z = Auto-Dribble\nX = Move One\nC = Move Two\nV = Move Three",
+        Duration = 4
+    })
+
+    task.delay(0.5, function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "Keybinds",
+            Text = "N = Move Four\nM = Move Five",
+            Duration = 4
+        })
+    end)
+end)
 
 maintab:Button("Metavision", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
@@ -150,7 +168,7 @@ maintab2:Button("Suppress Notifications", function()
 
     StarterGui:SetCore("SendNotification", {
         Title = "Notifications",
-        Text = _G.suppressNotifs and "Suppressed." or "Enabled.",
+        Text = _G.suppressNotifs and "Suppressed." or "Un-Suppressed.",
         Duration = 3
     })
 end)
