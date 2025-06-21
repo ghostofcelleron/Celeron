@@ -16,7 +16,7 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
-maintab2:Label("Auto Counter Works Using The Set Move Number!")
+maintab2:Label("Enable And Disable The ")
 funtab:Label("Custom Movesets, Not Actual Unlocks!")
 emotetab:Label("The Sounds Are Client Sided, The Emotes Are Visible!")
 teleporttab:Label("Map Teleports, No Prerequisites To Use!")
@@ -144,84 +144,41 @@ if humanoidRootPart then
 end
 end)
 
-maintab2:Button("Auto-Dribble", function()
+maintab2:Button("Suppress Notifications", function()
+    _G.suppressNotifs = not (_G.suppressNotifs or false)
+    local StarterGui = game:GetService("StarterGui")
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Notifications",
+        Text = _G.suppressNotifs and "Suppressed." or "Enabled.",
+        Duration = 3
+    })
+end)
+
+_G.suppressNotifs = false
+
 local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 local ANIMATION_ID = "rbxassetid://109744655458082"
 
-_G.toggleDetection = not (_G.toggleDetection or false)
-
-StarterGui:SetCore("SendNotification", {
-    Title = "Auto-Dribble",
-    Text = _G.toggleDetection and "Enabled." or "Disabled.",
-    Duration = 3
-})
-
-local function checkNearbyPlayers()
-    if not _G.toggleDetection then return end
-
-    for _, target in ipairs(Players:GetPlayers()) do
-        if target ~= player and target.Character and target.Team ~= player.Team then
-            local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
-            local targetHumanoid = target.Character:FindFirstChild("Humanoid")
-            local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
-
-            if targetHRP and targetAnimator then
-                local distance = (humanoidRootPart.Position - targetHRP.Position).Magnitude
-
-                if distance <= 35 then
-                    local playingTracks = targetAnimator:GetPlayingAnimationTracks()
-                    for _, track in ipairs(playingTracks) do
-                        if track.Animation.AnimationId == ANIMATION_ID then
-                            local drib = {
-                                buffer.fromstring("\024\001"),
-                                {{"dribble", false}}
-                            }
-                            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(drib))
-                        end
-                    end
-                end
-            end
-        end
+local function notify(title, text, duration)
+    if not _G.suppressNotifs then
+        StarterGui:SetCore("SendNotification", {
+            Title = title,
+            Text = text,
+            Duration = duration or 2
+        })
     end
 end
 
-RunService.Heartbeat:Connect(checkNearbyPlayers)
-end)
-
-maintab2:Button("Auto-Counter (Move One)", function()
-    local Players = game:GetService("Players")
-    local StarterGui = game:GetService("StarterGui")
-    local RunService = game:GetService("RunService")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-    local player = Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-
-    local STEAL_DISTANCE = {
-        ["rbxassetid://86531017806623"] = 25,
-        ["rbxassetid://109744655458082"] = 35
-    }
-
-    _G.toggleCounter1 = not _G.toggleCounter1
-
-    StarterGui:SetCore("SendNotification", {
-        Title = "Auto-Counter (Move One)",
-        Text = _G.toggleCounter1 and "Enabled." or "Disabled.",
-        Duration = 3
-    })
-
-    local function checkNearbyPlayers()
-        if not _G.toggleCounter1 then return end
-
-        local myHRP = character and character:FindFirstChild("HumanoidRootPart")
-        if not myHRP then return end
+local function setupAutoBehavior(toggleKey, skillName, humanoidRootPart)
+    RunService.Heartbeat:Connect(function()
+        if not _G[toggleKey] or not humanoidRootPart then return end
 
         for _, target in ipairs(Players:GetPlayers()) do
             if target ~= player and target.Character and target.Team ~= player.Team then
@@ -230,285 +187,85 @@ maintab2:Button("Auto-Counter (Move One)", function()
                 local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
 
                 if targetHRP and targetAnimator then
-                    local distance = (myHRP.Position - targetHRP.Position).Magnitude
-
-                    for animationId, detectionRange in pairs(STEAL_DISTANCE) do
-                        if distance <= detectionRange then
-                            for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
-                                if track.Animation.AnimationId == animationId then
-                                    local args = {
-                                        buffer.fromstring("\024\001"),
-                                        {
-                                            {
-                                                "skill1"
-                                            }
-                                        }
-                                    }
-                                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-                                    return
-                                end
+                    local distance = (humanoidRootPart.Position - targetHRP.Position).Magnitude
+                    if distance <= 35 then
+                        for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
+                            if track.Animation.AnimationId == ANIMATION_ID then
+                                local args = {
+                                    buffer.fromstring("\024\001"),
+                                    {{skillName}}
+                                }
+                                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                                return
                             end
                         end
                     end
                 end
             end
         end
-    end
+    end)
+end
 
-    RunService.RenderStepped:Connect(checkNearbyPlayers)
-end)
+local function createAutoCounter(label, toggleKey, skillName)
+    maintab2:Button(label, function()
+        _G[toggleKey] = not (_G[toggleKey] or false)
+        notify(label, _G[toggleKey] and "Enabled." or "Disabled.", 3)
 
-maintab2:Button("Auto-Counter (Move Two)", function()
-    local Players = game:GetService("Players")
-    local StarterGui = game:GetService("StarterGui")
-    local RunService = game:GetService("RunService")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-    local player = Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-
-    local STEAL_DISTANCE = {
-        ["rbxassetid://86531017806623"] = 25,
-        ["rbxassetid://109744655458082"] = 35
-    }
-
-    _G.toggleCounter2 = not _G.toggleCounter2
-
-    StarterGui:SetCore("SendNotification", {
-        Title = "Auto-Counter (Move Two)",
-        Text = _G.toggleCounter2 and "Enabled." or "Disabled.",
-        Duration = 3
-    })
-
-    local function checkNearbyPlayers()
-        if not _G.toggleCounter2 then return end
-
-        local myHRP = character and character:FindFirstChild("HumanoidRootPart")
-        if not myHRP then return end
-
-        for _, target in ipairs(Players:GetPlayers()) do
-            if target ~= player and target.Character and target.Team ~= player.Team then
-                local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
-                local targetHumanoid = target.Character:FindFirstChild("Humanoid")
-                local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
-
-                if targetHRP and targetAnimator then
-                    local distance = (myHRP.Position - targetHRP.Position).Magnitude
-
-                    for animationId, detectionRange in pairs(STEAL_DISTANCE) do
-                        if distance <= detectionRange then
-                            for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
-                                if track.Animation.AnimationId == animationId then
-                                    local args = {
-                                        buffer.fromstring("\024\001"),
-                                        {
-                                            {
-                                                "skill2"
-                                            }
-                                        }
-                                    }
-                                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-                                    return
-                                end
-                            end
-                        end
-                    end
-                end
-            end
+        local function onCharacterLoaded(char)
+            local humanoidRootPart = char:WaitForChild("HumanoidRootPart")
+            setupAutoBehavior(toggleKey, skillName, humanoidRootPart)
         end
-    end
 
-    RunService.RenderStepped:Connect(checkNearbyPlayers)
-end)
-
-maintab2:Button("Auto-Counter (Move Three)", function()
-    local Players = game:GetService("Players")
-    local StarterGui = game:GetService("StarterGui")
-    local RunService = game:GetService("RunService")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-    local player = Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-
-    local STEAL_DISTANCE = {
-        ["rbxassetid://86531017806623"] = 25,
-        ["rbxassetid://109744655458082"] = 35
-    }
-
-    _G.toggleCounter3 = not _G.toggleCounter3
-
-    StarterGui:SetCore("SendNotification", {
-        Title = "Auto-Counter (Move Three)",
-        Text = _G.toggleCounter3 and "Enabled." or "Disabled.",
-        Duration = 3
-    })
-
-    local function checkNearbyPlayers()
-        if not _G.toggleCounter3 then return end
-
-        local myHRP = character and character:FindFirstChild("HumanoidRootPart")
-        if not myHRP then return end
-
-        for _, target in ipairs(Players:GetPlayers()) do
-            if target ~= player and target.Character and target.Team ~= player.Team then
-                local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
-                local targetHumanoid = target.Character:FindFirstChild("Humanoid")
-                local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
-
-                if targetHRP and targetAnimator then
-                    local distance = (myHRP.Position - targetHRP.Position).Magnitude
-
-                    for animationId, detectionRange in pairs(STEAL_DISTANCE) do
-                        if distance <= detectionRange then
-                            for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
-                                if track.Animation.AnimationId == animationId then
-                                    local args = {
-                                        buffer.fromstring("\024\001"),
-                                        {
-                                            {
-                                                "skill3"
-                                            }
-                                        }
-                                    }
-                                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-                                    return
-                                end
-                            end
-                        end
-                    end
-                end
-            end
+        if player.Character then
+            onCharacterLoaded(player.Character)
         end
-    end
 
-    RunService.RenderStepped:Connect(checkNearbyPlayers)
-end)
+        player.CharacterAdded:Connect(onCharacterLoaded)
+    end)
+end
 
-maintab2:Button("Auto-Counter (Move Four)", function()
-    local Players = game:GetService("Players")
-    local StarterGui = game:GetService("StarterGui")
-    local RunService = game:GetService("RunService")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+createAutoCounter("Auto-Dribble", "toggleDetection", "dribble")
+createAutoCounter("Auto-Counter (Move One)", "toggleCounter1", "skill1")
+createAutoCounter("Auto-Counter (Move Two)", "toggleCounter2", "skill2")
+createAutoCounter("Auto-Counter (Move Three)", "toggleCounter3", "skill3")
+createAutoCounter("Auto-Counter (Move Four)", "toggleCounter4", "skill4")
+createAutoCounter("Auto-Counter (Move Five)", "toggleCounter5", "skill5")
 
-    local player = Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
+if not _G._keybindSetup then
+    _G._keybindSetup = true
 
-    local STEAL_DISTANCE = {
-        ["rbxassetid://86531017806623"] = 25,
-        ["rbxassetid://109744655458082"] = 35
-    }
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        local key = input.KeyCode
 
-    _G.toggleCounter4 = not _G.toggleCounter4
+        local keyMap = {
+            [Enum.KeyCode.Z] = {"toggleDetection", "Auto-Dribble", "dribble"},
+            [Enum.KeyCode.X] = {"toggleCounter1", "Auto-Counter (Move One)", "skill1"},
+            [Enum.KeyCode.C] = {"toggleCounter2", "Auto-Counter (Move Two)", "skill2"},
+            [Enum.KeyCode.V] = {"toggleCounter3", "Auto-Counter (Move Three)", "skill3"},
+            [Enum.KeyCode.N] = {"toggleCounter4", "Auto-Counter (Move Four)", "skill4"},
+            [Enum.KeyCode.M] = {"toggleCounter5", "Auto-Counter (Move Five)", "skill5"},
+        }
 
-    StarterGui:SetCore("SendNotification", {
-        Title = "Auto-Counter (Move Four)",
-        Text = _G.toggleCounter4 and "Enabled." or "Disabled.",
-        Duration = 3
-    })
+        local mapping = keyMap[key]
+        if mapping then
+            local toggleKey, label, skillName = unpack(mapping)
+            _G[toggleKey] = not (_G[toggleKey] or false)
+            notify(label, _G[toggleKey] and "Enabled." or "Disabled.")
 
-    local function checkNearbyPlayers()
-        if not _G.toggleCounter4 then return end
-
-        local myHRP = character and character:FindFirstChild("HumanoidRootPart")
-        if not myHRP then return end
-
-        for _, target in ipairs(Players:GetPlayers()) do
-            if target ~= player and target.Character and target.Team ~= player.Team then
-                local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
-                local targetHumanoid = target.Character:FindFirstChild("Humanoid")
-                local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
-
-                if targetHRP and targetAnimator then
-                    local distance = (myHRP.Position - targetHRP.Position).Magnitude
-
-                    for animationId, detectionRange in pairs(STEAL_DISTANCE) do
-                        if distance <= detectionRange then
-                            for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
-                                if track.Animation.AnimationId == animationId then
-                                    local args = {
-                                        buffer.fromstring("\024\001"),
-                                        {
-                                            {
-                                                "skill4"
-                                            }
-                                        }
-                                    }
-                                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-                                    return
-                                end
-                            end
-                        end
-                    end
-                end
+            local function onCharacterLoaded(char)
+                local humanoidRootPart = char:WaitForChild("HumanoidRootPart")
+                setupAutoBehavior(toggleKey, skillName, humanoidRootPart)
             end
-        end
-    end
 
-    RunService.RenderStepped:Connect(checkNearbyPlayers)
-end)
-
-maintab2:Button("Auto-Counter (Move Five)", function()
-    local Players = game:GetService("Players")
-    local StarterGui = game:GetService("StarterGui")
-    local RunService = game:GetService("RunService")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-    local player = Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-
-    local STEAL_DISTANCE = {
-        ["rbxassetid://86531017806623"] = 25,
-        ["rbxassetid://109744655458082"] = 35
-    }
-
-    _G.toggleCounter5 = not _G.toggleCounter5
-
-    StarterGui:SetCore("SendNotification", {
-        Title = "Auto-Counter (Move Five)",
-        Text = _G.toggleCounter5 and "Enabled." or "Disabled.",
-        Duration = 3
-    })
-
-    local function checkNearbyPlayers()
-        if not _G.toggleCounter5 then return end
-
-        local myHRP = character and character:FindFirstChild("HumanoidRootPart")
-        if not myHRP then return end
-
-        for _, target in ipairs(Players:GetPlayers()) do
-            if target ~= player and target.Character and target.Team ~= player.Team then
-                local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
-                local targetHumanoid = target.Character:FindFirstChild("Humanoid")
-                local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
-
-                if targetHRP and targetAnimator then
-                    local distance = (myHRP.Position - targetHRP.Position).Magnitude
-
-                    for animationId, detectionRange in pairs(STEAL_DISTANCE) do
-                        if distance <= detectionRange then
-                            for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
-                                if track.Animation.AnimationId == animationId then
-                                    local args = {
-                                        buffer.fromstring("\024\001"),
-                                        {
-                                            {
-                                                "skill5"
-                                            }
-                                        }
-                                    }
-                                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-                                    return
-                                end
-                            end
-                        end
-                    end
-                end
+            if player.Character then
+                onCharacterLoaded(player.Character)
             end
-        end
-    end
 
-    RunService.RenderStepped:Connect(checkNearbyPlayers)
-end)
+            player.CharacterAdded:Connect(onCharacterLoaded)
+        end
+    end)
+end
 
 maintab:Button("Hide Ace Eater", function()
 local char = game.Players.LocalPlayer.Character
