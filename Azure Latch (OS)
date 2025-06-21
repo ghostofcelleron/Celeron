@@ -42,6 +42,10 @@ helptab:Button("Show Keybinds", function()
     end)
 end)
 
+_G._rushingSoundPlaying = false
+_G._rushing = false
+_G._sideDashing = false
+
 maintab:Button("Metavision", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
 end)
@@ -331,77 +335,71 @@ local plr = game.Players.LocalPlayer
 end)
 
 maintab:Button("Auto QuickTimeEvent", function()
-local runService = game:GetService("RunService")
-local players = game:GetService("Players")
-local virtualInputManager = game:GetService("VirtualInputManager")
-local starterGui = game:GetService("StarterGui")
-local player = players.LocalPlayer
+    local runService = game:GetService("RunService")
+    local players = game:GetService("Players")
+    local virtualInputManager = game:GetService("VirtualInputManager")
+    local starterGui = game:GetService("StarterGui")
+    local player = players.LocalPlayer
 
-_G.QuickTimeEvent = not _G.QuickTimeEvent
+    _G.QuickTimeEvent = not _G.QuickTimeEvent
 
-local function sendNotification(status)
-    starterGui:SetCore("SendNotification", {
-        Title = "QuickTimeEvent",
-        Text = status,
-        Duration = 3
-    })
-end
-
-local function getAllTextLabels(parent)
-    local textLabels = {}
-    for _, descendant in ipairs(parent:GetDescendants()) do
-        if descendant:IsA("TextLabel") then
-            table.insert(textLabels, descendant)
+    local function sendNotification(status)
+        if not _G.suppressNotifs then
+            starterGui:SetCore("SendNotification", {
+                Title = "QuickTimeEvent",
+                Text = status,
+                Duration = 3
+            })
         end
     end
-    return textLabels
-end
 
-local function convertNumberToKeyText(text)
-    local numberMap = {
-        ["1"] = "One",
-        ["2"] = "Two",
-        ["3"] = "Three",
-        ["4"] = "Four",
-        ["5"] = "Five",
-        ["6"] = "Six",
-        ["7"] = "Seven",
-        ["8"] = "Eight",
-        ["9"] = "Nine",
-        ["0"] = "Zero"
-    }
-    return numberMap[text] or text
-end
+    local function getAllTextLabels(parent)
+        local textLabels = {}
+        for _, descendant in ipairs(parent:GetDescendants()) do
+            if descendant:IsA("TextLabel") then
+                table.insert(textLabels, descendant)
+            end
+        end
+        return textLabels
+    end
 
-local function checkQTE()
-    if _G.QuickTimeEvent and player and player:FindFirstChild("PlayerGui") then
-        local qteGui = player.PlayerGui:FindFirstChild("Qte")
+    local function convertNumberToKeyText(text)
+        local numberMap = {
+            ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
+            ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
+        }
+        return numberMap[text] or text
+    end
 
-        if qteGui and qteGui:FindFirstChild("QTE") and qteGui.QTE:FindFirstChild("Frame") then
-            local qteFrame = qteGui.QTE.Frame
+    local function checkQTE()
+        if _G.QuickTimeEvent and player and player:FindFirstChild("PlayerGui") then
+            local qteGui = player.PlayerGui:FindFirstChild("Qte")
 
-            if qteFrame.Size.X.Scale <= 0.740000169 and qteFrame.Size.X.Scale >= 0.720000019 and
-               qteFrame.Size.Y.Scale <= 0.74999999 and qteFrame.Size.Y.Scale >= 0.720000019 then
+            if qteGui and qteGui:FindFirstChild("QTE") and qteGui.QTE:FindFirstChild("Frame") then
+                local qteFrame = qteGui.QTE.Frame
 
-                local textLabels = getAllTextLabels(qteGui.QTE)
-                
-                for _, label in ipairs(textLabels) do
-                    local keyText = convertNumberToKeyText(label.Text)
-                    local keyToPress = Enum.KeyCode[keyText]
+                if qteFrame.Size.X.Scale <= 0.740000169 and qteFrame.Size.X.Scale >= 0.720000019 and
+                   qteFrame.Size.Y.Scale <= 0.74999999 and qteFrame.Size.Y.Scale >= 0.720000019 then
 
-                    if keyToPress then
-                        virtualInputManager:SendKeyEvent(true, keyToPress, false, game)
-                        virtualInputManager:SendKeyEvent(false, keyToPress, false, game)
+                    local textLabels = getAllTextLabels(qteGui.QTE)
+                    
+                    for _, label in ipairs(textLabels) do
+                        local keyText = convertNumberToKeyText(label.Text)
+                        local keyToPress = Enum.KeyCode[keyText]
+
+                        if keyToPress then
+                            virtualInputManager:SendKeyEvent(true, keyToPress, false, game)
+                            virtualInputManager:SendKeyEvent(false, keyToPress, false, game)
+                        end
                     end
                 end
             end
         end
     end
-end
 
-runService.RenderStepped:Connect(checkQTE)
+    runService.RenderStepped:Connect(checkQTE)
 
-sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
+    sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
 maintab:Button("No Rush Cooldown", function()
@@ -409,53 +407,78 @@ maintab:Button("No Rush Cooldown", function()
     local runService = game:GetService("RunService")
     local starterGui = game:GetService("StarterGui")
     local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
 
     _G.ForwardRushEnabled = not _G.ForwardRushEnabled
+    _G._rushing = false
+    _G._rushingSoundPlaying = false
 
-    starterGui:SetCore("SendNotification", {
-        Title = "No Rush CD",
-        Text = _G.ForwardRushEnabled and "Enabled." or "Disabled.",
-        Duration = 2
-    })
+    if not _G.suppressNotifs then
+        starterGui:SetCore("SendNotification", {
+            Title = "No Rush CD",
+            Text = _G.ForwardRushEnabled and "Enabled." or "Disabled.",
+            Duration = 2
+        })
+    end
 
     local function forwardRush()
-        if humanoid and rootPart and _G.ForwardRushEnabled then
-            local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
-            local animation = Instance.new("Animation")
-            animation.AnimationId = "rbxassetid://79394729551302"
-            local animationTrack = animator:LoadAnimation(animation)
-            animationTrack:Play()
+        if _G._rushing or not _G.ForwardRushEnabled then return end
+        _G._rushing = true
 
-            local rushTime = 0.4
-            local rushDistance = 45
-            local elapsedTime = 0
-            local startPosition = rootPart.Position
-            local targetPosition = startPosition + rootPart.CFrame.LookVector * rushDistance
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
 
-            runService:BindToRenderStep("ForwardRush", Enum.RenderPriority.Character.Value, function(dt)
-                elapsedTime = elapsedTime + dt
-                local alpha = math.clamp(elapsedTime / rushTime, 0, 1)
-                rootPart.CFrame = CFrame.new(startPosition:Lerp(targetPosition, alpha))
-                
-                if alpha >= 1 then
-                    runService:UnbindFromRenderStep("ForwardRush")
-                end
-            end)
+        if not humanoid or not rootPart then
+            _G._rushing = false
+            return
         end
+
+        local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+        local animation = Instance.new("Animation")
+        animation.AnimationId = "rbxassetid://79394729551302"
+        local animationTrack = animator:LoadAnimation(animation)
+        animationTrack:Play()
+
+	task.delay(0.05, function()
+    	if animationTrack.IsPlaying then
+       		local sound = Instance.new("Sound")
+        	sound.SoundId = "rbxassetid://105267293181745"
+        	sound.Parent = rootPart
+        	sound.Looped = false
+        	sound:Play()
+        	sound.Ended:Connect(function()
+            sound:Destroy()
+        	end)
+    	end
+	end)
+
+        local startPos = rootPart.Position
+        local endPos = startPos + rootPart.CFrame.LookVector * 45
+        local duration, elapsed = 0.5, 0
+        local dashId = "ForwardRush_" .. tostring(os.clock())
+
+        runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
+            if not rootPart or not rootPart.Parent then
+                runService:UnbindFromRenderStep(dashId)
+                _G._rushing = false
+                return
+            end
+
+            elapsed += dt
+            local alpha = math.clamp(elapsed / duration, 0, 1)
+            local newPos = startPos:Lerp(endPos, alpha)
+            rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
+
+            if alpha >= 1 then
+                runService:UnbindFromRenderStep(dashId)
+                _G._rushing = false
+            end
+        end)
     end
 
     userInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == Enum.KeyCode.F and _G.ForwardRushEnabled then
+        if not gameProcessed and input.KeyCode == Enum.KeyCode.F then
             forwardRush()
-            local SoundService = game:GetService("SoundService")
-            local sound = Instance.new("Sound")
-            sound.SoundId = "rbxassetid://105267293181745"
-            sound.Parent = SoundService
-            sound.Looped = false
-            sound:Play()
         end
     end)
 end)
@@ -471,58 +494,64 @@ maintab:Button("No Side Dash Cooldown", function()
 
     _G.SideDashEnabled = not _G.SideDashEnabled
 
-    starterGui:SetCore("SendNotification", {
-        Title = "No Side Dash CD",
-        Text = _G.SideDashEnabled and "Enabled." or "Disabled.",
-        Duration = 2
-    })
+    if not _G.suppressNotifs then
+        starterGui:SetCore("SendNotification", {
+            Title = "No Side Dash CD",
+            Text = _G.SideDashEnabled and "Enabled." or "Disabled.",
+            Duration = 2
+        })
+    end
 
     local function playDashSound()
         local sound = Instance.new("Sound")
         sound.SoundId = "rbxassetid://71212694698006"
         sound.Parent = rootPart
-        sound.Looped = false
         sound:Play()
         sound.Ended:Connect(function() sound:Destroy() end)
     end
 
-    local function sideDash(direction)
-        if humanoid and rootPart and _G.SideDashEnabled then
-            local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
-            local animation = Instance.new("Animation")
-            animation.AnimationId = direction == "right" and "rbxassetid://114016332539655" or "rbxassetid://100207093237932"
+local function sideDash(direction)
+    if humanoid and rootPart and _G.SideDashEnabled and not _G._sideDashing then
+        _G._sideDashing = true
 
-            local animationTrack = animator:LoadAnimation(animation)
-            animationTrack:Play()
-            playDashSound()
+        local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+        local animation = Instance.new("Animation")
+        animation.AnimationId = direction == "right" and "rbxassetid://114016332539655" or "rbxassetid://100207093237932"
+        local animationTrack = animator:LoadAnimation(animation)
+        animationTrack:Play()
+        playDashSound()
 
-            local sideOffset = rootPart.CFrame.RightVector * (direction == "right" and 19 or -19)
-            local targetPosition = rootPart.Position + sideOffset
-            local duration = 0.4
-            local elapsed = 0
+        local offset = rootPart.CFrame.RightVector * (direction == "right" and 25 or -25)
+        local startPos = rootPart.Position
+        local endPos = startPos + offset
+        local duration, elapsed = 0.55, 0 
+        local dashId = "SideDash_" .. tostring(os.clock())
 
-            runService:BindToRenderStep("SideDash", Enum.RenderPriority.Character.Value, function(dt)
-                elapsed = elapsed + dt
-                local alpha = math.clamp(elapsed / duration, 0, 1)
-                rootPart.CFrame = CFrame.new(rootPart.Position:Lerp(targetPosition, alpha))
-                
-                if alpha >= 1 then
-                    runService:UnbindFromRenderStep("SideDash")
-                end
-            end)
-        end
+        runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
+            if not rootPart or not rootPart.Parent then
+                runService:UnbindFromRenderStep(dashId)
+                _G._sideDashing = false
+                return
+            end
+
+            elapsed += dt
+            local alpha = math.clamp(elapsed / duration, 0, 1)
+            local newPos = startPos:Lerp(endPos, alpha)
+            rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
+
+            if alpha >= 1 then
+                runService:UnbindFromRenderStep(dashId)
+                _G._sideDashing = false
+            end
+        end)
     end
+end
 
     userInputService.InputBegan:Connect(function(input, gameProcessed)
         if not gameProcessed and input.KeyCode == Enum.KeyCode.Q then
-            local isAHeld = userInputService:IsKeyDown(Enum.KeyCode.A)
-            local isDHeld = userInputService:IsKeyDown(Enum.KeyCode.D)
-
-            if isDHeld then
-                sideDash("right")
-            elseif isAHeld then
-                sideDash("left")
-            end
+            local isA = userInputService:IsKeyDown(Enum.KeyCode.A)
+            local isD = userInputService:IsKeyDown(Enum.KeyCode.D)
+            if isD then sideDash("right") elseif isA then sideDash("left") end
         end
     end)
 end)
