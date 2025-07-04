@@ -1,0 +1,190 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+
+local CoreGui = game:GetService("CoreGui")
+local darkUI = CoreGui:FindFirstChild("dark_UI")
+
+if darkUI and syn and syn.protect_gui then
+	syn.protect_gui(darkUI)
+end
+
+local win = ui:Create({
+    Name = "Celeron's GUI (Basketball: Zero)",
+    ThemeColor = Color3.fromRGB(20, 20, 20),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+maintab:Button("Always In (Public / Ranked 3v3)", function()
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+-- Config
+local player = Players.LocalPlayer
+local ARC_HEIGHT = 52.5
+local ARC_DURATION = 1.5
+local CLICK_DELAY = 1.25
+local HOME_POS = Vector3.new(147, 28, -298)
+local AWAY_POS = Vector3.new(-147, 28, -297)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed then return end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		task.delay(CLICK_DELAY, function()
+			local ball = Workspace:FindFirstChild("Basketball")
+			if not ball or not player.Team then return end
+
+			local target = (player.Team.Name == "Home") and AWAY_POS or HOME_POS
+			local start = ball.Position
+			local peak = (start + target) / 2 + Vector3.new(0, ARC_HEIGHT, 0)
+
+			ball.AssemblyLinearVelocity = Vector3.zero
+			ball.AssemblyAngularVelocity = Vector3.zero
+
+			local rise = TweenService:Create(ball, TweenInfo.new(ARC_DURATION / 2), {Position = peak})
+			rise.Completed:Once(function()
+				local fall = TweenService:Create(ball, TweenInfo.new(ARC_DURATION / 2), {Position = target})
+				fall:Play()
+			end)
+
+			rise:Play()
+		end)
+	end
+end)
+end)
+
+maintab:Button("Always In (Ranked 2v2)", function()
+
+local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+-- Config
+local ARC_HEIGHT = 52.5
+local ARC_DURATION = 1.5
+local CLICK_WAIT_TIME = 1
+local FIXED_POS = Vector3.new(-146, 28, -298)
+
+_G.AlwaysInFixedEnabled = _G.AlwaysInFixedEnabled or false
+
+local function getBall()
+	local ball = Workspace:FindFirstChild("Basketball")
+	return (ball and ball:IsA("BasePart")) and ball or nil
+end
+
+local function arcTo(ball, target)
+	local start = ball.Position
+	local peak = (start + target) / 2 + Vector3.new(0, ARC_HEIGHT, 0)
+
+	ball.AssemblyLinearVelocity = Vector3.zero
+	ball.AssemblyAngularVelocity = Vector3.zero
+
+	local rise = TweenService:Create(ball, TweenInfo.new(ARC_DURATION / 2), {Position = peak})
+	rise.Completed:Once(function()
+		local fall = TweenService:Create(ball, TweenInfo.new(ARC_DURATION / 2), {Position = target})
+		fall.Completed:Once(function()
+			local push = (target - peak).Unit * 6 + Vector3.new(0, -8, 0)
+			ball.AssemblyLinearVelocity = push
+		end)
+		fall:Play()
+	end)
+
+	rise:Play()
+end
+
+local function notify(state)
+	StarterGui:SetCore("SendNotification", {
+		Title = "Always In (Fixed Mode)",
+		Text = state and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+end
+
+local function toggleFixedAlwaysIn()
+	_G.AlwaysInFixedEnabled = not _G.AlwaysInFixedEnabled
+	notify(_G.AlwaysInFixedEnabled)
+end
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed or not _G.AlwaysInFixedEnabled then return end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		task.delay(CLICK_WAIT_TIME, function()
+			if not _G.AlwaysInFixedEnabled then return end
+			local ball = getBall()
+			if ball then
+				arcTo(ball, FIXED_POS)
+			end
+		end)
+	end
+end)
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Shutdown Game", function()
+game:Shutdown()
+end)
+
+misctab:Button("Rejoin Server", function()
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local placeId = game.PlaceId
+local jobId = game.JobId
+
+TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
+end)
+
+misctab:Button("Switch Servers", function()
+    local servers = {}
+    local req = game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+    local body = HttpService:JSONDecode(req)
+
+    if body and body.data then
+        for i, v in next, body.data do
+            if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
+                table.insert(servers, 1, v.id)
+            end
+        end
+    end
+
+    if #servers > 0 then
+        TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], Players.LocalPlayer)
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/xSDwMhae")
+end)
