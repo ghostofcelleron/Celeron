@@ -1,0 +1,301 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (SAKTK)",
+    ThemeColor = Color3.fromRGB(20, 20, 20),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Juggernaut")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+local function applyEmulatedSpeed(speed)
+	local player = game.Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+
+	for _, force in pairs(rootPart:GetChildren()) do
+		if force:IsA("BodyVelocity") or force:IsA("VectorForce") then
+			force:Destroy()
+		end
+	end
+
+	local bodyVelocity = Instance.new("BodyVelocity")
+	bodyVelocity.MaxForce = Vector3.new(1e5, 0, 1e5)
+	bodyVelocity.P = 1250
+	bodyVelocity.Velocity = Vector3.zero
+	bodyVelocity.Name = "EmulatedWalkSpeed"
+	bodyVelocity.Parent = rootPart
+
+	local runService = game:GetService("RunService")
+	local connection
+
+	connection = runService.RenderStepped:Connect(function()
+		if not character or not character.Parent then
+			connection:Disconnect()
+			return
+		end
+		bodyVelocity.Velocity = humanoid.MoveDirection * speed
+	end)
+end
+
+maintab:Textbox("Player Speed (Velocity)", function(v)
+	local speed = tonumber(v)
+	if not speed then return end
+
+	applyEmulatedSpeed(speed)
+
+	game.Players.LocalPlayer.CharacterAdded:Connect(function()
+		task.wait(0.25)
+		applyEmulatedSpeed(speed)
+	end)
+end)
+
+maintab:Button("Aimlock (HOLD RIGHT CLICK)", function()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local localPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local mouse = localPlayer:GetMouse()
+
+local isLocking = false
+local targetCharacter = nil
+
+local function getTarget()
+	local ignoreList = {localPlayer.Character}
+	local unitRay = camera:ScreenPointToRay(mouse.X, mouse.Y)
+	local ray = Ray.new(unitRay.Origin, unitRay.Direction * 500)
+	local part = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
+	if part then
+		local model = part:FindFirstAncestorOfClass("Model")
+		if model and model ~= localPlayer.Character and Players:GetPlayerFromCharacter(model) then
+			return model
+		end
+	end
+	return nil
+end
+
+local function updateAim()
+	if not isLocking or not targetCharacter then return end
+	local targetPart = targetCharacter:FindFirstChild("UpperTorso") or targetCharacter:FindFirstChild("HumanoidRootPart")
+	if not targetPart then return end
+	local targetPos = targetPart.Position
+	local camPos = camera.CFrame.Position
+	local newLookVector = (targetPos - camPos).Unit
+	camera.CFrame = CFrame.new(camPos, camPos + newLookVector)
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		local target = getTarget()
+		if target then
+			targetCharacter = target
+			isLocking = true
+		end
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		isLocking = false
+		targetCharacter = nil
+	end
+end)
+
+RunService.RenderStepped:Connect(updateAim)
+end)
+
+maintab:Button("Wall Gun (Random)", function()
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+local weaponsFolder = workspace:WaitForChild("Weapons")
+local candidateModels = {}
+
+for _, model in pairs(weaponsFolder:GetDescendants()) do
+	if model:IsA("Model") and (model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")) then
+		table.insert(candidateModels, model)
+	end
+end
+
+table.sort(candidateModels, function(a, b)
+	local priorityList = { "Raygun", "M4A1" }
+	local function getPriority(model)
+		for i, name in ipairs(priorityList) do
+			if model.Name:lower() == name then
+				return #priorityList - i + 1
+			end
+		end
+		return 0
+	end
+	return getPriority(a) > getPriority(b)
+end)
+
+if #candidateModels > 0 then
+	local weightTop = math.min(3, #candidateModels)
+	local chosenIndex = math.random() < 0.6 and math.random(1, weightTop) or math.random(1, #candidateModels)
+	local chosenModel = candidateModels[chosenIndex]
+
+	if not chosenModel.PrimaryPart then
+		chosenModel.PrimaryPart = chosenModel:FindFirstChildWhichIsA("BasePart")
+	end
+
+	if chosenModel.PrimaryPart then
+		local baseCFrame = chosenModel:GetPrimaryPartCFrame()
+		local forward = baseCFrame.LookVector.Unit
+		local destination = baseCFrame.Position + forward * 3
+		root.CFrame = CFrame.new(destination, destination + forward)
+	end
+end
+end)
+
+maintab:Button("Juggernaut TP", function()
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+for _, player in ipairs(Players:GetPlayers()) do
+	if player ~= localPlayer and player.Character then
+		local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+		local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+
+		if humanoid and targetRoot and humanoid.Health > 200 then
+			humanoidRootPart.CFrame = targetRoot.CFrame + Vector3.new(1, 1, 1)
+			break
+		end
+	end
+end
+end)
+
+
+maintab:Button("Juggernaut ESP", function()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local localPlayer = Players.LocalPlayer
+
+RunService.RenderStepped:Connect(function()
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= localPlayer and player.Character then
+			local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+			local root = player.Character:FindFirstChild("HumanoidRootPart")
+
+			if humanoid and root then
+				local tag = root:FindFirstChild("JuggernautTag")
+
+				if humanoid.Health > 400 and not tag then
+					local billboard = Instance.new("BillboardGui")
+					billboard.Name = "JuggernautTag"
+					billboard.Adornee = root
+					billboard.Size = UDim2.new(0, 160, 0, 25)
+					billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+					billboard.AlwaysOnTop = true
+					billboard.LightInfluence = 0
+					billboard.MaxDistance = 1000
+					billboard.Parent = root
+
+					local textLabel = Instance.new("TextLabel")
+					textLabel.Size = UDim2.new(1, 0, 1, 0)
+					textLabel.BackgroundTransparency = 1
+					textLabel.Text = "JUGGERNAUT"
+					textLabel.TextColor3 = Color3.new(1, 1, 1)
+					textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+					textLabel.TextStrokeTransparency = 0
+					textLabel.TextScaled = true
+					textLabel.Font = Enum.Font.Arcade
+					textLabel.Parent = billboard
+				end
+			end
+		end
+	end
+end)
+end)
+
+maintab:Button("Pack-A-Punch (LEGIT, Req. 100 Points)", function()
+local p = game.Players.LocalPlayer
+local c = p.Character or p.CharacterAdded:Wait()
+local vim = game:GetService("VirtualInputManager")
+
+c:PivotTo(CFrame.new(111, 317, 73))
+
+task.delay(0.2, function()
+	vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+	vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+
+	task.delay(0.1, function()
+		c:PivotTo(CFrame.new(112, 317, 42))
+	end)
+end)
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Shutdown Game", function()
+game:Shutdown()
+end)
+
+misctab:Button("Rejoin Server", function()
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local placeId = game.PlaceId
+local jobId = game.JobId
+
+TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
+end)
+
+misctab:Button("Switch Servers", function()
+    local servers = {}
+    local req = game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+    local body = HttpService:JSONDecode(req)
+
+    if body and body.data then
+        for i, v in next, body.data do
+            if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
+                table.insert(servers, 1, v.id)
+            end
+        end
+    end
+
+    if #servers > 0 then
+        TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], Players.LocalPlayer)
+end
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/xSDwMhae")
+end)
