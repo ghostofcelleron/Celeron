@@ -7,11 +7,15 @@ local win = ui:Create({
     ThemeFont = Enum.Font.FredokaOne
 })
 
-local maintab = win:Tab("Juggernaut")
+local classtab = win:Tab("Classic")
+local juggtab = win:Tab("Juggernaut")
+local endtab = win:Tab("Endless")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
-maintab:Label("Script Made By Celeron + Daffy!")
+classtab:Label("Script Made By Celeron + Daffy!")
+juggtab:Label("Anti-Cheat Bypassed By Celeron!")
+endtab:Label("Endless Scripts By Celeron!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
@@ -46,7 +50,7 @@ local function applyEmulatedSpeed(speed)
 	end)
 end
 
-maintab:Textbox("Player Speed (Velocity)", function(v)
+classtab:Textbox("Player Speed (Velocity)", function(v)
 	local speed = tonumber(v)
 	if not speed then return end
 
@@ -58,7 +62,185 @@ maintab:Textbox("Player Speed (Velocity)", function(v)
 	end)
 end)
 
-maintab:Button("Aimlock (HOLD RIGHT CLICK)", function()
+classtab:Textbox("Gun Grabber", function(v)
+	local Players = game:GetService("Players")
+	local VirtualInputManager = game:GetService("VirtualInputManager")
+	local Workspace = game:GetService("Workspace")
+
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+	local camera = Workspace.CurrentCamera
+
+	local gunOrigin = humanoidRootPart.Position
+
+	local function findGunModel(name)
+		local weapons = Workspace:FindFirstChild("Weapons")
+		if not weapons then return nil end
+		for _, child in ipairs(weapons:GetChildren()) do
+			if child:IsA("Model") and child.Name:lower() == name:lower() then
+				return child
+			end
+		end
+		return nil
+	end
+
+	local function getGunPart(model)
+		if not model then return nil end
+		for _, part in ipairs(model:GetDescendants()) do
+			if part:IsA("BasePart") then
+				return part
+			end
+		end
+		return nil
+	end
+
+	local function runGunSequence(gunPart)
+		if not gunPart then return end
+		local position = gunPart.Position
+		humanoidRootPart.CFrame = CFrame.new(position)
+		camera.CFrame = CFrame.new(camera.CFrame.Position, position)
+		task.wait(0.1)
+		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+		task.wait(0.05)
+		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+		humanoidRootPart.CFrame = CFrame.new(gunOrigin)
+	end
+
+	local input = v:lower()
+	local gunModel = findGunModel(input)
+	local gunPart = getGunPart(gunModel)
+	runGunSequence(gunPart)
+end)
+
+classtab:Button("Kill All NPCs", function()
+local Workspace = game:GetService("Workspace")
+
+local killersFolder = Workspace:FindFirstChild("Killers")
+if killersFolder then
+	for _, obj in ipairs(killersFolder:GetDescendants()) do
+		if obj:IsA("Humanoid") and obj.Health > 0 then
+			obj.Health = 0
+		end
+	end
+end
+end)
+
+classtab:Button("Killer ESP", function()
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+
+local function highlightKillers()
+	local killersFolder = Workspace:FindFirstChild("Killers")
+	if not killersFolder then return end
+
+	for _, obj in ipairs(killersFolder:GetDescendants()) do
+		if obj:IsA("Humanoid") and obj.Health > 0 then
+			local model = obj.Parent
+			if model and not model:FindFirstChildOfClass("Highlight") then
+				local hl = Instance.new("Highlight")
+				hl.FillTransparency = 1
+				hl.OutlineTransparency = 0
+				hl.OutlineColor = Color3.fromRGB(255, 0, 0)
+				hl.Adornee = model
+				hl.Parent = model
+			end
+		end
+	end
+end
+
+task.spawn(function()
+	while true do
+		highlightKillers()
+		task.wait(1)
+	end
+end)
+end)
+
+classtab:Button("Remove Doors (Client)", function()
+for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
+    if obj.Name == "Door" then
+        obj:Destroy()
+    end
+end
+end)
+
+juggtab:Textbox("Player Speed (Velocity)", function(v)
+	local speed = tonumber(v)
+	if not speed then return end
+
+	applyEmulatedSpeed(speed)
+
+	game.Players.LocalPlayer.CharacterAdded:Connect(function()
+		task.wait(0.25)
+		applyEmulatedSpeed(speed)
+	end)
+end)
+
+endtab:Textbox("Player Speed (Velocity)", function(v)
+	local speed = tonumber(v)
+	if not speed then return end
+
+	applyEmulatedSpeed(speed)
+
+	game.Players.LocalPlayer.CharacterAdded:Connect(function()
+		task.wait(0.25)
+		applyEmulatedSpeed(speed)
+	end)
+end)
+
+juggtab:Textbox("Gun Grabber (MUST BE SPAWNED)", function(v)
+	local Players = game:GetService("Players")
+	local VirtualInputManager = game:GetService("VirtualInputManager")
+	local Workspace = game:GetService("Workspace")
+
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+	local camera = Workspace.CurrentCamera
+
+	local gunOrigin = humanoidRootPart.Position
+
+	local function findGunModel(name)
+		local weapons = Workspace:FindFirstChild("Weapons")
+		if not weapons then return nil end
+		for _, child in ipairs(weapons:GetChildren()) do
+			if child:IsA("Model") and child.Name:lower() == name:lower() then
+				return child
+			end
+		end
+		return nil
+	end
+
+	local function getGunPart(model)
+		if not model then return nil end
+		for _, part in ipairs(model:GetDescendants()) do
+			if part:IsA("BasePart") then
+				return part
+			end
+		end
+		return nil
+	end
+
+	local function runGunSequence(gunPart)
+		if not gunPart then return end
+		local position = gunPart.Position
+		humanoidRootPart.CFrame = CFrame.new(position)
+		camera.CFrame = CFrame.new(camera.CFrame.Position, position)
+		task.wait(0.1)
+		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+		task.wait(0.05)
+		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+		humanoidRootPart.CFrame = CFrame.new(gunOrigin)
+	end
+
+	local input = v:lower()
+	local gunModel = findGunModel(input)
+	local gunPart = getGunPart(gunModel)
+	runGunSequence(gunPart)
+end)
+
+juggtab:Button("Aimlock (HOLD RIGHT CLICK)", function()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -114,7 +296,123 @@ end)
 RunService.RenderStepped:Connect(updateAim)
 end)
 
-maintab:Button("Wall Gun (Random)", function()
+juggtab:Button("Show Current Weapons", function()
+local StarterGui = game:GetService("StarterGui")
+local Workspace = game:GetService("Workspace")
+
+local weaponsFolder = Workspace:FindFirstChild("Weapons")
+if not weaponsFolder then
+	StarterGui:SetCore("SendNotification", {
+		Title = "Possible Guns";
+		Text = "Weapons folder not found.";
+		Duration = 5;
+	})
+	return
+end
+
+local gunNames = {}
+
+for _, obj in ipairs(weaponsFolder:GetChildren()) do
+	if obj:IsA("Model") then
+		table.insert(gunNames, obj.Name)
+	end
+end
+
+local finalText = #gunNames > 0 and table.concat(gunNames, ", ") or "No guns found."
+
+StarterGui:SetCore("SendNotification", {
+	Title = "Current Weapons";
+	Text = finalText;
+	Duration = 10;
+})
+end)
+
+juggtab:Button("Win As Juggernaut", function()
+	local Players = game:GetService("Players")
+	local Workspace = game:GetService("Workspace")
+	local StarterGui = game:GetService("StarterGui")
+
+	local LocalPlayer = Players.LocalPlayer
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local localRoot = character:WaitForChild("HumanoidRootPart")
+
+	_G.LoopKillEnabled = not _G.LoopKillEnabled
+	local visited = {}
+	local running = false
+
+	local function isDead(player)
+		local char = player.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		return not (hum and hum.Health > 0)
+	end
+
+	local function teleportTo(player)
+		local targetChar = player.Character
+		local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+		if localRoot and targetRoot then
+			localRoot.CFrame = targetRoot.CFrame + Vector3.new(2, 0, 0)
+		end
+	end
+
+	local function sendNotification(state)
+		StarterGui:SetCore("SendNotification", {
+			Title = "Juggernaut Kill";
+			Text = state and "Enabled." or "Disabled.";
+			Duration = 5;
+		})
+	end
+
+	local function startLoopKill()
+		if running then return end
+		running = true
+		visited = {}
+		sendNotification(true)
+
+		task.spawn(function()
+			while _G.LoopKillEnabled do
+				for _, player in ipairs(Players:GetPlayers()) do
+					if player ~= LocalPlayer and not visited[player] then
+						repeat
+							if not _G.LoopKillEnabled then
+								running = false
+								visited = {}
+								sendNotification(false)
+								return
+							end
+
+							if isDead(player) then
+								visited[player] = true
+							else
+								teleportTo(player)
+							end
+							task.wait(0.05)
+						until visited[player]
+					end
+				end
+
+				if #Players:GetPlayers() - 1 == #visited then
+					running = false
+					sendNotification(false)
+					break
+				end
+
+				task.wait(1)
+			end
+
+			running = false
+			visited = {}
+			sendNotification(false)
+		end)
+	end
+
+	if _G.LoopKillEnabled then
+		startLoopKill()
+	else
+		sendNotification(false)
+	end
+end)
+
+juggtab:Button("Wall Gun (Random)", function()
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -160,7 +458,7 @@ if #candidateModels > 0 then
 end
 end)
 
-maintab:Button("Juggernaut TP", function()
+juggtab:Button("Juggernaut TP", function()
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
@@ -179,11 +477,9 @@ for _, player in ipairs(Players:GetPlayers()) do
 end
 end)
 
-
-maintab:Button("Juggernaut ESP", function()
+juggtab:Button("Juggernaut ESP", function()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-
 local localPlayer = Players.LocalPlayer
 
 RunService.RenderStepped:Connect(function()
@@ -216,6 +512,14 @@ RunService.RenderStepped:Connect(function()
 					textLabel.TextScaled = true
 					textLabel.Font = Enum.Font.Arcade
 					textLabel.Parent = billboard
+
+					local highlight = Instance.new("Highlight")
+					highlight.Name = "JuggernautESP"
+					highlight.Adornee = player.Character
+					highlight.FillTransparency = 1
+					highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+					highlight.OutlineTransparency = 0
+					highlight.Parent = game.CoreGui
 				end
 			end
 		end
@@ -223,7 +527,7 @@ RunService.RenderStepped:Connect(function()
 end)
 end)
 
-maintab:Button("Pack-A-Punch (LEGIT, Req. 100 Points)", function()
+juggtab:Button("Pack-A-Punch (LEGIT, Req. 100 Points)", function()
 local p = game.Players.LocalPlayer
 local c = p.Character or p.CharacterAdded:Wait()
 local vim = game:GetService("VirtualInputManager")
@@ -240,22 +544,115 @@ task.delay(0.2, function()
 end)
 end)
 
+juggtab:Button("Remove Doors (Client)", function()
+for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
+    if obj.Name == "Door" then
+        obj:Destroy()
+    end
+end
+end)
+
+local gunPositions = {
+	["raygun"] = Vector3.new(114, 335, 569),
+	["landmine"] = Vector3.new(243, 313, 332),
+	["mp5k"] = Vector3.new(232, 373, 47),
+	["awp"] = Vector3.new(466, 313, 756),
+	["m4a1"] = Vector3.new(-154, 303, 703),
+	["r870"] = Vector3.new(20, 292, 241),
+	["freezegun"] = Vector3.new(307, 333, 709),
+	["desert eagle"] = Vector3.new(171, 260, 406),
+	["m14"] = Vector3.new(184, 314, 379),
+	["mg42"] = Vector3.new(22, 313, 371),
+	["svd"] = Vector3.new(159, 333, 445),
+	["db shotgun"] = Vector3.new(106, 272, 101),
+	["energy can"] = Vector3.new(173, 333, 587),
+	["m16a2"] = Vector3.new(71, 282, 31),
+	["m1911"] = Vector3.new(340, 313, 370)
+}
+
+endtab:Textbox("Gun Grabber (Legit, Requires Points!)", function(v)
+	local Players = game:GetService("Players")
+	local VirtualInputManager = game:GetService("VirtualInputManager")
+	local Workspace = game:GetService("Workspace")
+
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+	local camera = Workspace.CurrentCamera
+
+	local gunOrigin = humanoidRootPart.Position
+
+	local function findGunModel(name)
+		local weapons = Workspace:FindFirstChild("Weapons")
+		if not weapons then return nil end
+		for _, child in ipairs(weapons:GetChildren()) do
+			if child:IsA("Model") and child.Name:lower() == name:lower() then
+				return child
+			end
+		end
+		return nil
+	end
+
+	local function getGunPart(model)
+		if not model then return nil end
+		for _, d in ipairs(model:GetDescendants()) do
+			if d:IsA("BasePart") then
+				return d
+			end
+		end
+		return nil
+	end
+
+	local function runGunSequence(gunPart, position)
+		if not gunPart then return end
+		humanoidRootPart.CFrame = CFrame.new(position)
+		camera.CFrame = CFrame.new(camera.CFrame.Position, gunPart.Position)
+		task.wait(0.1)
+		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+		task.wait(0.75)
+		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+		humanoidRootPart.CFrame = CFrame.new(gunOrigin)
+	end
+
+	local input = v:lower()
+	local gunModel = findGunModel(input)
+	local gunPart = getGunPart(gunModel)
+	local gunPos = gunPositions[input]
+
+	if gunModel and gunPart and gunPos then
+		runGunSequence(gunPart, gunPos)
+	else
+		warn("Gun \"" .. v .. "\" not found or missing position.")
+	end
+end)
+
+endtab:Button("Remove Doors (Client)", function()
+for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
+    if obj.Name == "Door" then
+        obj:Destroy()
+    end
+end
+end)
+
+endtab:Button("Kill All NPCs", function()
+local Workspace = game:GetService("Workspace")
+
+local killersFolder = Workspace:FindFirstChild("Killers")
+if killersFolder then
+	for _, obj in ipairs(killersFolder:GetDescendants()) do
+		if obj:IsA("Humanoid") and obj.Health > 0 then
+			obj.Health = 0
+		end
+	end
+end
+end)
+
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
 
 misctab:Button("Shutdown Game", function()
 game:Shutdown()
-end)
-
-misctab:Button("Rejoin Server", function()
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local placeId = game.PlaceId
-local jobId = game.JobId
-
-TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
 end)
 
 misctab:Button("Switch Servers", function()
