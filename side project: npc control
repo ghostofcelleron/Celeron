@@ -1,0 +1,104 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+local camera = Workspace.CurrentCamera
+
+humanoid.WalkSpeed = 0
+humanoid.JumpPower = 0
+camera.CameraType = Enum.CameraType.Scriptable
+camera.CFrame = CFrame.new(rootPart.Position + Vector3.new(0, 5, -10))
+
+humanoid.Died:Connect(function()
+	humanoid.JumpPower = 50
+	print("Player died—jump restored if needed.")
+end)
+
+local function getClosestNPC()
+	local closest
+	local shortest = math.huge
+
+	for _, obj in ipairs(Workspace:GetDescendants()) do
+		if obj:IsA("Humanoid") and not Players:GetPlayerFromCharacter(obj.Parent) and obj.Health > 0 then
+			local npcRoot = obj.Parent:FindFirstChild("HumanoidRootPart")
+			if npcRoot then
+				local dist = (rootPart.Position - npcRoot.Position).Magnitude
+				if dist < shortest then
+					shortest = dist
+					closest = npcRoot
+				end
+			end
+		end
+	end
+
+	return closest
+end
+
+local controlledNPC = getClosestNPC()
+if not controlledNPC then
+	warn("No valid NPC found.")
+	return
+end
+
+local originalCF = rootPart.CFrame
+rootPart.CFrame = controlledNPC.CFrame + Vector3.new(0, 3, 0)
+task.wait(0.5)
+rootPart.CFrame = originalCF
+
+local npcHumanoid = controlledNPC.Parent:FindFirstChildOfClass("Humanoid")
+if npcHumanoid then
+	npcHumanoid.WalkSpeed = 0
+	npcHumanoid.JumpPower = 0
+end
+
+camera.CameraSubject = controlledNPC
+camera.CameraType = Enum.CameraType.Custom
+
+local inputVector = Vector3.zero
+local speed = 20
+local jumpVelocity = 50
+
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
+
+	if input.KeyCode == Enum.KeyCode.W then inputVector += Vector3.new(0, 0, 1) end
+	if input.KeyCode == Enum.KeyCode.S then inputVector += Vector3.new(0, 0, -1) end
+	if input.KeyCode == Enum.KeyCode.A then inputVector += Vector3.new(-1, 0, 0) end
+	if input.KeyCode == Enum.KeyCode.D then inputVector += Vector3.new(1, 0, 0) end
+
+	if input.KeyCode == Enum.KeyCode.Space then
+		local currentVelocity = controlledNPC.AssemblyLinearVelocity
+		controlledNPC.AssemblyLinearVelocity = Vector3.new(currentVelocity.X, jumpVelocity, currentVelocity.Z)
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gp)
+	if gp then return end
+
+	if input.KeyCode == Enum.KeyCode.W then inputVector -= Vector3.new(0, 0, 1) end
+	if input.KeyCode == Enum.KeyCode.S then inputVector -= Vector3.new(0, 0, -1) end
+	if input.KeyCode == Enum.KeyCode.A then inputVector -= Vector3.new(-1, 0, 0) end
+	if input.KeyCode == Enum.KeyCode.D then inputVector -= Vector3.new(1, 0, 0) end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if controlledNPC then
+		local camCF = camera.CFrame
+		local forward = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
+		local right = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
+		local moveDir = (right * inputVector.X + forward * inputVector.Z)
+
+		controlledNPC.AssemblyLinearVelocity = moveDir.Magnitude > 0 and moveDir.Unit * speed or Vector3.zero
+
+		local faceDir = forward
+		if faceDir.Magnitude > 0 then
+			local targetCF = CFrame.new(controlledNPC.Position, controlledNPC.Position + faceDir)
+			controlledNPC.CFrame = targetCF
+		end
+	end
+end)
