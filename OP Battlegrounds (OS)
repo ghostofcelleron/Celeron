@@ -8,6 +8,7 @@ local win = ui:Create({
 })
 
 local maintab = win:Tab("Main")
+local cmovetab = win:Tab("Fun")
 local movetab = win:Tab("Moves")
 local chartab = win:Tab("Characters")
 local misctab = win:Tab("Others")
@@ -41,7 +42,7 @@ if remotes then
 
         if hrp and targetPlayer and targetPlayer.Character then
             local originalCF = hrp.CFrame
-            hrp.CFrame = CFrame.new(50000, 0, 50000)
+            hrp.CFrame = CFrame.new(-2726, 442, -530)
             hrp.Velocity = Vector3.zero
             task.wait(0.5)
 
@@ -86,7 +87,15 @@ maintab:Button("Kill Aura", function()
     toggleKillAura()
 end)
 
-maintab:Button("Anti-Void (BREAKS VOID KILL)", function()
+maintab:Button("Instant Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Jotaro"):FireServer(unpack(args))
+end)
+
+maintab:Button("Anti-Void", function()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
@@ -156,10 +165,6 @@ maintab:Button("No Dash CD", function()
 game.Players.LocalPlayer.NoDashCD.Value = true
 end)
 
-maintab:Button("No Stun", function()
-game.Players.LocalPlayer.NoStun.Value = true
-end)
-
 maintab:Button("Get Awaken", function()
 local player = game:GetService("Players").LocalPlayer
 local awakenBar = player:FindFirstChild("AwakenBar")
@@ -183,7 +188,7 @@ task.spawn(function()
 end)
 end)
 
-maintab:Button("Get Kills", function()
+maintab:Button("Get Kills (Will Kick, Use Anti-Kick!)", function()
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local Players = game:GetService("Players")
 
@@ -192,7 +197,7 @@ maintab:Button("Get Kills", function()
 
     task.spawn(function()
         local startTime = os.clock()
-        while os.clock() - startTime < 20 do
+        while os.clock() - startTime < 60 do
             GetKillsRemote:FireServer(player)
             task.wait(0.001)
         end
@@ -204,7 +209,17 @@ local combatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Com
 
 local ultraState = false
 
-movetab:Button("Ultra Instinct", function()
+movetab:Button("Ultra Instinct (Red)", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Ultra Instinct")
+end
+    activate()
+end)
+
+cmovetab:Button("Ultra Instinct (Attempt: Blue)", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local function activate()
@@ -212,9 +227,16 @@ local function activate()
     CombatRemote:FireServer("Ultra Instinct")
 end
 
-for _ = 1, 12 do
+for _ = 1, 500 do
     activate()
 end
+end)
+
+movetab:Button("Ultra Sense", function()
+local args = {
+	"UltraSense"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Goku"):FireServer(unpack(args))
 end)
 
 movetab:Button("Omni-Directional Punch", function()
@@ -240,7 +262,63 @@ local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuji")
     Remote:FireServer("TrueDomain")
 end)
 
-movetab:Button("Super Blue", function()
+cmovetab:Button("Simple Domain", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+local totalSpins = 5
+local spinDuration = 0.5
+local steps = 325
+local waitTime = 0.02
+
+for i = 1, steps do
+    Remote:FireServer("Blue")
+
+    local anglePerStep = (360 * totalSpins) / steps
+    local currentCF = humanoidRootPart.CFrame
+    humanoidRootPart.CFrame = currentCF * CFrame.Angles(0, math.rad(anglePerStep), 0)
+
+    wait(waitTime)
+end
+end)
+
+cmovetab:Button("Gojo's Death Combo", function()
+for _ = 1, 5 do
+	wait(0.125)
+   local args = {
+    [1] = "Blue"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gojo"):FireServer(unpack(args))
+end
+	wait(0.3)
+   local args = {
+    [1] = "Barrage"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gojo"):FireServer(unpack(args))
+wait(5.65)
+local args = {
+	"BlackFlash"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Yuta"):FireServer(unpack(args))
+wait(6.35)
+   local args = {
+    [1] = "Barrage"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gojo"):FireServer(unpack(args))
+wait(5.295)
+for _ = 1, 2 do
+	wait(0.05)
+   local args = {
+    [1] = "MaxRed"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gojo"):FireServer(unpack(args))
+end
+end)
+cmovetab:Button("Super Blue", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo")
 
@@ -258,7 +336,21 @@ movetab:Button("Giant Stomp", function()
 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Luffy2"):FireServer(unpack(args))
 end)
 
-movetab:Button("Super Cleave", function()
+movetab:Button("Godly Combo", function()
+local args = {
+	"GodlyCombo"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Goku"):FireServer(unpack(args))
+end)
+
+movetab:Button("Black FLASH! (Yuta)", function()
+local args = {
+	"BlackFlash"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Yuta"):FireServer(unpack(args))
+end)
+
+cmovetab:Button("Super Cleave", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuji")
 
@@ -274,13 +366,38 @@ local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuta")
 Remote:FireServer("PureLove")
 end)
 
-movetab:Button("Death Punch", function()
+movetab:Button("Yuta Heal", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuta")
+
+Remote:FireServer("Heal")
+end)
+
+movetab:Button("Slime Heal", function()
+local args = {
+	"SlimeHeal"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Cid"):FireServer(unpack(args))
+end)
+
+cmovetab:Button("Death Punch", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local GonRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gon")
 
 for _ = 1, 10 do
 	wait(0.05)
     GonRemote:FireServer("Rock")
+end
+end)
+
+cmovetab:Button("Death Punch V2", function()
+for _ = 1, 5 do
+	wait(0.025)
+   local args = {
+    [1] = "FinalSmash"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Deku"):FireServer(unpack(args))
 end
 end)
 
@@ -317,7 +434,7 @@ end
 activate()
 end)
 
-movetab:Button("DIE!", function()
+cmovetab:Button("DIE!", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local YutaRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuta")
 
@@ -327,28 +444,59 @@ for _ = 1, 10 do
 end
 end)
 
-movetab:Button("Rock", function()
+
+
+cmovetab:Button("Earthquake", function()
+for _ = 1, 15 do
+wait(0.05)
    local args = {
-    [1] = "Rock"
+    [1] = "Giant"
 }
 
-game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gon"):FireServer(unpack(args))
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Luffy2"):FireServer(unpack(args))
+end
 end)
 
-movetab:Button("Paper", function()
+cmovetab:Button("Explode", function()
+
+for _ = 1, 20 do
    local args = {
     [1] = "Paper"
 }
 
 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gon"):FireServer(unpack(args))
+end
 end)
 
-movetab:Button("Scissors", function()
+movetab:Button("FinalSmash", function()
    local args = {
-    [1] = "Scissor"
+    [1] = "FinalSmash"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Deku"):FireServer(unpack(args))
+end)
+
+movetab:Button("Rengoku.", function()
+local args = {
+	"Rengoku"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Rengoku"):FireServer(unpack(args))
+end)
+
+movetab:Button("Gon Awaken", function()
+   local args = {
+    [1] = "Awaken"
 }
 
 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gon"):FireServer(unpack(args))
+end)
+
+movetab:Button("Luffy Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Luffy2"):FireServer(unpack(args))
 end)
 
 chartab:Button("Gojo", function()
@@ -448,6 +596,13 @@ local function activate()
 end
 
 activate()
+end)
+
+chartab:Button("Cid", function()
+local args = {
+	"Cid"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Characters"):FireServer(unpack(args))
 end)
 
 misctab:Button("Infinite Yield", function()
