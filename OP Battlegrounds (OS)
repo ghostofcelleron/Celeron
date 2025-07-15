@@ -1,0 +1,491 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (OPBG)",
+    ThemeColor = Color3.fromRGB(19, 19, 19),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local movetab = win:Tab("Moves")
+local chartab = win:Tab("Characters")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+maintab:Textbox("Void Kill", function(v)
+local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
+if remotes then
+    local todo = remotes:WaitForChild("Todo", 5)
+    if todo then
+        local character = game.Players.LocalPlayer.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+        local function findTarget(partialName)
+            partialName = partialName:lower()
+            for _, plr in pairs(game.Players:GetPlayers()) do
+                local uname = plr.Name:lower()
+                local dname = plr.DisplayName:lower()
+                if uname:find(partialName) or dname:find(partialName) then
+                    return plr
+                end
+            end
+            return nil
+        end
+
+        local targetPlayer = findTarget(v)
+
+        if hrp and targetPlayer and targetPlayer.Character then
+            local originalCF = hrp.CFrame
+            hrp.CFrame = CFrame.new(50000, 0, 50000)
+            hrp.Velocity = Vector3.zero
+            task.wait(0.5)
+
+            todo:FireServer("Boogie", nil, targetPlayer.Character)
+            task.wait(0.5)
+
+            hrp.CFrame = originalCF
+        end
+    end
+end
+end)
+
+local killaura = false
+
+local function toggleKillAura()
+    killaura = not killaura
+
+    local statusText = killaura and "Enabled." or "Disabled."
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Kill Aura",
+        Text = statusText,
+        Duration = 3
+    })
+
+    if killaura then
+        task.spawn(function()
+            while killaura do
+                local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
+                if remotes then
+                    local yuji = remotes:WaitForChild("Yuji", 5)
+                    if yuji then
+                        yuji:FireServer("Cleave")
+                    end
+                end
+                task.wait()
+            end
+        end)
+    end
+end
+
+maintab:Button("Kill Aura", function()
+    toggleKillAura()
+end)
+
+maintab:Button("Anti-Void (BREAKS VOID KILL)", function()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+
+task.spawn(function()
+    while true do
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:FindFirstChild("HumanoidRootPart")
+
+        if root then
+            local pos = root.Position
+            local velocity = root.Velocity
+
+            local falling = velocity.Y < -5
+            local tooLow = pos.Y <= -1
+
+            local ray = RaycastParams.new()
+            ray.FilterDescendantsInstances = {character}
+            ray.FilterType = Enum.RaycastFilterType.Blacklist
+
+            local result = workspace:Raycast(pos, Vector3.new(0, -50, 0), ray)
+
+            if tooLow and falling and not result then
+                root.CFrame = CFrame.new(1, 180, -29)
+            end
+        end
+
+        task.wait(0.1)
+    end
+end)
+end)
+
+maintab:Button("Lag Server (MORE LAG EACH TIME RAN!)", function()
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+hrp.CFrame = CFrame.new(1, 180, -29)
+
+wait(1)
+
+local GojoRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo")
+for _ = 1, 100 do
+    GojoRemote:FireServer("MaxBlue")
+end
+
+wait(10)
+
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local placeId = game.PlaceId
+
+TeleportService:Teleport(placeId, player)
+end)
+
+maintab:Button("No Cooldowns", function()
+game.Players.LocalPlayer.NoCD.Value = true
+end)
+
+maintab:Button("No Dash CD", function()
+game.Players.LocalPlayer.NoDashCD.Value = true
+end)
+
+maintab:Button("No Stun", function()
+game.Players.LocalPlayer.NoStun.Value = true
+end)
+
+maintab:Button("Get Awaken", function()
+local player = game:GetService("Players").LocalPlayer
+local awakenBar = player:FindFirstChild("AwakenBar")
+
+if awakenBar and awakenBar:IsA("NumberValue") then
+    awakenBar.Value = 200
+end
+end)
+
+maintab:Button("Always Max Awaken", function()
+local player = game:GetService("Players").LocalPlayer
+
+task.spawn(function()
+    while true do
+        local awakenBar = player:FindFirstChild("AwakenBar")
+        if awakenBar and awakenBar:IsA("NumberValue") then
+            awakenBar.Value = 200
+        end
+        task.wait(0.01)
+    end
+end)
+end)
+
+maintab:Button("Get Kills", function()
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local Players = game:GetService("Players")
+
+    local player = Players.LocalPlayer
+    local GetKillsRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("GetKills")
+
+    task.spawn(function()
+        local startTime = os.clock()
+        while os.clock() - startTime < 20 do
+            GetKillsRemote:FireServer(player)
+            task.wait(0.001)
+        end
+    end)
+end)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local combatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+
+local ultraState = false
+
+movetab:Button("Ultra Instinct", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Ultra Instinct")
+end
+
+for _ = 1, 12 do
+    activate()
+end
+end)
+
+movetab:Button("Omni-Directional Punch", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Omni")
+end
+
+activate()
+end)
+
+movetab:Button("Infinite Void", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo")
+    Remote:FireServer("TrueDomain")
+end)
+
+movetab:Button("Malevolent Shrine", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuji")
+    Remote:FireServer("TrueDomain")
+end)
+
+movetab:Button("Super Blue", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo")
+
+for _ = 1, 20 do
+	wait(0.02)
+    Remote:FireServer("Blue")
+end
+end)
+
+movetab:Button("Giant Stomp", function()
+   local args = {
+    [1] = "Giant"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Luffy2"):FireServer(unpack(args))
+end)
+
+movetab:Button("Super Cleave", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuji")
+
+for _ = 1, 500 do
+    Remote:FireServer("Cleave")
+end
+end)
+
+movetab:Button("Pure Love", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuta")
+
+Remote:FireServer("PureLove")
+end)
+
+movetab:Button("Death Punch", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GonRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gon")
+
+for _ = 1, 10 do
+	wait(0.05)
+    GonRemote:FireServer("Rock")
+end
+end)
+
+movetab:Button("Serious Punch", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Serious")
+end
+
+activate()
+end)
+
+movetab:Button("Time Stop", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("TimeStop")
+end
+
+activate()
+end)
+
+movetab:Button("Katakuri Buzz", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Buzz")
+end
+
+activate()
+end)
+
+movetab:Button("DIE!", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local YutaRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuta")
+
+for _ = 1, 10 do
+	wait(0.05)
+    YutaRemote:FireServer("Shine")
+end
+end)
+
+movetab:Button("Rock", function()
+   local args = {
+    [1] = "Rock"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gon"):FireServer(unpack(args))
+end)
+
+movetab:Button("Paper", function()
+   local args = {
+    [1] = "Paper"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gon"):FireServer(unpack(args))
+end)
+
+movetab:Button("Scissors", function()
+   local args = {
+    [1] = "Scissor"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gon"):FireServer(unpack(args))
+end)
+
+chartab:Button("Gojo", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Gojo")
+end
+
+activate()
+end)
+
+chartab:Button("Yuji", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Yuji")
+end
+
+activate()
+end)
+
+chartab:Button("Goku", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Goku")
+end
+
+activate()
+end)
+
+chartab:Button("Rengoku", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Rengoku")
+end
+
+activate()
+end)
+
+chartab:Button("Luffy", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Luffy")
+end
+
+activate()
+end)
+
+chartab:Button("Akame", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Akame")
+end
+
+activate()
+end)
+
+chartab:Button("Todo", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Todo")
+end
+
+activate()
+end)
+
+chartab:Button("Jotaro", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Jotaro")
+end
+
+activate()
+end)
+
+chartab:Button("Akame", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Akame")
+end
+
+activate()
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Temporary Void Teleport (REJOIN IF BUGGED)", function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(22, -418, 299)
+end)
+
+misctab:Button("Destroy GUI", function()
+    win:Exit()
+end)
+
+misctab:Button("Leave Game", function()
+    game:Shutdown()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/xSDwMhae")
+end)
