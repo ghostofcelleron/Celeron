@@ -8,9 +8,10 @@ local win = ui:Create({
 })
 
 local maintab = win:Tab("Main")
-local cmovetab = win:Tab("Fun")
 local movetab = win:Tab("Moves")
 local chartab = win:Tab("Characters")
+local cmovetab = win:Tab("Fun")
+local ulttab = win:Tab("Awakens")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
@@ -18,7 +19,7 @@ maintab:Label("Script Made By Celeron + Daffy!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
-maintab:Textbox("Void Kill", function(v)
+maintab:Textbox("Void Player", function(v)
 local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
 if remotes then
     local todo = remotes:WaitForChild("Todo", 5)
@@ -55,6 +56,96 @@ if remotes then
 end
 end)
 
+maintab:Textbox("Glitch Player", function(v)
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local character = Players.LocalPlayer.Character
+local hrp = character and character:FindFirstChild("HumanoidRootPart")
+local stats = Players.LocalPlayer:FindFirstChild("Stats")
+local characterName = stats and stats:FindFirstChild("Character") and stats.Character.Value
+
+local function findTarget(partialName)
+    partialName = partialName:lower()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr.Name:lower():find(partialName) or plr.DisplayName:lower():find(partialName) then
+            return plr
+        end
+    end
+    return nil
+end
+
+local targetPlayer = findTarget(v)
+if hrp and targetPlayer and targetPlayer.Character then
+    local targetHRP = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if targetHRP then
+        local glitchRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuji")
+        local charRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+
+        local loopTeleporting = true
+
+        task.spawn(function()
+            while loopTeleporting do
+                local behindCF = targetHRP.CFrame * CFrame.new(0, 0, -3)
+                hrp.CFrame = CFrame.new(behindCF.Position, targetHRP.Position)
+                hrp.Velocity = Vector3.zero
+                task.wait(0.05)
+            end
+        end)
+
+        glitchRemote:FireServer("Cranium")
+        task.wait(1)
+
+        if characterName then
+            charRemote:FireServer(characterName)
+        end
+
+        loopTeleporting = false
+    end
+end
+end)
+
+maintab:Textbox("Bring Player", function(v)
+local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
+if remotes then
+    local todo = remotes:WaitForChild("Todo", 5)
+    if todo then
+        local character = game.Players.LocalPlayer.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+        local function findTarget(partialName)
+            partialName = partialName:lower()
+            for _, plr in pairs(game.Players:GetPlayers()) do
+                local uname = plr.Name:lower()
+                local dname = plr.DisplayName:lower()
+                if uname:find(partialName) or dname:find(partialName) then
+                    return plr
+                end
+            end
+            return nil
+        end
+
+        local targetPlayer = findTarget(v)
+        if hrp and targetPlayer and targetPlayer.Character then
+            local originalCF = hrp.CFrame
+            local targetHRP = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+            if targetHRP then
+                targetHRP.CFrame = hrp.CFrame + Vector3.new(0, 0, -3)
+                targetHRP.Velocity = Vector3.zero
+
+                todo:FireServer("Boogie", nil, targetPlayer.Character)
+
+                task.wait(0.5)
+
+                hrp.CFrame = originalCF
+                hrp.Velocity = Vector3.zero
+            end
+        end
+    end
+end
+end)
+
 local killaura = false
 
 local function toggleKillAura()
@@ -85,6 +176,78 @@ end
 
 maintab:Button("Kill Aura", function()
     toggleKillAura()
+end)
+
+maintab:Button("God Mode", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local originalCF = hrp.CFrame
+
+local targetHRP = Workspace[" "]:FindFirstChild("HumanoidRootPart")
+if targetHRP then
+    hrp.CFrame = CFrame.new(Vector3.new(-29, 180, 95), targetHRP.Position)
+    hrp.Velocity = Vector3.zero
+
+    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat"):FireServer("Omni")
+
+    task.wait(3)
+
+    hrp.CFrame = CFrame.new(-134, 332, 570)
+    hrp.Velocity = Vector3.zero
+
+	wait(1)
+
+    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo"):FireServer("TrueDomain")
+
+    task.wait(25.75)
+
+    hrp.CFrame = originalCF
+    hrp.Velocity = Vector3.zero
+end
+end)
+
+_G.AutoHealEnabled = not _G.AutoHealEnabled
+
+maintab:Button("Auto Heal", function()
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+local heal1 = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Cid")
+local heal2 = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuta")
+
+_G.AutoHealEnabled = not _G.AutoHealEnabled
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Auto-Heal",
+    Text = _G.AutoHealEnabled and "Enabled." or "Disabled.",
+    Duration = 4
+})
+
+if _G.AutoHealConn then
+    _G.AutoHealConn:Disconnect()
+    _G.AutoHealConn = nil
+end
+
+if _G.AutoHealEnabled then
+    local function onHealthChange(health)
+        if health < 100 then
+            heal1:FireServer("SlimeHeal")
+            heal2:FireServer("Heal")
+        end
+    end
+
+    _G.AutoHealConn = humanoid.HealthChanged:Connect(onHealthChange)
+end
 end)
 
 maintab:Button("Instant Awaken", function()
@@ -129,6 +292,42 @@ task.spawn(function()
 end)
 end)
 
+movetab:Button("Disable Ultra-Instinct", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+CombatRemote:FireServer("No Ultra Instinct")
+end)
+
+cmovetab:Button("Disable Ultra-Instinct", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+for _ = 1, 5000 do
+local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+CombatRemote:FireServer("No Ultra Instinct")
+end
+end)
+
+cmovetab:Button("Reverse Lag Technique (High-End Devices Only!)", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+
+local messageText = "If you are attacked while this is active, the attacker will lag until they either leave or stop attacking."
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Notice",
+    Text = messageText,
+    Duration = 15
+})
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Ultra Instinct")
+end
+
+for _ = 1, 5000 do
+    activate()
+end
+end)
+
 maintab:Button("Lag Server (MORE LAG EACH TIME RAN!)", function()
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -142,11 +341,11 @@ hrp.CFrame = CFrame.new(1, 180, -29)
 wait(1)
 
 local GojoRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo")
-for _ = 1, 100 do
+for _ = 1, 10 do
     GojoRemote:FireServer("MaxBlue")
 end
 
-wait(10)
+wait(5)
 
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
@@ -309,14 +508,6 @@ wait(6.35)
     [1] = "Barrage"
 }
 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gojo"):FireServer(unpack(args))
-wait(5.295)
-for _ = 1, 2 do
-	wait(0.05)
-   local args = {
-    [1] = "MaxRed"
-}
-game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gojo"):FireServer(unpack(args))
-end
 end)
 cmovetab:Button("Super Blue", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -444,7 +635,13 @@ for _ = 1, 10 do
 end
 end)
 
+cmovetab:Button("Glitching Grab", function()
+   local args = {
+    [1] = "Muscle"
+}
 
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Luffy2"):FireServer(unpack(args))
+end)
 
 cmovetab:Button("Earthquake", function()
 for _ = 1, 15 do
@@ -457,7 +654,7 @@ game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Luffy
 end
 end)
 
-cmovetab:Button("Explode", function()
+cmovetab:Button("Low-Gravity Explosion", function()
 
 for _ = 1, 20 do
    local args = {
@@ -483,7 +680,15 @@ local args = {
 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Rengoku"):FireServer(unpack(args))
 end)
 
-movetab:Button("Gon Awaken", function()
+ulttab:Button("Yuta Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Yuta"):FireServer(unpack(args))
+end)
+
+ulttab:Button("Gon Awaken", function()
    local args = {
     [1] = "Awaken"
 }
@@ -491,12 +696,36 @@ movetab:Button("Gon Awaken", function()
 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gon"):FireServer(unpack(args))
 end)
 
-movetab:Button("Luffy Awaken", function()
+ulttab:Button("Gear 5 Awaken", function()
    local args = {
     [1] = "Awaken"
 }
 
 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Luffy2"):FireServer(unpack(args))
+end)
+
+ulttab:Button("Deku Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Deku"):FireServer(unpack(args))
+end)
+
+ulttab:Button("Rengoku Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Rengoku"):FireServer(unpack(args))
+end)
+
+ulttab:Button("Yuji Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Yuji"):FireServer(unpack(args))
 end)
 
 chartab:Button("Gojo", function()
