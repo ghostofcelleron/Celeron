@@ -167,10 +167,24 @@ end
 end)
 
 maintab2:Textbox("Ball Hitbox Expander", function(v)
-local part = workspace.Terrain:FindFirstChild("Ball")
-if part and part:IsA("BasePart") then
-    part.Size = part.Size * v
+if _G.BallSizeLoop then
+    _G.BallSizeLoop:Disconnect()
+    _G.BallSizeLoop = nil
 end
+if _G.BallSizeThread then
+    _G.BallSizeThread:Cancel()
+end
+
+_G.BallSizeThread = task.spawn(function()
+    while true do
+        task.wait(0.05)
+        local Ball = workspace.Terrain:FindFirstChild("Ball")
+        local num = tonumber(v)
+        if Ball and num then
+            Ball.Size = Vector3.new(num, num, num)
+        end
+    end
+end)
 end)
 
 maintab2:Button("Suppress Notifications", function()
