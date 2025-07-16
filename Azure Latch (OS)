@@ -166,6 +166,13 @@ if humanoidRootPart then
 end
 end)
 
+maintab2:Textbox("Ball Hitbox Expander", function(v)
+local part = workspace.Terrain:FindFirstChild("Ball")
+if part and part:IsA("BasePart") then
+    part.Size = part.Size * v
+end
+end)
+
 maintab2:Button("Suppress Notifications", function()
     _G.suppressNotifs = not (_G.suppressNotifs or false)
     local StarterGui = game:GetService("StarterGui")
