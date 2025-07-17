@@ -227,7 +227,15 @@ local char = plr.Character or plr.CharacterAdded:Wait()
 local root = char:WaitForChild("HumanoidRootPart")
 
 local guiName = "SafeZoneUI"
-local origin = Vector3.new(10000, 10000, 15450)
+local function randomBetween(min, max)
+	return math.random(min, max)
+end
+
+local origin = Vector3.new(
+	randomBetween(10000, 100000),
+	randomBetween(10000, 100000),
+	randomBetween(10000, 100000)
+)
 local size, thickness, lastPos = 50, 2
 for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
 	if gui.Name == guiName then gui:Destroy() end
