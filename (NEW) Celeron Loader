@@ -1,3 +1,4 @@
+print("loader works!!")
 local sg = Instance.new("ScreenGui")
 sg.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
