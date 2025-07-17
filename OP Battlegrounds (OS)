@@ -8,6 +8,7 @@ local win = ui:Create({
 })
 
 local maintab = win:Tab("Main")
+local targtab = win:Tab("Target")
 local movetab = win:Tab("Moves")
 local chartab = win:Tab("Characters")
 local cmovetab = win:Tab("Fun")
@@ -19,7 +20,7 @@ maintab:Label("Script Made By Celeron + Daffy!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
-maintab:Textbox("Void Player", function(v)
+targtab:Textbox("Void Player", function(v)
 local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
 if remotes then
     local todo = remotes:WaitForChild("Todo", 5)
@@ -56,7 +57,81 @@ if remotes then
 end
 end)
 
-maintab:Textbox("Glitch Player", function(v)
+targtab:Textbox("Save Player", function(v)
+local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
+if remotes then
+    local todo = remotes:WaitForChild("Todo", 5)
+    if todo then
+        local character = game.Players.LocalPlayer.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+        local function findTarget(partialName)
+            partialName = partialName:lower()
+            for _, plr in pairs(game.Players:GetPlayers()) do
+                local uname = plr.Name:lower()
+                local dname = plr.DisplayName:lower()
+                if uname:find(partialName) or dname:find(partialName) then
+                    return plr
+                end
+            end
+            return nil
+        end
+
+        local targetPlayer = findTarget(v)
+
+        if hrp and targetPlayer and targetPlayer.Character then
+            local originalCF = CFrame.new(-95, 356, 519)
+            hrp.CFrame = CFrame.new(-95, 356, 519)
+            hrp.Velocity = Vector3.zero
+            task.wait(0.5)
+
+            todo:FireServer("Boogie", nil, targetPlayer.Character)
+            task.wait(0.5)
+
+            hrp.CFrame = CFrame.new(-95, 356, 519)
+        end
+    end
+end
+end)
+
+targtab:Textbox("Jail Player", function(v)
+local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
+if remotes then
+    local todo = remotes:WaitForChild("Todo", 5)
+    if todo then
+        local character = game.Players.LocalPlayer.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+        local function findTarget(partialName)
+            partialName = partialName:lower()
+            for _, plr in pairs(game.Players:GetPlayers()) do
+                local uname = plr.Name:lower()
+                local dname = plr.DisplayName:lower()
+                if uname:find(partialName) or dname:find(partialName) then
+                    return plr
+                end
+            end
+            return nil
+        end
+
+        local targetPlayer = findTarget(v)
+
+        if hrp and targetPlayer and targetPlayer.Character then
+            local originalCF = hrp.CFrame
+            hrp.CFrame = CFrame.new(200, 178, 431)
+            hrp.Velocity = Vector3.zero
+            task.wait(0.5)
+
+            todo:FireServer("Boogie", nil, targetPlayer.Character)
+            task.wait(0.5)
+
+            hrp.CFrame = originalCF
+        end
+    end
+end
+end)
+
+targtab:Textbox("Glitch Player", function(v)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -105,7 +180,7 @@ if hrp and targetPlayer and targetPlayer.Character then
 end
 end)
 
-maintab:Textbox("Bring Player", function(v)
+targtab:Textbox("Bring Player", function(v)
 local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
 if remotes then
     local todo = remotes:WaitForChild("Todo", 5)
@@ -146,6 +221,312 @@ if remotes then
 end
 end)
 
+maintab:Button("Safe Zone GUI", function()
+local plr = game:GetService("Players").LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local root = char:WaitForChild("HumanoidRootPart")
+
+local guiName = "SafeZoneUI"
+local origin = Vector3.new(10000, 10000, 15450)
+local size, thickness, lastPos = 50, 2
+for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
+	if gui.Name == guiName then gui:Destroy() end
+end
+local existingRoom = workspace:FindFirstChild("SafeZoneRoom")
+if existingRoom then existingRoom:Destroy() end
+
+local folder = Instance.new("Model", workspace)
+folder.Name = "SafeZoneRoom"
+
+local function createPart(props)
+	local p = Instance.new("Part")
+	for k, v in pairs(props) do p[k] = v end
+	p.Anchored = true
+	p.Parent = folder
+	return p
+end
+
+local function wall(off, sz, trans)
+	return createPart{
+		Size = sz,
+		Position = origin + off,
+		Material = Enum.Material.WoodPlanks,
+		Color = Color3.fromRGB(110, 85, 60),
+		Transparency = trans or 0
+	}
+end
+
+wall(Vector3.new(0,-size/2,0), Vector3.new(size, thickness, size)) -- Floor
+wall(Vector3.new(0,size/2,0), Vector3.new(size, thickness, size)) -- Ceiling
+wall(Vector3.new(-size/2,0,0), Vector3.new(thickness, size, size)) -- Left
+wall(Vector3.new(size/2,0,0), Vector3.new(thickness, size, size)) -- Right
+wall(Vector3.new(0,0,-size/2), Vector3.new(size, size, thickness)) -- Back
+wall(Vector3.new(0,0,size/2), Vector3.new(size, size, thickness)) -- Front
+
+wall(Vector3.new(0,0,-size/2 + 0.1), Vector3.new(size-10, size-10, 0.2), 0.5)
+wall(Vector3.new(0,8,size/2 - 0.1), Vector3.new(size-10, size-12, 0.2), 0.4)
+
+createPart{
+	Shape = Enum.PartType.Ball,
+	Size = Vector3.new(5,5,5),
+	Position = origin + Vector3.new(0,6,0),
+	Material = Enum.Material.Neon,
+	Color = Color3.fromRGB(0,255,170)
+}
+
+local seat = Instance.new("Seat", folder)
+seat.Size = Vector3.new(4, 1, 4)
+seat.Position = origin + Vector3.new(0, -size/2 + 3, 0)
+seat.Material = Enum.Material.Wood
+seat.Color = Color3.fromRGB(100, 80, 60)
+seat.Name = "SafeZoneChair"
+seat.Anchored = false
+seat.CanCollide = true
+
+local base = Instance.new("Part", folder)
+base.Size = Vector3.new(0.1, 0.1, 0.1)
+base.Position = seat.Position
+base.Anchored = true
+base.Transparency = 1
+base.CanCollide = false
+
+local weldBase = Instance.new("WeldConstraint")
+weldBase.Part0 = base
+weldBase.Part1 = seat
+weldBase.Parent = base
+
+local back = createPart{
+	Size = Vector3.new(4, 4, 0.5),
+	Position = seat.Position + Vector3.new(0, 2, 2.25),
+	Material = Enum.Material.Wood,
+	Color = seat.Color
+}
+back.Anchored = false
+
+local weldBack = Instance.new("WeldConstraint")
+weldBack.Part0 = seat
+weldBack.Part1 = back
+weldBack.Parent = seat
+
+for _, offset in ipairs({
+	Vector3.new(-1.5, -0.5, -1.5),
+	Vector3.new(1.5, -0.5, -1.5),
+	Vector3.new(-1.5, -0.5, 1.5),
+	Vector3.new(1.5, -0.5, 1.5),
+}) do
+	local leg = createPart{
+		Size = Vector3.new(0.5, 2, 0.5),
+		Position = seat.Position + offset,
+		Material = Enum.Material.Wood,
+		Color = seat.Color
+	}
+	leg.Anchored = false
+
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = seat
+	weld.Part1 = leg
+	weld.Parent = seat
+end
+
+local screen = Instance.new("Part", folder)
+screen.Size = Vector3.new(10, 6, 0.2)
+screen.Position = origin + Vector3.new(0, -size/2 + 5, -8)
+screen.Anchored = true
+screen.Material = Enum.Material.Glass
+screen.Transparency = 0.5
+screen.Reflectance = 0.1
+screen.Color = Color3.fromRGB(20, 20, 20)
+screen.Name = "SafeZoneTV"
+
+local frame = Instance.new("Part", folder)
+frame.Size = Vector3.new(10.2, 6.2, 0.2)
+frame.Position = screen.Position + Vector3.new(0, 0, -0.21)
+frame.Anchored = true
+frame.Material = Enum.Material.Wood
+frame.Color = Color3.fromRGB(60, 45, 35)
+frame.Name = "TVFrame"
+
+local glow = Instance.new("PointLight", frame)
+glow.Color = Color3.fromRGB(90, 90, 120)
+glow.Range = 12
+glow.Brightness = 1.5
+glow.Shadows = false
+
+local stand = Instance.new("Part", folder)
+stand.Size = Vector3.new(12, 1, 4)
+stand.Position = screen.Position + Vector3.new(0, -3.5, -0.5)
+stand.Anchored = true
+stand.Material = Enum.Material.Wood
+stand.Color = Color3.fromRGB(70, 50, 40)
+stand.Name = "TVStand"
+
+local images = {
+	"rbxassetid://",
+	"rbxassetid://2096706",
+	"rbxassetid://12886904144",
+}
+
+local screenDecal = Instance.new("Decal")
+screenDecal.Texture = "rbxassetid://2058984"
+screenDecal.Face = Enum.NormalId.Bottom
+screenDecal.Parent = screen
+
+local surface = Instance.new("SurfaceGui", screen)
+surface.Face = Enum.NormalId.Front
+surface.CanvasSize = Vector2.new(500, 300)
+surface.AlwaysOnTop = true
+surface.Name = "TVDisplay"
+
+local imageLabel = Instance.new("ImageLabel", surface)
+imageLabel.Size = UDim2.new(1, 0, 1, 0)
+imageLabel.BackgroundTransparency = 1
+imageLabel.Image = "rbxassetid://2058984"
+
+task.spawn(function()
+	local index = 1
+	while true do
+		index = (index % #images) + 1
+		imageLabel.Image = images[index]
+		task.wait(3)
+	end
+end)
+
+local speaker = Instance.new("Part", folder)
+speaker.Size = Vector3.new(3, 3, 3)
+speaker.Position = origin + Vector3.new(6, -size/2 + 5, -8)
+speaker.Anchored = true
+speaker.Material = Enum.Material.SmoothPlastic
+speaker.Color = Color3.fromRGB(50, 50, 50)
+speaker.Name = "MusicSpeaker"
+
+local mesh = Instance.new("SpecialMesh", speaker)
+mesh.MeshId = "rbxassetid://1323932968"
+mesh.TextureId = "rbxassetid://6057464213"
+mesh.Scale = Vector3.new(3, 3, 3)
+
+local sound = Instance.new("Sound", speaker)
+sound.SoundId = "rbxassetid://1845341094"
+sound.Volume = 0.75
+sound.Looped = true
+sound.Playing = true
+
+local function lamp(pos)
+	local base = createPart{
+		Size = Vector3.new(1,6,1),
+		Position = origin + pos,
+		Color = Color3.fromRGB(45,45,45),
+		Material = Enum.Material.Metal
+	}
+	local light = Instance.new("PointLight", base)
+	light.Color = Color3.fromRGB(255, 240, 190)
+	light.Range = 75
+	light.Brightness = 2
+	light.Shadows = true
+end
+
+local lampOff = size/2 - 3
+for _, vec in ipairs({
+	Vector3.new(-lampOff, lampOff - 5, -lampOff),
+	Vector3.new(lampOff, lampOff - 5, -lampOff),
+	Vector3.new(-lampOff, lampOff - 5, lampOff),
+	Vector3.new(lampOff, lampOff - 5, lampOff),
+}) do lamp(vec) end
+
+local debounceTable = {}
+
+seat.Touched:Connect(function(hit)
+	local character = hit.Parent
+	local human = character and character:FindFirstChild("Humanoid")
+	local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+	if not (human and hrp) then return end
+	if debounceTable[character] then return end
+
+	debounceTable[character] = true
+
+	local seatCF = seat.CFrame
+	local offset = Vector3.new(0, 2.2, 0)
+	hrp.CFrame = CFrame.new(seat.Position + offset, seat.Position + seatCF.LookVector * 5)
+	human.Sit = true
+
+	task.delay(2, function()
+		debounceTable[character] = nil
+	end)
+end)
+
+local gui = Instance.new("ScreenGui")
+gui.Name = guiName
+gui.ResetOnSpawn = false
+gui.Parent = game:GetService("CoreGui")
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 260, 0, 140)
+frame.Position = UDim2.new(0.5, -130, 0.9, 0)
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+frame.BorderSizePixel = 0
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0.25, 0)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 20
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Text = "🛡️ Safety 🛡️"
+
+local function makeBtn(txt, ypos)
+	local b = Instance.new("TextButton", frame)
+	b.Size = UDim2.new(1, -20, 0.2, 0)
+	b.Position = UDim2.new(0, 10, ypos, 0)
+	b.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	b.BorderSizePixel = 0
+	b.TextColor3 = Color3.new(1,1,1)
+	b.Font = Enum.Font.Gotham
+	b.TextSize = 16
+	b.Text = txt
+	return b
+end
+
+local toBtn = makeBtn("Teleport to SafeZone", 0.25)
+local backBtn = makeBtn("Previous Position", 0.71)
+local spawnBtn = makeBtn("Teleport to Spawn", 0.48)
+
+toBtn.MouseButton1Click:Connect(function()
+	lastPos = root.Position
+	root.CFrame = CFrame.new(origin + Vector3.new(0,5,0))
+end)
+
+backBtn.MouseButton1Click:Connect(function()
+	if lastPos then root.CFrame = CFrame.new(lastPos + Vector3.new(0,5,0)) end
+end)
+
+spawnBtn.MouseButton1Click:Connect(function()
+	lastPos = root.Position
+	root.CFrame = CFrame.new(Vector3.new(0, 180, -13))
+end)
+
+local UIS = game:GetService("UserInputService")
+local dragging, offset = false, Vector2.zero
+
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		offset = input.Position - frame.AbsolutePosition
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		frame.Position = UDim2.new(0, input.Position.X - offset.X, 0, input.Position.Y - offset.Y)
+	end
+end)
+
+UIS.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+end)
+
+end)
+
 local killaura = false
 
 local function toggleKillAura()
@@ -177,6 +558,8 @@ end
 maintab:Button("Kill Aura", function()
     toggleKillAura()
 end)
+
+
 
 maintab:Button("God Mode", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
