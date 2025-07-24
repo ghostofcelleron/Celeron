@@ -235,7 +235,7 @@ local function setupAutoBehavior(toggleKey, skillName, humanoidRootPart)
                         for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
                             if track.Animation.AnimationId == ANIMATION_ID then
                                 local args = {
-                                    buffer.fromstring("\024\001"),
+                                    buffer.fromstring("\025\001"),
                                     {{skillName}}
                                 }
                                 ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
