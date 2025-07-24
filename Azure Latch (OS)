@@ -166,30 +166,29 @@ if humanoidRootPart then
 end
 end)
 
-maintab2:Textbox("Ball Hitbox Expander", function(v)
-	if _G.BallProximityThread then
-		_G.BallProximityThread:Cancel()
-		_G.BallProximityThread = nil
+maintab2:Textbox("Ball Magnet", function(v)
+	local player = game.Players.LocalPlayer
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+
+	local range = tonumber(v) or 0
+
+	local function findBall()
+		for _, obj in ipairs(workspace:GetDescendants()) do
+			if obj:IsA("BasePart") and obj.Name == "Ball" then
+				return obj
+			end
+		end
+		return nil
 	end
 
-	local distanceLimit = tonumber(v)
-	if not distanceLimit then return end
-
-	_G.BallProximityThread = task.spawn(function()
+	spawn(function()
 		while true do
-			task.wait(0.05)
-			local Ball = workspace.Terrain:FindFirstChild("Ball")
-			local character = player.Character
-			local hrp = character and character:FindFirstChild("HumanoidRootPart")
-
-			if Ball and hrp then
-				local distance = (Ball.Position - hrp.Position).Magnitude
-				if distance <= distanceLimit then
-					local args = {
-						buffer.fromstring("\016")
-					}
-					ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-				end
+			wait(0.255)
+			local target = findBall()
+			if target and (hrp.Position - target.Position).Magnitude <= range then
+				remote:FireServer(buffer.fromstring("\016"))
 			end
 		end
 	end)
