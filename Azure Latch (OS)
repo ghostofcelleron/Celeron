@@ -185,7 +185,7 @@ maintab2:Textbox("Ball Magnet", function(v)
 
 	spawn(function()
 		while true do
-			wait(0.255)
+			wait(0.5)
 			local target = findBall()
 			if target and (hrp.Position - target.Position).Magnitude <= range then
 				remote:FireServer(buffer.fromstring("\016"))
