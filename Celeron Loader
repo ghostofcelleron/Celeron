@@ -30,7 +30,11 @@ local function executeScript()
         [893973440] = "https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Flee%20The%20Facility%20(OS)",
         [94647229517154] = "https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Azure%20Latch%20(OS)",
         [3738091713] = "https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Boxing%20League%20(OS)",
-        [4598019433] = "https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Generic%20Roleplay%20Game%20(OS)"
+        [4598019433] = "https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Generic%20Roleplay%20Game%20(OS)",
+        [1962086868] = "https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Tower%20Of%20Hell%20(OS)",
+        [155382109] = "https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/SurviveAndKillTheKillers%20(OS)",
+        [15467245730] = "https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/OP%20Battlegrounds%20(OS)",
+        [130739873848552] = "https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Basketball%3A%20Zero%20(OS)"
     }
 
     local url = scripts[game.PlaceId]
