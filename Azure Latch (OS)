@@ -167,10 +167,6 @@ end
 end)
 
 maintab2:Textbox("Ball Hitbox Expander", function(v)
-	if _G.BallProximityLoop then
-		_G.BallProximityLoop:Disconnect()
-		_G.BallProximityLoop = nil
-	end
 	if _G.BallProximityThread then
 		_G.BallProximityThread:Cancel()
 		_G.BallProximityThread = nil
