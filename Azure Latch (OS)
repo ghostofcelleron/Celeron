@@ -167,24 +167,36 @@ end
 end)
 
 maintab2:Textbox("Ball Hitbox Expander", function(v)
-if _G.BallSizeLoop then
-    _G.BallSizeLoop:Disconnect()
-    _G.BallSizeLoop = nil
-end
-if _G.BallSizeThread then
-    _G.BallSizeThread:Cancel()
-end
+	if _G.BallProximityLoop then
+		_G.BallProximityLoop:Disconnect()
+		_G.BallProximityLoop = nil
+	end
+	if _G.BallProximityThread then
+		_G.BallProximityThread:Cancel()
+		_G.BallProximityThread = nil
+	end
 
-_G.BallSizeThread = task.spawn(function()
-    while true do
-        task.wait(0.05)
-        local Ball = workspace.Terrain:FindFirstChild("Ball")
-        local num = tonumber(v)
-        if Ball and num then
-            Ball.Size = Vector3.new(num, num, num)
-        end
-    end
-end)
+	local distanceLimit = tonumber(v)
+	if not distanceLimit then return end
+
+	_G.BallProximityThread = task.spawn(function()
+		while true do
+			task.wait(0.05)
+			local Ball = workspace.Terrain:FindFirstChild("Ball")
+			local character = player.Character
+			local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+			if Ball and hrp then
+				local distance = (Ball.Position - hrp.Position).Magnitude
+				if distance <= distanceLimit then
+					local args = {
+						buffer.fromstring("\016")
+					}
+					ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+				end
+			end
+		end
+	end)
 end)
 
 maintab2:Button("Suppress Notifications", function()
