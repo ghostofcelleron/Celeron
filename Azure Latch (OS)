@@ -242,7 +242,6 @@ local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
 local ANIMATION_ID = "rbxassetid://109744655458082"
-
 local cooldowns = {}
 
 local function notify(title, text, duration)
@@ -256,23 +255,24 @@ local function notify(title, text, duration)
 end
 
 local function setupAutoBehavior(toggleKey, skillName, humanoidRootPart)
-    RunService.Heartbeat:Connect(function()
+    RunService.Stepped:Connect(function()
         if not _G[toggleKey] or not humanoidRootPart then return end
 
         for _, target in ipairs(Players:GetPlayers()) do
             if target ~= player and target.Character and target.Team ~= player.Team then
                 local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
                 local targetHumanoid = target.Character:FindFirstChild("Humanoid")
-                local targetAnimator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
+                local animator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
 
-                if targetHRP and targetAnimator then
+                if targetHRP and animator then
                     local distance = (humanoidRootPart.Position - targetHRP.Position).Magnitude
                     if distance <= 35 then
-                        local lastUsed = cooldowns[target] or 0
-                        if tick() - lastUsed >= 0.5 then
-                            for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
+                        local now = tick()
+                        local last = cooldowns[target] or 0
+                        if now - last >= 0.5 then
+                            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
                                 if track.Animation.AnimationId == ANIMATION_ID then
-                                    cooldowns[target] = tick()
+                                    cooldowns[target] = now
 
                                     local args = {
                                         buffer.fromstring("\025\001"),
