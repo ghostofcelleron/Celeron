@@ -166,6 +166,18 @@ if humanoidRootPart then
 end
 end)
 
+maintab2:Button("Bind Magnet (M2 BIND)", function()
+local userInputService = game:GetService("UserInputService")
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        remote:FireServer(buffer.fromstring("\016"))
+    end
+end)
+end)
+
 maintab2:Textbox("Ball Magnet", function(v)
 	local player = game.Players.LocalPlayer
 	local char = player.Character or player.CharacterAdded:Wait()
@@ -194,7 +206,7 @@ maintab2:Textbox("Ball Magnet", function(v)
 	end)
 end)
 
-maintab2:Button("GK-Style Slide", function(v)
+maintab2:Button("GK-Style Slide", function()
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
