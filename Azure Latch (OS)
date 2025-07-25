@@ -194,6 +194,33 @@ maintab2:Textbox("Ball Magnet", function(v)
 	end)
 end)
 
+maintab2:Textbox("GK-Style Slide", function(v)
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+UserInputService.InputBegan:Connect(function(input, isProcessed)
+	if isProcessed or input.KeyCode ~= Enum.KeyCode.Q then return end
+
+	task.delay(0.425, function()
+		local target = root.CFrame + (root.CFrame.LookVector * 30)
+
+		local tweenInfo = TweenInfo.new(
+			0.05,
+			Enum.EasingStyle.Sine,
+			Enum.EasingDirection.Out
+		)
+
+		local tween = TweenService:Create(root, tweenInfo, {CFrame = target})
+		tween:Play()
+	end)
+end)
+end)
+
 maintab2:Button("Suppress Notifications", function()
     _G.suppressNotifs = not (_G.suppressNotifs or false)
     local StarterGui = game:GetService("StarterGui")
@@ -215,6 +242,8 @@ local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
 local ANIMATION_ID = "rbxassetid://109744655458082"
+
+local cooldowns = {}
 
 local function notify(title, text, duration)
     if not _G.suppressNotifs then
@@ -239,14 +268,19 @@ local function setupAutoBehavior(toggleKey, skillName, humanoidRootPart)
                 if targetHRP and targetAnimator then
                     local distance = (humanoidRootPart.Position - targetHRP.Position).Magnitude
                     if distance <= 35 then
-                        for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
-                            if track.Animation.AnimationId == ANIMATION_ID then
-                                local args = {
-                                    buffer.fromstring("\025\001"),
-                                    {{skillName}}
-                                }
-                                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-                                return
+                        local lastUsed = cooldowns[target] or 0
+                        if tick() - lastUsed >= 0.5 then
+                            for _, track in ipairs(targetAnimator:GetPlayingAnimationTracks()) do
+                                if track.Animation.AnimationId == ANIMATION_ID then
+                                    cooldowns[target] = tick()
+
+                                    local args = {
+                                        buffer.fromstring("\025\001"),
+                                        {{skillName}}
+                                    }
+                                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                                    break
+                                end
                             end
                         end
                     end
