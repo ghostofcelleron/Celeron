@@ -401,7 +401,6 @@ maintab:Button("Auto QuickTimeEvent", function()
     local players = game:GetService("Players")
     local virtualInputManager = game:GetService("VirtualInputManager")
     local starterGui = game:GetService("StarterGui")
-    local GuiService = game:GetService("GuiService")
     local player = players.LocalPlayer
 
     _G.QuickTimeEvent = not _G.QuickTimeEvent
@@ -426,7 +425,7 @@ maintab:Button("Auto QuickTimeEvent", function()
         return textLabels
     end
 
-    local function convertKeyText(text)
+    local function convertNumberToKeyText(text)
         local numberMap = {
             ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
             ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
@@ -445,23 +444,11 @@ maintab:Button("Auto QuickTimeEvent", function()
                     local textLabels = getAllTextLabels(qteGui.QTE)
 
                     for _, label in ipairs(textLabels) do
-                        local rawText = string.upper(label.Text)
-
-                        if rawText == "CLICK" or rawText == "TAP" or rawText == "PRESS" then
-                            for _, child in ipairs(label:GetChildren()) do
-                                if child:IsA("TextButton") then
-                                    GuiService:Select(child)
-                                    child:Activate()
-                                    break
-                                end
-                            end
-                        else
-                            local keyText = convertKeyText(label.Text)
-                            local keyCode = Enum.KeyCode[keyText]
-                            if keyCode then
-                                virtualInputManager:SendKeyEvent(true, keyCode, false, game)
-                                virtualInputManager:SendKeyEvent(false, keyCode, false, game)
-                            end
+                        local keyText = convertNumberToKeyText(label.Text)
+                        local keyCode = Enum.KeyCode[keyText]
+                        if keyCode then
+                            virtualInputManager:SendKeyEvent(true, keyCode, false, game)
+                            virtualInputManager:SendKeyEvent(false, keyCode, false, game)
                         end
                     end
                 end
