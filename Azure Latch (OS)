@@ -194,7 +194,7 @@ maintab2:Textbox("Ball Magnet", function(v)
 	end)
 end)
 
-maintab2:Textbox("GK-Style Slide", function(v)
+maintab2:Button("GK-Style Slide", function(v)
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
