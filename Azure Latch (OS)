@@ -1870,6 +1870,10 @@ teleporttab:Button("Goal Box (B)", function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-534, 3, 974)
 end)
 
+misctab:Button("Upgrade UI (very cool actually)", function()
+loadstring(game:HttpGet("https://pastebin.com/raw/QDNYsgxQ"))()
+end)
+
 misctab:Button("Overtime Cinematics", function()
 local vals = game.ReplicatedStorage.workspace
 local timer = vals.timer
