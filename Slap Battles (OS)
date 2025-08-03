@@ -96,7 +96,7 @@ end)
 
 maintab:Button("Slap Aura", function()
 	enabled = not enabled
-	local status = enabled and "Enabled" or "Disabled"
+	local status = enabled and "Enabled." or "Disabled."
 	game:GetService("StarterGui"):SetCore("SendNotification", {
 		Title = "Slap Aura",
 		Text = "" .. status,
@@ -112,7 +112,7 @@ local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
-local range = 7
+local range = 15
 local cooldown = 0.5
 local lastClick = 0
 local enabled = false
