@@ -52,10 +52,10 @@ end)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
 local enabled = false
-local scanInterval = 0.15
 local cachedRemotes = {}
 
 local function findEquippedGlove()
@@ -105,21 +105,21 @@ local function findRelevantHitRemotes(gloveName)
         end
     end
 
-    if #hits > 0 then
-        print("Matched hit remotes for glove '" .. gloveName .. "':")
-        for _, remote in ipairs(hits) do
-            print("- " .. remote:GetFullName())
-        end
-        cachedRemotes[gloveName] = hits
-        return hits
-    end
-
-    return nil
+    cachedRemotes[gloveName] = hits
+    return hits
 end
 
-task.spawn(function()
-    while true do
-        if enabled then
+local heartbeatConn
+local lastFireTime = 0
+
+maintab:Button("Slap Aura", function()
+    enabled = not enabled
+
+    if enabled and not heartbeatConn then
+        heartbeatConn = RunService.Heartbeat:Connect(function()
+            local currentTime = os.clock()
+            if currentTime - lastFireTime < 0.5 then return end
+
             local glove = findEquippedGlove()
             local targetPlayer = getClosestPlayer()
 
@@ -130,41 +130,36 @@ task.spawn(function()
 
                 if torso then
                     local remotes = {}
+
                     if glove then
                         local foundRemotes = findRelevantHitRemotes(glove.Name)
-                        if foundRemotes then
+                        if foundRemotes and #foundRemotes > 0 then
                             remotes = foundRemotes
                         end
                     end
 
                     if #remotes == 0 then
-                        for _, fallbackName in ipairs({"GeneralHit", "b"}) do
-                            local fallbackRemote = ReplicatedStorage:FindFirstChild(fallbackName)
-                            if fallbackRemote then
-                                table.insert(remotes, fallbackRemote)
+                        for _, fallback in ipairs({"GeneralHit", "b"}) do
+                            local remote = ReplicatedStorage:FindFirstChild(fallback)
+                            if remote then
+                                table.insert(remotes, remote)
                             end
-                        end
-                        print("Using fallback remotes:")
-                        for _, r in ipairs(remotes) do
-                            print("- " .. r:GetFullName())
                         end
                     end
 
                     for _, remote in ipairs(remotes) do
-                        local args = {
-                            targetPlayer.Character:WaitForChild(torso.Name)
-                        }
-                        remote:FireServer(unpack(args))
+                        remote:FireServer(targetPlayer.Character:FindFirstChild(torso.Name))
                     end
+
+                    lastFireTime = currentTime
                 end
             end
-        end
-        task.wait(scanInterval)
+        end)
+    elseif not enabled and heartbeatConn then
+        heartbeatConn:Disconnect()
+        heartbeatConn = nil
     end
-end)
 
-maintab:Button("Slap Aura", function()
-    enabled = not enabled
     StarterGui:SetCore("SendNotification", {
         Title = "Slap Aura",
         Text = enabled and "Enabled." or "Disabled.",
