@@ -647,61 +647,48 @@ farmtab:Textbox("Slap Farm (Set Username To Main)", function(v)
 	floating = true
 end)
 
-farmtab:Label("Killstreak / Reaper Farm: Recommended To Teleport Main To Baseplate.")
+farmtab:Label("Kill Farm: Recommended To Teleport Main To Baseplate.")
 
-farmtab:Textbox("KS / Reaper Farm (Set Username To Main)", function(v)
-	local Players = game:GetService("Players")
-	local Workspace = game:GetService("Workspace")
+farmtab:Textbox("Kill Farm (Set Username To Main)", function(v)
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 
-	local LocalPlayer = Players.LocalPlayer
-	local loopRunning = true
-	local shouldRunCycle = false
-	local customPosition = Vector3.new(-1009, 332, 5)
+local LocalPlayer = Players.LocalPlayer
 
-	local function teleportToLocation()
-		local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-		if root then
-			root.CFrame = CFrame.new(customPosition)
-		end
-	end
+local function onCharacterSpawn(character)
+	local rootPart = character:WaitForChild("HumanoidRootPart")
 
-	local function teleportToTargetMultiple()
-		if not v then return end
-		local target = Players:FindFirstChild(v)
-		local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-		if not target or not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then return end
-		if not myRoot then return end
+	local teleportPart = Workspace:WaitForChild("Lobby"):WaitForChild("Teleport1")
+	rootPart.CFrame = teleportPart.CFrame + Vector3.new(0, 1, 0)
+	firetouchinterest(rootPart, teleportPart, 0)
+	task.wait(0.1)
+	firetouchinterest(rootPart, teleportPart, 1)
 
+	task.wait(0.7)
+
+	local target = Players:FindFirstChild(v)
+	if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
 		local targetRoot = target.Character.HumanoidRootPart
 		local offset = targetRoot.CFrame.LookVector.Unit * 5
-		local destination = targetRoot.Position + offset + Vector3.new(0, 2, 0)
+		local destination = targetRoot.Position + offset + Vector3.new(0, 1, 0)
 
-		for i = 1, 15 do
-			myRoot.CFrame = CFrame.new(destination, targetRoot.Position)
+		for i = 1, 25 do
+			rootPart.CFrame = CFrame.new(destination, targetRoot.Position)
 			task.wait(0.05)
-		end
-
-		local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if humanoid then
-			humanoid.Health = 0
 		end
 	end
 
-	LocalPlayer.CharacterAdded:Connect(function()
-		shouldRunCycle = true
-	end)
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.Health = 0
+	end
+end
 
-	task.spawn(function()
-		while loopRunning do
-			if LocalPlayer.Character and shouldRunCycle then
-				shouldRunCycle = false
-				teleportToLocation()
-				task.wait(0.5)
-				teleportToTargetMultiple()
-			end
-			task.wait(0.1)
-		end
-	end)
+LocalPlayer.CharacterAdded:Connect(onCharacterSpawn)
+
+if LocalPlayer.Character then
+	onCharacterSpawn(LocalPlayer.Character)
+end
 end)
 
 misctab:Button("Infinite Yield", function()
