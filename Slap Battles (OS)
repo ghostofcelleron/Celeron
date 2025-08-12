@@ -1,4 +1,4 @@
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Slap Battles)",
@@ -12,6 +12,7 @@ local exptab = win:Tab("Exploits")
 local antitab = win:Tab("Protection")
 local farmtab = win:Tab("Farms")
 local teletab = win:Tab("Areas")
+local placetab = win:Tab("Places")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
@@ -20,6 +21,82 @@ exptab:Label("This Section Contains Useful / Game-Breaking Scripts.")
 antitab:Label("Protection Settings May Be Blatant.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
+placetab:Label("These Places Can Be Joined Instantly!")
+
+local TeleportService = game:GetService("TeleportService")
+local LocalPlayer = game.Players.LocalPlayer
+
+local function teleportTo(placeId)
+    TeleportService:Teleport(placeId, LocalPlayer)
+end
+
+placetab:Button("Main Game", function()
+    teleportTo(6403373529)
+end)
+
+placetab:Button("Killstreak Only", function()
+    teleportTo(11520107397)
+end)
+
+placetab:Button("No One Shot Gloves", function()
+    teleportTo(9015014224)
+end)
+
+placetab:Button("Slap Royale Matchmaking", function()
+    teleportTo(9426795465)
+end)
+
+placetab:Button("Normal Barzil", function()
+    teleportTo(7234087065)
+end)
+
+placetab:Button("Tower Of Hell (TOH)", function()
+    teleportTo(115782629143468)
+end)
+
+placetab:Button("Custom Glove Customizer", function()
+    teleportTo(9068206286)
+end)
+
+placetab:Button("Slap League", function()
+    teleportTo(18698003301)
+end)
+
+placetab:Button("Soft Update Waiting Place", function()
+    teleportTo(12712288037)
+end)
+
+placetab:Button("?", function()
+    teleportTo(12845859004)
+end)
+
+placetab:Label("Warning: The Below Places Can't Be Joined Directly.")
+
+placetab:Button("Testing Place", function()
+    teleportTo(9020359053)
+end)
+
+
+placetab:Button("Tower Defense", function()
+    teleportTo(15228348051)
+end)
+
+
+placetab:Button("Christmas Eve", function()
+    teleportTo(15507333474)
+end)
+
+placetab:Button("Day in the Life of a Small Game Dev", function()
+    teleportTo(136005148166028)
+end)
+
+placetab:Button("Null Zone", function()
+    teleportTo(14422118326)
+end)
+
+placetab:Button("Staff Application", function()
+    teleportTo(16034567693)
+end)
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -47,6 +124,25 @@ LocalPlayer.CharacterAdded:Connect(function(character)
 			humanoid.WalkSpeed = lastSliderSet
 		end
 	end)
+end)
+
+maintab:Button("Whistler Glove (CUSTOM, BEHIND PORTAL!)", function()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/Umbrella-Scripter/Slap-Battles/refs/heads/main/F.L.O.W.E.R.lua'))()
+end)
+
+maintab:Button("Remove Cooldown", function()
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local tool = character:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
+while character.Humanoid.Health ~= 0 do
+local localscript = tool:FindFirstChildOfClass("LocalScript")
+local localscriptclone = localscript:Clone()
+localscriptclone = localscript:Clone()
+localscriptclone:Clone()
+localscript:Destroy()
+localscriptclone.Parent = tool
+wait(0.1)
+end
 end)
 
 local Players = game:GetService("Players")
@@ -169,14 +265,13 @@ end)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 
 local LocalPlayer = Players.LocalPlayer
-local KSHitRemote = ReplicatedStorage:WaitForChild("KSHit")
 
 local root = nil
-local auraEnabled = true
+local auraEnabled = false
+local KSHitRemote = nil
 
 local function updateRoot()
 	local character = LocalPlayer.Character
@@ -213,7 +308,7 @@ end
 
 task.spawn(function()
 	while true do
-		if auraEnabled and root then
+		if auraEnabled and root and KSHitRemote then
 			local target = getClosestPlayer()
 			if target and target.Character then
 				local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
@@ -227,13 +322,10 @@ task.spawn(function()
 end)
 
 maintab:Button("Slap Aura (KS)", function()
+	if not KSHitRemote then
+		KSHitRemote = ReplicatedStorage:FindFirstChild("KSHit")
+	end
 	auraEnabled = not auraEnabled
-	local status = auraEnabled and "Enabled." or "Disabled."
-	StarterGui:SetCore("SendNotification", {
-		Title = "Slap Aura (KS)",
-		Text = status,
-		Duration = 3
-	})
 end)
 
 local Players = game:GetService("Players")
@@ -245,7 +337,7 @@ local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
 local range = 7
-local cooldown = 0.5
+local cooldown = 1.450
 local lastClick = 0
 local enabled = false
 
@@ -283,6 +375,55 @@ maintab:Button("Glove Triggerbot", function()
         Text = enabled and "Enabled." or "Disabled.",
         Duration = 2
     })
+end)
+
+maintab:Button("Spam Quake (Equip Quake)", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local remote = ReplicatedStorage:WaitForChild("QuakeQuake")
+
+for i = 1, 250 do
+    remote:FireServer({ start = true })
+    remote:FireServer({ finished = true })
+    task.wait() 
+end
+end)
+
+maintab:Button("Bind Rhythm (Binds To E, Equip Rhythm.)", function()
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local remote = ReplicatedStorage:WaitForChild("rhythmevent")
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.E then
+        local args = {
+            [1] = "AoeExplosion",
+            [2] = 42
+        }
+        remote:FireServer(unpack(args))
+    end
+end)
+end)
+
+maintab:Button("Free Radio (CLIENT)", function()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function cloneRadioTool()
+    for _, obj in ipairs(game:GetDescendants()) do
+        if obj:IsA("Tool") and obj.Name == "Radio" then
+            local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+            if backpack then
+                local clone = obj:Clone()
+                clone.Parent = backpack
+                return
+            end
+        end
+    end
+end
+
+cloneRadioTool()
 end)
 
 maintab:Button("Auto-Click Tycoon (MUST BE NEAR)", function()
@@ -396,11 +537,114 @@ antitab:Button("Anti-Fling", function()
 	notify("Anti-Fling", status)
 end)
 
+local StarterGui = game:GetService("StarterGui")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local dangerousTools = {
+    ["Error"] = true,
+    ["OVERKILL"] = true,
+    ["The Flex"] = true
+}
+
+local function hasDangerousTool(player)
+    local backpack = player:FindFirstChildOfClass("Backpack")
+    local character = player.Character
+    if not backpack and not character then return false end
+
+    for _, tool in ipairs(backpack:GetChildren()) do
+        if dangerousTools[tool.Name] then return true end
+    end
+    if character then
+        for _, tool in ipairs(character:GetChildren()) do
+            if tool:IsA("Tool") and dangerousTools[tool.Name] then return true end
+        end
+    end
+    return false
+end
+
+local antiOneShotEnabled = false
+local connection
+antitab:Button("Anti-OneShot", function()
+    antiOneShotEnabled = not antiOneShotEnabled
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Anti-OneShot",
+        Text = antiOneShotEnabled and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+
+    if antiOneShotEnabled then
+        connection = RunService.RenderStepped:Connect(function()
+            local myCharacter = LocalPlayer.Character
+            if not myCharacter then return end
+
+            local myRoot = myCharacter:FindFirstChild("HumanoidRootPart")
+            if not myRoot then return end
+
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and hasDangerousTool(player) then
+                    local theirRoot = player.Character:FindFirstChild("HumanoidRootPart")
+                    if theirRoot then
+                        local offset = myRoot.Position - theirRoot.Position
+                        local distance = offset.Magnitude
+                        local minDistance = 20
+
+                        if distance < minDistance then
+                            local repelDir = offset.Unit
+                            local targetPosition = theirRoot.Position + repelDir * minDistance
+                            local upwardBias = Vector3.new(0, 0.5, 0)
+                            local correctedPosition = targetPosition + upwardBias
+
+                            myRoot.CFrame = CFrame.new(correctedPosition)
+                            break
+                        end
+                    end
+                end
+            end
+        end)
+    elseif connection then
+        connection:Disconnect()
+        connection = nil
+    end
+end)
+
+local running = false
+antitab:Button("Anti-MegaRock", function()
+    running = not running
+    getgenv().antimegarocksb = running
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Anti-MegaRock",
+        Text = running and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+
+    if running then
+        task.spawn(function()
+            while getgenv().antimegarocksb do
+                for _, player in ipairs(game.Players:GetPlayers()) do
+                    local char = player.Character
+                    if char then
+                        local rock = char:FindFirstChild("rock")
+                        if rock then
+                            rock.CanTouch = false
+                            rock.CanQuery = false
+                        end
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
+    end
+end)
+
 exptab:Button("Get All Badge Gloves (INSTANT)", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/IncognitoScripts/SlapBattles/refs/heads/main/InstantGloves"))()
 end)
 
-antitab:Button("Anti-Void (Box Method)", function()
+antitab:Button("Anti-Void (ONLY MAIN ISLAND, Box Method)", function()
 local Workspace = game:GetService("Workspace")
 
 local originCFrame = CFrame.new(
@@ -533,7 +777,7 @@ game:GetService("StarterGui"):SetCore("SendNotification", {
 })
 end)
 
-farmtab:Textbox("Slap Farm (Set Username To Alt)", function(v)
+farmtab:Textbox("Slap Farm (Set Username To Alt.)", function(v)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -642,14 +886,14 @@ if LocalPlayer.Character then
 	root = character:WaitForChild("HumanoidRootPart")
 end
 
-farmtab:Textbox("Slap Farm (Set Username To Main)", function(v)
+farmtab:Textbox("Slap Farm (Set Username To Main.)", function(v)
 	targetName = v
 	floating = true
 end)
 
 farmtab:Label("Kill Farm: Recommended To Teleport Main To Baseplate.")
 
-farmtab:Textbox("Kill Farm (Set Username To Main)", function(v)
+farmtab:Textbox("Kill Farm (Set Username To Main.)", function(v)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
@@ -691,6 +935,184 @@ if LocalPlayer.Character then
 end
 end)
 
+farmtab:Label("Rob Farm: Silent, No Recommendations.")
+
+farmtab:Button("Rob Absorb Farm (Use On Main, Rejoin To Disable.)", function()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local targetPosition = Vector3.new(5000, 241, 4999)
+local remote = ReplicatedStorage:WaitForChild("rob")
+local args = { false }
+
+task.spawn(function()
+    while true do
+        remote:FireServer(unpack(args))
+        task.wait(3)
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    local character = player.Character
+    if character then
+        local root = character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.Velocity = Vector3.zero
+            root.CFrame = CFrame.new(targetPosition)
+        end
+    end
+end)
+end)
+
+farmtab:Textbox("Rob Absorb Farm (Set Username To Main, Semi-Blatant.)", function(v)
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+
+local function onCharacterSpawn(character)
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+
+	local teleportPart = Workspace:WaitForChild("Lobby"):WaitForChild("Teleport1")
+	rootPart.CFrame = teleportPart.CFrame + Vector3.new(0, 1, 0)
+	firetouchinterest(rootPart, teleportPart, 0)
+	task.wait(0.1)
+	firetouchinterest(rootPart, teleportPart, 1)
+
+	task.wait(0.7)
+
+	local target = Players:FindFirstChild(v)
+	if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+		local targetRoot = target.Character.HumanoidRootPart
+		local offset = targetRoot.CFrame.LookVector.Unit * 5
+		local destination = targetRoot.Position + offset + Vector3.new(0, 1, 0)
+
+		for i = 1, 25 do
+			rootPart.CFrame = CFrame.new(destination, targetRoot.Position)
+			task.wait(0.05)
+		end
+	end
+
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.Health = 0
+	end
+end
+
+LocalPlayer.CharacterAdded:Connect(onCharacterSpawn)
+
+if LocalPlayer.Character then
+	onCharacterSpawn(LocalPlayer.Character)
+end
+end)
+
+farmtab:Label("Moyai Farm: Recommended To Join Small Servers.")
+
+farmtab:Button("Moyai Farm Quest #1 (Use On Main, Rejoin To Disable.)", function()
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+local targetPosition = Vector3.new(280.659210, 21.155642, 240.360291)
+local lookDirection = Vector3.new(0.989398, 0.000000, -0.145231)
+local targetCFrame = CFrame.new(targetPosition, targetPosition + lookDirection)
+
+root.CFrame = targetCFrame
+
+task.wait(0.15)
+VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+task.wait(0.05)
+VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+task.wait(0.2)
+VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+task.wait(0.05)
+VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+local targetPosition = Vector3.new(272.066437, 13.453131, 245.083008)
+local lookDirection = Vector3.new(0.185743, -0.000000, -0.982598)
+local targetCFrame = CFrame.new(targetPosition, targetPosition + lookDirection)
+
+root.CFrame = targetCFrame
+
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+while true do
+    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+    task.wait(2.3)
+end
+end)
+
+farmtab:Button("Moyai Farm Quest #1 (Use On Alt.)", function()
+while true do game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(273, 14, 241) task.wait(0.05) end
+end)
+
+farmtab:Label("Brick Farm: Silent, No Recommendations.")
+
+farmtab:Button("Brick Multi-Farm (Use On Main.)", function(v)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local targetPosition = Vector3.new(5000, 228, 5000)
+
+RunService.Heartbeat:Connect(function()
+    local character = player.Character
+    if character then
+        local root = character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = CFrame.new(targetPosition)
+        end
+    end
+end)
+
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+while true do
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+    task.wait(6.75)
+end
+end)
+
+farmtab:Button("Brick Multi-Farm (Use On Alt.)", function(v)
+local Workspace = game:GetService("Workspace")
+
+local baseplate = Instance.new("Part")
+baseplate.Size = Vector3.new(100, 1, 100)
+baseplate.Position = Vector3.new(5002, 209, 4996)
+baseplate.Anchored = true
+baseplate.Name = "tpbaseplate"
+baseplate.Parent = Workspace
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local targetPosition = Vector3.new(5002, 214, 4996)
+
+RunService.Heartbeat:Connect(function()
+    local character = player.Character
+    if character then
+        local root = character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = CFrame.new(targetPosition)
+        end
+    end
+end)
+end)
+
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
@@ -699,9 +1121,219 @@ misctab:Button("Nameless Admin", function()
 loadstring(game:HttpGet('https://raw.githubusercontent.com/FilteringEnabled/NamelessAdmin/main/Source'))()
 end)
 
+misctab:Button("Rejoin Server", function()
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+local placeId = game.PlaceId
+local jobId = game.JobId
+local player = Players.LocalPlayer or Players:GetPlayers()[1]
+
+if typeof(placeId) == "number" and typeof(jobId) == "string" and player then
+    print("Rejoining current server...")
+    print("PlaceId:", placeId)
+    print("JobId:", jobId)
+    TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
+else
+    print("Failed to get current server info or player.")
+end
+end)
+
+misctab:Button("Switch Servers", function()
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+local placeId = game.PlaceId
+local currentJobId = game.JobId
+local player = Players.LocalPlayer or Players:GetPlayers()[1]
+
+local function findDifferentServer()
+    local cursor = nil
+
+    while true do
+        local url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100", placeId)
+        if cursor then
+            url = url .. "&cursor=" .. cursor
+        end
+
+        local success, response = pcall(function()
+            return http_request({
+                Url = url,
+                Method = "GET",
+                Headers = {
+                    ["User-Agent"] = "Mozilla/5.0"
+                }
+            })
+        end)
+
+        if not success or not response or not response.Body then
+            print("Request failed. Retrying...")
+            task.wait(2)
+            continue
+        end
+
+        if string.find(response.Body, "Too many requests") then
+            print("Rate limited. Waiting...")
+            task.wait(3)
+            continue
+        end
+
+        local successDecode, data = pcall(function()
+            return HttpService:JSONDecode(response.Body)
+        end)
+
+        if not successDecode or not data or not data.data then
+            print("Failed to decode. Retrying...")
+            task.wait(2)
+            continue
+        end
+
+        for _, server in pairs(data.data) do
+            if server.id ~= currentJobId and server.playing < server.maxPlayers then
+                print("Found different server:", server.id)
+                return server.id
+            end
+        end
+
+        cursor = data.nextPageCursor
+        task.wait(1)
+
+        if not cursor then break end
+    end
+
+    return nil
+end
+
+local newJobId = findDifferentServer()
+if newJobId and player then
+    print("Teleporting to different server...")
+    TeleportService:TeleportToPlaceInstance(placeId, newJobId, player)
+else
+    print("No different server found or player missing.")
+end
+end)
+
+misctab:Button("Join Small Server (MAY GET RATE LIMITED!)", function()
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+_G.extracted1 = game.PlaceId
+_G.extracted2 = nil
+
+local userAgents = {
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+    "Mozilla/5.0 (X11; Linux x86_64)",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)",
+    "Mozilla/5.0 (Android 11; Mobile; rv:89.0)",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0)",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko)",
+    "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko)",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/114.0.0.0 Safari/537.36"
+}
+
+local function fetchSmartServer()
+    local cursor = nil
+    local smallestServer = nil
+    local minPlayers = math.huge
+    local retryCount = 0
+
+    while true do
+        local baseUrl = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100", _G.extracted1)
+        local url = baseUrl
+        if cursor then
+            url = url .. "&cursor=" .. cursor
+        end
+
+        local headers = {
+            ["User-Agent"] = userAgents[math.random(1, #userAgents)],
+            ["X-Requested-With"] = "XMLHttpRequest"
+        }
+
+        local success, response = pcall(function()
+            return http_request({
+                Url = url,
+                Method = "GET",
+                Headers = headers
+            })
+        end)
+
+        if not success or not response or not response.Body then
+            print("Request failed. Retrying...")
+            retryCount += 1
+            task.wait(math.random(2, 4) + retryCount)
+            continue
+        end
+
+        if string.find(response.Body, "Too many requests") then
+            print("Rate limited. Backing off...")
+            retryCount += 1
+            task.wait(math.random(3, 6) + retryCount)
+            continue
+        end
+
+        local successDecode, data = pcall(function()
+            return HttpService:JSONDecode(response.Body)
+        end)
+
+        if not successDecode or not data or not data.data then
+            print("Failed to decode server data. Retrying...")
+            retryCount += 1
+            task.wait(math.random(2, 5) + retryCount)
+            continue
+        end
+
+        retryCount = 0
+
+        for _, server in pairs(data.data) do
+            print("Checking server:", server.id, "Players:", server.playing, "/", server.maxPlayers)
+
+            if server.playing >= 1 and server.playing <= 2 and server.playing < server.maxPlayers then
+                print("Found ideal server with 1–2 players. Joining now.")
+                return server
+            end
+
+            if server.playing < minPlayers and server.playing < server.maxPlayers then
+                minPlayers = server.playing
+                smallestServer = server
+            end
+        end
+
+        cursor = data.nextPageCursor
+        task.wait(math.random(1, 2))
+
+        if not cursor then break end
+    end
+
+    return smallestServer
+end
+
+local server = fetchSmartServer()
+if server then
+    _G.extracted2 = server.id
+    print("Extracted PlaceId:", _G.extracted1)
+    print("Extracted JobId:", _G.extracted2)
+
+    local player = Players.LocalPlayer or Players:GetPlayers()[1]
+
+    if typeof(_G.extracted1) == "number" and typeof(_G.extracted2) == "string" and player then
+        print("Teleporting to server...")
+        TeleportService:TeleportToPlaceInstance(_G.extracted1, _G.extracted2, player)
+    else
+        print("Invalid data or player not found.")
+    end
+else
+    print("No suitable server found.")
+end
+end)
+
 misctab:Button("Destroy GUI", function()
     win:Exit()
 end)
+
 
 misctab:Button("Leave Game", function()
     game:Shutdown()
