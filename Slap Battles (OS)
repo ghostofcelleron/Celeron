@@ -26,6 +26,7 @@ end
 local slapbattles2 = slapbattles
 
 if currentPlaceId == slapbattles then
+
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
 
 local win = ui:Create({
