@@ -1587,6 +1587,7 @@ StarterGui:SetCore("SendNotification", {
 })
 setclipboard("https://discord.gg/8stFYxJv4R")
 end)
+
 elseif currentPlaceId == evilbarzil then
 
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
@@ -2144,7 +2145,6 @@ misctab:Button("Destroy GUI", function()
     win:Exit()
 end)
 
-
 misctab:Button("Leave Game", function()
     game:Shutdown()
 end)
@@ -2174,6 +2174,7 @@ setclipboard("https://discord.gg/8stFYxJv4R")
 end)
 
 elseif currentPlaceId == slaproyale then
+
 for _, obj in ipairs(game:GetDescendants()) do
 	if obj:IsA("Seat") or obj:IsA("VehicleSeat") then
 		obj:Destroy()
@@ -3254,9 +3255,12 @@ setclipboard("https://discord.gg/8stFYxJv4R")
 end)
 elseif currentPlaceId == nullzone then
 print("unimplemented.")
+
 elseif currentPlaceId == slapbattlesks then
 print("unimplemented.")
+
 elseif currentPlaceId == slaproyalewaiting then
+
 local StarterGui = game:GetService("StarterGui")
 
 StarterGui:SetCore("SendNotification", {
