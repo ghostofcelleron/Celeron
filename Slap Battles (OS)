@@ -5,11 +5,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local slapbattles = 6403373529
 local slapbattles2 = 124596094333302
+local slapbattles3 = 9015014224
 local slapbattlesks = 11520107397
 local evilbarzil = 80420091630966
 local slaproyale = 9431156611
 local slaproyalewaiting = 9426795465
-local nullzone = 14422118326
+local eternalbob = 13833961666
 
 local currentPlaceId = game.PlaceId
 
@@ -23,9 +24,7 @@ local function notify(title, text, duration)
 	end)
 end
 
-local slapbattles2 = slapbattles
-
-if currentPlaceId == slapbattles then
+if currentPlaceId == slapbattles or currentPlaceId == slapbattles2 or currentPlaceId == slapbattles3 then
 
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
 
@@ -41,6 +40,8 @@ local antitab = win:Tab("Protection")
 local exptab = win:Tab("Exploits")
 local farmtab = win:Tab("Farms")
 local teletab = win:Tab("Map")
+local funtab = win:Tab("Fun")
+local modetab = win:Tab("Modes")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
@@ -276,7 +277,7 @@ misctab:Button("Leave Game", function()
     game:Shutdown()
 end)
 
-misctab:Label("These Places Can Be Joined Instantly!")
+modetab:Label("These Places Can Be Joined Instantly!")
 
 local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = game.Players.LocalPlayer
@@ -285,23 +286,23 @@ local function teleportTo(placeId)
     TeleportService:Teleport(placeId, LocalPlayer)
 end
 
-misctab:Button("Main Game", function()
+modetab:Button("Main Game", function()
     teleportTo(6403373529)
 end)
 
-misctab:Button("Killstreak Only", function()
+modetab:Button("Killstreak Only", function()
     teleportTo(11520107397)
 end)
 
-misctab:Button("No One Shot Gloves", function()
+modetab:Button("No One Shot Gloves", function()
     teleportTo(9015014224)
 end)
 
-misctab:Button("Slap Royale Matchmaking", function()
+modetab:Button("Slap Royale Matchmaking", function()
     teleportTo(9426795465)
 end)
 
-misctab:Button("Normal Barzil", function()
+modetab:Button("Normal Barzil", function()
     teleportTo(7234087065)
 end)
 
@@ -309,45 +310,69 @@ misctab:Button("Slap League (Functional, Needs Another Player.)", function()
     teleportTo(18698003301)
 end)
 
-misctab:Button("Tower Of Hell (TOH)", function()
+modetab:Button("Tower Of Hell (TOH)", function()
     teleportTo(115782629143468)
 end)
 
-misctab:Button("Custom Glove Customizer", function()
+modetab:Button("Day in the Life of a Small Game Dev", function()
+	queueonteleport([[
+    print("ez pz!")
+
+    local player = game:GetService("Players").LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+
+    local function find(parent, name)
+        local t, s = 2.5, tick()
+        repeat
+            local c = parent:FindFirstChild(name)
+            if c then return c end
+            task.wait(0.1)
+        until tick() - s > t
+        return nil
+    end
+
+    local hrp = find(character, "HumanoidRootPart")
+    local trigger = find(find(find(find(workspace, "Buildings"), "wizard twoer 2"), "Model"), "Trigger")
+
+    if hrp and trigger and trigger:FindFirstChild("TouchInterest") then
+        firetouchinterest(hrp, trigger, 0)
+        firetouchinterest(hrp, trigger, 1)
+    end
+]])
+teleportTo(7234087065)
+end)
+
+modetab:Button("Custom Glove Customizer", function()
     teleportTo(9068206286)
 end)
 
-misctab:Button("Soft Update Waiting Place", function()
+modetab:Button("Soft Update Waiting Place", function()
     teleportTo(12712288037)
 end)
 
-misctab:Button("?", function()
+modetab:Button("?", function()
     teleportTo(12845859004)
 end)
 
-misctab:Label("Warning: The Below Places Can't Be Joined Directly.")
+modetab:Label("Warning: The Below Places Can't Be Joined Directly.")
 
-misctab:Button("Testing Place", function()
+modetab:Button("Testing Place", function()
     teleportTo(9020359053)
 end)
 
-misctab:Button("Tower Defense", function()
+modetab:Button("Tower Defense", function()
     teleportTo(15228348051)
 end)
 
-misctab:Button("Christmas Eve", function()
+modetab:Button("Christmas Eve", function()
     teleportTo(15507333474)
 end)
 
-misctab:Button("Day in the Life of a Small Game Dev", function()
-    teleportTo(136005148166028)
-end)
-
-misctab:Button("Null Zone", function()
+modetab:Button("Null Zone", function()
     teleportTo(14422118326)
 end)
 
-misctab:Button("Staff Application", function()
+modetab:Button("Staff Application", function()
     teleportTo(16034567693)
 end)
 
@@ -397,7 +422,230 @@ LocalPlayer.CharacterAdded:Connect(function(character)
 	end
 end)
 
-maintab:Button("Whistler Glove (CUSTOM, BEHIND PORTAL!)", function()
+funtab:Label("Some Fun Features I Made.")
+
+funtab:Button("OP Avatar GUI", function()
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local Camera = Workspace.CurrentCamera
+
+task.spawn(function()
+	while true do
+		task.wait(1)
+		local land = Workspace:FindFirstChild(LocalPlayer.Name .. "'s avatar_land")
+		local generator = land and land:FindFirstChild("Generator")
+		local broken = generator and generator:FindFirstChild("broken")
+		local prompt = broken and broken:FindFirstChild("prompt")
+		if prompt then
+			prompt.HoldDuration = 0
+		end
+	end
+end)
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AvatarGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = PlayerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 216, 0, 412)
+frame.Position = UDim2.new(0.5, -108, 0.5, -206)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+frame.Active = true
+frame.Draggable = true
+
+local function createLabel(text, positionY, color)
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, 0, 0, 27)
+	label.Position = UDim2.new(0, 0, 0, positionY)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = color
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 21
+	label.Text = text
+	label.TextScaled = false
+	label.Parent = frame
+	return label
+end
+
+local title = createLabel("Avatar GUI", 0, Color3.fromRGB(255, 255, 255))
+title.Size = UDim2.new(1, 0, 0, 41)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 24
+
+local infoBar = createLabel("Loading...", 41, Color3.fromRGB(200, 200, 200))
+local statusBar = createLabel("Checking...", 68, Color3.fromRGB(180, 255, 180))
+local godModeBar = createLabel("God Mode: Unknown", 95, Color3.fromRGB(255, 200, 200))
+
+local godModeEnabled = nil
+
+local function createButton(name, index, callback)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(1, -24, 0, 34)
+	button.Position = UDim2.new(0, 12, 0, 129 + (index - 1) * 38)
+	button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	button.TextColor3 = Color3.fromRGB(255, 255, 255)
+	button.Font = Enum.Font.Gotham
+	button.TextSize = 13
+	button.Text = name
+	button.BorderSizePixel = 0
+	button.Parent = frame
+	button.MouseButton1Click:Connect(callback)
+	return button
+end
+
+createButton("God Mode (Use In Hatch)", 1, function()
+	godModeEnabled = true
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local root = character:WaitForChild("HumanoidRootPart")
+	local land = Workspace:FindFirstChild(LocalPlayer.Name .. "'s avatar_land")
+	local hatch = land and land:FindFirstChild("AvatarLand") and land.AvatarLand:FindFirstChild("hatch") and land.AvatarLand.hatch:FindFirstChild("hatch")
+	if hatch and hatch:IsA("BasePart") then
+		root.CFrame = hatch.CFrame + Vector3.new(0, 5, 0)
+	end
+end)
+
+createButton("Disable God Mode", 2, function()
+	godModeEnabled = false
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local root = character:WaitForChild("HumanoidRootPart")
+	local basement = Workspace:FindFirstChild("BasementFolder") and Workspace.BasementFolder:FindFirstChild(LocalPlayer.Name .. "'s Basement")
+	local exit = basement and basement:FindFirstChild("Exit")
+	if exit and exit:IsA("BasePart") then
+	end
+end)
+
+createButton("Enter Hatch", 3, function()
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local root = character:WaitForChild("HumanoidRootPart")
+	local land = Workspace:FindFirstChild(LocalPlayer.Name .. "'s avatar_land")
+	local hatch = land and land:FindFirstChild("AvatarLand") and land.AvatarLand:FindFirstChild("hatch") and land.AvatarLand.hatch:FindFirstChild("hatch")
+	if hatch and hatch:IsA("BasePart") then
+		root.CFrame = hatch.CFrame + Vector3.new(0, 5, 0)
+	end
+	task.wait(0.3)
+	local main = land and land:FindFirstChild("main")
+	local prompt = main and main:FindFirstChildOfClass("ProximityPrompt")
+	if prompt then
+	end
+end)
+
+createButton("Enter Hatch (Use If God Mode)", 4, function()
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local root = character:WaitForChild("HumanoidRootPart")
+	local basement = Workspace:FindFirstChild("BasementFolder") and Workspace.BasementFolder:FindFirstChild(LocalPlayer.Name .. "'s Basement")
+	if basement then
+		for _, child in ipairs(basement:GetChildren()) do
+			if child:IsA("BasePart") then
+				root.CFrame = child.CFrame + Vector3.new(0, 5, 0)
+				break
+			end
+		end
+	end
+end)
+
+createButton("Fix Generator", 5, function()
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local root = character:WaitForChild("HumanoidRootPart")
+	local land = Workspace:FindFirstChild(LocalPlayer.Name .. "'s avatar_land")
+	local generator = land and land:FindFirstChild("Generator")
+	local broken = generator and generator:FindFirstChild("broken")
+	local prompt = broken and broken:FindFirstChildOfClass("ProximityPrompt")
+	if prompt then
+		local originalCFrame = root.CFrame
+		root.CFrame = generator.CFrame + Vector3.new(0, -5, 0)
+		task.wait(0.25)
+		root.CFrame = originalCFrame
+	end
+end)
+
+local viewingHatch = false
+local originalCameraSubject = Camera.CameraSubject
+local originalCameraType = Camera.CameraType
+
+local function toggleHatchView()
+	local land = Workspace:FindFirstChild(LocalPlayer.Name .. "'s avatar_land")
+	local hatch = land and land:FindFirstChild("AvatarLand") and land.AvatarLand:FindFirstChild("hatch") and land.AvatarLand.hatch:FindFirstChild("hatch")
+	if not hatch or not hatch:IsA("BasePart") then return end
+	if viewingHatch then
+		Camera.CameraType = originalCameraType
+		Camera.CameraSubject = originalCameraSubject
+	else
+		Camera.CameraType = Enum.CameraType.Scriptable
+		local camPos = hatch.Position + Vector3.new(0, 25, 20)
+		Camera.CFrame = CFrame.new(camPos, hatch.Position)
+	end
+	viewingHatch = not viewingHatch
+end
+
+createButton("Toggle View Hatch", 6, toggleHatchView)
+createButton("Close GUI", 7, function() screenGui:Destroy() end)
+
+task.spawn(function()
+	local function monitorDeathAndExit()
+		local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		local root = character:WaitForChild("HumanoidRootPart")
+
+		if humanoid then
+			humanoid.Died:Connect(function()
+				godModeEnabled = false
+			end)
+		end
+
+		local basement = Workspace:FindFirstChild("BasementFolder") and Workspace.BasementFolder:FindFirstChild(LocalPlayer.Name .. "'s Basement")
+		local exit = basement and basement:FindFirstChild("Exit")
+		if exit and exit:IsA("BasePart") then
+			exit.Touched:Connect(function(hit)
+				if hit == root then
+					godModeEnabled = false
+				end
+			end)
+		end
+	end
+
+	monitorDeathAndExit()
+	LocalPlayer.CharacterAdded:Connect(monitorDeathAndExit)
+
+	while screenGui.Parent do
+		local sourceLabel = PlayerGui:FindFirstChild("screen3") and PlayerGui.screen3:FindFirstChild("Bar") and PlayerGui.screen3.Bar:FindFirstChild("TextLabel")
+		infoBar.Text = sourceLabel and sourceLabel.Text or "No Basement."
+
+		local genLabel = Workspace:FindFirstChild("BasementFolder")
+			and Workspace.BasementFolder:FindFirstChild(LocalPlayer.Name .. "'s Basement")
+			and Workspace.BasementFolder[LocalPlayer.Name .. "'s Basement"]
+			and Workspace.BasementFolder[LocalPlayer.Name .. "'s Basement"]:FindFirstChild("gen_status")
+			and Workspace.BasementFolder[LocalPlayer.Name .. "'s Basement"].gen_status:FindFirstChild("Screen")
+			and Workspace.BasementFolder[LocalPlayer.Name .. "'s Basement"].gen_status.Screen:FindFirstChild("SurfaceGui")
+			and Workspace.BasementFolder[LocalPlayer.Name .. "'s Basement"].gen_status.Screen.SurfaceGui:FindFirstChild("TextLabel")
+
+		if genLabel and typeof(genLabel.Text) == "string" then
+			local cleaned = string.gsub(genLabel.Text, "Generator", "")
+			statusBar.Text = cleaned
+		else
+			statusBar.Text = "Status: N/A"
+		end
+
+		if godModeEnabled == true then
+			godModeBar.Text = "God Mode: On"
+		elseif godModeEnabled == false then
+			godModeBar.Text = "God Mode: Off"
+		else
+			godModeBar.Text = "God Mode: N/A"
+		end
+
+		task.wait(0.2)
+	end
+end)
+end)
+
+funtab:Label("Use Below Features At Your Own Risk, Not Made By Me.")
+
+funtab:Button("FLOWERS Glove (Glove Ability: Crash Server)", function()
 loadstring(game:HttpGet('https://raw.githubusercontent.com/Umbrella-Scripter/Slap-Battles/refs/heads/main/F.L.O.W.E.R.lua'))()
 end)
 
@@ -422,127 +670,12 @@ local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
-local enabled = false
-local cachedRemotes = {}
-
-local function findEquippedGlove()
-    local character = LocalPlayer.Character
-    if not character then return nil end
-    for _, tool in ipairs(character:GetChildren()) do
-        if tool:IsA("Tool") then
-            return tool
-        end
-    end
-end
-
-local function getClosestPlayer()
-    local myChar = LocalPlayer.Character
-    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return nil end
-
-    local closest, dist = nil, math.huge
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
-            if targetRoot then
-                local mag = (targetRoot.Position - myRoot.Position).Magnitude
-                if mag < dist then
-                    dist = mag
-                    closest = player
-                end
-            end
-        end
-    end
-    return closest
-end
-
-local function findRelevantHitRemotes(gloveName)
-    if cachedRemotes[gloveName] then return cachedRemotes[gloveName] end
-
-    local nameLower = string.lower(gloveName or "")
-    local hits = {}
-
-    for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
-        if obj:IsA("RemoteEvent") then
-            local remoteLower = string.lower(obj.Name)
-            if remoteLower == nameLower .. "hi"
-            or (remoteLower:find(nameLower) and remoteLower:find("hit")) then
-                table.insert(hits, obj)
-            end
-        end
-    end
-
-    cachedRemotes[gloveName] = hits
-    return hits
-end
-
-local heartbeatConn
-local lastFireTime = 0
-
-maintab:Button("Slap Aura", function()
-    enabled = not enabled
-
-    if enabled and not heartbeatConn then
-        heartbeatConn = RunService.Heartbeat:Connect(function()
-            local currentTime = os.clock()
-            if currentTime - lastFireTime < 0.5 then return end
-
-            local glove = findEquippedGlove()
-            local targetPlayer = getClosestPlayer()
-
-            if targetPlayer and targetPlayer.Character then
-                local torso = targetPlayer.Character:FindFirstChild("Torso")
-                    or targetPlayer.Character:FindFirstChild("UpperTorso")
-                    or targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-
-                if torso then
-                    local remotes = {}
-
-                    if glove then
-                        local foundRemotes = findRelevantHitRemotes(glove.Name)
-                        if foundRemotes and #foundRemotes > 0 then
-                            remotes = foundRemotes
-                        end
-                    end
-
-                    if #remotes == 0 then
-                        for _, fallback in ipairs({"GeneralHit", "b"}) do
-                            local remote = ReplicatedStorage:FindFirstChild(fallback)
-                            if remote then
-                                table.insert(remotes, remote)
-                            end
-                        end
-                    end
-
-                    for _, remote in ipairs(remotes) do
-                        remote:FireServer(targetPlayer.Character:FindFirstChild(torso.Name))
-                    end
-
-                    lastFireTime = currentTime
-                end
-            end
-        end)
-    elseif not enabled and heartbeatConn then
-        heartbeatConn:Disconnect()
-        heartbeatConn = nil
-    end
-
-    StarterGui:SetCore("SendNotification", {
-        Title = "Slap Aura",
-        Text = enabled and "Enabled." or "Disabled.",
-        Duration = 3
-    })
-end)
-
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StarterGui = game:GetService("StarterGui")
-
-local LocalPlayer = Players.LocalPlayer
-
 local root = nil
 local auraEnabled = false
-local KSHitRemote = nil
+local cachedRemotes = {}
+local KSHitRemote = ReplicatedStorage:FindFirstChild("KSHit")
+local auraConnection
+local lastFireTime = 0
 
 local function notify(title, text, duration)
 	pcall(function()
@@ -570,10 +703,19 @@ if LocalPlayer.Character then
 	updateRoot()
 end
 
+local function findEquippedGlove()
+	local character = LocalPlayer.Character
+	if not character then return nil end
+	for _, tool in ipairs(character:GetChildren()) do
+		if tool:IsA("Tool") then
+			return tool
+		end
+	end
+end
+
 local function getClosestPlayer()
 	local closest = nil
 	local minDist = math.huge
-
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
 			local distance = (player.Character.HumanoidRootPart.Position - root.Position).Magnitude
@@ -583,31 +725,76 @@ local function getClosestPlayer()
 			end
 		end
 	end
-
 	return closest
 end
 
-task.spawn(function()
-	while true do
-		if auraEnabled and root and KSHitRemote then
-			local target = getClosestPlayer()
-			if target and target.Character then
-				local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-				if targetRoot then
-					KSHitRemote:FireServer(targetRoot)
-				end
+local function findRelevantHitRemotes(gloveName)
+	if cachedRemotes[gloveName] then return cachedRemotes[gloveName] end
+	local nameLower = string.lower(gloveName or "")
+	local hits = {}
+	for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+		if obj:IsA("RemoteEvent") then
+			local remoteLower = string.lower(obj.Name)
+			if remoteLower == nameLower .. "hi" or (remoteLower:find(nameLower) and remoteLower:find("hit")) then
+				table.insert(hits, obj)
 			end
 		end
-		task.wait(0.5)
 	end
-end)
+	cachedRemotes[gloveName] = hits
+	return hits
+end
 
-maintab:Button("Slap Aura (KS)", function()
-	if not KSHitRemote then
-		KSHitRemote = ReplicatedStorage:FindFirstChild("KSHit")
-	end
+maintab:Button("Slap Aura", function()
 	auraEnabled = not auraEnabled
 	notify("Slap Aura", auraEnabled and "Enabled." or "Disabled.")
+	if auraEnabled then
+		if auraConnection then
+			auraConnection:Disconnect()
+			auraConnection = nil
+		end
+		auraConnection = RunService.Heartbeat:Connect(function()
+			local currentTime = os.clock()
+			if currentTime - lastFireTime < 0.7 then return end
+			lastFireTime = currentTime
+
+			if not root then return end
+			local target = getClosestPlayer()
+			if not target or not target.Character then return end
+			local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+			if not targetRoot then return end
+
+			local glove = findEquippedGlove()
+			local remotes = {}
+
+			if glove then
+				local foundRemotes = findRelevantHitRemotes(glove.Name)
+				if foundRemotes and #foundRemotes > 0 then
+					remotes = foundRemotes
+				end
+			end
+
+			if #remotes == 0 then
+				if KSHitRemote then
+					table.insert(remotes, KSHitRemote)
+				end
+				for _, fallback in ipairs({"GeneralHit", "b"}) do
+					local remote = ReplicatedStorage:FindFirstChild(fallback)
+					if remote then
+						table.insert(remotes, remote)
+					end
+				end
+			end
+
+			for _, remote in ipairs(remotes) do
+				remote:FireServer(targetRoot)
+			end
+		end)
+	else
+		if auraConnection then
+			auraConnection:Disconnect()
+			auraConnection = nil
+		end
+	end
 end)
 
 local Players = game:GetService("Players")
@@ -684,6 +871,41 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
             [2] = 90
         }
         remote:FireServer(unpack(args))
+    end
+end)
+end)
+
+maintab:Button("Bind Kinetic (Binds To R, Equip Kinetic.)", function()
+local UIS = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.R then
+        local player = Players.LocalPlayer
+        local glove = player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Glove")
+
+        if glove and glove.Value == "Kinetic" then
+            local character = player.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                local OGL = character.HumanoidRootPart.CFrame
+                for i = 1, 100 do
+                    ReplicatedStorage.SelfKnockback:FireServer({
+                        ["Force"] = 0,
+                        ["Direction"] = Vector3.new(0, 0.01, 0)
+                    })
+                    task.wait(0.05)
+                end
+            end
+        else
+            StarterGui:SetCore("SendNotification", {
+                Title = "Wrong Glove",
+                Text = "Equip Kinetic Glove.",
+                Duration = 10
+            })
+        end
     end
 end)
 end)
@@ -973,49 +1195,67 @@ antitab:Button("Anti-OneShot", function()
     end
 end)
 
-local run_service = game:GetService("RunService")
-local players = game:GetService("Players")
-local starter_gui = game:GetService("StarterGui")
-local workspace = game:GetService("Workspace")
+local StarterGui = game:GetService("StarterGui")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
 
-local local_player = players.LocalPlayer
-local character = local_player.Character or local_player.CharacterAdded:Wait()
-local root_part = character:WaitForChild("HumanoidRootPart")
-
-local sbeve_shield = false
-local sbeve_push_power = 100
-local sbeve_detection_radius = 15
-local sbeve_notify = true
-
-local function notify(text)
-    if sbeve_notify then
-        starter_gui:SetCore("SendNotification", {
-            Title = "Anti-Sbeve",
-            Text = text,
-            Duration = 3
-        })
-    end
-end
+local sbeveShieldEnabled = false
+local sbeveDetectionRadius = 15
+local sbevePushDistance = 22
+local sbeveConnection
 
 antitab:Button("Anti-Sbeve", function()
-    sbeve_shield = not sbeve_shield
-    notify(sbeve_shield and "Enabled." or "Disabled.")
-end)
+    sbeveShieldEnabled = not sbeveShieldEnabled
 
-run_service.RenderStepped:Connect(function()
-    if not sbeve_shield then return end
+    StarterGui:SetCore("SendNotification", {
+        Title = "Anti-Sbeve",
+        Text = sbeveShieldEnabled and "Enabled." or "Disabled.",
+        Duration = 3
+    })
 
-    for _, model in ipairs(workspace:GetChildren()) do
-        if model:IsA("Model") and model ~= character then
-            local stevebody = model:FindFirstChild("stevebody")
-            if stevebody and stevebody:IsA("BasePart") then
-                local distance = (stevebody.Position - root_part.Position).Magnitude
-                if distance <= sbeve_detection_radius then
-                    local direction = (root_part.Position - stevebody.Position).Unit
-                    root_part.Velocity = direction * sbeve_push_power
+    if sbeveShieldEnabled then
+        sbeveConnection = RunService.RenderStepped:Connect(function()
+            local myCharacter = LocalPlayer.Character
+            if not myCharacter then return end
+
+            local myRoot = myCharacter:FindFirstChild("HumanoidRootPart")
+            if not myRoot then return end
+
+            local closestThreat = nil
+            local closestDistance = math.huge
+
+            for _, model in ipairs(Workspace:GetChildren()) do
+                if model:IsA("Model") and model ~= myCharacter then
+                    local stevebody = model:FindFirstChild("stevebody")
+                    if stevebody and stevebody:IsA("BasePart") then
+                        local distance = (stevebody.Position - myRoot.Position).Magnitude
+                        if distance < sbeveDetectionRadius and distance < closestDistance then
+                            closestThreat = stevebody
+                            closestDistance = distance
+                        end
+                    end
                 end
             end
-        end
+
+            if closestThreat then
+                local offset = myRoot.Position - closestThreat.Position
+                local repelDir = offset.Unit
+                local targetPosition = closestThreat.Position + repelDir * sbevePushDistance
+                local upwardBias = Vector3.new(0, 0.5, 0)
+                local correctedPosition = targetPosition + upwardBias
+
+                -- Smooth movement using Lerp toward safe position
+                local currentPosition = myRoot.Position
+                local newPosition = currentPosition:Lerp(correctedPosition, 0.1) -- smaller factor = smoother
+
+                myRoot.CFrame = CFrame.new(newPosition)
+            end
+        end)
+    elseif sbeveConnection then
+        sbeveConnection:Disconnect()
+        sbeveConnection = nil
     end
 end)
 
@@ -1053,50 +1293,56 @@ exptab:Button("Get All Badge Gloves (INSTANT)", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/IncognitoScripts/SlapBattles/refs/heads/main/InstantGloves"))()
 end)
 
-antitab:Button("Anti-Void (ONLY MAIN ISLAND, Box Method)", function()
-local Workspace = game:GetService("Workspace")
+antitab:Button("Anti-Void (Teleport Method, Rejoin To Disable.)", function()
+local lp = game.Players.LocalPlayer
+local lastGroundedPos = nil
 
-local originCFrame = CFrame.new(
-    -4.08799744, -8.92285156, 1.83599997,
-    -1.1920929e-07, 1.00000012, 0,
-    -1.00000012, -1.1920929e-07, -0,
-    -0, 0, 1
-)
-local center = originCFrame.Position
-local sphereRadius = 117
-local segmentSize = 8
+local baseplate = Instance.new("Part")
+baseplate.Size = Vector3.new(99999, 1, 99999)
+baseplate.Position = Vector3.new(-30, -30, -30)
+baseplate.Anchored = true
+baseplate.CanCollide = true
+baseplate.Transparency = 0.9
+baseplate.Name = "VoidProtection"
+baseplate.Parent = workspace
 
-local latSteps = math.floor(math.pi * sphereRadius / segmentSize)
-local longSteps = math.floor((2 * math.pi * sphereRadius) / segmentSize)
+game:GetService("RunService").Heartbeat:Connect(function()
+    local char = lp.Character
+    if not char then return end
 
-for i = 0, latSteps do
-    local theta = math.pi * (i / latSteps)
-    local y = math.cos(theta) * sphereRadius
-    local ringRadius = math.sin(theta) * sphereRadius
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
 
-    for j = 0, longSteps - 1 do
-        local phi = 2 * math.pi * (j / longSteps)
-        local x = math.cos(phi) * ringRadius
-        local z = math.sin(phi) * ringRadius
+    local rayOrigin = hrp.Position
+    local rayDirection = Vector3.new(0, -50, 0)
 
-        local localPos = Vector3.new(x, y, z)
-        local worldPos = originCFrame:PointToWorldSpace(localPos)
-        local dir = (worldPos - center).Unit
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {char, baseplate}
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+    params.IgnoreWater = true
 
-        local segment = Instance.new("Part")
-        segment.Size = Vector3.new(segmentSize, segmentSize, segmentSize)
-        segment.Position = worldPos
-        segment.Anchored = true
-        segment.Material = Enum.Material.Carpet
-        segment.BrickColor = BrickColor.new("Black")
-        segment.CFrame = CFrame.new(worldPos, worldPos + dir)
-        segment.Name = "VoidProtection"
-        segment.Parent = Workspace
+    local result = workspace:Raycast(rayOrigin, rayDirection, params)
+
+    if result and result.Instance and result.Instance.CanCollide then
+        lastGroundedPos = hrp.Position
+    elseif hrp.Position.Y < -24 and lastGroundedPos then
+        hrp.CFrame = CFrame.new(lastGroundedPos + Vector3.new(0, 5, 0))
     end
-end
 end)
 
-antitab:Button("Anti-Void (Void Method)", function()
+baseplate.Touched:Connect(function(hit)
+    local char = lp.Character
+    if not char then return end
+    if hit:IsDescendantOf(char) and lastGroundedPos then
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.CFrame = CFrame.new(lastGroundedPos + Vector3.new(0, 5, 0))
+        end
+    end
+end)
+end)
+
+antitab:Button("Anti-Void (Baseplate Method)", function()
 local Workspace = game:GetService("Workspace")
 
 local baseplate = Instance.new("Part")
@@ -1141,6 +1387,30 @@ end)
 
 teletab:Button("The Plate", function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = game:GetService("Workspace").Arena.Plate.CFrame
+end)
+
+teletab:Button("Retro Obby", function()
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local mapPath = ReplicatedStorage:WaitForChild("Assets"):WaitForChild("Retro"):WaitForChild("Map"):WaitForChild("RetroObbyMap")
+local mapName = "RetroObbyMap"
+
+local existingMap = Workspace:FindFirstChild(mapName)
+if not existingMap then
+    local clonedMap = mapPath:Clone()
+    clonedMap.Parent = Workspace
+    existingMap = clonedMap
+end
+
+local targetPosition = CFrame.new(-16873, -1, 4775)
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+hrp.CFrame = targetPosition
 end)
 
 teletab:Button("Baseplate", function()
@@ -1562,7 +1832,30 @@ RunService.Heartbeat:Connect(function()
 end)
 end)
 
+farmtab:Label("Glovel Farm: Recommended To Join Small Servers.")
 
+farmtab:Button("Glovel Instant Quest #1 (Use On Main.)", function()
+local GlovelFunc = game:GetService("ReplicatedStorage"):WaitForChild("GlovelFunc")
+local RunService = game:GetService("RunService")
+
+local startTime = os.clock()
+local duration = 3
+local connections = {}
+
+for i = 1, 10 do
+    task.spawn(function()
+        local conn
+        conn = RunService.Heartbeat:Connect(function()
+            if os.clock() - startTime > duration then
+                conn:Disconnect()
+                return
+            end
+            GlovelFunc:InvokeServer()
+        end)
+        table.insert(connections, conn)
+    end)
+end
+end)
 
 helptab:Button("Copy Owner Discord Username", function()
 local StarterGui = game:GetService("StarterGui")
@@ -1602,7 +1895,7 @@ local win = ui:Create({
 local maintab = win:Tab("Main")
 local steptab = win:Tab("Steps")
 local tooltab = win:Tab("Tools")
-local placetab = win:Tab("Places")
+local modetab = win:Tab("Modes")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
@@ -1610,8 +1903,7 @@ maintab:Label("Script Made By Celeron + Daffy!")
 steptab:Label("Click The Steps In Order!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
-
-placetab:Label("These Places Can Be Joined Instantly!")
+modetab:Label("These Places Can Be Joined Instantly!")
 
 local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = game.Players.LocalPlayer
@@ -1620,63 +1912,89 @@ local function teleportTo(placeId)
     TeleportService:Teleport(placeId, LocalPlayer)
 end
 
-placetab:Button("Killstreak Only", function()
+modetab:Button("Main Game", function()
+    teleportTo(6403373529)
+end)
+
+modetab:Button("Killstreak Only", function()
     teleportTo(11520107397)
 end)
 
-placetab:Button("No One Shot Gloves", function()
+modetab:Button("No One Shot Gloves", function()
     teleportTo(9015014224)
 end)
 
-placetab:Button("Slap Royale Matchmaking", function()
+modetab:Button("Slap Royale Matchmaking", function()
     teleportTo(9426795465)
 end)
 
-placetab:Button("Normal Barzil", function()
+modetab:Button("Normal Barzil", function()
     teleportTo(7234087065)
 end)
 
-placetab:Button("Tower Of Hell (TOH)", function()
+modetab:Button("Tower Of Hell (TOH)", function()
     teleportTo(115782629143468)
 end)
 
-placetab:Button("Custom Glove Customizer", function()
+modetab:Button("Day in the Life of a Small Game Dev", function()
+	queueonteleport([[
+    print("ez pz!")
+
+    local player = game:GetService("Players").LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+
+    local function find(parent, name)
+        local t, s = 2.5, tick()
+        repeat
+            local c = parent:FindFirstChild(name)
+            if c then return c end
+            task.wait(0.5)
+        until tick() - s > t
+        return nil
+    end
+
+    local hrp = find(character, "HumanoidRootPart")
+    local trigger = find(find(find(find(workspace, "Buildings"), "wizard twoer 2"), "Model"), "Trigger")
+
+    if hrp and trigger and trigger:FindFirstChild("TouchInterest") then
+        firetouchinterest(hrp, trigger, 0)
+        firetouchinterest(hrp, trigger, 1)
+    end
+]])
+teleportTo(7234087065)
+end)
+
+modetab:Button("Custom Glove Customizer", function()
     teleportTo(9068206286)
 end)
 
-placetab:Button("Slap League", function()
+modetab:Button("Slap League", function()
     teleportTo(18698003301)
 end)
 
-placetab:Button("Soft Update Waiting Place", function()
+modetab:Button("Soft Update Waiting Place", function()
     teleportTo(12712288037)
 end)
 
-placetab:Button("?", function()
+modetab:Button("?", function()
     teleportTo(12845859004)
 end)
 
-placetab:Label("Warning: The Below Places Can't Be Joined Directly.")
+modetab:Label("Warning: The Below Places Can't Be Joined Directly.")
 
-placetab:Button("Testing Place", function()
+modetab:Button("Testing Place", function()
     teleportTo(9020359053)
 end)
 
-
-placetab:Button("Tower Defense", function()
+modetab:Button("Tower Defense", function()
     teleportTo(15228348051)
 end)
 
-
-placetab:Button("Christmas Eve", function()
+modetab:Button("Christmas Eve", function()
     teleportTo(15507333474)
 end)
 
-placetab:Button("Day in the Life of a Small Game Dev", function()
-    teleportTo(136005148166028)
-end)
-
-placetab:Button("Null Zone", function()
+modetab:Button("Null Zone", function()
     teleportTo(14422118326)
 end)
 
@@ -1922,7 +2240,6 @@ if closestObject then
     HRP.CFrame = CFrame.new(closestObject.Position)
 end
 end)
-
 
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
@@ -2193,14 +2510,14 @@ local win = ui:Create({
 local maintab = win:Tab("Main")
 local itemtab = win:Tab("Items")
 local antitab = win:Tab("Protection")
-local placetab = win:Tab("Places")
+local modetab = win:Tab("Modes")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
-placetab:Label("These Places Can Be Joined Instantly!")
+modetab:Label("These Places Can Be Joined Instantly!")
 
 local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = game.Players.LocalPlayer
@@ -2209,63 +2526,89 @@ local function teleportTo(placeId)
     TeleportService:Teleport(placeId, LocalPlayer)
 end
 
-placetab:Button("Killstreak Only", function()
+modetab:Button("Main Game", function()
+    teleportTo(6403373529)
+end)
+
+modetab:Button("Killstreak Only", function()
     teleportTo(11520107397)
 end)
 
-placetab:Button("No One Shot Gloves", function()
+modetab:Button("No One Shot Gloves", function()
     teleportTo(9015014224)
 end)
 
-placetab:Button("Slap Royale Matchmaking", function()
+modetab:Button("Slap Royale Matchmaking", function()
     teleportTo(9426795465)
 end)
 
-placetab:Button("Normal Barzil", function()
+modetab:Button("Normal Barzil", function()
     teleportTo(7234087065)
 end)
 
-placetab:Button("Tower Of Hell (TOH)", function()
+modetab:Button("Tower Of Hell (TOH)", function()
     teleportTo(115782629143468)
 end)
 
-placetab:Button("Custom Glove Customizer", function()
+modetab:Button("Day in the Life of a Small Game Dev", function()
+	queueonteleport([[
+    print("ez pz!")
+
+    local player = game:GetService("Players").LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+
+    local function find(parent, name)
+        local t, s = 2.5, tick()
+        repeat
+            local c = parent:FindFirstChild(name)
+            if c then return c end
+            task.wait(0.1)
+        until tick() - s > t
+        return nil
+    end
+
+    local hrp = find(character, "HumanoidRootPart")
+    local trigger = find(find(find(find(workspace, "Buildings"), "wizard twoer 2"), "Model"), "Trigger")
+
+    if hrp and trigger and trigger:FindFirstChild("TouchInterest") then
+        firetouchinterest(hrp, trigger, 0)
+        firetouchinterest(hrp, trigger, 1)
+    end
+]])
+teleportTo(7234087065)
+end)
+
+modetab:Button("Custom Glove Customizer", function()
     teleportTo(9068206286)
 end)
 
-placetab:Button("Slap League (Functional, Needs Another Player.)", function()
+modetab:Button("Slap League (Functional, Needs Another Player.)", function()
     teleportTo(18698003301)
 end)
 
-placetab:Button("Soft Update Waiting Place", function()
+modetab:Button("Soft Update Waiting Place", function()
     teleportTo(12712288037)
 end)
 
-placetab:Button("?", function()
+modetab:Button("?", function()
     teleportTo(12845859004)
 end)
 
-placetab:Label("Warning: The Below Places Can't Be Joined Directly.")
+modetab:Label("Warning: The Below Places Can't Be Joined Directly.")
 
-placetab:Button("Testing Place", function()
+modetab:Button("Testing Place", function()
     teleportTo(9020359053)
 end)
 
-
-placetab:Button("Tower Defense", function()
+modetab:Button("Tower Defense", function()
     teleportTo(15228348051)
 end)
 
-
-placetab:Button("Christmas Eve", function()
+modetab:Button("Christmas Eve", function()
     teleportTo(15507333474)
 end)
 
-placetab:Button("Day in the Life of a Small Game Dev", function()
-    teleportTo(136005148166028)
-end)
-
-placetab:Button("Null Zone", function()
+modetab:Button("Null Zone", function()
     teleportTo(14422118326)
 end)
 
@@ -2431,22 +2774,42 @@ maintab:Button("Glove Triggerbot", function()
     })
 end)
 
-maintab:Button("Detect Votekick Users", function()
+maintab:Button("Highlight Votekick Risks (Darker Color = Risky)", function()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
-local SLAP_THRESHOLD = 5000
 local HIGHLIGHT_TAG = "HighSlapHighlight"
 
-local function applyHighlight(character)
-	if not character then return end
+local function getHighlightColor(slapCount)
+	if slapCount >= 25001 then
+		return Color3.fromRGB(128, 0, 128)
+	elseif slapCount >= 17501 then
+		return Color3.fromRGB(255, 85, 0)
+	elseif slapCount >= 10001 then
+		return Color3.fromRGB(255, 165, 0)
+	elseif slapCount >= 7501 then
+		return Color3.fromRGB(255, 255, 0)
+	elseif slapCount >= 5000 then
+		return Color3.fromRGB(0, 255, 0)
+	else
+		return nil
+	end
+end
+
+local function applyHighlight(character, color)
+	if not character or not color then return end
+
 	local existing = character:FindFirstChild(HIGHLIGHT_TAG)
-	if existing then return end
+	if existing then
+		existing.FillColor = color
+		existing.OutlineColor = color
+		return
+	end
 
 	local highlight = Instance.new("Highlight")
 	highlight.Name = HIGHLIGHT_TAG
-	highlight.FillColor = Color3.new(1, 0, 0)
-	highlight.OutlineColor = Color3.new(1, 0, 0)
+	highlight.FillColor = color
+	highlight.OutlineColor = color
 	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 	highlight.Adornee = character
 	highlight.Parent = character
@@ -2466,8 +2829,9 @@ local function updateHighlights()
 		local character = player.Character
 
 		if slaps and slaps:IsA("IntValue") and character then
-			if slaps.Value >= SLAP_THRESHOLD then
-				applyHighlight(character)
+			local color = getHighlightColor(slaps.Value)
+			if color then
+				applyHighlight(character, color)
 			else
 				removeHighlight(character)
 			end
@@ -2477,7 +2841,7 @@ local function updateHighlights()
 	end
 end
 
-RunService.Heartbeat:Connect(function(step)
+RunService.Heartbeat:Connect(function()
 	updateHighlights()
 end)
 end)
@@ -3253,14 +3617,1510 @@ StarterGui:SetCore("SendNotification", {
 })
 setclipboard("https://discord.gg/8stFYxJv4R")
 end)
-elseif currentPlaceId == nullzone then
-print("unimplemented.")
+elseif currentPlaceId == eternalbob then
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (Eternal Bob)",
+    ThemeColor = Color3.fromRGB(14, 14, 14),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local antitab = win:Tab("Protection")
+local modetab = win:Tab("Modes")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+antitab:Label("Protection Settings May Be Blatant.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Nameless Admin", function()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/FilteringEnabled/NamelessAdmin/main/Source'))()
+end)
+
+misctab:Button("Rejoin Server", function()
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+local placeId = game.PlaceId
+local jobId = game.JobId
+local player = Players.LocalPlayer or Players:GetPlayers()[1]
+
+if typeof(placeId) == "number" and typeof(jobId) == "string" and player then
+    print("Rejoining current server...")
+    print("PlaceId:", placeId)
+    print("JobId:", jobId)
+    TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
+else
+    print("Failed to get current server info or player.")
+end
+end)
+
+misctab:Button("Switch Servers", function()
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+local placeId = game.PlaceId
+local currentJobId = game.JobId
+local player = Players.LocalPlayer or Players:GetPlayers()[1]
+
+local function findDifferentServer()
+    local cursor = nil
+
+    while true do
+        local url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100", placeId)
+        if cursor then
+            url = url .. "&cursor=" .. cursor
+        end
+
+        local success, response = pcall(function()
+            return http_request({
+                Url = url,
+                Method = "GET",
+                Headers = {
+                    ["User-Agent"] = "Mozilla/5.0"
+                }
+            })
+        end)
+
+        if not success or not response or not response.Body then
+            print("Request failed. Retrying...")
+            task.wait(2)
+            continue
+        end
+
+        if string.find(response.Body, "Too many requests") then
+            print("Rate limited. Waiting...")
+            task.wait(3)
+            continue
+        end
+
+        local successDecode, data = pcall(function()
+            return HttpService:JSONDecode(response.Body)
+        end)
+
+        if not successDecode or not data or not data.data then
+            print("Failed to decode. Retrying...")
+            task.wait(2)
+            continue
+        end
+
+        for _, server in pairs(data.data) do
+            if server.id ~= currentJobId and server.playing < server.maxPlayers then
+                print("Found different server:", server.id)
+                return server.id
+            end
+        end
+
+        cursor = data.nextPageCursor
+        task.wait(1)
+
+        if not cursor then break end
+    end
+
+    return nil
+end
+
+local newJobId = findDifferentServer()
+if newJobId and player then
+    print("Teleporting to different server...")
+    TeleportService:TeleportToPlaceInstance(placeId, newJobId, player)
+else
+    print("No different server found or player missing.")
+end
+end)
+
+misctab:Button("Join Small Server (MAY GET RATE LIMITED!)", function()
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+_G.extracted1 = game.PlaceId
+_G.extracted2 = nil
+
+local userAgents = {
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+    "Mozilla/5.0 (X11; Linux x86_64)",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)",
+    "Mozilla/5.0 (Android 11; Mobile; rv:89.0)",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0)",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko)",
+    "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko)",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/114.0.0.0 Safari/537.36"
+}
+
+local function fetchSmartServer()
+    local cursor = nil
+    local smallestServer = nil
+    local minPlayers = math.huge
+    local retryCount = 0
+
+    while true do
+        local baseUrl = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100", _G.extracted1)
+        local url = baseUrl
+        if cursor then
+            url = url .. "&cursor=" .. cursor
+        end
+
+        local headers = {
+            ["User-Agent"] = userAgents[math.random(1, #userAgents)],
+            ["X-Requested-With"] = "XMLHttpRequest"
+        }
+
+        local success, response = pcall(function()
+            return http_request({
+                Url = url,
+                Method = "GET",
+                Headers = headers
+            })
+        end)
+
+        if not success or not response or not response.Body then
+            print("Request failed. Retrying...")
+            retryCount += 1
+            task.wait(math.random(2, 4) + retryCount)
+            continue
+        end
+
+        if string.find(response.Body, "Too many requests") then
+            print("Rate limited. Backing off...")
+            retryCount += 1
+            task.wait(math.random(3, 6) + retryCount)
+            continue
+        end
+
+        local successDecode, data = pcall(function()
+            return HttpService:JSONDecode(response.Body)
+        end)
+
+        if not successDecode or not data or not data.data then
+            print("Failed to decode server data. Retrying...")
+            retryCount += 1
+            task.wait(math.random(2, 5) + retryCount)
+            continue
+        end
+
+        retryCount = 0
+
+        for _, server in pairs(data.data) do
+            print("Checking server:", server.id, "Players:", server.playing, "/", server.maxPlayers)
+
+            if server.playing >= 1 and server.playing <= 2 and server.playing < server.maxPlayers then
+                print("Found ideal server with 1–2 players. Joining now.")
+                return server
+            end
+
+            if server.playing < minPlayers and server.playing < server.maxPlayers then
+                minPlayers = server.playing
+                smallestServer = server
+            end
+        end
+
+        cursor = data.nextPageCursor
+        task.wait(math.random(1, 2))
+
+        if not cursor then break end
+    end
+
+    return smallestServer
+end
+
+local server = fetchSmartServer()
+if server then
+    _G.extracted2 = server.id
+    print("Extracted PlaceId:", _G.extracted1)
+    print("Extracted JobId:", _G.extracted2)
+
+    local player = Players.LocalPlayer or Players:GetPlayers()[1]
+
+    if typeof(_G.extracted1) == "number" and typeof(_G.extracted2) == "string" and player then
+        print("Teleporting to server...")
+        TeleportService:TeleportToPlaceInstance(_G.extracted1, _G.extracted2, player)
+    else
+        print("Invalid data or player not found.")
+    end
+else
+    print("No suitable server found.")
+end
+end)
+
+misctab:Button("Destroy GUI", function()
+    win:Exit()
+end)
+
+
+misctab:Button("Leave Game", function()
+    game:Shutdown()
+end)
+
+modetab:Label("These Places Can Be Joined Instantly!")
+
+local TeleportService = game:GetService("TeleportService")
+local LocalPlayer = game.Players.LocalPlayer
+
+local function teleportTo(placeId)
+    TeleportService:Teleport(placeId, LocalPlayer)
+end
+
+modetab:Button("Main Game", function()
+    teleportTo(6403373529)
+end)
+
+modetab:Button("Killstreak Only", function()
+    teleportTo(11520107397)
+end)
+
+modetab:Button("No One Shot Gloves", function()
+    teleportTo(9015014224)
+end)
+
+modetab:Button("Slap Royale Matchmaking", function()
+    teleportTo(9426795465)
+end)
+
+modetab:Button("Normal Barzil", function()
+    teleportTo(7234087065)
+end)
+
+misctab:Button("Slap League (Functional, Needs Another Player.)", function()
+    teleportTo(18698003301)
+end)
+
+modetab:Button("Tower Of Hell (TOH)", function()
+    teleportTo(115782629143468)
+end)
+
+modetab:Button("Day in the Life of a Small Game Dev", function()
+	queueonteleport([[
+    print("ez pz!")
+
+    local player = game:GetService("Players").LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+
+    local function find(parent, name)
+        local t, s = 2.5, tick()
+        repeat
+            local c = parent:FindFirstChild(name)
+            if c then return c end
+            task.wait(0.1)
+        until tick() - s > t
+        return nil
+    end
+
+    local hrp = find(character, "HumanoidRootPart")
+    local trigger = find(find(find(find(workspace, "Buildings"), "wizard twoer 2"), "Model"), "Trigger")
+
+    if hrp and trigger and trigger:FindFirstChild("TouchInterest") then
+        firetouchinterest(hrp, trigger, 0)
+        firetouchinterest(hrp, trigger, 1)
+    end
+]])
+teleportTo(7234087065)
+end)
+
+modetab:Button("Custom Glove Customizer", function()
+    teleportTo(9068206286)
+end)
+
+modetab:Button("Soft Update Waiting Place", function()
+    teleportTo(12712288037)
+end)
+
+modetab:Button("?", function()
+    teleportTo(12845859004)
+end)
+
+modetab:Label("Warning: The Below Places Can't Be Joined Directly.")
+
+modetab:Button("Testing Place", function()
+    teleportTo(9020359053)
+end)
+
+modetab:Button("Tower Defense", function()
+    teleportTo(15228348051)
+end)
+
+modetab:Button("Christmas Eve", function()
+    teleportTo(15507333474)
+end)
+
+modetab:Button("Null Zone", function()
+    teleportTo(14422118326)
+end)
+
+modetab:Button("Staff Application", function()
+    teleportTo(16034567693)
+end)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local lastSliderSet = nil
+local humanoidConnection = nil
+
+local function applySpeed(humanoid)
+	if not humanoid or not lastSliderSet then return end
+	if humanoid.WalkSpeed ~= lastSliderSet then
+		humanoid.WalkSpeed = lastSliderSet
+	end
+
+	if humanoidConnection then
+		humanoidConnection:Disconnect()
+	end
+
+	humanoidConnection = humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+		if humanoid.WalkSpeed ~= lastSliderSet then
+			humanoid.WalkSpeed = lastSliderSet
+		end
+	end)
+end
+
+maintab:Slider("Player Speed", 19.5, 5, 85, function(v)
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	lastSliderSet = (v == 8) and 16 or v
+	applySpeed(humanoid)
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(character)
+	character:WaitForChild("Humanoid"):GetPropertyChangedSignal("Parent"):Connect(function()
+		local newHumanoid = character:FindFirstChildOfClass("Humanoid")
+		if newHumanoid then
+			applySpeed(newHumanoid)
+		end
+	end)
+
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		applySpeed(humanoid)
+	end
+end)
+
+local autoSlapBob = false
+local slapLoop = nil
+
+local autoSlapBob = false
+local slapLoop = nil
+
+maintab:Button("Auto Slap Bob", function()
+    autoSlapBob = not autoSlapBob
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Auto Slap Bob",
+        Text = autoSlapBob and "Enabled." or "Disabled.",
+        Duration = 5
+    })
+
+    if autoSlapBob then
+        slapLoop = task.spawn(function()
+            while autoSlapBob do
+                local boss = workspace:FindFirstChild("bobBoss")
+                if boss then
+                    local damageEvent = boss:FindFirstChild("DamageEvent")
+                    if damageEvent then
+                        damageEvent:FireServer()
+                    end
+                end
+                task.wait(0.1)
+            end
+        end)
+    else
+        if slapLoop then
+            task.cancel(slapLoop)
+            slapLoop = nil
+        end
+    end
+end)
+
+local autoAttackBob = false
+local attackLoop = nil
+
+maintab:Button("Slap Aura (Players / Mini Bob)", function()
+    autoAttackBob = not autoAttackBob
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Slap Aura",
+        Text = autoAttackBob and "Enabled." or "Disabled.",
+        Duration = 5
+    })
+
+    if autoAttackBob then
+        attackLoop = task.spawn(function()
+            while autoAttackBob do
+                local glove = game.Players.LocalPlayer.leaderstats.Glove.Value
+                if glove == "Reaper" then
+                    for _, v in ipairs(workspace:GetDescendants()) do
+                        if v.Name == "BobClone" then
+                            game:GetService("ReplicatedStorage").ReaperHit:FireServer(v:FindFirstChild("HumanoidRootPart"))
+                        end
+                    end
+                elseif glove == "Killstreak" then
+                    for _, v in ipairs(workspace:GetDescendants()) do
+                        if v.Name == "BobClone" then
+                            game:GetService("ReplicatedStorage").KSHit:FireServer(v:FindFirstChild("HumanoidRootPart"))
+                        end
+                    end
+                elseif glove == "God's Hand" then
+                    for _, v in ipairs(workspace:GetDescendants()) do
+                        if v.Name == "BobClone" then
+                            game:GetService("ReplicatedStorage").Godshand:FireServer(v:FindFirstChild("HumanoidRootPart"))
+                        end
+                    end
+                elseif glove == "Tycoon" then
+                    for _, v in ipairs(workspace:GetDescendants()) do
+                        if v.Name == "BobClone" then
+                            game:GetService("ReplicatedStorage").GeneralHit:FireServer(v:FindFirstChild("HumanoidRootPart"))
+                        end
+                    end
+                elseif glove == "Default" then
+                    for _, v in ipairs(game.Players:GetPlayers()) do
+                        if v ~= game.Players.LocalPlayer and v.Character then
+                            if v.Character:FindFirstChild("Ragdolled") and v.Character.Ragdolled.Value == false then
+                                game:GetService("ReplicatedStorage").b:FireServer(v.Character:FindFirstChild("HumanoidRootPart"))
+                            end
+                        end
+                    end
+                end
+                task.wait(0.25)
+            end
+        end)
+    else
+        if attackLoop then
+            task.cancel(attackLoop)
+            attackLoop = nil
+        end
+    end
+end)
+
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local spamClick = false
+local clickLoop = nil
+
+maintab:Button("Auto Tycoon", function()
+    spamClick = not spamClick
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Auto Tycoon",
+        Text = spamClick and "Enabled." or "Disabled.",
+        Duration = 5
+    })
+
+    if spamClick then
+        if clickLoop then
+            task.cancel(clickLoop)
+            clickLoop = nil
+        end
+
+        clickLoop = task.spawn(function()
+            while spamClick do
+                for _, player in ipairs(Players:GetPlayers()) do
+                    local tycoonName = "ÅTycoon" .. player.Name
+                    local tycoonModel = Workspace:FindFirstChild(tycoonName)
+
+                    if tycoonModel and tycoonModel:FindFirstChild("Click") then
+                        local clickDetector = tycoonModel.Click:FindFirstChildOfClass("ClickDetector")
+                        if clickDetector and clickDetector.Parent:IsA("BasePart") then
+                            local screenPos = Workspace.CurrentCamera:WorldToViewportPoint(clickDetector.Parent.Position)
+                            VirtualInputManager:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, true, game, 0)
+                            VirtualInputManager:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, false, game, 0)
+                        end
+                    end
+                end
+                task.wait(0.2)
+            end
+        end)
+    else
+        if clickLoop then
+            task.cancel(clickLoop)
+            clickLoop = nil
+        end
+    end
+end)
+
+antitab:Button("Remove Screenshake", function()
+local player = game:GetService("Players").LocalPlayer
+local screenshake = player:WaitForChild("PlayerScripts"):FindFirstChild("Screenshake")
+
+if screenshake then
+    screenshake:Destroy()
+else
+    warn("screenshake already removed")
+end
+end)
+
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local playerName = LocalPlayer.Name
+
+local root = nil
+local slappedValue = nil
+local ragdolledValue = Instance.new("BoolValue")
+ragdolledValue.Name = "Ragdolled"
+ragdolledValue.Value = false
+ragdolledValue.Parent = LocalPlayer
+
+local antiFlingEnabled = false
+
+local function notify(title, text)
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = title;
+			Text = text;
+			Duration = 3,
+		})
+	end)
+end
+
+local function freezePlayer(source)
+	if not antiFlingEnabled or not root then return end
+
+	root.AssemblyLinearVelocity = Vector3.zero
+	root.AssemblyAngularVelocity = Vector3.zero
+	root.Anchored = true
+
+	task.delay(2, function()
+		if root then
+			root.Anchored = false
+		end
+	end)
+end
+
+RunService.Heartbeat:Connect(function()
+	if antiFlingEnabled and ragdolledValue and ragdolledValue.Value == true then
+		freezePlayer("Ragdolled")
+	end
+end)
+
+local function setupCharacter(character)
+	root = character:WaitForChild("HumanoidRootPart")
+
+	local localFolder = Workspace:FindFirstChild(playerName)
+	if localFolder then
+		slappedValue = localFolder:FindFirstChild("LastSlappedBy")
+		ragdolledValue = localFolder:FindFirstChild("Ragdolled") or ragdolledValue
+	end
+
+	if slappedValue then
+		slappedValue.Changed:Connect(function(newValue)
+			if antiFlingEnabled and newValue and newValue ~= "" then
+				freezePlayer("Slapped")
+			end
+		end)
+	end
+end
+
+if LocalPlayer.Character then
+	setupCharacter(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(setupCharacter)
+
+antitab:Button("Anti-Knockback", function()
+	antiFlingEnabled = not antiFlingEnabled
+	local status = antiFlingEnabled and "Enabled." or "Disabled."
+	notify("Anti-Knockback", status)
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
 
 elseif currentPlaceId == slapbattlesks then
-print("unimplemented.")
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
 
+local win = ui:Create({
+    Name = "Celeron's GUI (Slap Battles)",
+    ThemeColor = Color3.fromRGB(14, 14, 14),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local antitab = win:Tab("Protection")
+local teletab = win:Tab("Map")
+local modetab = win:Tab("Modes")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+antitab:Label("Protection Settings May Be Blatant.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Nameless Admin", function()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/FilteringEnabled/NamelessAdmin/main/Source'))()
+end)
+
+misctab:Button("Rejoin Server", function()
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+local placeId = game.PlaceId
+local jobId = game.JobId
+local player = Players.LocalPlayer or Players:GetPlayers()[1]
+
+if typeof(placeId) == "number" and typeof(jobId) == "string" and player then
+    print("Rejoining current server...")
+    print("PlaceId:", placeId)
+    print("JobId:", jobId)
+    TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
+else
+    print("Failed to get current server info or player.")
+end
+end)
+
+misctab:Button("Switch Servers", function()
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+local placeId = game.PlaceId
+local currentJobId = game.JobId
+local player = Players.LocalPlayer or Players:GetPlayers()[1]
+
+local function findDifferentServer()
+    local cursor = nil
+
+    while true do
+        local url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100", placeId)
+        if cursor then
+            url = url .. "&cursor=" .. cursor
+        end
+
+        local success, response = pcall(function()
+            return http_request({
+                Url = url,
+                Method = "GET",
+                Headers = {
+                    ["User-Agent"] = "Mozilla/5.0"
+                }
+            })
+        end)
+
+        if not success or not response or not response.Body then
+            print("Request failed. Retrying...")
+            task.wait(2)
+            continue
+        end
+
+        if string.find(response.Body, "Too many requests") then
+            print("Rate limited. Waiting...")
+            task.wait(3)
+            continue
+        end
+
+        local successDecode, data = pcall(function()
+            return HttpService:JSONDecode(response.Body)
+        end)
+
+        if not successDecode or not data or not data.data then
+            print("Failed to decode. Retrying...")
+            task.wait(2)
+            continue
+        end
+
+        for _, server in pairs(data.data) do
+            if server.id ~= currentJobId and server.playing < server.maxPlayers then
+                print("Found different server:", server.id)
+                return server.id
+            end
+        end
+
+        cursor = data.nextPageCursor
+        task.wait(1)
+
+        if not cursor then break end
+    end
+
+    return nil
+end
+
+local newJobId = findDifferentServer()
+if newJobId and player then
+    print("Teleporting to different server...")
+    TeleportService:TeleportToPlaceInstance(placeId, newJobId, player)
+else
+    print("No different server found or player missing.")
+end
+end)
+
+misctab:Button("Join Small Server (MAY GET RATE LIMITED!)", function()
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+_G.extracted1 = game.PlaceId
+_G.extracted2 = nil
+
+local userAgents = {
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+    "Mozilla/5.0 (X11; Linux x86_64)",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)",
+    "Mozilla/5.0 (Android 11; Mobile; rv:89.0)",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0)",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko)",
+    "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko)",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/114.0.0.0 Safari/537.36"
+}
+
+local function fetchSmartServer()
+    local cursor = nil
+    local smallestServer = nil
+    local minPlayers = math.huge
+    local retryCount = 0
+
+    while true do
+        local baseUrl = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100", _G.extracted1)
+        local url = baseUrl
+        if cursor then
+            url = url .. "&cursor=" .. cursor
+        end
+
+        local headers = {
+            ["User-Agent"] = userAgents[math.random(1, #userAgents)],
+            ["X-Requested-With"] = "XMLHttpRequest"
+        }
+
+        local success, response = pcall(function()
+            return http_request({
+                Url = url,
+                Method = "GET",
+                Headers = headers
+            })
+        end)
+
+        if not success or not response or not response.Body then
+            print("Request failed. Retrying...")
+            retryCount += 1
+            task.wait(math.random(2, 4) + retryCount)
+            continue
+        end
+
+        if string.find(response.Body, "Too many requests") then
+            print("Rate limited. Backing off...")
+            retryCount += 1
+            task.wait(math.random(3, 6) + retryCount)
+            continue
+        end
+
+        local successDecode, data = pcall(function()
+            return HttpService:JSONDecode(response.Body)
+        end)
+
+        if not successDecode or not data or not data.data then
+            print("Failed to decode server data. Retrying...")
+            retryCount += 1
+            task.wait(math.random(2, 5) + retryCount)
+            continue
+        end
+
+        retryCount = 0
+
+        for _, server in pairs(data.data) do
+            print("Checking server:", server.id, "Players:", server.playing, "/", server.maxPlayers)
+
+            if server.playing >= 1 and server.playing <= 2 and server.playing < server.maxPlayers then
+                print("Found ideal server with 1–2 players. Joining now.")
+                return server
+            end
+
+            if server.playing < minPlayers and server.playing < server.maxPlayers then
+                minPlayers = server.playing
+                smallestServer = server
+            end
+        end
+
+        cursor = data.nextPageCursor
+        task.wait(math.random(1, 2))
+
+        if not cursor then break end
+    end
+
+    return smallestServer
+end
+
+local server = fetchSmartServer()
+if server then
+    _G.extracted2 = server.id
+    print("Extracted PlaceId:", _G.extracted1)
+    print("Extracted JobId:", _G.extracted2)
+
+    local player = Players.LocalPlayer or Players:GetPlayers()[1]
+
+    if typeof(_G.extracted1) == "number" and typeof(_G.extracted2) == "string" and player then
+        print("Teleporting to server...")
+        TeleportService:TeleportToPlaceInstance(_G.extracted1, _G.extracted2, player)
+    else
+        print("Invalid data or player not found.")
+    end
+else
+    print("No suitable server found.")
+end
+end)
+
+misctab:Button("Destroy GUI", function()
+    win:Exit()
+end)
+
+
+misctab:Button("Leave Game", function()
+    game:Shutdown()
+end)
+
+modetab:Label("These Places Can Be Joined Instantly!")
+
+local TeleportService = game:GetService("TeleportService")
+local LocalPlayer = game.Players.LocalPlayer
+
+local function teleportTo(placeId)
+    TeleportService:Teleport(placeId, LocalPlayer)
+end
+
+modetab:Button("Main Game", function()
+    teleportTo(6403373529)
+end)
+
+modetab:Button("Killstreak Only", function()
+    teleportTo(11520107397)
+end)
+
+modetab:Button("No One Shot Gloves", function()
+    teleportTo(9015014224)
+end)
+
+modetab:Button("Slap Royale Matchmaking", function()
+    teleportTo(9426795465)
+end)
+
+modetab:Button("Normal Barzil", function()
+    teleportTo(7234087065)
+end)
+
+misctab:Button("Slap League (Functional, Needs Another Player.)", function()
+    teleportTo(18698003301)
+end)
+
+modetab:Button("Tower Of Hell (TOH)", function()
+    teleportTo(115782629143468)
+end)
+
+modetab:Button("Day in the Life of a Small Game Dev", function()
+	queueonteleport([[
+    print("ez pz!")
+
+    local player = game:GetService("Players").LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+
+    local function find(parent, name)
+        local t, s = 2.5, tick()
+        repeat
+            local c = parent:FindFirstChild(name)
+            if c then return c end
+            task.wait(0.1)
+        until tick() - s > t
+        return nil
+    end
+
+    local hrp = find(character, "HumanoidRootPart")
+    local trigger = find(find(find(find(workspace, "Buildings"), "wizard twoer 2"), "Model"), "Trigger")
+
+    if hrp and trigger and trigger:FindFirstChild("TouchInterest") then
+        firetouchinterest(hrp, trigger, 0)
+        firetouchinterest(hrp, trigger, 1)
+    end
+]])
+teleportTo(7234087065)
+end)
+
+modetab:Button("Custom Glove Customizer", function()
+    teleportTo(9068206286)
+end)
+
+modetab:Button("Soft Update Waiting Place", function()
+    teleportTo(12712288037)
+end)
+
+modetab:Button("?", function()
+    teleportTo(12845859004)
+end)
+
+modetab:Label("Warning: The Below Places Can't Be Joined Directly.")
+
+modetab:Button("Testing Place", function()
+    teleportTo(9020359053)
+end)
+
+modetab:Button("Tower Defense", function()
+    teleportTo(15228348051)
+end)
+
+modetab:Button("Christmas Eve", function()
+    teleportTo(15507333474)
+end)
+
+modetab:Button("Null Zone", function()
+    teleportTo(14422118326)
+end)
+
+modetab:Button("Staff Application", function()
+    teleportTo(16034567693)
+end)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local lastSliderSet = nil
+local humanoidConnection = nil
+
+local function applySpeed(humanoid)
+	if not humanoid or not lastSliderSet then return end
+	if humanoid.WalkSpeed ~= lastSliderSet then
+		humanoid.WalkSpeed = lastSliderSet
+	end
+
+	if humanoidConnection then
+		humanoidConnection:Disconnect()
+	end
+
+	humanoidConnection = humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+		if humanoid.WalkSpeed ~= lastSliderSet then
+			humanoid.WalkSpeed = lastSliderSet
+		end
+	end)
+end
+
+maintab:Slider("Player Speed", 19.5, 5, 85, function(v)
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	lastSliderSet = (v == 8) and 16 or v
+	applySpeed(humanoid)
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(character)
+	character:WaitForChild("Humanoid"):GetPropertyChangedSignal("Parent"):Connect(function()
+		local newHumanoid = character:FindFirstChildOfClass("Humanoid")
+		if newHumanoid then
+			applySpeed(newHumanoid)
+		end
+	end)
+
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		applySpeed(humanoid)
+	end
+end)
+
+maintab:Button("Remove Cooldown", function()
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local tool = character:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
+while character.Humanoid.Health ~= 0 do
+local localscript = tool:FindFirstChildOfClass("LocalScript")
+local localscriptclone = localscript:Clone()
+localscriptclone = localscript:Clone()
+localscriptclone:Clone()
+localscript:Destroy()
+localscriptclone.Parent = tool
+wait(0.1)
+end
+end)
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local root = nil
+local auraEnabled = false
+local cachedRemotes = {}
+local heartbeatConn
+local lastFireTime = 0
+
+local function notify(title, text, duration)
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = title,
+			Text = text,
+			Duration = duration or 3
+		})
+	end)
+end
+
+local function updateRoot()
+	local character = LocalPlayer.Character
+	if character then
+		root = character:FindFirstChild("HumanoidRootPart")
+	end
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+	char:WaitForChild("HumanoidRootPart")
+	updateRoot()
+end)
+
+if LocalPlayer.Character then
+	updateRoot()
+end
+
+local function findEquippedGlove()
+	local character = LocalPlayer.Character
+	if not character then return nil end
+	for _, tool in ipairs(character:GetChildren()) do
+		if tool:IsA("Tool") then
+			return tool
+		end
+	end
+end
+
+local function getClosestPlayer()
+	local myRoot = root
+	if not myRoot then return nil end
+
+	local closest, dist = nil, math.huge
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character then
+			local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+			if targetRoot then
+				local mag = (targetRoot.Position - myRoot.Position).Magnitude
+				if mag < dist then
+					dist = mag
+					closest = player
+				end
+			end
+		end
+	end
+	return closest
+end
+
+local function findRelevantHitRemotes(gloveName)
+	if cachedRemotes[gloveName] then return cachedRemotes[gloveName] end
+
+	local nameLower = string.lower(gloveName or "")
+	local hits = {}
+
+	for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+		if obj:IsA("RemoteEvent") then
+			local remoteLower = string.lower(obj.Name)
+			if remoteLower == nameLower .. "hi"
+			or (remoteLower:find(nameLower) and remoteLower:find("hit"))
+			or remoteLower:find("zh")
+			or remoteLower:find("slap")
+			or remoteLower:find("hi")
+			or remoteLower:find("hit") then
+				table.insert(hits, obj)
+			end
+		end
+	end
+
+	cachedRemotes[gloveName] = hits
+	return hits
+end
+
+maintab:Button("Slap Aura", function()
+	auraEnabled = not auraEnabled
+
+	if auraEnabled and not heartbeatConn then
+		heartbeatConn = RunService.Heartbeat:Connect(function()
+			local currentTime = os.clock()
+			if currentTime - lastFireTime < 0.5 then return end
+
+			local glove = findEquippedGlove()
+			local targetPlayer = getClosestPlayer()
+
+			if targetPlayer and targetPlayer.Character then
+				local torso = targetPlayer.Character:FindFirstChild("Torso")
+					or targetPlayer.Character:FindFirstChild("UpperTorso")
+					or targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+				if torso then
+					local remotes = {}
+
+					if glove then
+						local foundRemotes = findRelevantHitRemotes(glove.Name)
+						if foundRemotes and #foundRemotes > 0 then
+							remotes = foundRemotes
+						end
+					end
+
+					if #remotes == 0 then
+						for _, fallbackName in ipairs({"GeneralHit", "b", "KSHit"}) do
+							local remote = ReplicatedStorage:FindFirstChild(fallbackName)
+							if remote then
+								table.insert(remotes, remote)
+							end
+						end
+					end
+
+					for _, remote in ipairs(remotes) do
+						remote:FireServer(torso)
+					end
+
+					lastFireTime = currentTime
+				end
+			end
+		end)
+	elseif not auraEnabled and heartbeatConn then
+		heartbeatConn:Disconnect()
+		heartbeatConn = nil
+	end
+
+	notify("Slap Aura", auraEnabled and "Enabled." or "Disabled.")
+end)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+local range = 15
+local cooldown = 1
+local lastClick = 0
+local enabled = false
+
+local function emulateClick()
+	VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, nil, 0)
+	VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, nil, 0)
+end
+
+RunService.RenderStepped:Connect(function()
+	if not enabled then return end
+
+	local now = tick()
+	if now - lastClick < cooldown then return end
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			local targetHRP = player.Character.HumanoidRootPart
+			local dist = (HumanoidRootPart.Position - targetHRP.Position).Magnitude
+
+			if dist <= range then
+				emulateClick()
+				lastClick = now
+				break
+			end
+		end
+	end
+end)
+
+maintab:Button("Glove Triggerbot", function()
+    enabled = not enabled
+
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Glove Triggerbot",
+        Text = enabled and "Enabled." or "Disabled.",
+        Duration = 2
+    })
+end)
+
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local playerName = LocalPlayer.Name
+
+local root = nil
+local slappedValue = nil
+local ragdolledValue = Instance.new("BoolValue")
+ragdolledValue.Name = "Ragdolled"
+ragdolledValue.Value = false
+ragdolledValue.Parent = LocalPlayer
+
+local antiFlingEnabled = false
+
+local function notify(title, text)
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = title;
+			Text = text;
+			Duration = 3,
+		})
+	end)
+end
+
+local function freezePlayer(source)
+	if not antiFlingEnabled or not root then return end
+
+	root.AssemblyLinearVelocity = Vector3.zero
+	root.AssemblyAngularVelocity = Vector3.zero
+	root.Anchored = true
+
+	task.delay(2, function()
+		if root then
+			root.Anchored = false
+		end
+	end)
+end
+
+RunService.Heartbeat:Connect(function()
+	if antiFlingEnabled and ragdolledValue and ragdolledValue.Value == true then
+		freezePlayer("Ragdolled")
+	end
+end)
+
+local function setupCharacter(character)
+	root = character:WaitForChild("HumanoidRootPart")
+
+	local localFolder = Workspace:FindFirstChild(playerName)
+	if localFolder then
+		slappedValue = localFolder:FindFirstChild("LastSlappedBy")
+		ragdolledValue = localFolder:FindFirstChild("Ragdolled") or ragdolledValue
+	end
+
+	if slappedValue then
+		slappedValue.Changed:Connect(function(newValue)
+			if antiFlingEnabled and newValue and newValue ~= "" then
+				freezePlayer("Slapped")
+			end
+		end)
+	end
+end
+
+if LocalPlayer.Character then
+	setupCharacter(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(setupCharacter)
+
+antitab:Button("Anti-Knockback", function()
+	antiFlingEnabled = not antiFlingEnabled
+	local status = antiFlingEnabled and "Enabled." or "Disabled."
+	notify("Anti-Knockback", status)
+end)
+
+antitab:Button("Anti-Void (Teleport Method, Rejoin To Disable.)", function()
+local lp = game.Players.LocalPlayer
+local lastGroundedPos = nil
+
+local baseplate = Instance.new("Part")
+baseplate.Size = Vector3.new(99999, 1, 99999)
+baseplate.Position = Vector3.new(-30, -30, -30)
+baseplate.Anchored = true
+baseplate.CanCollide = true
+baseplate.Transparency = 0.9
+baseplate.Name = "VoidProtection"
+baseplate.Parent = workspace
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    local char = lp.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local rayOrigin = hrp.Position
+    local rayDirection = Vector3.new(0, -50, 0)
+
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {char, baseplate}
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+    params.IgnoreWater = true
+
+    local result = workspace:Raycast(rayOrigin, rayDirection, params)
+
+    if result and result.Instance and result.Instance.CanCollide then
+        lastGroundedPos = hrp.Position
+    elseif hrp.Position.Y < -24 and lastGroundedPos then
+        hrp.CFrame = CFrame.new(lastGroundedPos + Vector3.new(0, 5, 0))
+    end
+end)
+
+baseplate.Touched:Connect(function(hit)
+    local char = lp.Character
+    if not char then return end
+    if hit:IsDescendantOf(char) and lastGroundedPos then
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.CFrame = CFrame.new(lastGroundedPos + Vector3.new(0, 5, 0))
+        end
+    end
+end)
+end)
+
+antitab:Button("Anti-Void (Baseplate Method)", function()
+local Workspace = game:GetService("Workspace")
+
+local baseplate = Instance.new("Part")
+baseplate.Name = "VoidProtection"
+baseplate.Size = Vector3.new(25000, 1, 25000)
+baseplate.Position = Vector3.new(15, -10, 6)
+baseplate.Anchored = true
+baseplate.Material = Enum.Material.Grass
+baseplate.Transparency = 0.75
+baseplate.Color = Color3.fromRGB(0, 255, 45)
+baseplate.CastShadow = false 
+baseplate.Parent = workspace
+end)
+
+antitab:Button("Remove Anti-Void", function()
+local function removeVoidProtections(parent)
+	for _, obj in ipairs(parent:GetDescendants()) do
+		if obj:IsA("BasePart") and obj.Name == "VoidProtection" then
+			obj:Destroy()
+		end
+	end
+end
+
+removeVoidProtections(game)
+end)
+
+teletab:Button("Main Island", function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(3, -5, 16)
+end)
+
+teletab:Button("Moyai Island", function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(229, -16, -12)
+end)
+
+teletab:Button("Slapple Island", function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-381, 51, -12)
+end)
+
+teletab:Button("Castle", function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(250, 34, 189)
+end)
+
+teletab:Button("The Plate", function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = game:GetService("Workspace").Arena.Plate.CFrame
+end)
+
+teletab:Button("Retro Obby", function()
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local mapPath = ReplicatedStorage:WaitForChild("Assets"):WaitForChild("Retro"):WaitForChild("Map"):WaitForChild("RetroObbyMap")
+local mapName = "RetroObbyMap"
+
+local existingMap = Workspace:FindFirstChild(mapName)
+if not existingMap then
+    local clonedMap = mapPath:Clone()
+    clonedMap.Parent = Workspace
+    existingMap = clonedMap
+end
+
+local targetPosition = CFrame.new(-16873, -1, 4775)
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+hrp.CFrame = targetPosition
+end)
+
+teletab:Button("Baseplate", function()
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local baseplateName = "_TargetBaseplate"
+local targetPosition = Vector3.new(5000, 228, 5000)
+local baseplateSize = Vector3.new(512, 20, 512)
+
+local function ensureBaseplate()
+	local existing = Workspace:FindFirstChild(baseplateName)
+	if not existing then
+		local part = Instance.new("Part")
+		part.Name = baseplateName
+		part.Size = baseplateSize
+		part.Position = targetPosition
+		part.Anchored = true
+		part.TopSurface = Enum.SurfaceType.Smooth
+		part.BottomSurface = Enum.SurfaceType.Smooth
+		part.Material = Enum.Material.SmoothPlastic
+		part.Color = Color3.fromRGB(163, 162, 165)
+		part.Parent = Workspace
+	end
+end
+
+local function teleportToBaseplate()
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local root = character:WaitForChild("HumanoidRootPart")
+	root.CFrame = CFrame.new(targetPosition + Vector3.new(0, baseplateSize.Y / 2 + 5, 0))
+end
+
+ensureBaseplate()
+teleportToBaseplate()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
 elseif currentPlaceId == slaproyalewaiting then
-
 local StarterGui = game:GetService("StarterGui")
 
 StarterGui:SetCore("SendNotification", {
@@ -3270,5 +5130,12 @@ StarterGui:SetCore("SendNotification", {
     Button1 = "alright fella",
 })
 else
-	print("This game isn't supported or isn't added yet.")
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Not Supported",
+    Text = "This Game / Mode Is Not Supported, Please Try Again Later.",
+    Duration = 3,
+    Button1 = "alright fella",
+})
 end
