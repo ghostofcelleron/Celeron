@@ -1881,6 +1881,7 @@ end
 end)
 
 farmtab:Label("Flash Farm: Silent, Teleport To Baseplate.")
+
 farmtab:Button("Auto-Complete Flash Quests #1 & #2", function()
 local rs = game:GetService("ReplicatedStorage")
 local flashTeleport = rs:WaitForChild("FlashTeleport")
@@ -1910,6 +1911,21 @@ if typeof(placeId) == "number" and typeof(jobId) == "string" and player then
     TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
 else
     print("Failed to get current server info or player.")
+end
+end)
+
+farmtab:Label("Wormhole Farm: Silent, Teleport To Baseplate.")
+
+farmtab:Button("Auto-Complete Wormhole Quest #3", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local WormholePlace = ReplicatedStorage:WaitForChild("WormholePlace")
+
+local totalFires = 750
+
+for i = 1, totalFires do
+    task.spawn(function()
+        WormholePlace:FireServer()
+    end)
 end
 end)
 
