@@ -46,7 +46,7 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
-exptab:Label("This Section Contains Useful / Game-Breaking Scripts.")
+exptab:Label("Useful / Game-Breaking Scripts.")
 antitab:Label("Protection Settings May Be Blatant.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
@@ -306,7 +306,7 @@ modetab:Button("Normal Barzil", function()
     teleportTo(7234087065)
 end)
 
-misctab:Button("Slap League (Functional, Needs Another Player.)", function()
+modetab:Button("Slap League (Functional, Needs Another Player.)", function()
     teleportTo(18698003301)
 end)
 
@@ -339,7 +339,12 @@ modetab:Button("Day in the Life of a Small Game Dev", function()
         firetouchinterest(hrp, trigger, 1)
     end
 ]])
+wait(1)
 teleportTo(7234087065)
+end)
+
+modetab:Button("Suction Cup Trials", function()
+game:GetService("ReplicatedStorage").Events.suction_obby_tp:FireServer()
 end)
 
 modetab:Button("Custom Glove Customizer", function()
@@ -649,21 +654,6 @@ funtab:Button("FLOWERS Glove (Glove Ability: Crash Server)", function()
 loadstring(game:HttpGet('https://raw.githubusercontent.com/Umbrella-Scripter/Slap-Battles/refs/heads/main/F.L.O.W.E.R.lua'))()
 end)
 
-maintab:Button("Remove Cooldown", function()
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local tool = character:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
-while character.Humanoid.Health ~= 0 do
-local localscript = tool:FindFirstChildOfClass("LocalScript")
-local localscriptclone = localscript:Clone()
-localscriptclone = localscript:Clone()
-localscriptclone:Clone()
-localscript:Destroy()
-localscriptclone.Parent = tool
-wait(0.1)
-end
-end)
-
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
@@ -754,7 +744,7 @@ maintab:Button("Slap Aura", function()
 		end
 		auraConnection = RunService.Heartbeat:Connect(function()
 			local currentTime = os.clock()
-			if currentTime - lastFireTime < 0.7 then return end
+			if currentTime - lastFireTime < 0.5 then return end
 			lastFireTime = currentTime
 
 			if not root then return end
@@ -846,6 +836,21 @@ maintab:Button("Glove Triggerbot", function()
     })
 end)
 
+maintab:Button("Remove Cooldown", function()
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local tool = character:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
+while character.Humanoid.Health ~= 0 do
+local localscript = tool:FindFirstChildOfClass("LocalScript")
+local localscriptclone = localscript:Clone()
+localscriptclone = localscript:Clone()
+localscriptclone:Clone()
+localscript:Destroy()
+localscriptclone.Parent = tool
+wait(0.1)
+end
+end)
+
 maintab:Button("Auto-Click Tycoon (MUST BE NEAR)", function()
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local Players = game:GetService("Players")
@@ -880,7 +885,7 @@ connection = RunService.RenderStepped:Connect(function()
 end)
 end)
 
-maintab:Button("SEND A MILLION BUSES (VERY BLATANT)", function()
+maintab:Button("One Million Buses (VERY BLATANT)", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local remote = ReplicatedStorage:WaitForChild("busmoment")
@@ -985,6 +990,38 @@ for i = 1, 250 do
 end
 end)
 
+local auraEnabled = false
+
+maintab:Button("Spam Prop Effect", function()
+	auraEnabled = not auraEnabled
+	notify("Prop Effect", auraEnabled and "Enabled." or "Disabled.")
+
+	if auraEnabled then
+		task.spawn(function()
+			while auraEnabled do
+				game:GetService("ReplicatedStorage").Prop:FireServer(math.huge)
+				task.wait(0.05)
+			end
+		end)
+	end
+end)
+
+local deathLoopEnabled = false
+
+maintab:Button("Spam Error Sound", function()
+	deathLoopEnabled = not deathLoopEnabled
+	notify("Error Spam", deathLoopEnabled and "Enabled." or "Disabled.")
+
+	if deathLoopEnabled then
+		task.spawn(function()
+			while deathLoopEnabled do
+				game:GetService("ReplicatedStorage").ErrorDeath:FireServer()
+				task.wait(0.5)
+			end
+		end)
+	end
+end)
+
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
@@ -1062,6 +1099,66 @@ antitab:Button("Anti-Knockback", function()
 	notify("Anti-Knockback", status)
 end)
 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local StarterGui = game:GetService("StarterGui")
+
+local LocalPlayer = Players.LocalPlayer
+local playerName = LocalPlayer.Name
+
+local character = nil
+local ragdolledValue = nil
+local antiAnchorEnabled = false
+
+local function notify(title, text)
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = title;
+			Text = text;
+			Duration = 3,
+		})
+	end)
+end
+
+local function setupCharacter(char)
+	character = char
+
+	local localFolder = Workspace:FindFirstChild(playerName)
+	if localFolder then
+		ragdolledValue = localFolder:FindFirstChild("Ragdolled")
+	end
+end
+
+if LocalPlayer.Character then
+	setupCharacter(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(setupCharacter)
+
+RunService.Heartbeat:Connect(function()
+	if not antiAnchorEnabled or not character then return end
+
+	local isRagdolled = ragdolledValue and ragdolledValue.Value
+	if not isRagdolled then
+		for _, part in ipairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				pcall(function()
+					if part.Anchored then
+						part.Anchored = false
+					end
+				end)
+			end
+		end
+	end
+end)
+
+antitab:Button("Anti-Freeze / Time Stop (Enable With Anti-Knockback!)", function()
+	antiAnchorEnabled = not antiAnchorEnabled
+	local status = antiAnchorEnabled and "Enabled." or "Disabled."
+	notify("Anti-Freeze", status)
+end)
+
 local StarterGui = game:GetService("StarterGui")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -1072,8 +1169,7 @@ local dangerousTools = {
     ["OVERKILL"] = true,
     ["The Flex"] = true,
     ["rob"] = true,
-    ["Leash"] = true,
-	["Link"] = true
+    ["Leash"] = true
 }
 
 local function hasDangerousTool(player)
@@ -1233,6 +1329,293 @@ end)
 
 exptab:Button("Get All Badge Gloves (INSTANT)", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/IncognitoScripts/SlapBattles/refs/heads/main/InstantGloves"))()
+end)
+
+exptab:Label("Eggler Exploits.")
+
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HRP = Character:WaitForChild("HumanoidRootPart")
+
+local escapePosition = Vector3.new(17944.336, -130.158, -3549.880)
+local escapeRotation = Vector3.new(0.000, 179.367, 0.000)
+
+local function stringSimilarity(a, b)
+	a, b = a:lower(), b:lower()
+	local score = 0
+	for i = 1, math.min(#a, #b) do
+		if a:sub(i, i) == b:sub(i, i) then
+			score = score + 1
+		end
+	end
+	return score
+end
+
+local function getBestMatch(name)
+	local bestScore = -1
+	local bestPlayer = nil
+
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			local unameScore = stringSimilarity(name, player.Name)
+			local dnameScore = stringSimilarity(name, player.DisplayName)
+			local score = math.max(unameScore, dnameScore)
+
+			if score > bestScore then
+				bestScore = score
+				bestPlayer = player
+			end
+		end
+	end
+
+	return bestPlayer
+end
+
+local function getLiveHRP(player)
+	if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		return player.Character.HumanoidRootPart
+	end
+end
+
+local function teleportBehindAndFace(targetHRP)
+	if not targetHRP then return end
+	local backOffset = targetHRP.CFrame.LookVector * -3
+	local newPos = targetHRP.Position + backOffset + Vector3.new(0, 2, 0)
+	local lookAt = targetHRP.Position
+	local newCFrame = CFrame.new(newPos, lookAt)
+	HRP.CFrame = newCFrame
+end
+
+local function pressE()
+	VirtualInputManager:SendKeyEvent(true, "E", false, game)
+	task.wait(0.05)
+	VirtualInputManager:SendKeyEvent(false, "E", false, game)
+end
+
+local function teleportToEscape()
+	local rotationCFrame = CFrame.Angles(
+		math.rad(escapeRotation.X),
+		math.rad(escapeRotation.Y),
+		math.rad(escapeRotation.Z)
+	)
+	HRP.CFrame = CFrame.new(escapePosition) * rotationCFrame
+end
+
+exptab:Textbox("Kick Player (Guide Portal)", function(v)
+	local targetPlayer = getBestMatch(v)
+	if targetPlayer then
+		for i = 1, 3 do
+			local targetHRP = getLiveHRP(targetPlayer)
+			if targetHRP then
+				teleportBehindAndFace(targetHRP)
+				task.wait(0.05)
+				pressE()
+			end
+			task.wait(0.05)
+		end
+		task.wait(0.2)
+		teleportToEscape()
+	end
+end)
+
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local LocalPlayer = Players.LocalPlayer
+
+local escapePosition = Vector3.new(-908.989, 310.044, -0.153)
+local escapeRotation = Vector3.new(0.401, -90.002, 0.000)
+
+local function stringSimilarity(a, b)
+	a, b = a:lower(), b:lower()
+	local score = 0
+	for i = 1, math.min(#a, #b) do
+		if a:sub(i, i) == b:sub(i, i) then
+			score = score + 1
+		end
+	end
+	return score
+end
+
+local function getBestMatch(name)
+	local bestScore = -1
+	local bestPlayer = nil
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			local unameScore = stringSimilarity(name, player.Name)
+			local dnameScore = stringSimilarity(name, player.DisplayName)
+			local score = math.max(unameScore, dnameScore)
+			if score > bestScore then
+				bestScore = score
+				bestPlayer = player
+			end
+		end
+	end
+	return bestPlayer
+end
+
+local function getLiveHRP(player)
+	if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		return player.Character.HumanoidRootPart
+	end
+end
+
+local function teleportBehindAndFace(targetHRP)
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+	if not targetHRP then return end
+	local backOffset = targetHRP.CFrame.LookVector * -3
+	local newPos = targetHRP.Position + backOffset + Vector3.new(0, 2, 0)
+	local lookAt = targetHRP.Position
+	local newCFrame = CFrame.new(newPos, lookAt)
+	hrp.CFrame = newCFrame
+end
+
+local function pressE()
+	VirtualInputManager:SendKeyEvent(true, "E", false, game)
+	task.wait(0.05)
+	VirtualInputManager:SendKeyEvent(false, "E", false, game)
+end
+
+local function teleportToEscape()
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+	local rotationCFrame = CFrame.Angles(
+		math.rad(escapeRotation.X),
+		math.rad(escapeRotation.Y),
+		math.rad(escapeRotation.Z)
+	)
+	hrp.CFrame = CFrame.new(escapePosition) * rotationCFrame
+
+	if not workspace:FindFirstChild("kickplate") then
+		local baseplate = Instance.new("Part")
+		baseplate.Size = Vector3.new(3, 3, 3)
+		baseplate.Position = Vector3.new(escapePosition.X, escapePosition.Y - 3, escapePosition.Z)
+		baseplate.Anchored = true
+		baseplate.Material = Enum.Material.SmoothPlastic
+		baseplate.Color = Color3.fromRGB(163, 162, 165)
+		baseplate.Name = "kickplate"
+		baseplate.Parent = workspace
+	end
+end
+
+exptab:Textbox("Kick Player (Brazil Portal)", function(v)
+	local targetPlayer = getBestMatch(v)
+	if targetPlayer then
+		for i = 1, 3 do
+			local targetHRP = getLiveHRP(targetPlayer)
+			if targetHRP then
+				teleportBehindAndFace(targetHRP)
+				task.wait(0.05)
+				pressE()
+			end
+			task.wait(0.05)
+		end
+		task.wait(0.2)
+		teleportToEscape()
+	end
+end)
+
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HRP = Character:WaitForChild("HumanoidRootPart")
+
+local escapePosition = Vector3.new(18621, -49484, -3927)
+local escapeRotation = Vector3.new(0.000, 179.367, 0.000)
+
+local function stringSimilarity(a, b)
+	a, b = a:lower(), b:lower()
+	local score = 0
+	for i = 1, math.min(#a, #b) do
+		if a:sub(i, i) == b:sub(i, i) then
+			score = score + 1
+		end
+	end
+	return score
+end
+
+local function getBestMatch(name)
+	local bestScore = -1
+	local bestPlayer = nil
+
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			local unameScore = stringSimilarity(name, player.Name)
+			local dnameScore = stringSimilarity(name, player.DisplayName)
+			local score = math.max(unameScore, dnameScore)
+
+			if score > bestScore then
+				bestScore = score
+				bestPlayer = player
+			end
+		end
+	end
+
+	return bestPlayer
+end
+
+local function getLiveHRP(player)
+	if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		return player.Character.HumanoidRootPart
+	end
+end
+
+local function teleportBehindAndFace(targetHRP)
+	if not targetHRP then return end
+	local backOffset = targetHRP.CFrame.LookVector * -3
+	local newPos = targetHRP.Position + backOffset + Vector3.new(0, 2, 0)
+	local lookAt = targetHRP.Position
+	local newCFrame = CFrame.new(newPos, lookAt)
+	HRP.CFrame = newCFrame
+end
+
+local function pressE()
+	VirtualInputManager:SendKeyEvent(true, "E", false, game)
+	task.wait(0.05)
+	VirtualInputManager:SendKeyEvent(false, "E", false, game)
+end
+
+local function teleportToEscape()
+	local rotationCFrame = CFrame.Angles(
+		math.rad(escapeRotation.X),
+		math.rad(escapeRotation.Y),
+		math.rad(escapeRotation.Z)
+	)
+	HRP.CFrame = CFrame.new(escapePosition) * rotationCFrame
+end
+
+	if not workspace:FindFirstChild("kickplate1") then
+		local baseplate = Instance.new("Part")
+		baseplate.Size = Vector3.new(3, 3, 3)
+		baseplate.Position = Vector3.new(escapePosition.X, escapePosition.Y - 3, escapePosition.Z)
+		baseplate.Anchored = true
+		baseplate.Material = Enum.Material.SmoothPlastic
+		baseplate.Color = Color3.fromRGB(163, 162, 165)
+		baseplate.Name = "kickplate1"
+		baseplate.Parent = workspace
+	end
+
+exptab:Textbox("Softlock Player", function(v)
+	local targetPlayer = getBestMatch(v)
+	if targetPlayer then
+		for i = 1, 3 do
+			local targetHRP = getLiveHRP(targetPlayer)
+			if targetHRP then
+				teleportBehindAndFace(targetHRP)
+				task.wait(0.05)
+				pressE()
+			end
+			task.wait(0.05)
+		end
+		task.wait(0.2)
+		teleportToEscape()
+	end
 end)
 
 antitab:Button("Anti-Void (Teleport Method, Rejoin To Disable.)", function()
@@ -1631,6 +2014,61 @@ if LocalPlayer.Character then
 end
 end)
 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local targetName = nil
+local bringEnabled = false
+
+local function bringTarget(targetPlayer)
+	local function loop()
+		while bringEnabled and targetPlayer and targetPlayer.Character do
+			local targetHRP = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+			local myChar = Players.LocalPlayer.Character
+			local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+
+			if targetHRP and myHRP then
+				targetHRP.CFrame = myHRP.CFrame + Vector3.new(0, 3, 0)
+			end
+
+			task.wait(0.1)
+		end
+	end
+
+	coroutine.wrap(loop)()
+end
+
+local function trackTarget(name)
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player.Name:lower() == name:lower() then
+			player.CharacterAdded:Connect(function()
+				if bringEnabled then
+					bringTarget(player)
+				end
+			end)
+			if player.Character then
+				bringTarget(player)
+			end
+		end
+	end
+
+	Players.PlayerAdded:Connect(function(player)
+		if player.Name:lower() == name:lower() then
+			player.CharacterAdded:Connect(function()
+				if bringEnabled then
+					bringTarget(player)
+				end
+			end)
+		end
+	end)
+end
+
+farmtab:Textbox("Loop Bring Player (Username)", function(v)
+	targetName = v
+	bringEnabled = true
+	trackTarget(targetName)
+end)
+
 farmtab:Label("Moyai Farm: Recommended To Join Small Servers.")
 
 farmtab:Button("Moyai Farm Quest #1 (Use On Main, Rejoin To Disable.)", function()
@@ -1799,6 +2237,39 @@ for i = 1, 10 do
 end
 end)
 
+farmtab:Label("Flash Farm: Silent, Teleport To Baseplate.")
+farmtab:Button("Auto-Complete Flash Quests #1 & #2", function()
+local rs = game:GetService("ReplicatedStorage")
+local flashTeleport = rs:WaitForChild("FlashTeleport")
+
+local loopCount = 500
+
+for i = 1, loopCount do
+    task.spawn(function()
+        while true do
+            flashTeleport:FireServer()
+            task.wait()
+        end
+    end)
+end
+wait(3)
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+
+local placeId = game.PlaceId
+local jobId = game.JobId
+local player = Players.LocalPlayer or Players:GetPlayers()[1]
+
+if typeof(placeId) == "number" and typeof(jobId) == "string" and player then
+    print("Rejoining current server...")
+    print("PlaceId:", placeId)
+    print("JobId:", jobId)
+    TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
+else
+    print("Failed to get current server info or player.")
+end
+end)
+
 farmtab:Label("Bus Farm: Silent, Teleport To Baseplate.")
 
 farmtab:Button("Successful Bus Hit Farm (Use On Main.)", function()
@@ -1839,7 +2310,7 @@ RunService.Heartbeat:Connect(function()
 	hrp.CFrame = CFrame.new(newPos)
 end)
 
-farmtab:Button("SEND A MILLION BUSES (VERY BLATANT)", function()
+farmtab:Button("One Million Buses (VERY BLATANT)", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local remote = ReplicatedStorage:WaitForChild("busmoment")
@@ -1877,55 +2348,6 @@ if typeof(placeId) == "number" and typeof(jobId) == "string" and player then
     TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
 else
     print("Failed to get current server info or player.")
-end
-end)
-
-farmtab:Label("Flash Farm: Silent, Teleport To Baseplate.")
-
-farmtab:Button("Auto-Complete Flash Quests #1 & #2", function()
-local rs = game:GetService("ReplicatedStorage")
-local flashTeleport = rs:WaitForChild("FlashTeleport")
-
-local loopCount = 500
-
-for i = 1, loopCount do
-    task.spawn(function()
-        while true do
-            flashTeleport:FireServer()
-            task.wait()
-        end
-    end)
-end
-wait(3)
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
-
-local placeId = game.PlaceId
-local jobId = game.JobId
-local player = Players.LocalPlayer or Players:GetPlayers()[1]
-
-if typeof(placeId) == "number" and typeof(jobId) == "string" and player then
-    print("Rejoining current server...")
-    print("PlaceId:", placeId)
-    print("JobId:", jobId)
-    TeleportService:TeleportToPlaceInstance(placeId, jobId, player)
-else
-    print("Failed to get current server info or player.")
-end
-end)
-
-farmtab:Label("Wormhole Farm: Silent, Teleport To Baseplate.")
-
-farmtab:Button("Auto-Complete Wormhole Quest #3", function()
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local WormholePlace = ReplicatedStorage:WaitForChild("WormholePlace")
-
-local totalFires = 750
-
-for i = 1, totalFires do
-    task.spawn(function()
-        WormholePlace:FireServer()
-    end)
 end
 end)
 
@@ -2034,6 +2456,10 @@ modetab:Button("Day in the Life of a Small Game Dev", function()
     end
 ]])
 teleportTo(7234087065)
+end)
+
+modetab:Button("Suction Cup Trials", function()
+game:GetService("ReplicatedStorage").Events.suction_obby_tp:FireServer()
 end)
 
 modetab:Button("Custom Glove Customizer", function()
@@ -2650,6 +3076,10 @@ modetab:Button("Day in the Life of a Small Game Dev", function()
 teleportTo(7234087065)
 end)
 
+modetab:Button("Suction Cup Trials", function()
+game:GetService("ReplicatedStorage").Events.suction_obby_tp:FireServer()
+end)
+
 modetab:Button("Custom Glove Customizer", function()
     teleportTo(9068206286)
 end)
@@ -3245,7 +3675,6 @@ for _, tool in ipairs(itemsFolder:GetChildren()) do
 	end
 end
 end)
-
 
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
@@ -3965,7 +4394,7 @@ modetab:Button("Normal Barzil", function()
     teleportTo(7234087065)
 end)
 
-misctab:Button("Slap League (Functional, Needs Another Player.)", function()
+modetab:Button("Slap League (Functional, Needs Another Player.)", function()
     teleportTo(18698003301)
 end)
 
@@ -3999,6 +4428,10 @@ modetab:Button("Day in the Life of a Small Game Dev", function()
     end
 ]])
 teleportTo(7234087065)
+end)
+
+modetab:Button("Suction Cup Trials", function()
+game:GetService("ReplicatedStorage").Events.suction_obby_tp:FireServer()
 end)
 
 modetab:Button("Custom Glove Customizer", function()
@@ -4177,42 +4610,52 @@ maintab:Button("Slap Aura (Players / Mini Bob)", function()
     end
 end)
 
-maintab:Button("Auto-Click Tycoon", function()
-    local VirtualInputManager = game:GetService("VirtualInputManager")
-    local Players = game:GetService("Players")
-    local Workspace = game:GetService("Workspace")
-    local Camera = Workspace.CurrentCamera
-    local localPlayer = Players.LocalPlayer
-    local clicking = true
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
 
-    coroutine.wrap(function()
-        while clicking do
-            local closestPart = nil
-            local shortestDistance = math.huge
+local spamClick = false
+local clickLoop = nil
 
-            for _, player in pairs(Players:GetPlayers()) do
-                local tycoon = Workspace:FindFirstChild("ÅTycoon" .. player.Name)
-                if tycoon then
-                    local clickPart = tycoon:FindFirstChild("Click")
-                    if clickPart and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                        local distance = (clickPart.Position - localPlayer.Character.HumanoidRootPart.Position).Magnitude
-                        if distance < 15 and distance < shortestDistance then
-                            shortestDistance = distance
-                            closestPart = clickPart
+maintab:Button("Auto Tycoon", function()
+    spamClick = not spamClick
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Auto Tycoon",
+        Text = spamClick and "Enabled." or "Disabled.",
+        Duration = 5
+    })
+
+    if spamClick then
+        if clickLoop then
+            task.cancel(clickLoop)
+            clickLoop = nil
+        end
+
+        clickLoop = task.spawn(function()
+            while spamClick do
+                for _, player in ipairs(Players:GetPlayers()) do
+                    local tycoonName = "ÅTycoon" .. player.Name
+                    local tycoonModel = Workspace:FindFirstChild(tycoonName)
+
+                    if tycoonModel and tycoonModel:FindFirstChild("Click") then
+                        local clickDetector = tycoonModel.Click:FindFirstChildOfClass("ClickDetector")
+                        if clickDetector and clickDetector.Parent:IsA("BasePart") then
+                            local screenPos = Workspace.CurrentCamera:WorldToViewportPoint(clickDetector.Parent.Position)
+                            VirtualInputManager:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, true, game, 0)
+                            VirtualInputManager:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, false, game, 0)
                         end
                     end
                 end
+                task.wait(0.2)
             end
-
-            if closestPart then
-                local screenPoint = Camera:WorldToViewportPoint(closestPart.Position)
-                VirtualInputManager:SendMouseButtonEvent(screenPoint.X, screenPoint.Y, 0, true, game, 0)
-                VirtualInputManager:SendMouseButtonEvent(screenPoint.X, screenPoint.Y, 0, false, game, 0)
-            end
-
-            task.wait(0.2)
+        end)
+    else
+        if clickLoop then
+            task.cancel(clickLoop)
+            clickLoop = nil
         end
-    end)()
+    end
 end)
 
 antitab:Button("Remove Screenshake", function()
@@ -4331,7 +4774,7 @@ elseif currentPlaceId == slapbattlesks then
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
 
 local win = ui:Create({
-    Name = "Celeron's GUI (Killstreak Only)",
+    Name = "Celeron's GUI (Slap Battles)",
     ThemeColor = Color3.fromRGB(14, 14, 14),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne
@@ -4604,7 +5047,7 @@ modetab:Button("Normal Barzil", function()
     teleportTo(7234087065)
 end)
 
-misctab:Button("Slap League (Functional, Needs Another Player.)", function()
+modetab:Button("Slap League (Functional, Needs Another Player.)", function()
     teleportTo(18698003301)
 end)
 
@@ -4638,6 +5081,10 @@ modetab:Button("Day in the Life of a Small Game Dev", function()
     end
 ]])
 teleportTo(7234087065)
+end)
+
+modetab:Button("Suction Cup Trials", function()
+game:GetService("ReplicatedStorage").Events.suction_obby_tp:FireServer()
 end)
 
 modetab:Button("Custom Glove Customizer", function()
