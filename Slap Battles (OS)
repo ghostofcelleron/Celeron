@@ -7,10 +7,13 @@ local slapbattles = 6403373529
 local slapbattles2 = 124596094333302
 local slapbattles3 = 9015014224
 local slapbattlesks = 11520107397
-local evilbarzil = 80420091630966
 local slaproyale = 9431156611
 local slaproyalewaiting = 9426795465
+local evilbarzil = 80420091630966
 local eternalbob = 13833961666
+local egglerserver = 129665246576996
+local nullzone = 14422118326
+local barzil = 7234087065
 
 local currentPlaceId = game.PlaceId
 
@@ -314,7 +317,8 @@ modetab:Button("Tower Of Hell (TOH)", function()
     teleportTo(115782629143468)
 end)
 
-modetab:Button("Day in the Life of a Small Game Dev", function()
+
+modetab:Button("Day in the Life of a Small Game Dev (MAY NOT WORK!)", function()
 	queueonteleport([[
     print("ez pz!")
 
@@ -339,12 +343,20 @@ modetab:Button("Day in the Life of a Small Game Dev", function()
         firetouchinterest(hrp, trigger, 1)
     end
 ]])
-wait(1)
 teleportTo(7234087065)
 end)
 
 modetab:Button("Suction Cup Trials", function()
 game:GetService("ReplicatedStorage").Events.suction_obby_tp:FireServer()
+end)
+
+modetab:Button("Sword Fight On The Heights", function()
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(316, 40, 197))
+wait(0.5)
+local args = {[1] = "Ban Hammer"}
+game:GetService("ReplicatedStorage"):WaitForChild("RetroAbility"):FireServer(unpack(args))
+wait(0.25)
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(308, 45, 189))
 end)
 
 modetab:Button("Custom Glove Customizer", function()
@@ -660,131 +672,251 @@ local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
-local root = nil
-local auraEnabled = false
+local enabled = false
 local cachedRemotes = {}
-local KSHitRemote = ReplicatedStorage:FindFirstChild("KSHit")
-local auraConnection
-local lastFireTime = 0
-
-local function notify(title, text, duration)
-	pcall(function()
-		StarterGui:SetCore("SendNotification", {
-			Title = title,
-			Text = text,
-			Duration = duration or 3
-		})
-	end)
-end
-
-local function updateRoot()
-	local character = LocalPlayer.Character
-	if character then
-		root = character:FindFirstChild("HumanoidRootPart")
-	end
-end
-
-LocalPlayer.CharacterAdded:Connect(function(char)
-	char:WaitForChild("HumanoidRootPart")
-	updateRoot()
-end)
-
-if LocalPlayer.Character then
-	updateRoot()
-end
 
 local function findEquippedGlove()
-	local character = LocalPlayer.Character
-	if not character then return nil end
-	for _, tool in ipairs(character:GetChildren()) do
-		if tool:IsA("Tool") then
-			return tool
-		end
-	end
+    local character = LocalPlayer.Character
+    if not character then return nil end
+    for _, tool in ipairs(character:GetChildren()) do
+        if tool:IsA("Tool") then
+            return tool
+        end
+    end
 end
 
 local function getClosestPlayer()
-	local closest = nil
-	local minDist = math.huge
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local distance = (player.Character.HumanoidRootPart.Position - root.Position).Magnitude
-			if distance < minDist then
-				minDist = distance
-				closest = player
-			end
-		end
-	end
-	return closest
+    local myChar = LocalPlayer.Character
+    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+
+    local closest, dist = nil, math.huge
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+            if targetRoot then
+                local mag = (targetRoot.Position - myRoot.Position).Magnitude
+                if mag < dist then
+                    dist = mag
+                    closest = player
+                end
+            end
+        end
+    end
+    return closest
 end
 
 local function findRelevantHitRemotes(gloveName)
-	if cachedRemotes[gloveName] then return cachedRemotes[gloveName] end
-	local nameLower = string.lower(gloveName or "")
-	local hits = {}
-	for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
-		if obj:IsA("RemoteEvent") then
-			local remoteLower = string.lower(obj.Name)
-			if remoteLower == nameLower .. "hi" or (remoteLower:find(nameLower) and remoteLower:find("hit")) then
-				table.insert(hits, obj)
-			end
-		end
-	end
-	cachedRemotes[gloveName] = hits
-	return hits
+    if cachedRemotes[gloveName] then return cachedRemotes[gloveName] end
+
+    local nameLower = string.lower(gloveName or "")
+    local hits = {}
+
+    for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            local remoteLower = string.lower(obj.Name)
+            if remoteLower == nameLower .. "hi"
+            or (remoteLower:find(nameLower) and remoteLower:find("hit")) then
+                table.insert(hits, obj)
+            end
+        end
+    end
+
+    cachedRemotes[gloveName] = hits
+    return hits
 end
 
+local heartbeatConn
+local lastFireTime = 0
+
 maintab:Button("Slap Aura", function()
-	auraEnabled = not auraEnabled
-	notify("Slap Aura", auraEnabled and "Enabled." or "Disabled.")
-	if auraEnabled then
-		if auraConnection then
-			auraConnection:Disconnect()
-			auraConnection = nil
-		end
-		auraConnection = RunService.Heartbeat:Connect(function()
-			local currentTime = os.clock()
-			if currentTime - lastFireTime < 0.5 then return end
-			lastFireTime = currentTime
+    enabled = not enabled
 
-			if not root then return end
-			local target = getClosestPlayer()
-			if not target or not target.Character then return end
-			local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-			if not targetRoot then return end
+    if enabled and not heartbeatConn then
+        heartbeatConn = RunService.Heartbeat:Connect(function()
+            local currentTime = os.clock()
+            if currentTime - lastFireTime < 0.5 then return end
 
-			local glove = findEquippedGlove()
-			local remotes = {}
+            local glove = findEquippedGlove()
+            local targetPlayer = getClosestPlayer()
 
-			if glove then
-				local foundRemotes = findRelevantHitRemotes(glove.Name)
-				if foundRemotes and #foundRemotes > 0 then
-					remotes = foundRemotes
-				end
-			end
+            if targetPlayer and targetPlayer.Character then
+                local torso = targetPlayer.Character:FindFirstChild("Torso")
+                    or targetPlayer.Character:FindFirstChild("UpperTorso")
+                    or targetPlayer.Character:FindFirstChild("HumanoidRootPart")
 
-			if #remotes == 0 then
-				if KSHitRemote then
-					table.insert(remotes, KSHitRemote)
-				end
-				for _, fallback in ipairs({"GeneralHit", "b"}) do
-					local remote = ReplicatedStorage:FindFirstChild(fallback)
-					if remote then
-						table.insert(remotes, remote)
-					end
-				end
-			end
+                if torso then
+                    local remotes = {}
 
-			for _, remote in ipairs(remotes) do
-				remote:FireServer(targetRoot)
-			end
-		end)
-	else
-		if auraConnection then
-			auraConnection:Disconnect()
-			auraConnection = nil
-		end
-	end
+                    if glove then
+                        local foundRemotes = findRelevantHitRemotes(glove.Name)
+                        if foundRemotes and #foundRemotes > 0 then
+                            remotes = foundRemotes
+                        end
+                    end
+
+                    if #remotes == 0 then
+                        for _, fallback in ipairs({"GeneralHit", "b", "KSHit"}) do
+                            local remote = ReplicatedStorage:FindFirstChild(fallback)
+                            if remote then
+                                table.insert(remotes, remote)
+                            end
+                        end
+                    end
+
+                    for _, remote in ipairs(remotes) do
+                        remote:FireServer(targetPlayer.Character:FindFirstChild(torso.Name))
+                    end
+
+                    lastFireTime = currentTime
+                end
+            end
+        end)
+    elseif not enabled and heartbeatConn then
+        heartbeatConn:Disconnect()
+        heartbeatConn = nil
+    end
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Slap Aura",
+        Text = enabled and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+end)
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local enabled = false
+local cachedRemotes = {}
+local AnimationId = "rbxassetid://13526154547"
+local slapCount = 0
+local slapWindowStart = 0
+local cooldownActive = false
+
+local function findEquippedGlove()
+    local character = LocalPlayer.Character
+    if not character then return nil end
+    for _, tool in ipairs(character:GetChildren()) do
+        if tool:IsA("Tool") then
+            return tool
+        end
+    end
+end
+
+local function getClosestPlayer()
+    local myChar = LocalPlayer.Character
+    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+    local closest, dist = nil, math.huge
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+            if targetRoot then
+                local mag = (targetRoot.Position - myRoot.Position).Magnitude
+                if mag < dist then
+                    dist = mag
+                    closest = player
+                end
+            end
+        end
+    end
+    return closest
+end
+
+local function findRelevantHitRemotes(gloveName)
+    if cachedRemotes[gloveName] then return cachedRemotes[gloveName] end
+    local nameLower = string.lower(gloveName or "")
+    local hits = {}
+    for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            local remoteLower = string.lower(obj.Name)
+            if remoteLower == nameLower .. "hi" or (remoteLower:find(nameLower) and remoteLower:find("hit")) then
+                table.insert(hits, obj)
+            end
+        end
+    end
+    cachedRemotes[gloveName] = hits
+    return hits
+end
+
+local heartbeatConn
+
+maintab:Button("Slap Aura (Legit)", function()
+    enabled = not enabled
+    if enabled and not heartbeatConn then
+        heartbeatConn = RunService.Heartbeat:Connect(function()
+            local currentTime = os.clock()
+            if currentTime - slapWindowStart > 3 then
+                slapWindowStart = currentTime
+                slapCount = 0
+            end
+            if slapCount >= 5 then return end
+            if cooldownActive then return end
+            local glove = findEquippedGlove()
+            if not glove then return end
+            local targetPlayer = getClosestPlayer()
+            if targetPlayer and targetPlayer.Character then
+                local torso = targetPlayer.Character:FindFirstChild("Torso") or targetPlayer.Character:FindFirstChild("UpperTorso") or targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if torso then
+                    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if myRoot then
+                        local distance = (torso.Position - myRoot.Position).Magnitude
+                        if distance > 13 then return end
+                        local y = myRoot.Position.Y
+                        if y >= 314 and y <= 350 then return end
+                        cooldownActive = true
+                        task.delay(0.7, function()
+                            cooldownActive = false
+                        end)
+                        local remotes = {}
+                        local foundRemotes = findRelevantHitRemotes(glove.Name)
+                        if foundRemotes and #foundRemotes > 0 then
+                            remotes = foundRemotes
+                        end
+                        if #remotes == 0 then
+                            for _, fallback in ipairs({"GeneralHit", "b", "KSHit"}) do
+                                local remote = ReplicatedStorage:FindFirstChild(fallback)
+                                if remote then
+                                    table.insert(remotes, remote)
+                                end
+                            end
+                        end
+                        local originalCFrame = myRoot.CFrame
+                        local direction = (torso.Position - myRoot.Position).Unit
+                        local yaw = math.atan2(-direction.Z, direction.X)
+                        myRoot.CFrame = CFrame.new(myRoot.Position) * CFrame.Angles(0, yaw, 0)
+                        task.wait(0.05)
+                        myRoot.CFrame = originalCFrame
+                        for _, remote in ipairs(remotes) do
+                            remote:FireServer(torso)
+                        end
+                        if y < 314 or y > 350 then
+                            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                            if humanoid then
+                                local anim = Instance.new("Animation")
+                                anim.AnimationId = AnimationId
+                                local track = humanoid:LoadAnimation(anim)
+                                track:Play()
+                            end
+                        end
+                        slapCount += 1
+                    end
+                end
+            end
+        end)
+    elseif not enabled and heartbeatConn then
+        heartbeatConn:Disconnect()
+        heartbeatConn = nil
+    end
+    StarterGui:SetCore("SendNotification", {
+        Title = "Slap Aura (Legit)",
+        Text = enabled and "Enabled." or "Disabled.",
+        Duration = 3
+    })
 end)
 
 local Players = game:GetService("Players")
@@ -2430,34 +2562,6 @@ modetab:Button("Tower Of Hell (TOH)", function()
     teleportTo(115782629143468)
 end)
 
-modetab:Button("Day in the Life of a Small Game Dev", function()
-	queueonteleport([[
-    print("ez pz!")
-
-    local player = game:GetService("Players").LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-
-    local function find(parent, name)
-        local t, s = 2.5, tick()
-        repeat
-            local c = parent:FindFirstChild(name)
-            if c then return c end
-            task.wait(0.5)
-        until tick() - s > t
-        return nil
-    end
-
-    local hrp = find(character, "HumanoidRootPart")
-    local trigger = find(find(find(find(workspace, "Buildings"), "wizard twoer 2"), "Model"), "Trigger")
-
-    if hrp and trigger and trigger:FindFirstChild("TouchInterest") then
-        firetouchinterest(hrp, trigger, 0)
-        firetouchinterest(hrp, trigger, 1)
-    end
-]])
-teleportTo(7234087065)
-end)
-
 modetab:Button("Suction Cup Trials", function()
 game:GetService("ReplicatedStorage").Events.suction_obby_tp:FireServer()
 end)
@@ -2999,7 +3103,7 @@ end
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
 
 local win = ui:Create({
-    Name = "Celeron's GUI (Slap Royale)",
+    Name = "Celeron's GUI (SB: Slap Royale)",
     ThemeColor = Color3.fromRGB(14, 14, 14),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne
@@ -3013,6 +3117,7 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
+itemtab:Label("Disable The Bunker Before Grabbing Items.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 modetab:Label("These Places Can Be Joined Instantly!")
@@ -3046,34 +3151,6 @@ end)
 
 modetab:Button("Tower Of Hell (TOH)", function()
     teleportTo(115782629143468)
-end)
-
-modetab:Button("Day in the Life of a Small Game Dev", function()
-	queueonteleport([[
-    print("ez pz!")
-
-    local player = game:GetService("Players").LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-
-    local function find(parent, name)
-        local t, s = 2.5, tick()
-        repeat
-            local c = parent:FindFirstChild(name)
-            if c then return c end
-            task.wait(0.1)
-        until tick() - s > t
-        return nil
-    end
-
-    local hrp = find(character, "HumanoidRootPart")
-    local trigger = find(find(find(find(workspace, "Buildings"), "wizard twoer 2"), "Model"), "Trigger")
-
-    if hrp and trigger and trigger:FindFirstChild("TouchInterest") then
-        firetouchinterest(hrp, trigger, 0)
-        firetouchinterest(hrp, trigger, 1)
-    end
-]])
-teleportTo(7234087065)
 end)
 
 modetab:Button("Suction Cup Trials", function()
@@ -3352,7 +3429,7 @@ maintab:Button("Exit Bus", function()
 game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("BusJumping"):FireServer()
 end)
 
-itemtab:Button("Remove Bunker (Use If Grabbing Items.)", function()
+itemtab:Button("Disable Bunker", function()
 local itemsFolder = workspace:WaitForChild("Items")
 local mapOffice = workspace:WaitForChild("Map"):WaitForChild("OriginOffice")
 
@@ -3377,6 +3454,8 @@ end
 
 mapOffice:Destroy()
 end)
+
+itemtab:Label("Item Grabbing: May Get Kicked If Match Didn't Start, Recommend Ice Cubes.")
 
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
@@ -3419,7 +3498,7 @@ local function sendFKey()
 	end
 end
 
-itemtab:Textbox("Get Item", function(v)
+itemtab:Textbox("Grab Certain Item", function(v)
 	for _, tool in ipairs(itemsFolder:GetChildren()) do
 		if tool:IsA("Tool") and tool:FindFirstChild("Handle") and matches(tool.Name, v) then
 			local handle = tool.Handle
@@ -3433,7 +3512,129 @@ itemtab:Textbox("Get Item", function(v)
 	end
 end)
 
-itemtab:Button("Grab Strength Items", function()
+itemtab:Button("Grab All Items (More Risky In Lobby!)", function()
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local camera = workspace.CurrentCamera
+local itemsFolder = workspace:WaitForChild("Items")
+
+local moveDelay = 0.425
+local pauseTime = 0.15
+
+local function moveTo(part)
+	local direction = (part.Position - hrp.Position).Unit
+	local targetPos = part.Position - direction * 3
+	local targetCF = CFrame.new(targetPos)
+	hrp.CFrame = targetCF
+	task.wait(moveDelay)
+end
+
+local function faceTarget(part)
+	local lookVector = (part.Position - hrp.Position).Unit
+	local yaw = math.atan2(lookVector.X, lookVector.Z)
+	hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, yaw, 0)
+end
+
+local function rotateCameraTo(part)
+	local camPos = camera.CFrame.Position
+	local lookAt = part.Position
+	camera.CFrame = CFrame.new(camPos, lookAt)
+end
+
+local function sendFKey()
+	for _ = 1, 3 do
+		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+		task.wait(0.05)
+		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+		task.wait(0.05)
+	end
+end
+
+for _, tool in ipairs(itemsFolder:GetChildren()) do
+	if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
+		local handle = tool.Handle
+		moveTo(handle)
+		task.wait(pauseTime)
+		faceTarget(handle)
+		rotateCameraTo(handle)
+		task.wait(pauseTime)
+		sendFKey()
+	end
+end
+end)
+
+itemtab:Button("Grab Permanent Items (Recommended!)", function()
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local camera = workspace.CurrentCamera
+local itemsFolder = workspace:WaitForChild("Items")
+
+local moveDelay = 0.425
+local pauseTime = 0.1
+
+local priorityOrder = {
+	"speed potion",
+	"frog potion",
+	"bull's essence",
+	"potion of strength",
+	"boba",
+}
+
+local function matches(name, target)
+	return string.find(string.lower(name), string.lower(target), 1, true)
+end
+
+local function moveTo(part)
+	local direction = (part.Position - hrp.Position).Unit
+	local targetPos = part.Position - direction
+	hrp.CFrame = CFrame.new(targetPos)
+	task.wait(moveDelay)
+end
+
+local function faceTarget(part)
+	local lookVector = (part.Position - hrp.Position).Unit
+	local yaw = math.atan2(lookVector.X, lookVector.Z)
+	hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, yaw, 0)
+end
+
+local function rotateCameraTo(part)
+	camera.CFrame = CFrame.new(camera.CFrame.Position, part.Position)
+end
+
+local function sendFKey()
+	for _ = 1, 3 do
+		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+		task.wait(0.05)
+		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+		task.wait(0.05)
+	end
+end
+
+local visited = {}
+
+for _, targetName in ipairs(priorityOrder) do
+	for _, tool in ipairs(itemsFolder:GetChildren()) do
+		if tool:IsA("Tool") and tool:FindFirstChild("Handle") and matches(tool.Name, targetName) and not visited[tool] then
+			visited[tool] = true
+			local handle = tool.Handle
+			moveTo(handle)
+			task.wait(pauseTime)
+			faceTarget(handle)
+			rotateCameraTo(handle)
+			task.wait(pauseTime)
+			sendFKey()
+		end
+	end
+end
+end)
+
+itemtab:Button("Grab PVP Items (Recommended!)", function()
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
 local player = Players.LocalPlayer
@@ -3450,7 +3651,8 @@ local priorityOrder = {
 	"cube of ice",
 	"bull's essence",
     "sphere of fury",
-    "potion of strength"
+    "potion of strength",
+	"boba"
 }
 
 local function matches(name, target)
@@ -3459,7 +3661,7 @@ end
 
 local function moveTo(part)
 	local direction = (part.Position - hrp.Position).Unit
-	local targetPos = part.Position - direction * 3
+	local targetPos = part.Position - direction
 	hrp.CFrame = CFrame.new(targetPos)
 	task.wait(moveDelay)
 end
@@ -3516,7 +3718,8 @@ local pauseTime = 0.1
 local priorityOrder = {
 	"apple",
     "first aid kit",
-    "bandage"
+    "bandage",
+	"health potion"
 }
 
 local function matches(name, target)
@@ -3567,20 +3770,20 @@ for _, targetName in ipairs(priorityOrder) do
 end
 end)
 
-itemtab:Button("Use PVP Items", function()
+itemtab:Label("Item Usage: Recommended To Use Away From Others.")
+
+itemtab:Button("Use Permanent Items (May Be Suspicious.)", function()
 local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
 local LocalPlayer = Players.LocalPlayer
 local Backpack = LocalPlayer:WaitForChild("Backpack")
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
-local delayBetweenTools = 0.175
-local clicksPerTool = 1
-local clickDelay = 0.05
-
 local keywords = {
-	"cube of ice",
-	"bull's essence"
+	"speed potion",
+	"frog potion",
+	"bull's essence",
+	"potion of strength",
+	"boba",
 }
 
 local function matches(name)
@@ -3593,19 +3796,41 @@ local function matches(name)
 	return false
 end
 
-local function equipAndClick(tool)
-	if not tool or not tool:IsDescendantOf(Backpack) then return end
-
-	tool.Parent = Character
-	task.wait(0.2)
-
-	for _ = 1, clicksPerTool do
-		VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-		task.wait(clickDelay)
-		VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-		task.wait(clickDelay)
+local matchingTools = {}
+for _, tool in ipairs(Backpack:GetChildren()) do
+	if tool:IsA("Tool") and matches(tool.Name) then
+		table.insert(matchingTools, tool)
 	end
+end
 
+for _, tool in ipairs(matchingTools) do
+	tool.Parent = Character
+	task.defer(function()
+		tool:Activate()
+	end)
+end
+end)
+
+itemtab:Button("Use Strength Items (May Be Suspicious.)", function()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Backpack = LocalPlayer:WaitForChild("Backpack")
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+local keywords = {
+	"bull's essence",
+	"potion of strength",
+	"boba"
+}
+
+local function matches(name)
+	local lower = string.lower(name)
+	for _, keyword in ipairs(keywords) do
+		if string.find(lower, keyword, 1, true) then
+			return true
+		end
+	end
+	return false
 end
 
 local matchingTools = {}
@@ -3616,62 +3841,125 @@ for _, tool in ipairs(Backpack:GetChildren()) do
 end
 
 for _, tool in ipairs(matchingTools) do
-	equipAndClick(tool)
-	task.wait(delayBetweenTools)
+	tool.Parent = Character
+	task.defer(function()
+		tool:Activate()
+	end)
 end
 end)
 
-itemtab:Button("Grab All Items (Possible To Use In Lobby, May Get Kicked.)", function()
-
+itemtab:Button("Use Speed / Jump Items", function()
 local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local camera = workspace.CurrentCamera
-local itemsFolder = workspace:WaitForChild("Items")
+local LocalPlayer = Players.LocalPlayer
+local Backpack = LocalPlayer:WaitForChild("Backpack")
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
-local moveDelay = 0.425
-local pauseTime = 0.15
+local keywords = {
+	"speed potion",
+	"frog potion",
+	"boba"
+}
 
-local function moveTo(part)
-	local direction = (part.Position - hrp.Position).Unit
-	local targetPos = part.Position - direction * 3
-	local targetCF = CFrame.new(targetPos)
-	hrp.CFrame = targetCF
-	task.wait(moveDelay)
+local function matches(name)
+	local lower = string.lower(name)
+	for _, keyword in ipairs(keywords) do
+		if string.find(lower, keyword, 1, true) then
+			return true
+		end
+	end
+	return false
 end
 
-local function faceTarget(part)
-	local lookVector = (part.Position - hrp.Position).Unit
-	local yaw = math.atan2(lookVector.X, lookVector.Z)
-	hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, yaw, 0)
-end
-
-local function rotateCameraTo(part)
-	local camPos = camera.CFrame.Position
-	local lookAt = part.Position
-	camera.CFrame = CFrame.new(camPos, lookAt)
-end
-
-local function sendFKey()
-	for _ = 1, 3 do
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
+local matchingTools = {}
+for _, tool in ipairs(Backpack:GetChildren()) do
+	if tool:IsA("Tool") and matches(tool.Name) then
+		table.insert(matchingTools, tool)
 	end
 end
 
-for _, tool in ipairs(itemsFolder:GetChildren()) do
-	if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
-		local handle = tool.Handle
-		moveTo(handle)
-		task.wait(pauseTime)
-		faceTarget(handle)
-		rotateCameraTo(handle)
-		task.wait(pauseTime)
-		sendFKey()
+for _, tool in ipairs(matchingTools) do
+	tool.Parent = Character
+	task.defer(function()
+		tool:Activate()
+	end)
+end
+end)
+
+itemtab:Button("Use Ice Cubes (MAY One-Shot With Slap Aura.)", function()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Backpack = LocalPlayer:WaitForChild("Backpack")
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+local keywords = {
+	"cube of ice"
+}
+
+local function matches(name)
+	local lower = string.lower(name)
+	for _, keyword in ipairs(keywords) do
+		if string.find(lower, keyword, 1, true) then
+			return true
+		end
+	end
+	return false
+end
+
+local matchingTools = {}
+for _, tool in ipairs(Backpack:GetChildren()) do
+	if tool:IsA("Tool") and matches(tool.Name) then
+		table.insert(matchingTools, tool)
+	end
+end
+
+for _, tool in ipairs(matchingTools) do
+	tool.Parent = Character
+	task.defer(function()
+		tool:Activate()
+	end)
+end
+end)
+
+itemtab:Label("Item Dropping: Recommended To Use Away From Others.")
+
+itemtab:Button("Drop All Items", function()
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local LocalPlayer = Players.LocalPlayer
+local Backpack = LocalPlayer:WaitForChild("Backpack")
+
+local dropDelay = 0.1
+
+local toolstodrop = {
+	"speed potion",
+	"frog potion",
+	"bull's essence",
+	"potion of strength",
+	"boba",
+	"true power",
+	"cube of ice",
+	"sphere of fury",
+	"lightning potion",
+	"health potion",
+	"bandage",
+	"apple"
+}
+
+local dropLookup = {}
+for _, name in ipairs(toolstodrop) do
+	dropLookup[string.lower(name)] = true
+end
+
+for _, tool in ipairs(Backpack:GetChildren()) do
+	if tool:IsA("Tool") and dropLookup[string.lower(tool.Name)] then
+		tool.Parent = LocalPlayer.Character
+		task.wait(0.1)
+
+		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Backspace, false, game)
+		task.wait(0.05)
+		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Backspace, false, game)
+
+		task.wait(dropDelay)
 	end
 end
 end)
@@ -4122,7 +4410,7 @@ elseif currentPlaceId == eternalbob then
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
 
 local win = ui:Create({
-    Name = "Celeron's GUI (Eternal Bob)",
+    Name = "Celeron's GUI (SB: Eternal Bob)",
     ThemeColor = Color3.fromRGB(14, 14, 14),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne
@@ -4400,34 +4688,6 @@ end)
 
 modetab:Button("Tower Of Hell (TOH)", function()
     teleportTo(115782629143468)
-end)
-
-modetab:Button("Day in the Life of a Small Game Dev", function()
-	queueonteleport([[
-    print("ez pz!")
-
-    local player = game:GetService("Players").LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-
-    local function find(parent, name)
-        local t, s = 2.5, tick()
-        repeat
-            local c = parent:FindFirstChild(name)
-            if c then return c end
-            task.wait(0.1)
-        until tick() - s > t
-        return nil
-    end
-
-    local hrp = find(character, "HumanoidRootPart")
-    local trigger = find(find(find(find(workspace, "Buildings"), "wizard twoer 2"), "Model"), "Trigger")
-
-    if hrp and trigger and trigger:FindFirstChild("TouchInterest") then
-        firetouchinterest(hrp, trigger, 0)
-        firetouchinterest(hrp, trigger, 1)
-    end
-]])
-teleportTo(7234087065)
 end)
 
 modetab:Button("Suction Cup Trials", function()
@@ -4774,7 +5034,7 @@ elseif currentPlaceId == slapbattlesks then
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
 
 local win = ui:Create({
-    Name = "Celeron's GUI (Slap Battles)",
+    Name = "Celeron's GUI (SB: Killstreak Only)",
     ThemeColor = Color3.fromRGB(14, 14, 14),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne
@@ -5053,34 +5313,6 @@ end)
 
 modetab:Button("Tower Of Hell (TOH)", function()
     teleportTo(115782629143468)
-end)
-
-modetab:Button("Day in the Life of a Small Game Dev", function()
-	queueonteleport([[
-    print("ez pz!")
-
-    local player = game:GetService("Players").LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-
-    local function find(parent, name)
-        local t, s = 2.5, tick()
-        repeat
-            local c = parent:FindFirstChild(name)
-            if c then return c end
-            task.wait(0.1)
-        until tick() - s > t
-        return nil
-    end
-
-    local hrp = find(character, "HumanoidRootPart")
-    local trigger = find(find(find(find(workspace, "Buildings"), "wizard twoer 2"), "Model"), "Trigger")
-
-    if hrp and trigger and trigger:FindFirstChild("TouchInterest") then
-        firetouchinterest(hrp, trigger, 0)
-        firetouchinterest(hrp, trigger, 1)
-    end
-]])
-teleportTo(7234087065)
 end)
 
 modetab:Button("Suction Cup Trials", function()
@@ -5638,6 +5870,189 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
+elseif currentPlaceId == nullzone then
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (SB: Null Zone)",
+    ThemeColor = Color3.fromRGB(14, 14, 14),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+maintab:Button("TP To Null Glove", function()
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(5454, -189, 1837))
+end)
+
+maintab:Button("TP To Tinkerer Glove", function()
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(4842, -214, 801))
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
+elseif currentPlaceId == egglerserver then
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (SB: Eggler)",
+    ThemeColor = Color3.fromRGB(14, 14, 14),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+maintab:Button("First Golden Egg", function()
+local player = game:GetService("Players").LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+local target = workspace.TrialCompletedPoints["Trial 1"].root
+
+firetouchinterest(root, target, 0)
+firetouchinterest(root, target, 1)
+end)
+
+maintab:Button("Second Golden Egg", function()
+local player = game:GetService("Players").LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+local target = workspace.TrialCompletedPoints["Trial 2"].root
+
+firetouchinterest(root, target, 0)
+firetouchinterest(root, target, 1)
+end)
+
+maintab:Button("Third Golden Egg", function()
+local player = game:GetService("Players").LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+local target = workspace.TrialCompletedPoints["Trial 3"].root
+
+firetouchinterest(root, target, 0)
+firetouchinterest(root, target, 1)
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
+elseif currentPlaceId == barzil then
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (SB: Barzil)",
+    ThemeColor = Color3.fromRGB(14, 14, 14),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+maintab:Button("Instant Boxer Glove", function()
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+root.CFrame = CFrame.new(4233, 3505, 265)
+
+local target = workspace:FindFirstChild("BoxingGloves")
+if target then
+	local pos = target.Position
+	local screenPos = workspace.CurrentCamera:WorldToViewportPoint(pos)
+	VirtualInputManager:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, true, game, 0)
+	VirtualInputManager:SendMouseButtonEvent(screenPos.X, screenPos.Y, 0, false, game, 0)
+end
+end)
+
+maintab:Button("Enter Metaverse Portal", function()
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(250, 98, -62823))
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
 else
 local StarterGui = game:GetService("StarterGui")
 
