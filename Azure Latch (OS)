@@ -119,14 +119,15 @@ local function StealBall()
             if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
                 LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
-                local args = {
-                    buffer.fromstring("\b\001"),
-                    {
-                        { "tackle" }
-                    }
-                }
-
-                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+					local args = {
+						buffer.fromstring("\020\001"),
+						{
+							{
+								"tackle"
+							}
+						}
+					}
+					game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
             end
         end
     end
@@ -153,14 +154,20 @@ coroutine.resume(coroutine.create(function()
                 if LocalRootPart and Goal then
                     LocalRootPart.CFrame = Goal.CFrame
 
-                    local args = {
-                        buffer.fromstring("\b\001"),
-                        {
-                            { "tackle" }
-                        }
-                    }
+					local args = {
+						buffer.fromstring("\020\001"),
+						{
+							{
+								"kick",
+								20,
+								false,
+								vector.create(0, 1, 0)
+							}
+						}
+					}
+					game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
 
-                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+
                 end
             end
         end)
@@ -206,14 +213,16 @@ if _G.ALWAYS_BALL_ACTIVE then
                     if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
                         LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
-                        local args = {
-                            buffer.fromstring("\b\001"),
-                            {
-                                { "tackle" }
-                            }
-                        }
+						local args = {
+							buffer.fromstring("\020\001"),
+							{
+								{
+									"tackle"
+								}
+							}
+						}
+						game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
 
-                        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
                     end
                 end
             end
@@ -801,26 +810,26 @@ end
 
 maintab2:Button("Get Center-Field", function()
 local args = {
-    buffer.fromstring("\013\001\001\000B")
+	buffer.fromstring("\003\001\001\000A")
 }
 game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
 
 local args = {
-    buffer.fromstring("\013\001\001\000B")
+	buffer.fromstring("\003\001\001\000B")
 }
-game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args)) 
+game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
 end)
 
 maintab2:Button("Get Goalie", function()
 local args = {
-    buffer.fromstring("\013\005\001\000B")
+	buffer.fromstring("\003\005\001\000B")
 }
 game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
 
 local args = {
-    buffer.fromstring("\013\005\001\000A")
+	buffer.fromstring("\003\005\001\000A")
 }
-game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args)) 
+game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
 end)
 
 maintab:Button("Steal Ball", function()
@@ -854,14 +863,16 @@ local function StealBall()
                 if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
-                    local args = {
-                        buffer.fromstring("\b\001"),
-                        {
-                            { "tackle" }
-                        }
-                    }
+					local args = {
+						buffer.fromstring("\020\001"),
+							{
+								{
+								"tackle"
+								}
+							}
+						}
+					game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
 
-                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
                 end
             end
         end
@@ -903,13 +914,16 @@ local function StealBall()
                 if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
-                    local args = {
-                        buffer.fromstring("\b\001"),
-                        {
-                            { "tackle" }
-                        }
-                    }
-                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+					local args = {
+						buffer.fromstring("\020\001"),
+						{
+							{
+								"tackle"
+							}
+						}
+					}
+					game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+
                 end
             end
         end
