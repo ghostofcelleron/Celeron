@@ -330,33 +330,6 @@ maintab2:Textbox("Ball Magnet", function(v)
 	end)
 end)
 
-maintab2:Button("GK-Style Slide", function()
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local Players = game:GetService("Players")
-
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local root = character:WaitForChild("HumanoidRootPart")
-
-UserInputService.InputBegan:Connect(function(input, isProcessed)
-	if isProcessed or input.KeyCode ~= Enum.KeyCode.Q then return end
-
-	task.delay(0.425, function()
-		local target = root.CFrame + (root.CFrame.LookVector * 30)
-
-		local tweenInfo = TweenInfo.new(
-			0.05,
-			Enum.EasingStyle.Sine,
-			Enum.EasingDirection.Out
-		)
-
-		local tween = TweenService:Create(root, tweenInfo, {CFrame = target})
-		tween:Play()
-	end)
-end)
-end)
-
 maintab2:Button("Suppress Notifications", function()
     _G.suppressNotifs = not (_G.suppressNotifs or false)
     local StarterGui = game:GetService("StarterGui")
@@ -1012,8 +985,93 @@ if humanoidRootPart then
 end
 end)
 
-maintab:Button("Permanent Break Ball (CAN'T BE REVERSED!)", function()
+maintab:Button("Permanent Break Ball (Req. Ball)", function()
 game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(-603, -422, -2081))
+end)
+
+maintab:Button("Auto-GK (Made By Daffy, Reset To Disable.)", function()
+local plr = game.Players.LocalPlayer
+local char = plr.Character
+local cam = game.Workspace.CurrentCamera
+
+local function ball()
+    return game.Workspace.Terrain:FindFirstChild("Ball")
+end
+
+local function getGKpos()
+    if plr.Team == game.Teams.A then
+        return Vector3.new(-535, 3, 1698)
+    elseif plr.Team == game.Teams.B then
+        return Vector3.new(-535, 3, 845)
+    end
+end
+
+local function getGKgoal()
+    if plr.Team == game.Teams.A then
+        return workspace.map.Agoal
+    elseif plr.Team == game.Teams.B then
+        return workspace.map.Bgoal
+    end
+end
+
+local con = game["Run Service"].RenderStepped:Connect(function()
+    local ball:Part = ball()
+    if ball and plr.Team ~= game.Teams.lobby then
+        cam.CFrame = CFrame.lookAt(cam.CFrame.Position, ball.Position)
+
+        local dist = (plr.Character.HumanoidRootPart.Position - ball.Position).Magnitude
+        if dist <= 50 then
+
+            if ball.Position.Y >= plr.Character.HumanoidRootPart.Position.Y + 6 then
+                plr.Character.Humanoid.Jump = true
+            else
+                plr.Character.Humanoid.Jump = false
+            end
+
+            local args = {
+                buffer.fromstring("\020\001"),
+                {
+                    { "tackle" }
+                }
+            }
+
+            game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+        else
+            local goaldist = (getGKgoal().Position - plr.Character.HumanoidRootPart.Position).Magnitude
+            if goaldist > 38 then
+                plr.Character.Humanoid:MoveTo(getGKpos())
+            end
+        end
+    else
+        local goaldist = (getGKgoal().Position - plr.Character.HumanoidRootPart.Position).Magnitude
+        if goaldist > 38 then
+            plr.Character.Humanoid:MoveTo(getGKpos())
+        end
+    end
+end)
+
+repeat
+    task.wait()
+until char.Humanoid.Healh <= 0
+con:Disconnect()
+end)
+
+maintab:Button("Bind Doberman (Binds To T, Works With Any Style.)", function()
+local uis = game:GetService("UserInputService")
+
+uis.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+
+    if input.KeyCode == Enum.KeyCode.T then
+        local args = {
+buffer.fromstring("\020\001"),
+{
+{ "doberman", false }
+}
+}
+game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+    end
+end)
 end)
 
 maintab:Button("Barou Devour Goal", function()
