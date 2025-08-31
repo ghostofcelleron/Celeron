@@ -1463,7 +1463,25 @@ exptab:Button("Get All Badge Gloves (INSTANT)", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/IncognitoScripts/SlapBattles/refs/heads/main/InstantGloves"))()
 end)
 
-exptab:Label("Eggler Exploits.")
+exptab:Button("Instant Egg Quest (Talk To Hitman First!)", function()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+local eggFolder = workspace:WaitForChild("EasterHuntEggs")
+local basePosition = HumanoidRootPart.Position
+
+local index = 0
+for _, part in ipairs(eggFolder:GetDescendants()) do
+	if part:IsA("MeshPart") and part.Anchored then
+		part.Position = basePosition * index
+		index += 1
+	end
+end
+end)
+
+exptab:Label("Eggler Glove Exploits.")
 
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
