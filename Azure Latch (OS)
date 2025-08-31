@@ -154,6 +154,8 @@ coroutine.resume(coroutine.create(function()
                 if LocalRootPart and Goal then
                     LocalRootPart.CFrame = Goal.CFrame
 
+					wait(0.185)
+
 					local args = {
 						buffer.fromstring("\020\001"),
 						{
