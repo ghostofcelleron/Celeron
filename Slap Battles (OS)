@@ -5953,6 +5953,8 @@ maintab:Label("Script Made By Celeron + Daffy!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
+maintab:Label("Become An Egg Before Obtaining Golden Eggs!")
+
 maintab:Button("First Golden Egg", function()
 local player = game:GetService("Players").LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
