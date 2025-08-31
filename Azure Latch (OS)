@@ -297,7 +297,7 @@ local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliabl
 userInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        remote:FireServer(buffer.fromstring("\016"))
+        remote:FireServer(buffer.fromstring("\019"))
     end
 end)
 end)
@@ -324,7 +324,7 @@ maintab2:Textbox("Ball Magnet", function(v)
 			wait(0.5)
 			local target = findBall()
 			if target and (hrp.Position - target.Position).Magnitude <= range then
-				remote:FireServer(buffer.fromstring("\016"))
+				remote:FireServer(buffer.fromstring("\019"))
 			end
 		end
 	end)
@@ -413,14 +413,14 @@ local function setupAutoBehavior(toggleKey, skillName, humanoidRootPart)
                                     local args
                                     if skillName == "dribble" then
                                         args = {
-                                            buffer.fromstring("\b\001"),
+                                            buffer.fromstring("\020\001"),
                                             {
                                                 { skillName, false }
                                             }
                                         }
                                     else
                                         args = {
-                                            buffer.fromstring("\b\001"),
+                                            buffer.fromstring("\020\001"),
                                             {
                                                 { skillName }
                                             }
@@ -1137,29 +1137,10 @@ local plr = game.Players.LocalPlayer
 			end)
 
 maintab2:Textbox("Character Picker", function(v)
-
-local validNames = {
-    ["rin"] = "\019\003\000rin",
-    ["aiku"] = "\019\004\000aiku",
-    ["barou"] = "\019\005\000barou",
-    ["sae"] = "\019\003\000sae",
-    ["kaiser"] = "\019\006\000kaiser",
-    ["don"] = "\019\010\000donlorenzo",
-    ["nagi"] = "\019\004\000nagi",
-    ["shidou"] = "\019\006\000shidou",
-    ["isagi"] = "\019\005\000isagi"
-}
-
-local function checkAndFire(v)
-    local match = validNames[v]
-    if match then
-        local args = { buffer.fromstring(match) }
-        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-    else
-    end
-end
-
-checkAndFire(v)
+    local args = {
+        buffer.fromstring("!\b\000" .. v)
+    }
+    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
 end)
 
 funtab:Button("Don Lorenzo (Nagi)", function()
