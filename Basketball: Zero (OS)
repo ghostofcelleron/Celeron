@@ -20,7 +20,7 @@ end
 
 local win = ui:Create({
 	Name = "Celeron's GUI (Basketball: Zero)",
-	ThemeColor = Color3.fromRGB(20, 20, 20),
+	ThemeColor = Color3.fromRGB(18, 18, 18),
 	StartupSound = "rbxassetid://6958727243",
 	ThemeFont = Enum.Font.FredokaOne
 })
