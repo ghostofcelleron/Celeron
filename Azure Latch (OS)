@@ -1136,13 +1136,6 @@ local plr = game.Players.LocalPlayer
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
 			end)
 
-maintab2:Textbox("Character Picker", function(v)
-    local args = {
-        buffer.fromstring("!\b\000" .. v)
-    }
-    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-end)
-
 funtab:Button("Don Lorenzo (Nagi)", function()
 local StarterGui = game:GetService("StarterGui")
 
