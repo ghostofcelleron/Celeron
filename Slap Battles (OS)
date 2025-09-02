@@ -1356,7 +1356,7 @@ maintab:Button("Spam Error Sound", function()
 	end
 end)
 
-glovetab:Button("UBG (Badge Obtaining Hub, NOT BY ME!)", function()
+glovetab:Button("UBH (Badge Obtaining Hub, NOT BY ME!)", function()
 loadstring(game:HttpGet('https://raw.githubusercontent.com/Pro666Pro/UltimateBadgeHub/main/main.lua'))()
 end)
 
