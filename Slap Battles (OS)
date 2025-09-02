@@ -17,6 +17,8 @@ local barzil = 7234087065
 local suction = 89837553336708
 local sfoth = 117232463555132
 local bindmaze = 74169485398268
+local icetrials = 17290438723
+local hexagon = 98726100529621
 
 local currentPlaceId = game.PlaceId
 
@@ -326,6 +328,10 @@ modetab:Button("Binded Maze", function()
     teleportTo(74169485398268)
 end)
 
+modetab:Button("Ice Trials", function()
+    teleportTo(17290438723)
+end)
+
 modetab:Button("Suction Cup Trials", function()
 game:GetService("ReplicatedStorage").Events.suction_obby_tp:FireServer()
 end)
@@ -422,222 +428,438 @@ end)
 funtab:Label("Some Fun Features I Made.")
 
 funtab:Button("OP Avatar GUI", function()
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-local Camera = Workspace.CurrentCamera
+local plr = game.Players.LocalPlayer
+local ws, cam = workspace, workspace.CurrentCamera
+
+local gui = Instance.new("ScreenGui", plr:WaitForChild("PlayerGui"))
+gui.Name = "AvatarGUI"
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 260, 0, 320)
+frame.Position = UDim2.new(0.5, -130, 0.5, -160)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+frame.Active, frame.Draggable = true, true
+
+local closeBtn = Instance.new("TextButton", frame)
+closeBtn.Size = UDim2.new(0, 12, 0, 12)
+closeBtn.Position = UDim2.new(1, -16, 0, 4)
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+closeBtn.BorderSizePixel = 0
+closeBtn.Text, closeBtn.ZIndex = "", 10
+closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
+
+local plr = game.Players.LocalPlayer
+local ws = workspace
 
 task.spawn(function()
 	while true do
 		task.wait(1)
-		local land = Workspace:FindFirstChild(LocalPlayer.Name .. "'s avatar_land")
-		local generator = land and land:FindFirstChild("Generator")
-		local broken = generator and generator:FindFirstChild("broken")
+		local land = ws:FindFirstChild(plr.Name .. "'s avatar_land")
+		local gen = land and land:FindFirstChild("Generator")
+		local broken = gen and gen:FindFirstChild("broken")
 		local prompt = broken and broken:FindFirstChild("prompt")
-		if prompt then
+		if prompt and prompt:IsA("ProximityPrompt") then
 			prompt.HoldDuration = 0
 		end
 	end
 end)
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AvatarGUI"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = PlayerGui
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, -24, 0, 24)
+title.Position = UDim2.new(0, 12, 0, 8)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.Text = "Avatar GUI"
+title.TextXAlignment = Enum.TextXAlignment.Left
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 216, 0, 412)
-frame.Position = UDim2.new(0.5, -108, 0.5, -206)
-frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+local tabBar = Instance.new("Frame", frame)
+tabBar.Size = UDim2.new(1, 0, 0, 36)
+tabBar.Position = UDim2.new(0, 0, 0, 32)
+tabBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+tabBar.BorderSizePixel = 0
+
+local tabLayout = Instance.new("UIListLayout", tabBar)
+tabLayout.FillDirection = Enum.FillDirection.Horizontal
+tabLayout.Padding = UDim.new(0, 4)
+
+local tabPadding = Instance.new("UIPadding", tabBar)
+tabPadding.PaddingTop = UDim.new(0, 6)
+tabPadding.PaddingBottom = UDim.new(0, 6)
+tabPadding.PaddingLeft = UDim.new(0, 6)
+tabPadding.PaddingRight = UDim.new(0, 6)
+
+Instance.new("UIListLayout", tabBar).Padding = UDim.new(0, 4)
+
+local content = Instance.new("ScrollingFrame", frame)
+content.Position = UDim2.new(0, 0, 0, 68)
+content.Size = UDim2.new(1, 0, 1, -68)
+content.CanvasSize = UDim2.new(0, 0, 0, 0)
+content.ScrollBarThickness = 6
+content.BackgroundTransparency = 1
+content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+content.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+
+local function createButton(text, callback)
+	local b = Instance.new("TextButton", content)
+	b.Size = UDim2.new(1, 0, 0, 32)
+	b.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	b.TextColor3 = Color3.fromRGB(255, 255, 255)
+	b.Font = Enum.Font.Gotham
+	b.TextSize = 13
+	b.Text = text
+	b.BorderSizePixel = 0
+	b.AutoLocalize = false
+	b.MouseButton1Click:Connect(callback)
+end
+
+local function tpTo(part)
+	local c = plr.Character or plr.CharacterAdded:Wait()
+	local r = c:WaitForChild("HumanoidRootPart")
+	if part and part:IsA("BasePart") then r.CFrame = part.CFrame + Vector3.new(0, 5, 0) end
+end
+
+local function getLand() return ws:FindFirstChild(plr.Name .. "'s avatar_land") end
+local function getBasement() return ws:FindFirstChild("BasementFolder") and ws.BasementFolder:FindFirstChild(plr.Name .. "'s Basement") end
+
+local godModeState
+
+local function loadTab()
+	content:ClearAllChildren()
+
+	local padding = Instance.new("UIPadding", content)
+	padding.PaddingTop = UDim.new(0, 2)
+	padding.PaddingLeft = UDim.new(0, 6)
+	padding.PaddingRight = UDim.new(0, 6)
+
+	local layout = Instance.new("UIListLayout", content)
+	layout.Padding = UDim.new(0, 4)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+	local function statusLabel(text, color)
+		local l = Instance.new("TextLabel", content)
+		l.Size = UDim2.new(1, 0, 0, 28)
+		l.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+		l.BackgroundTransparency = 0.2
+		l.TextColor3 = color
+		l.Font = Enum.Font.GothamMedium
+		l.TextSize = 16
+		l.Text = text
+		l.TextXAlignment = Enum.TextXAlignment.Left
+		l.BorderSizePixel = 0
+		return l
+	end
+
+	local infoBar = statusLabel("Power: Loading...", Color3.fromRGB(200, 200, 200))
+	local statusBar = statusLabel("Basement: Checking...", Color3.fromRGB(180, 255, 180))
+	local godModeBar = statusLabel("God Mode: Unknown", Color3.fromRGB(255, 200, 200))
+
+	createButton("God Mode", function()
+		godModeState = true
+		godModeBar.Text = "God Mode: On"
+		local h = getLand() and getLand():FindFirstChild("AvatarLand") and getLand().AvatarLand:FindFirstChild("hatch") and getLand().AvatarLand.hatch:FindFirstChild("hatch")
+		tpTo(h)
+	end)
+
+	createButton("Disable God Mode", function()
+		godModeState = false
+		godModeBar.Text = "God Mode: Off"
+		local e = getBasement() and getBasement():FindFirstChild("Exit")
+		tpTo(e)
+	end)
+
+	createButton("Enter Hatch", function()
+		local h = getLand() and getLand():FindFirstChild("AvatarLand") and getLand().AvatarLand:FindFirstChild("hatch") and getLand().AvatarLand.hatch:FindFirstChild("hatch")
+		tpTo(h)
+		task.wait(0.3)
+		local p = getLand() and getLand():FindFirstChild("main") and getLand().main:FindFirstChildOfClass("ProximityPrompt")
+		if p then fireproximityprompt(p) end
+	end)
+
+	createButton("Enter Hatch (God Mode)", function()
+		local b = getBasement()
+		if b then for _, p in ipairs(b:GetChildren()) do if p:IsA("BasePart") then tpTo(p) break end end end
+	end)
+
+	createButton("Fix Generator", function()
+		local g = getLand() and getLand():FindFirstChild("Generator")
+		local br = g and g:FindFirstChild("broken")
+		local p = br and br:FindFirstChild("prompt")
+		local c = plr.Character or plr.CharacterAdded:Wait()
+		local r = c:WaitForChild("HumanoidRootPart")
+		local orig = r.CFrame
+		if p and p:IsA("ProximityPrompt") then
+			r.CFrame = g.CFrame + Vector3.new(0, -10, 0)
+			task.wait(0.2)
+			fireproximityprompt(p)
+			task.wait(0.1)
+			r.CFrame = orig
+		end
+	end)
+
+	createButton("Toggle View Hatch", function()
+		local h = getLand() and getLand():FindFirstChild("AvatarLand") and getLand().AvatarLand:FindFirstChild("hatch") and getLand().AvatarLand.hatch:FindFirstChild("hatch")
+		if h and h:IsA("BasePart") then
+			if cam.CameraType == Enum.CameraType.Scriptable then
+				cam.CameraType = Enum.CameraType.Custom
+				cam.CameraSubject = plr.Character:FindFirstChildOfClass("Humanoid")
+			else
+				cam.CameraType = Enum.CameraType.Scriptable
+				cam.CFrame = CFrame.new(h.Position + Vector3.new(0, 25, 20), h.Position)
+			end
+		end
+	end)
+
+	createButton("Close GUI", function() gui:Destroy() end)
+
+	task.spawn(function()
+		while gui.Parent do
+			local s = plr.PlayerGui:FindFirstChild("screen3") and plr.PlayerGui.screen3:FindFirstChild("Bar") and plr.PlayerGui.screen3.Bar:FindFirstChild("TextLabel")
+			infoBar.Text = s and (s.Text) or "Power: N/A"
+
+			local g = getBasement() and getBasement():FindFirstChild("gen_status")
+			local t = g and g:FindFirstChild("Screen") and g.Screen:FindFirstChild("SurfaceGui") and g.Screen.SurfaceGui:FindFirstChild("TextLabel")
+			statusBar.Text = t and (t.Text:gsub("Generator", "")) or "Basement: N/A"
+			godModeBar.Text = godModeState == true and "God Mode: On" or godModeState == false and "God Mode: Off" or "God Mode: Unknown"
+			task.wait(0.2)
+		end
+	end)
+end
+
+local tabBtn = Instance.new("TextButton", tabBar)
+tabBtn.Size = UDim2.new(1, 0, 1, 0)
+tabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+tabBtn.Font = Enum.Font.GothamBold
+tabBtn.TextSize = 14
+tabBtn.Text = "Avatar"
+tabBtn.BorderSizePixel = 0
+tabBtn.AutoLocalize = false
+tabBtn.MouseButton1Click:Connect(loadTab)
+
+loadTab()
+end)
+
+funtab:Button("OP Alchemist GUI", function()
+local rs, plr = game:GetService("ReplicatedStorage"), game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", plr:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
+gui.Name = "AlchemistGUI"
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 260, 0, 320)
+frame.Position = UDim2.new(0.5, -130, 0.5, -160)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 frame.BorderSizePixel = 0
-frame.Parent = screenGui
 frame.Active = true
 frame.Draggable = true
 
-local function createLabel(text, positionY, color)
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, 0, 0, 27)
-	label.Position = UDim2.new(0, 0, 0, positionY)
-	label.BackgroundTransparency = 1
-	label.TextColor3 = color
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 21
-	label.Text = text
-	label.TextScaled = false
-	label.Parent = frame
-	return label
-end
+local closeBtn = Instance.new("TextButton", frame)
+closeBtn.Size = UDim2.new(0, 12, 0, 12)
+closeBtn.Position = UDim2.new(1, -16, 0, 4)
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+closeBtn.BorderSizePixel = 0
+closeBtn.Text = ""
+closeBtn.ZIndex = 10
+closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 
-local title = createLabel("Avatar GUI", 0, Color3.fromRGB(255, 255, 255))
-title.Size = UDim2.new(1, 0, 0, 41)
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, -24, 0, 24)
+title.Position = UDim2.new(0, 12, 0, 8)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 24
+title.TextSize = 18
+title.Text = "Alchemist GUI"
+title.TextXAlignment = Enum.TextXAlignment.Left
 
-local infoBar = createLabel("Loading...", 41, Color3.fromRGB(200, 200, 200))
-local statusBar = createLabel("Checking...", 68, Color3.fromRGB(180, 255, 180))
-local godModeBar = createLabel("God Mode: Unknown", 95, Color3.fromRGB(255, 200, 200))
+local tabBar = Instance.new("Frame", frame)
+tabBar.Size = UDim2.new(1, 0, 0, 36)
+tabBar.Position = UDim2.new(0, 0, 0, 32)
+tabBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+tabBar.BorderSizePixel = 0
 
-local godModeEnabled = nil
+local tabLayout = Instance.new("UIListLayout", tabBar)
+tabLayout.FillDirection = Enum.FillDirection.Horizontal
+tabLayout.Padding = UDim.new(0, 4)
 
-local function createButton(name, index, callback)
-	local button = Instance.new("TextButton")
-	button.Size = UDim2.new(1, -24, 0, 34)
-	button.Position = UDim2.new(0, 12, 0, 129 + (index - 1) * 38)
-	button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-	button.TextColor3 = Color3.fromRGB(255, 255, 255)
-	button.Font = Enum.Font.Gotham
-	button.TextSize = 13
-	button.Text = name
-	button.BorderSizePixel = 0
-	button.Parent = frame
-	button.MouseButton1Click:Connect(callback)
-	return button
+local tabPadding = Instance.new("UIPadding", tabBar)
+tabPadding.PaddingTop = UDim.new(0, 6)
+tabPadding.PaddingBottom = UDim.new(0, 6)
+tabPadding.PaddingLeft = UDim.new(0, 6)
+tabPadding.PaddingRight = UDim.new(0, 6)
+
+local content = Instance.new("ScrollingFrame", frame)
+content.Position = UDim2.new(0, 0, 0, 68)
+content.Size = UDim2.new(1, 0, 1, -68)
+content.CanvasSize = UDim2.new(0, 0, 0, 0)
+content.ScrollBarThickness = 6
+content.BackgroundTransparency = 1
+content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+content.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+
+local function mix(item, count)
+	for _ = 1, count do
+		rs.AlchemistEvent:FireServer("MixItem", item)
+	end
 end
 
-createButton("God Mode (Use In Hatch)", 1, function()
-	godModeEnabled = true
-	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local root = character:WaitForChild("HumanoidRootPart")
-	local land = Workspace:FindFirstChild(LocalPlayer.Name .. "'s avatar_land")
-	local hatch = land and land:FindFirstChild("AvatarLand") and land.AvatarLand:FindFirstChild("hatch") and land.AvatarLand.hatch:FindFirstChild("hatch")
-	if hatch and hatch:IsA("BasePart") then
-		root.CFrame = hatch.CFrame + Vector3.new(0, 5, 0)
+local function brewPotion(ingredients)
+	for _, item in ipairs(ingredients) do
+		rs.AlchemistEvent:FireServer("MixItem", item)
 	end
-end)
-
-createButton("Disable God Mode", 2, function()
-	godModeEnabled = false
-	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local root = character:WaitForChild("HumanoidRootPart")
-	local basement = Workspace:FindFirstChild("BasementFolder") and Workspace.BasementFolder:FindFirstChild(LocalPlayer.Name .. "'s Basement")
-	local exit = basement and basement:FindFirstChild("Exit")
-	if exit and exit:IsA("BasePart") then
-	end
-end)
-
-createButton("Enter Hatch", 3, function()
-	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local root = character:WaitForChild("HumanoidRootPart")
-	local land = Workspace:FindFirstChild(LocalPlayer.Name .. "'s avatar_land")
-	local hatch = land and land:FindFirstChild("AvatarLand") and land.AvatarLand:FindFirstChild("hatch") and land.AvatarLand.hatch:FindFirstChild("hatch")
-	if hatch and hatch:IsA("BasePart") then
-		root.CFrame = hatch.CFrame + Vector3.new(0, 5, 0)
-	end
-	task.wait(0.3)
-	local main = land and land:FindFirstChild("main")
-	local prompt = main and main:FindFirstChildOfClass("ProximityPrompt")
-	if prompt then
-	end
-end)
-
-createButton("Enter Hatch (Use If God Mode)", 4, function()
-	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local root = character:WaitForChild("HumanoidRootPart")
-	local basement = Workspace:FindFirstChild("BasementFolder") and Workspace.BasementFolder:FindFirstChild(LocalPlayer.Name .. "'s Basement")
-	if basement then
-		for _, child in ipairs(basement:GetChildren()) do
-			if child:IsA("BasePart") then
-				root.CFrame = child.CFrame + Vector3.new(0, 5, 0)
-				break
-			end
-		end
-	end
-end)
-
-createButton("Fix Generator", 5, function()
-	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local root = character:WaitForChild("HumanoidRootPart")
-	local land = Workspace:FindFirstChild(LocalPlayer.Name .. "'s avatar_land")
-	local generator = land and land:FindFirstChild("Generator")
-	local broken = generator and generator:FindFirstChild("broken")
-	local prompt = broken and broken:FindFirstChildOfClass("ProximityPrompt")
-	if prompt then
-		local originalCFrame = root.CFrame
-		root.CFrame = generator.CFrame + Vector3.new(0, -5, 0)
-		task.wait(0.25)
-		root.CFrame = originalCFrame
-	end
-end)
-
-local viewingHatch = false
-local originalCameraSubject = Camera.CameraSubject
-local originalCameraType = Camera.CameraType
-
-local function toggleHatchView()
-	local land = Workspace:FindFirstChild(LocalPlayer.Name .. "'s avatar_land")
-	local hatch = land and land:FindFirstChild("AvatarLand") and land.AvatarLand:FindFirstChild("hatch") and land.AvatarLand.hatch:FindFirstChild("hatch")
-	if not hatch or not hatch:IsA("BasePart") then return end
-	if viewingHatch then
-		Camera.CameraType = originalCameraType
-		Camera.CameraSubject = originalCameraSubject
-	else
-		Camera.CameraType = Enum.CameraType.Scriptable
-		local camPos = hatch.Position + Vector3.new(0, 25, 20)
-		Camera.CFrame = CFrame.new(camPos, hatch.Position)
-	end
-	viewingHatch = not viewingHatch
+	rs.AlchemistEvent:FireServer("BrewPotion")
 end
 
-createButton("Toggle View Hatch", 6, toggleHatchView)
-createButton("Close GUI", 7, function() screenGui:Destroy() end)
-
-task.spawn(function()
-	local function monitorDeathAndExit()
-		local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-		local humanoid = character:FindFirstChildOfClass("Humanoid")
-		local root = character:WaitForChild("HumanoidRootPart")
-
-		if humanoid then
-			humanoid.Died:Connect(function()
-				godModeEnabled = false
-			end)
-		end
-
-		local basement = Workspace:FindFirstChild("BasementFolder") and Workspace.BasementFolder:FindFirstChild(LocalPlayer.Name .. "'s Basement")
-		local exit = basement and basement:FindFirstChild("Exit")
-		if exit and exit:IsA("BasePart") then
-			exit.Touched:Connect(function(hit)
-				if hit == root then
-					godModeEnabled = false
+local tabs = {
+	Core = {
+		{"Summon Cauldron", function() rs.GeneralAbility:FireServer() end},
+		{"Get All Ingredients", function()
+			local items = {
+				"Blood Rose","Dark Root","Red Crystal","Blue Crystal","Glowing Mushroom",
+				"Dire Flower","Wild Vine","Plane Flower","Jade Stone","Autumn Sprout",
+				"Hazel Lily","Fire Flower","Winter Rose","Elder Wood","Mushroom","Cake Mix"
+			}
+			for _, i in ipairs(items) do
+				for _ = 1, 50 do
+					rs.AlchemistEvent:FireServer("AddItem", i)
 				end
-			end)
-		end
+			end
+		end},
+		{"All Potions", function()
+			mix("Blood Rose", 10)
+			mix("Dark Root", 10)
+			rs.AlchemistEvent:FireServer("BrewPotion")
+
+brewPotion({"Red Crystal", "Dire Flower", "Wild Vine"})
+brewPotion({"Elder Wood", "Mushroom", "Mushroom"})
+brewPotion({"Autumn Sprout", "Jade Stone"})
+brewPotion({"Blue Crystal", "Hazel Lily", "Hazel Lily"})
+brewPotion({"Dark Root", "Dark Root", "Dark Root"})
+brewPotion({"Plane Flower", "Plane Flower"})
+brewPotion({"Red Crystal", "Fire Flower", "Fire Flower"})
+brewPotion({"Hazel Lily", "Mushroom"})
+brewPotion({"Blue Crystal", "Winter Rose", "Winter Rose", "Wild Vine", "Glowing Mushroom"})
+brewPotion({"Mushroom", "Mushroom", "Blue Crystal", "Blue Crystal", "Jade Stone", "Plane Flower"})
+brewPotion({"Elder Wood", "Elder Wood", "Elder Wood", "Blue Crystal", "Red Crystal"})
+brewPotion({"Mushroom", "Mushroom", "Blue Crystal", "Hazel Lily", "Plane Flower"})
+brewPotion({"Glowing Mushroom", "Elder Wood", "Blue Crystal", "Plane Flower", "Plane Flower"})
+brewPotion({"Wild Vine", "Wild Vine", "Wild Vine", "Blood Rose", "Dark Root", "Elder Wood", "Jade Stone"})
+brewPotion({"Plane Flower", "Plane Flower", "Hazel Lily"})
+brewPotion({"Red Crystal", "Blue Crystal", "Elder Wood", "Elder Wood", "Elder Wood"})
+brewPotion({"Dark Root", "Dark Root", "Blood Rose", "Red Crystal"})
+brewPotion({"Mushroom"})
+		end}
+	},
+	Potions = {
+		{"Lethal Potion", function()
+			mix("Blood Rose", 10)
+			mix("Dark Root", 10)
+			rs.AlchemistEvent:FireServer("BrewPotion")
+		end},
+		{"Power Potion", function()
+			brewPotion({"Red Crystal","Dire Flower","Wild Vine"})
+		end},
+		{"Invincibility Potion", function()
+			brewPotion({"Elder Wood","Mushroom","Mushroom"})
+		end},
+		{"Haste Potion", function()
+			brewPotion({"Autumn Sprout","Jade Stone"})
+		end},
+		{"Invisibility Potion", function()
+			brewPotion({"Blue Crystal","Hazel Lily","Hazel Lily"})
+		end},
+		{"Nightmare Potion", function()
+			brewPotion({"Dark Root","Dark Root","Dark Root"})
+		end},
+		{"Paralyzing Potion", function()
+			brewPotion({"Plane Flower","Plane Flower"})
+		end},
+		{"Expotion Potion", function()
+			brewPotion({"Red Crystal","Fire Flower","Fire Flower"})
+		end},
+		{"Feather Potion", function()
+			brewPotion({"Hazel Lily","Mushroom"})
+		end},
+		{"Speed Potion", function()
+			brewPotion({"Mushroom", "Mushroom", "Blue Crystal", "Hazel Lily", "Plane Flower"})
+		end},
+		{"Anti-Toxin Potion", function()
+			brewPotion({"Glowing Mushroom", "Elder Wood", "Blue Crystal", "Plane Flower", "Plane Flower"})
+		end},
+		{"Toxic Potion", function()
+			brewPotion({"Blue Crystal","Winter Rose","Winter Rose","Wild Vine","Glowing Mushroom"})
+		end},
+		{"Freeze Potion", function()
+			brewPotion({"Blue Crystal","Winter Rose","Winter Rose","Wild Vine","Glowing Mushroom"})
+		end},
+		{"Corrupt Field Potion", function()
+			brewPotion({"Plane Flower", "Plane Flower", "Hazel Lily"})
+		end},
+		{"Corrupt Vine Potion", function()
+			brewPotion({"Wild Vine", "Wild Vine", "Wild Vine", "Blood Rose", "Dark Root", "Elder Wood", "Jade Stone"})
+		end},
+		{"Grug Potion", function()
+			brewPotion({"Mushroom"})
+		end},
+		{"Slow Potion", function()
+			brewPotion({"Mushroom", "Mushroom", "Blue Crystal", "Blue Crystal", "Jade Stone", "Plane Flower"})
+		end},
+	}
+}
+
+local function loadTab(name, buttons)
+	content:ClearAllChildren()
+
+	local padding = Instance.new("UIPadding", content)
+	padding.PaddingTop = UDim.new(0, 10)
+	padding.PaddingLeft = UDim.new(0, 6)
+	padding.PaddingRight = UDim.new(0, 6)
+
+	local layout = Instance.new("UIListLayout", content)
+	layout.Padding = UDim.new(0, 8)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+	for i, data in ipairs(buttons) do
+		local btn = Instance.new("TextButton", content)
+		btn.Size = UDim2.new(1, 0, 0, 32)
+		btn.LayoutOrder = i
+		btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		btn.Font = Enum.Font.Gotham
+		btn.TextSize = 13
+		btn.Text = data[1]
+		btn.BorderSizePixel = 0
+		btn.AutoLocalize = false
+		btn.MouseButton1Click:Connect(data[2])
 	end
+end
 
-	monitorDeathAndExit()
-	LocalPlayer.CharacterAdded:Connect(monitorDeathAndExit)
+local tabCount = 0.05
+for _ in pairs(tabs) do tabCount += 1 end
 
-	while screenGui.Parent do
-		local sourceLabel = PlayerGui:FindFirstChild("screen3") and PlayerGui.screen3:FindFirstChild("Bar") and PlayerGui.screen3.Bar:FindFirstChild("TextLabel")
-		infoBar.Text = sourceLabel and sourceLabel.Text or "No Basement."
+local totalPadding = (tabCount - 1) * 4
+local tabWidth = math.floor((260 - totalPadding) / tabCount)
 
-		local genLabel = Workspace:FindFirstChild("BasementFolder")
-			and Workspace.BasementFolder:FindFirstChild(LocalPlayer.Name .. "'s Basement")
-			and Workspace.BasementFolder[LocalPlayer.Name .. "'s Basement"]
-			and Workspace.BasementFolder[LocalPlayer.Name .. "'s Basement"]:FindFirstChild("gen_status")
-			and Workspace.BasementFolder[LocalPlayer.Name .. "'s Basement"].gen_status:FindFirstChild("Screen")
-			and Workspace.BasementFolder[LocalPlayer.Name .. "'s Basement"].gen_status.Screen:FindFirstChild("SurfaceGui")
-			and Workspace.BasementFolder[LocalPlayer.Name .. "'s Basement"].gen_status.Screen.SurfaceGui:FindFirstChild("TextLabel")
+for tabName, tabData in pairs(tabs) do
+	local tabBtn = Instance.new("TextButton", tabBar)
+	tabBtn.Size = UDim2.new(0, tabWidth, 1, 0)
+	tabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	tabBtn.Font = Enum.Font.GothamBold
+	tabBtn.TextSize = 14
+	tabBtn.Text = tabName
+	tabBtn.BorderSizePixel = 0
+	tabBtn.AutoLocalize = false
+	tabBtn.MouseButton1Click:Connect(function()
+		loadTab(tabName, tabData)
+	end)
+end
 
-		if genLabel and typeof(genLabel.Text) == "string" then
-			local cleaned = string.gsub(genLabel.Text, "Generator", "")
-			statusBar.Text = cleaned
-		else
-			statusBar.Text = "Status: N/A"
-		end
-
-		if godModeEnabled == true then
-			godModeBar.Text = "God Mode: On"
-		elseif godModeEnabled == false then
-			godModeBar.Text = "God Mode: Off"
-		else
-			godModeBar.Text = "God Mode: N/A"
-		end
-
-		task.wait(0.2)
-	end
-end)
+loadTab("Core", tabs.Core)
 end)
 
 funtab:Label("Use Below Features At Your Own Risk, Not Made By Me.")
@@ -2575,6 +2797,10 @@ modetab:Button("Binded Maze", function()
     teleportTo(74169485398268)
 end)
 
+modetab:Button("Ice Trials", function()
+    teleportTo(17290438723)
+end)
+
 modetab:Button("Suction Cup Trials", function()
 game:GetService("ReplicatedStorage").Events.suction_obby_tp:FireServer()
 end)
@@ -3168,6 +3394,10 @@ end)
 
 modetab:Button("Binded Maze", function()
     teleportTo(74169485398268)
+end)
+
+modetab:Button("Ice Trials", function()
+    teleportTo(17290438723)
 end)
 
 modetab:Button("Suction Cup Trials", function()
@@ -4881,6 +5111,10 @@ modetab:Button("Binded Maze", function()
     teleportTo(74169485398268)
 end)
 
+modetab:Button("Ice Trials", function()
+    teleportTo(17290438723)
+end)
+
 modetab:Button("Custom Glove Customizer", function()
     teleportTo(9068206286)
 end)
@@ -5504,6 +5738,10 @@ end)
 
 modetab:Button("Binded Maze", function()
     teleportTo(74169485398268)
+end)
+
+modetab:Button("Ice Trials", function()
+    teleportTo(17290438723)
 end)
 
 modetab:Button("Suction Cup Trials", function()
@@ -6284,6 +6522,107 @@ StarterGui:SetCore("SendNotification", {
     Button1 = "alright fella",
 })
 game.Players.LocalPlayer.Character:PivotTo(CFrame.new(-153, 5, -170))
+elseif currentPlaceId == icetrials then
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Frostbite Glove",
+    Text = "Interact with the essence to get the glove.",
+    Duration = 20,
+    Button1 = "alright fella",
+})
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(-552, 177, 57))
+elseif currentPlaceId == hexagon then
+local plr = game.Players.LocalPlayer
+local hrp = plr.Character:WaitForChild("HumanoidRootPart")
+local StarterGui = game:GetService("StarterGui")
+
+local function touch(part)
+    firetouchinterest(hrp, part, 0)
+    firetouchinterest(hrp, part, 1)
+end
+
+local function waitFor(partPath)
+    local target
+    repeat
+        target = partPath()
+        task.wait()
+    until target
+    return target
+end
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Hexa Glove",
+    Text = "Obtaining Glove...",
+    Duration = 10,
+    Button1 = "alright fella",
+})
+
+task.wait(5)
+
+local partI = waitFor(function()
+    return workspace:FindFirstChild("Part I") and workspace["Part I"].Obby:FindFirstChild("end")
+end)
+touch(partI)
+task.wait(10)
+
+local subtitle = waitFor(function()
+    return workspace:FindFirstChild("Part 2") and workspace["Part 2"]:FindFirstChild("SubtitleActivation")
+end)
+touch(subtitle)
+
+local portalActivator = waitFor(function()
+    return workspace["Part 2"]["Adjacent Island"]:FindFirstChild("PortalActivator")
+end)
+hrp.CFrame = portalActivator.CFrame + Vector3.new(0, 3, 0)
+
+local portal = waitFor(function()
+    return workspace["Part 2"]:FindFirstChild("Portal")
+end)
+task.wait(3)
+touch(portal)
+task.wait(10)
+
+local tpHandle = waitFor(function()
+    return workspace:FindFirstChild("Part 3") and workspace["Part 3"].TpToNext:FindFirstChild("Handle")
+end)
+hrp.CFrame = tpHandle.CFrame
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Hexa Glove",
+    Text = "Click The Glove To Continue.",
+    Duration = 10,
+    Button1 = "alright fella",
+})
+
+local tpPart = waitFor(function()
+    return workspace:FindFirstChild("Part 4") and workspace["Part 4"]:FindFirstChild("TPPart")
+end)
+task.wait(5)
+touch(tpPart)
+
+local gloveHandle = waitFor(function()
+    return workspace:FindFirstChild("Part 5") and workspace["Part 5"].Glove:FindFirstChild("Handle")
+end)
+task.wait(5)
+hrp.CFrame = gloveHandle.CFrame
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Hexa Glove",
+    Text = "Click on the default glove in front of you to finish the challenge.",
+    Duration = 10,
+    Button1 = "alright fella",
+})
+
+local hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+
+repeat task.wait() until workspace:FindFirstChild("Finale") and workspace.Finale:FindFirstChild("Reward")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Hexa Glove",
+    Text = "Walk to the glove and click / tap on it to obtain the glove.",
+    Duration = 120,
+    Button1 = "alright fella",
+})
 else
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
