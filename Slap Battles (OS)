@@ -1185,7 +1185,7 @@ wait(0.1)
 end
 end)
 
-maintab:Button("Auto-Click Tycoon (MUST BE NEAR)", function()
+maintab:Button("Auto-Click Tycoon (Must Be Near.)", function()
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -1219,7 +1219,7 @@ connection = RunService.RenderStepped:Connect(function()
 end)
 end)
 
-maintab:Button("One Million Buses (VERY BLATANT)", function()
+maintab:Button("One Million Buses (Very Blatant, Equip Bus.)", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local remote = ReplicatedStorage:WaitForChild("busmoment")
@@ -1498,7 +1498,7 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
-antitab:Button("Anti-Freeze / Time Stop (Enable With Anti-Knockback!)", function()
+antitab:Button("Anti-Time Stop", function()
 	antiAnchorEnabled = not antiAnchorEnabled
 	local status = antiAnchorEnabled and "Enabled." or "Disabled."
 	notify("Anti-Freeze", status)
@@ -1672,11 +1672,11 @@ antitab:Button("Anti-MegaRock", function()
     end
 end)
 
-exptab:Button("Get All Badge Gloves (INSTANT)", function()
+exptab:Button("Get All Badge Gloves (Instant, Recommended Not To Use On Main.)", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/IncognitoScripts/SlapBattles/refs/heads/main/InstantGloves"))()
 end)
 
-exptab:Button("Instant Egg Quest (Talk To Hitman First!)", function()
+exptab:Button("Instant Egg Quest (Accept Quest From Hitman First.)", function()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -2598,6 +2598,240 @@ for i = 1, 10 do
         table.insert(connections, conn)
     end)
 end
+end)
+
+farmtab:Label("Ultra Instinct Farm: Semi-Blatant, Teleport To Baseplate.")
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local autoslapenabled = false
+local cachedRemotes = {}
+
+local function findEquippedGlove()
+    local character = LocalPlayer.Character
+    if not character then return nil end
+    for _, tool in ipairs(character:GetChildren()) do
+        if tool:IsA("Tool") then
+            return tool
+        end
+    end
+end
+
+local function getClosestPlayer()
+    local myChar = LocalPlayer.Character
+    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+
+    local closest, dist = nil, math.huge
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+            if targetRoot then
+                local mag = (targetRoot.Position - myRoot.Position).Magnitude
+                if mag < dist then
+                    dist = mag
+                    closest = player
+                end
+            end
+        end
+    end
+    return closest
+end
+
+local function findRelevantHitRemotes(gloveName)
+    if cachedRemotes[gloveName] then return cachedRemotes[gloveName] end
+
+    local nameLower = string.lower(gloveName or "")
+    local hits = {}
+
+    for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            local remoteLower = string.lower(obj.Name)
+            if remoteLower == nameLower .. "hi"
+            or (remoteLower:find(nameLower) and remoteLower:find("hit")) then
+                table.insert(hits, obj)
+            end
+        end
+    end
+
+    cachedRemotes[gloveName] = hits
+    return hits
+end
+
+local heartbeatConn
+local lastFireTime = 0
+
+farmtab:Button("Auto-Slap (Main OR Both Accounts.)", function()
+    autoslapenabled = not autoslapenabled
+
+    if autoslapenabled and not heartbeatConn then
+        heartbeatConn = RunService.Heartbeat:Connect(function()
+            local currentTime = os.clock()
+            if currentTime - lastFireTime < 1.5 then return end
+
+            local glove = findEquippedGlove()
+            local targetPlayer = getClosestPlayer()
+
+            if targetPlayer and targetPlayer.Character then
+                local torso = targetPlayer.Character:FindFirstChild("Torso")
+                    or targetPlayer.Character:FindFirstChild("UpperTorso")
+                    or targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+                if torso then
+                    local remotes = {}
+
+                    if glove then
+                        local foundRemotes = findRelevantHitRemotes(glove.Name)
+                        if foundRemotes and #foundRemotes > 0 then
+                            remotes = foundRemotes
+                        end
+                    end
+
+                    if #remotes == 0 then
+                        for _, fallback in ipairs({"GeneralHit", "b", "KSHit"}) do
+                            local remote = ReplicatedStorage:FindFirstChild(fallback)
+                            if remote then
+                                table.insert(remotes, remote)
+                            end
+                        end
+                    end
+
+                    for _, remote in ipairs(remotes) do
+                        remote:FireServer(targetPlayer.Character:FindFirstChild(torso.Name))
+                    end
+
+                    lastFireTime = currentTime
+                end
+            end
+        end)
+    elseif not autoslapenabled and heartbeatConn then
+        heartbeatConn:Disconnect()
+        heartbeatConn = nil
+    end
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Auto-Slap",
+        Text = autoslapenabled and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+end)
+
+farmtab:Button("Ultra Instinct Multi-Farm (Use On Main.)", function()
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local targetPosition = Vector3.new(5001, 241, 4951)
+
+RunService.Heartbeat:Connect(function()
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        character:MoveTo(targetPosition)
+    end
+end)
+end)
+
+farmtab:Button("Ultra Instinct Multi-Farm (Use On Alt.)", function()
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local targetBase = Vector3.new(5001, 241, 4951)
+local offset = Vector3.new(0, 0, -4)
+
+local function getClosestPlayer()
+    local closest, shortest = nil, math.huge
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            if dist < shortest then
+                shortest = dist
+                closest = player
+            end
+        end
+    end
+    return closest
+end
+
+RunService.Heartbeat:Connect(function()
+    local char = LocalPlayer.Character
+    if not (char and char:FindFirstChild("HumanoidRootPart")) then return end
+
+    local hrp = char.HumanoidRootPart
+    local targetPos = targetBase + offset
+    local targetPlayer = getClosestPlayer()
+
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local lookAt = targetPlayer.Character.HumanoidRootPart.Position
+        hrp.CFrame = CFrame.new(targetPos, lookAt)
+    else
+        hrp.CFrame = CFrame.new(targetPos)
+    end
+end)
+end)
+
+farmtab:Label("Cloud Farm: Semi-Blatant, No Recommendations.")
+
+farmtab:Button("Auto-Complete Quest #3 (Use In Cloud.)", function()
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+local waypoints = {
+    CFrame.new(-586, 115, 555),
+    CFrame.new(485, 115, 558),
+    CFrame.new(600, 115, -367),
+    CFrame.new(-471, 115, -441)
+}
+
+local originalSeat = humanoid.SeatPart
+local currentIndex = 1
+local active = true
+
+local function moveOverTime(startCFrame, endCFrame, duration)
+    local elapsed = 0
+    local step = RunService.Heartbeat
+
+    while elapsed < duration and active do
+        if humanoid.SeatPart ~= originalSeat then
+            active = false
+            break
+        end
+
+        local alpha = elapsed / duration
+        local interpolated = startCFrame:Lerp(endCFrame, alpha)
+        hrp.CFrame = interpolated
+
+        elapsed += step:Wait()
+    end
+
+    hrp.CFrame = endCFrame
+end
+
+task.spawn(function()
+    while active do
+        if humanoid.SeatPart ~= originalSeat then
+            active = false
+            break
+        end
+
+        local nextIndex = currentIndex % #waypoints + 1
+        local start = hrp.CFrame
+        local target = waypoints[nextIndex]
+
+        moveOverTime(start, target, 1.25)
+
+        currentIndex = nextIndex
+    end
+end)
 end)
 
 farmtab:Label("Flash Farm: Silent, Teleport To Baseplate.")
@@ -5230,6 +5464,8 @@ maintab:Button("Auto Slap Bob", function()
         end
     end
 end)
+
+maintab:Label("You Can Slap Farm Using The Mini Bobs!")
 
 local autoAttackBob = false
 local attackLoop = nil
