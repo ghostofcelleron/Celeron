@@ -1391,7 +1391,8 @@ print("loaded don lorenzo script")
 UserInputService.InputBegan:connect(onKeyPress)
 end)
 
-funtab:Button("Ronaldo (Shidou)", function()
+
+funtab:Button("Ronaldo V1 (Shidou)", function()
 
 local StarterGui = game:GetService("StarterGui")
 
@@ -1642,6 +1643,10 @@ end)
 updateToolName()
 
 print("loaded RONALDO SUIII script")
+end)
+
+funtab:Button("Ronaldo V2 (Shidou)", function()
+loadstring(game:HttpGet("https://pastebin.com/raw/dgDW6JmL", true))()
 end)
 
 funtab:Button("Trolling Moveset", function()
