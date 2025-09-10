@@ -1337,7 +1337,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 end)
 
-maintab:Button("Bind Muck (Binds To Y, Any Glove.)", function()
+maintab:Button("Bind Muck (Binds To Y, Use With Any Glove.)", function()
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -1351,7 +1351,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 end)
 
-maintab:Button("Semi-Invisible Run Portal", function()
+maintab:Button("Semi-Invisible Run Portal (Equip Run.)", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = game:GetService("Players").LocalPlayer
 
@@ -1359,13 +1359,13 @@ local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local root = character:WaitForChild("HumanoidRootPart")
 
 local args = {
-	Vector3.new(root.Position.X, root.Position.Y - 5, root.Position.Z)
+	Vector3.new(root.Position.X, root.Position.Y - 7, root.Position.Z)
 }
 
 ReplicatedStorage:WaitForChild("GeneralAbility"):FireServer(unpack(args))
 end)
 
-maintab:Button("Spam Quake (Equip Quake)", function()
+maintab:Button("Spam Quake (Equip Quake.)", function()
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local remote = ReplicatedStorage:WaitForChild("QuakeQuake")
 
@@ -2508,7 +2508,7 @@ local args = { false }
 task.spawn(function()
     while true do
         remote:FireServer(unpack(args))
-        task.wait(3)
+        task.wait(1.25)
     end
 end)
 
@@ -2551,11 +2551,6 @@ local function onCharacterSpawn(character)
 			rootPart.CFrame = CFrame.new(destination, targetRoot.Position)
 			task.wait(0.05)
 		end
-	end
-
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		humanoid.Health = 0
 	end
 end
 
@@ -3207,6 +3202,58 @@ end
 end)
 
 farmtab:Label("Run Farm: Semi-Blatant, Teleport To Baseplate.")
+
+farmtab:Button("Run Farm Instructions", function()
+game:GetService("StarterGui"):SetCore("SendNotification", {
+	Title = "Run Kill Farm";
+	Text = "You Must Have Another Player In Your Run Dimension While Farming. Consider Using A Third Alt Account.";
+	Duration = 30;
+})
+wait(0.2)
+game:GetService("StarterGui"):SetCore("SendNotification", {
+	Title = "Run Kill Farm";
+	Text = "Periodically Respawn The Portal And Bring The Third Alt In With You.";
+	Duration = 30;
+})
+end)
+
+farmtab:Textbox("Run Kill Farm (Set Username To Main, See Info For Instructions.)", function(v)
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local LocalPlayer = Players.LocalPlayer
+
+local function onCharacterSpawn(character)
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+
+	local teleportPart = Workspace:WaitForChild("Lobby"):WaitForChild("Teleport1")
+	rootPart.CFrame = teleportPart.CFrame + Vector3.new(0, 1, 0)
+	firetouchinterest(rootPart, teleportPart, 0)
+	task.wait(0.1)
+	firetouchinterest(rootPart, teleportPart, 1)
+
+	task.wait(0.7)
+
+	local target = Players:FindFirstChild(v)
+	if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+		local targetRoot = target.Character.HumanoidRootPart
+		local offset = targetRoot.CFrame.LookVector.Unit * 5
+		local destination = targetRoot.Position + offset + Vector3.new(0, 7, 0)
+
+		for i = 1, 25 do
+			rootPart.CFrame = CFrame.new(destination, targetRoot.Position)
+			task.wait(0.05)
+		end
+	end
+end
+
+LocalPlayer.CharacterAdded:Connect(onCharacterSpawn)
+
+if LocalPlayer.Character then
+	onCharacterSpawn(LocalPlayer.Character)
+end
+end)
+
 farmtab:Button("Auto Run Mastery Quest #2 (Use At Baseplate.)", function()
 while true do
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -3233,7 +3280,7 @@ local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local root = character:WaitForChild("HumanoidRootPart")
 
 local args = {
-	Vector3.new(root.Position.X, root.Position.Y - 3, root.Position.Z)
+	Vector3.new(root.Position.X, root.Position.Y - 5, root.Position.Z)
 }
 
 ReplicatedStorage:WaitForChild("GeneralAbility"):FireServer(unpack(args))
