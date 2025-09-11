@@ -2185,6 +2185,39 @@ ensureBaseplate()
 teleportToBaseplate()
 end)
 
+farmtab:Label("Anti-AFK: Useful For Certain Farms.")
+
+local antiAFK = false
+local lastInputTime = tick()
+local inputService = game:GetService("UserInputService")
+local vim = game:GetService("VirtualInputManager")
+local StarterGui = game:GetService("StarterGui")
+
+inputService.InputBegan:Connect(function()
+    lastInputTime = tick()
+end)
+
+task.spawn(function()
+    while true do
+        if antiAFK and tick() - lastInputTime >= 60 then
+            vim:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+            task.wait(0.1)
+            vim:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+            lastInputTime = tick()
+        end
+        task.wait(1)
+    end
+end)
+
+farmtab:Button("Anti-AFK", function()
+    antiAFK = not antiAFK
+    StarterGui:SetCore("SendNotification", {
+        Title = "Anti-AFK",
+        Text = antiAFK and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+end)
+
 farmtab:Label("Slap Farming: Recommended To Teleport To Baseplate.")
 
 farmtab:Button("Slap Farm Info", function()
@@ -2524,6 +2557,65 @@ RunService.Heartbeat:Connect(function()
 end)
 end)
 
+farmtab:Button("Semi-Instant Complete Quest #3", function()
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(313, 48, 183))
+workspace.Gravity = 0
+for _, obj in ipairs({
+    workspace:FindFirstChild("AntiDefaultArena"),
+    workspace:FindFirstChild("DEATHBARRIER"),
+    workspace:FindFirstChild("DEATHBARRIER2"),
+    workspace:FindFirstChild("ArenaBarrier"),
+}) do
+    if obj then obj:Destroy() end
+end
+wait(0.5)
+
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local root = char:WaitForChild("HumanoidRootPart")
+local humanoid = char:WaitForChild("Humanoid")
+
+local targetPos = Vector3.new(175000, 48, -10000)
+local stepSize = 10
+local delay = 0.01
+
+local direction = (targetPos - root.Position).Unit
+local distance = (targetPos - root.Position).Magnitude
+local steps = math.floor(distance / stepSize)
+
+humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+for _, part in ipairs(char:GetDescendants()) do
+    if part:IsA("BasePart") then
+        part.CanCollide = false
+        part.Velocity = Vector3.zero
+    end
+end
+
+task.spawn(function()
+    for i = 1, steps do
+        root.CFrame = root.CFrame + direction * stepSize
+        task.wait(delay)
+    end
+    root.CFrame = CFrame.new(targetPos)
+    humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+end)
+
+local remote = ReplicatedStorage:WaitForChild("rob")
+local args = { false }
+local alive = true
+
+humanoid.Died:Connect(function()
+    alive = false
+end)
+
+task.spawn(function()
+    while alive do
+        remote:FireServer(unpack(args))
+        task.wait(3.25)
+    end
+end)
+end)
+
 farmtab:Textbox("Rob Absorb Farm (Set Username To Main.)", function(v)
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -2614,6 +2706,15 @@ farmtab:Textbox("Loop Bring Player (Username)", function(v)
 	targetName = v
 	bringEnabled = true
 	trackTarget(targetName)
+end)
+
+farmtab:Label("Fort Farm: Silent, Teleport To Baseplate.")
+
+farmtab:Button("Spam Build Wall", function()
+while true do
+game:GetService("ReplicatedStorage").Fortlol:FireServer()
+wait(3.33)
+end
 end)
 
 farmtab:Label("Moyai Farm: Recommended To Join Small Servers.")
