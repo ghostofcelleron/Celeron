@@ -2030,6 +2030,22 @@ exptab:Textbox("Softlock Player", function(v)
 	end
 end)
 
+exptab:Label("Angel Glove Exploits.")
+exptab:Textbox("Loop Angel Player (Usable On Self!)", function(v)
+	task.spawn(function()
+		while true do
+			for _, plr in ipairs(game:GetService("Players"):GetPlayers()) do
+				if plr.Name:lower():find(v:lower()) or plr.DisplayName:lower():find(v:lower()) then
+					local args = { plr }
+					game:GetService("ReplicatedStorage"):WaitForChild("GeneralAbility"):FireServer(unpack(args))
+					break
+				end
+			end
+			task.wait(1.5)
+		end
+	end)
+end)
+
 antitab:Button("Anti-Void (Teleport Method, Rejoin To Disable.)", function()
 local lp = game.Players.LocalPlayer
 local lastGroundedPos = nil
@@ -2741,6 +2757,7 @@ task.wait(0.2)
 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
 task.wait(0.05)
 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+task.wait(0.05)
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -3391,7 +3408,7 @@ end)
 
 farmtab:Label("Obby Farm: Blatant, Recommended To Join Small Servers.")
 
-farmtab:Button("Set Up Obby Farm (Use Before Auto Place Parts.)", function()
+farmtab:Button("Place Parts Set-Up (Use Before Auto Place Parts.)", function()
 game.Players.LocalPlayer.Character:PivotTo(CFrame.new(270, 13, 252))
 end)
 
@@ -3403,6 +3420,44 @@ local args = {
 }
 game:GetService("ReplicatedStorage"):WaitForChild("GeneralAbility"):FireServer(unpack(args))
 wait(2.5)
+end
+end)
+
+farmtab:Button("Obby Kill Brick Farm", function()
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+local function runTeleportSequence(character)
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+
+	local teleportPart = Workspace:WaitForChild("Lobby"):WaitForChild("Teleport1")
+	rootPart.CFrame = teleportPart.CFrame + Vector3.new(0, 1, 0)
+	firetouchinterest(rootPart, teleportPart, 0)
+	task.wait(0.1)
+	firetouchinterest(rootPart, teleportPart, 1)
+
+	task.wait(0.7)
+
+	for _, otherPlayer in ipairs(Players:GetPlayers()) do
+		if otherPlayer ~= LocalPlayer then
+			local targetName = "ObbyItem" .. otherPlayer.Name .. "LavaSpinner"
+			local obj = Workspace:FindFirstChild(targetName, true)
+			if obj and obj:IsA("BasePart") then
+				for i = 1, 5 do
+					rootPart.CFrame = CFrame.new(obj.Position + Vector3.new(0, 5, 0))
+					task.wait(0.05)
+				end
+				break
+			end
+		end
+	end
+end
+
+LocalPlayer.CharacterAdded:Connect(runTeleportSequence)
+
+if LocalPlayer.Character then
+	runTeleportSequence(LocalPlayer.Character)
 end
 end)
 
