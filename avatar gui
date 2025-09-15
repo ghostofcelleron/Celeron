@@ -1,0 +1,213 @@
+local plr = game.Players.LocalPlayer
+local ws, cam = workspace, workspace.CurrentCamera
+
+local gui = Instance.new("ScreenGui", plr:WaitForChild("PlayerGui"))
+gui.Name = "AvatarGUI"
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 260, 0, 320)
+frame.Position = UDim2.new(0.5, -130, 0.5, -160)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+frame.Active, frame.Draggable = true, true
+
+local closeBtn = Instance.new("TextButton", frame)
+closeBtn.Size = UDim2.new(0, 12, 0, 12)
+closeBtn.Position = UDim2.new(1, -16, 0, 4)
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+closeBtn.BorderSizePixel = 0
+closeBtn.Text, closeBtn.ZIndex = "", 10
+closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
+
+local plr = game.Players.LocalPlayer
+local ws = workspace
+
+task.spawn(function()
+	while true do
+		task.wait(1)
+		local land = ws:FindFirstChild(plr.Name .. "'s avatar_land")
+		local gen = land and land:FindFirstChild("Generator")
+		local broken = gen and gen:FindFirstChild("broken")
+		local prompt = broken and broken:FindFirstChild("prompt")
+		if prompt and prompt:IsA("ProximityPrompt") then
+			prompt.HoldDuration = 0
+		end
+	end
+end)
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, -24, 0, 24)
+title.Position = UDim2.new(0, 12, 0, 8)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.Text = "Avatar GUI"
+title.TextXAlignment = Enum.TextXAlignment.Left
+
+local tabBar = Instance.new("Frame", frame)
+tabBar.Size = UDim2.new(1, 0, 0, 36)
+tabBar.Position = UDim2.new(0, 0, 0, 32)
+tabBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+tabBar.BorderSizePixel = 0
+
+local tabLayout = Instance.new("UIListLayout", tabBar)
+tabLayout.FillDirection = Enum.FillDirection.Horizontal
+tabLayout.Padding = UDim.new(0, 4)
+
+local tabPadding = Instance.new("UIPadding", tabBar)
+tabPadding.PaddingTop = UDim.new(0, 6)
+tabPadding.PaddingBottom = UDim.new(0, 6)
+tabPadding.PaddingLeft = UDim.new(0, 6)
+tabPadding.PaddingRight = UDim.new(0, 6)
+
+Instance.new("UIListLayout", tabBar).Padding = UDim.new(0, 4)
+
+local content = Instance.new("ScrollingFrame", frame)
+content.Position = UDim2.new(0, 0, 0, 68)
+content.Size = UDim2.new(1, 0, 1, -68)
+content.CanvasSize = UDim2.new(0, 0, 0, 0)
+content.ScrollBarThickness = 6
+content.BackgroundTransparency = 1
+content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+content.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+
+local function createButton(text, callback)
+	local b = Instance.new("TextButton", content)
+	b.Size = UDim2.new(1, 0, 0, 32)
+	b.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	b.TextColor3 = Color3.fromRGB(255, 255, 255)
+	b.Font = Enum.Font.Gotham
+	b.TextSize = 13
+	b.Text = text
+	b.BorderSizePixel = 0
+	b.AutoLocalize = false
+	b.MouseButton1Click:Connect(callback)
+end
+
+local function tpTo(part)
+	local c = plr.Character or plr.CharacterAdded:Wait()
+	local r = c:WaitForChild("HumanoidRootPart")
+	if part and part:IsA("BasePart") then r.CFrame = part.CFrame + Vector3.new(0, 5, 0) end
+end
+
+local function getLand() return ws:FindFirstChild(plr.Name .. "'s avatar_land") end
+local function getBasement() return ws:FindFirstChild("BasementFolder") and ws.BasementFolder:FindFirstChild(plr.Name .. "'s Basement") end
+
+local godModeState
+
+local function loadTab()
+	content:ClearAllChildren()
+
+	local padding = Instance.new("UIPadding", content)
+	padding.PaddingTop = UDim.new(0, 2)
+	padding.PaddingLeft = UDim.new(0, 6)
+	padding.PaddingRight = UDim.new(0, 6)
+
+	local layout = Instance.new("UIListLayout", content)
+	layout.Padding = UDim.new(0, 4)
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+	local function statusLabel(text, color)
+		local l = Instance.new("TextLabel", content)
+		l.Size = UDim2.new(1, 0, 0, 28)
+		l.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+		l.BackgroundTransparency = 0.2
+		l.TextColor3 = color
+		l.Font = Enum.Font.GothamMedium
+		l.TextSize = 16
+		l.Text = text
+		l.TextXAlignment = Enum.TextXAlignment.Left
+		l.BorderSizePixel = 0
+		return l
+	end
+
+	local infoBar = statusLabel("Power: Loading...", Color3.fromRGB(200, 200, 200))
+	local statusBar = statusLabel("Basement: Checking...", Color3.fromRGB(180, 255, 180))
+	local godModeBar = statusLabel("God Mode: Unknown", Color3.fromRGB(255, 200, 200))
+
+	createButton("God Mode", function()
+		godModeState = true
+		godModeBar.Text = "God Mode: On"
+		local h = getLand() and getLand():FindFirstChild("AvatarLand") and getLand().AvatarLand:FindFirstChild("hatch") and getLand().AvatarLand.hatch:FindFirstChild("hatch")
+		tpTo(h)
+	end)
+
+	createButton("Disable God Mode", function()
+		godModeState = false
+		godModeBar.Text = "God Mode: Off"
+		local e = getBasement() and getBasement():FindFirstChild("Exit")
+		tpTo(e)
+	end)
+
+	createButton("Enter Hatch", function()
+		local h = getLand() and getLand():FindFirstChild("AvatarLand") and getLand().AvatarLand:FindFirstChild("hatch") and getLand().AvatarLand.hatch:FindFirstChild("hatch")
+		tpTo(h)
+		task.wait(0.3)
+		local p = getLand() and getLand():FindFirstChild("main") and getLand().main:FindFirstChildOfClass("ProximityPrompt")
+		if p then fireproximityprompt(p) end
+	end)
+
+	createButton("Enter Hatch (God Mode)", function()
+		local b = getBasement()
+		if b then for _, p in ipairs(b:GetChildren()) do if p:IsA("BasePart") then tpTo(p) break end end end
+	end)
+
+	createButton("Fix Generator", function()
+		local g = getLand() and getLand():FindFirstChild("Generator")
+		local br = g and g:FindFirstChild("broken")
+		local p = br and br:FindFirstChild("prompt")
+		local c = plr.Character or plr.CharacterAdded:Wait()
+		local r = c:WaitForChild("HumanoidRootPart")
+		local orig = r.CFrame
+		if p and p:IsA("ProximityPrompt") then
+			r.CFrame = g.CFrame + Vector3.new(0, -10, 0)
+			task.wait(0.2)
+			fireproximityprompt(p)
+			task.wait(0.1)
+			r.CFrame = orig
+		end
+	end)
+
+	createButton("Toggle View Hatch", function()
+		local h = getLand() and getLand():FindFirstChild("AvatarLand") and getLand().AvatarLand:FindFirstChild("hatch") and getLand().AvatarLand.hatch:FindFirstChild("hatch")
+		if h and h:IsA("BasePart") then
+			if cam.CameraType == Enum.CameraType.Scriptable then
+				cam.CameraType = Enum.CameraType.Custom
+				cam.CameraSubject = plr.Character:FindFirstChildOfClass("Humanoid")
+			else
+				cam.CameraType = Enum.CameraType.Scriptable
+				cam.CFrame = CFrame.new(h.Position + Vector3.new(0, 25, 20), h.Position)
+			end
+		end
+	end)
+
+	createButton("Close GUI", function() gui:Destroy() end)
+
+	task.spawn(function()
+		while gui.Parent do
+			local s = plr.PlayerGui:FindFirstChild("screen3") and plr.PlayerGui.screen3:FindFirstChild("Bar") and plr.PlayerGui.screen3.Bar:FindFirstChild("TextLabel")
+			infoBar.Text = s and (s.Text) or "Power: N/A"
+
+			local g = getBasement() and getBasement():FindFirstChild("gen_status")
+			local t = g and g:FindFirstChild("Screen") and g.Screen:FindFirstChild("SurfaceGui") and g.Screen.SurfaceGui:FindFirstChild("TextLabel")
+			statusBar.Text = t and (t.Text:gsub("Generator", "")) or "Basement: N/A"
+			godModeBar.Text = godModeState == true and "God Mode: On" or godModeState == false and "God Mode: Off" or "God Mode: Unknown"
+			task.wait(0.2)
+		end
+	end)
+end
+
+local tabBtn = Instance.new("TextButton", tabBar)
+tabBtn.Size = UDim2.new(1, 0, 1, 0)
+tabBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+tabBtn.Font = Enum.Font.GothamBold
+tabBtn.TextSize = 14
+tabBtn.Text = "Avatar"
+tabBtn.BorderSizePixel = 0
+tabBtn.AutoLocalize = false
+tabBtn.MouseButton1Click:Connect(loadTab)
+
+loadTab()
