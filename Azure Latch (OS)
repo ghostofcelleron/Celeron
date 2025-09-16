@@ -1184,7 +1184,7 @@ local skillRemote = game.ReplicatedStorage:WaitForChild("SkillRemote")
 skillRemote:FireServer("Skill3")
 end)
 
-maintab:Button("Shidou Back-Heel Goal", function()
+maintab:Button("Shidou Back-Heel Goal (Must Be Overtime.)", function()
 local plr = game.Players.LocalPlayer
 				if plr.Team == game.Teams:FindFirstChild("A") then
 					plr.Character.HumanoidRootPart.Position = Vector3.new(-625, 3, 925)
