@@ -16,7 +16,6 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
-maintab2:Label("Set The Auto-Counter Number To Your Character's Counter Move!")
 funtab:Label("Custom Movesets, Not Actual Unlocks!")
 emotetab:Label("The Sounds Are Client Sided, The Emotes Are Visible!")
 teleporttab:Label("Map Teleports, No Prerequisites To Use!")
@@ -55,7 +54,7 @@ maintab:Button("Auto-Goal", function()
     if _G.AUTO_GOAL then
         game.StarterGui:SetCore("SendNotification", {
             Title = "Farm Goals",
-            Text = "Activated!",
+            Text = "Enabled.",
             Duration = 5
         })
 local Players = game:GetService("Players")
@@ -178,7 +177,7 @@ end))
     else
         game.StarterGui:SetCore("SendNotification", {
             Title = "Farm Goals",
-            Text = "Deactivated!",
+            Text = "Disabled.",
             Duration = 5
         })
     end
@@ -189,7 +188,7 @@ _G.ALWAYS_BALL_ACTIVE = not _G.ALWAYS_BALL_ACTIVE
 if _G.ALWAYS_BALL_ACTIVE then
     game.StarterGui:SetCore("SendNotification", {
         Title = "Always Ball",
-        Text = "Activated!",
+        Text = "Enabled.",
         Duration = 5
     })
 
@@ -235,7 +234,7 @@ if _G.ALWAYS_BALL_ACTIVE then
 else
     game.StarterGui:SetCore("SendNotification", {
         Title = "Always Ball",
-        Text = "Deactivated!",
+        Text = "Disabled.",
         Duration = 5
     })
 
@@ -292,6 +291,21 @@ if humanoidRootPart then
 end
 end)
 
+maintab2:Label("Notification Suppression: Useful When Streaming.")
+
+maintab2:Button("Suppress Notifications", function()
+    _G.suppressNotifs = not (_G.suppressNotifs or false)
+    local StarterGui = game:GetService("StarterGui")
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Notifications",
+        Text = _G.suppressNotifs and "Suppressed." or "Un-Suppressed.",
+        Duration = 3
+    })
+end)
+
+maintab2:Label("Ball Magnet: Allows You To Grab The Ball From Further Away.")
+
 maintab2:Button("Bind Magnet (M2 BIND)", function()
 local userInputService = game:GetService("UserInputService")
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
@@ -304,44 +318,7 @@ userInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 end)
 
-maintab2:Textbox("Ball Magnet", function(v)
-	local player = game.Players.LocalPlayer
-	local char = player.Character or player.CharacterAdded:Wait()
-	local hrp = char:WaitForChild("HumanoidRootPart")
-	local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-
-	local range = tonumber(v) or 0
-
-	local function findBall()
-		for _, obj in ipairs(workspace:GetDescendants()) do
-			if obj:IsA("BasePart") and obj.Name == "Ball" then
-				return obj
-			end
-		end
-		return nil
-	end
-
-	spawn(function()
-		while true do
-			wait(0.5)
-			local target = findBall()
-			if target and (hrp.Position - target.Position).Magnitude <= range then
-				remote:FireServer(buffer.fromstring("\019"))
-			end
-		end
-	end)
-end)
-
-maintab2:Button("Suppress Notifications", function()
-    _G.suppressNotifs = not (_G.suppressNotifs or false)
-    local StarterGui = game:GetService("StarterGui")
-
-    StarterGui:SetCore("SendNotification", {
-        Title = "Notifications",
-        Text = _G.suppressNotifs and "Suppressed." or "Un-Suppressed.",
-        Duration = 3
-    })
-end)
+maintab2:Label("Set The Auto-Counter Number To Your Character's Counter Move!")
 
 _G.suppressNotifs = false
 
@@ -783,30 +760,6 @@ local function teleportToBall()
     end
 end
 
-maintab2:Button("Get Center-Field", function()
-local args = {
-	buffer.fromstring("\003\001\001\000A")
-}
-game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-
-local args = {
-	buffer.fromstring("\003\001\001\000B")
-}
-game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-end)
-
-maintab2:Button("Get Goalie", function()
-local args = {
-	buffer.fromstring("\003\005\001\000B")
-}
-game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-
-local args = {
-	buffer.fromstring("\003\005\001\000A")
-}
-game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-end)
-
 maintab:Button("Steal Ball", function()
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1058,49 +1011,6 @@ until char.Humanoid.Healh <= 0
 con:Disconnect()
 end)
 
-maintab:Button("Auto Formless (Binds To T.)", function()
-local UIS = game:GetService("UserInputService")
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Camera = workspace.CurrentCamera
-
-local LP = Players.LocalPlayer
-local ByteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
-
-UIS.InputBegan:Connect(function(input, gp)
-	if gp or input.KeyCode ~= Enum.KeyCode.T or UIS.MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
-
-	local char = LP.Character
-	local hrp = char and char:FindFirstChild("HumanoidRootPart")
-	local hum = char and char:FindFirstChildOfClass("Humanoid")
-	if not hrp or not hum then return end
-
-	hum.AutoRotate = false
-	hrp.CFrame *= CFrame.Angles(0, math.rad(180), 0)
-
-	local camType, camSubject = Camera.CameraType, Camera.CameraSubject
-	Camera.CameraType = Enum.CameraType.Scriptable
-	Camera.CFrame = hrp.CFrame + Vector3.new(0, 2, 0)
-
-	task.delay(0.1, function()
-		Camera.CameraType = camType
-		Camera.CameraSubject = camSubject
-		hum.AutoRotate = true
-	end)
-
-	task.wait(0.05)
-	ByteNetReliable:FireServer(
-		buffer.fromstring("\020\001"),
-		{ { "kick", 24, false, vector.create(0, 1, 0) } }
-	)
-
-	ByteNetReliable:FireServer(
-		buffer.fromstring("\020\001"),
-		{ { "skill1" } }
-	)
-end)
-end)
-
 maintab:Button("Barou Devour Goal", function()
 local plr = game.Players.LocalPlayer
 
@@ -1220,6 +1130,94 @@ local plr = game.Players.LocalPlayer
                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
 			end)
+
+maintab2:Label("Ball Magnet: Allows You To Grab The Ball From Further Away.")
+
+maintab2:Button("Auto Formless (Binds To T.)", function()
+maintab2:Button("Auto Formless (Binds To T.)", function()
+	local UIS = game:GetService("UserInputService")
+	local Players = game:GetService("Players")
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local StarterGui = game:GetService("StarterGui")
+	local Camera = workspace.CurrentCamera
+
+	local LP = Players.LocalPlayer
+	local ByteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
+
+	_G.autoFormlessEnabled = not (_G.autoFormlessEnabled or false)
+	if not _G.suppressNotifs then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Auto Formless",
+			Text = _G.autoFormlessEnabled and "Enabled." or "Disabled.",
+			Duration = 2
+		})
+	end
+
+	if not _G.autoFormlessEnabled then return end
+
+	UIS.InputBegan:Connect(function(input, gp)
+		if not _G.autoFormlessEnabled or gp or input.KeyCode ~= Enum.KeyCode.T or UIS.MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
+
+		local char = LP.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if not hrp or not hum then return end
+
+		hum.AutoRotate = false
+		hrp.CFrame *= CFrame.Angles(0, math.rad(180), 0)
+
+		local camType, camSubject = Camera.CameraType, Camera.CameraSubject
+		Camera.CameraType = Enum.CameraType.Scriptable
+		Camera.CFrame = hrp.CFrame + Vector3.new(0, 2, 0)
+
+		task.delay(0.1, function()
+			if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
+				Camera.CameraSubject = LP.Character:FindFirstChildOfClass("Humanoid")
+				Camera.CameraType = Enum.CameraType.Custom
+			else
+				Camera.CameraSubject = camSubject
+				Camera.CameraType = camType
+			end
+			hum.AutoRotate = true
+		end)
+
+		task.wait(0.05)
+		ByteNetReliable:FireServer(
+			buffer.fromstring("\020\001"),
+			{ { "kick", 24, false, vector.create(0, 1, 0) } }
+		)
+
+		ByteNetReliable:FireServer(
+			buffer.fromstring("\020\001"),
+			{ { "skill1" } }
+		)
+	end)
+end)
+end)
+
+maintab2:Button("Get Center-Field", function()
+local args = {
+	buffer.fromstring("\003\001\001\000A")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+
+local args = {
+	buffer.fromstring("\003\001\001\000B")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+end)
+
+maintab2:Button("Get Goalie", function()
+local args = {
+	buffer.fromstring("\003\005\001\000B")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+
+local args = {
+	buffer.fromstring("\003\005\001\000A")
+}
+game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+end)
 
 funtab:Button("Don Lorenzo (Nagi)", function()
 local StarterGui = game:GetService("StarterGui")
