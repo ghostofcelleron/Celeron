@@ -1840,6 +1840,15 @@ farmtab:Button("Slap Farm (Alt Account, Use In Arena.)", function()
 	floating = true
 end)
 
+farmtab:Label("Bounty Slap Farm: Recommended To Use In Small Servers.")
+
+farmtab:Button("Bounty Slap Farm (Alt Account.)", function()
+while true do
+wait()
+game:GetService("ReplicatedStorage"):WaitForChild("GeneralAbility"):FireServer()
+end
+end)
+
 farmtab:Label("Kill Farm: Recommended To Teleport Main To Baseplate.")
 
 farmtab:Textbox("Kill Farm (Set Username To Main, Use In Arena.)", function(v)
