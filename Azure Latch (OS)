@@ -1134,7 +1134,6 @@ local plr = game.Players.LocalPlayer
 maintab2:Label("Ball Magnet: Allows You To Grab The Ball From Further Away.")
 
 maintab2:Button("Auto Formless (Binds To T.)", function()
-maintab2:Button("Auto Formless (Binds To T.)", function()
 	local UIS = game:GetService("UserInputService")
 	local Players = game:GetService("Players")
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1192,7 +1191,6 @@ maintab2:Button("Auto Formless (Binds To T.)", function()
 			{ { "skill1" } }
 		)
 	end)
-end)
 end)
 
 maintab2:Button("Get Center-Field", function()
