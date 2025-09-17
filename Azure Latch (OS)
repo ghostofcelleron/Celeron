@@ -1058,21 +1058,46 @@ until char.Humanoid.Healh <= 0
 con:Disconnect()
 end)
 
-maintab:Button("Bind Doberman (Binds To T, Works With Any Style.)", function()
-local uis = game:GetService("UserInputService")
+maintab:Button("Auto Formless (Binds To T.)", function()
+local UIS = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Camera = workspace.CurrentCamera
 
-uis.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
+local LP = Players.LocalPlayer
+local ByteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
 
-    if input.KeyCode == Enum.KeyCode.T then
-        local args = {
-buffer.fromstring("\020\001"),
-{
-{ "doberman", false }
-}
-}
-game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-    end
+UIS.InputBegan:Connect(function(input, gp)
+	if gp or input.KeyCode ~= Enum.KeyCode.T or UIS.MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
+
+	local char = LP.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if not hrp or not hum then return end
+
+	hum.AutoRotate = false
+	hrp.CFrame *= CFrame.Angles(0, math.rad(180), 0)
+
+	local camType, camSubject = Camera.CameraType, Camera.CameraSubject
+	Camera.CameraType = Enum.CameraType.Scriptable
+	Camera.CFrame = hrp.CFrame + Vector3.new(0, 2, 0)
+
+	task.delay(0.1, function()
+		Camera.CameraType = camType
+		Camera.CameraSubject = camSubject
+		hum.AutoRotate = true
+	end)
+
+	task.wait(0.05)
+	ByteNetReliable:FireServer(
+		buffer.fromstring("\020\001"),
+		{ { "kick", 24, false, vector.create(0, 1, 0) } }
+	)
+
+	ByteNetReliable:FireServer(
+		buffer.fromstring("\020\001"),
+		{ { "skill1" } }
+	)
 end)
 end)
 
