@@ -962,7 +962,8 @@ end
 end)
 
 maintab:Button("Permanent Break Ball (Req. Ball)", function()
-game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(-603, -422, -2081))
+workspace.FallenPartsDestroyHeight = -50000
+game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(1, -49999, 1))
 end)
 
 maintab:Button("Auto-GK (Made By Daffy, Reset To Disable.)", function()
