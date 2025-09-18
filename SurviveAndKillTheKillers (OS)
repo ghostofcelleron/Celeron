@@ -1,4 +1,4 @@
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SAKTK)",
