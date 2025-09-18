@@ -34,7 +34,7 @@ end
 
 if currentPlaceId == slapbattles or currentPlaceId == slapbattles2 or currentPlaceId == slapbattles3 then
 
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Slap Battles)",
@@ -3063,7 +3063,7 @@ end)
 
 elseif currentPlaceId == evilbarzil then
 
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Evil Barzil)",
@@ -3666,7 +3666,7 @@ for _, obj in ipairs(game:GetDescendants()) do
 	end
 end
 
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Slap Royale)",
@@ -5154,7 +5154,7 @@ StarterGui:SetCore("SendNotification", {
 setclipboard("https://discord.gg/8stFYxJv4R")
 end)
 elseif currentPlaceId == eternalbob then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Eternal Bob)",
@@ -5821,7 +5821,7 @@ setclipboard("https://discord.gg/8stFYxJv4R")
 end)
 
 elseif currentPlaceId == slapbattlesks then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Killstreak Only)",
@@ -6669,7 +6669,7 @@ StarterGui:SetCore("SendNotification", {
     Button1 = "alright fella",
 })
 elseif currentPlaceId == nullzone then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Null Zone)",
@@ -6754,7 +6754,7 @@ StarterGui:SetCore("SendNotification", {
 setclipboard("https://discord.gg/8stFYxJv4R")
 end)
 elseif currentPlaceId == egglerserver then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Eggler)",
@@ -6829,7 +6829,7 @@ StarterGui:SetCore("SendNotification", {
 setclipboard("https://discord.gg/8stFYxJv4R")
 end)
 elseif currentPlaceId == barzil then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Barzil)",
