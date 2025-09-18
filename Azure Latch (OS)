@@ -1131,7 +1131,7 @@ local plr = game.Players.LocalPlayer
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
 			end)
 
-maintab2:Label("Ball Magnet: Allows You To Grab The Ball From Further Away.")
+maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
 
 maintab2:Button("Auto Formless (Binds To T.)", function()
 	local UIS = game:GetService("UserInputService")
