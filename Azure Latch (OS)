@@ -349,18 +349,6 @@ userInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 end)
 
-maintab2:Button("Bind Magnet (M2 BIND)", function()
-local userInputService = game:GetService("UserInputService")
-local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-
-userInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        remote:FireServer(buffer.fromstring("\019"))
-    end
-end)
-end)
-
 maintab2:Label("Set The Auto-Counter Number To Your Character's Counter Move!")
 
 _G.suppressNotifs = false
