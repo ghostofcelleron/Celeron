@@ -1,0 +1,123 @@
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+local PlayerGui = LP:WaitForChild("PlayerGui")
+
+local slapbattles = {6403373529,124596094333302,9015014224,11520107397,9431156611,9426795465,80420091630966,13833961666,129665246576996,14422118326,7234087065,89837553336708,117232463555132,74169485398268,17290438723,98726100529621}
+local azurelatch = {94647229517154,85946466968831}
+local fleethefacility = {893973440}
+local towerofhell = {1962086868,3582763398}
+local saktk = {155382109}
+local grg = {4598019433}
+
+local loaderGui = Instance.new("ScreenGui")
+loaderGui.Name = "gui"
+loaderGui.ResetOnSpawn = false
+loaderGui.Parent = PlayerGui
+
+local bg = Instance.new("Frame")
+bg.Size = UDim2.new(0, 220, 0, 100)
+bg.Position = UDim2.new(0.5, -110, 0.5, -450)
+bg.BackgroundColor3 = Color3.fromRGB(0, 160, 255)
+bg.BackgroundTransparency = 0.4
+bg.BorderSizePixel = 0
+bg.Parent = loaderGui
+
+Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 8)
+
+local gradient = Instance.new("UIGradient")
+gradient.Rotation = 90
+gradient.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 115, 255)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 155, 170)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+}
+gradient.Parent = bg
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 24)
+title.Position = UDim2.new(0, 0, 0, 5)
+title.BackgroundTransparency = 1
+title.Text = "Celeron's Loader"
+title.TextColor3 = Color3.fromRGB(24, 24, 24)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.Parent = bg
+
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, 0, 0, 20)
+label.Position = UDim2.new(0, 0, 0, 30)
+label.BackgroundTransparency = 1
+label.Text = "Loading..."
+label.TextColor3 = Color3.fromRGB(24, 24, 24)
+label.Font = Enum.Font.SourceSansBold
+label.TextSize = 16
+label.Parent = bg
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(1, -20, 0, 16)
+frame.Position = UDim2.new(0, 10, 0, 60)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.BorderSizePixel = 0
+frame.Parent = bg
+
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
+
+local bar = Instance.new("Frame")
+bar.Size = UDim2.new(0, 0, 1, 0)
+bar.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+bar.BorderSizePixel = 0
+bar.Parent = frame
+
+Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 6)
+
+local function animateBar(duration)
+	local tween = TweenService:Create(bar, TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+		Size = UDim2.new(1, 0, 1, 0)
+	})
+	tween:Play()
+	tween.Completed:Wait()
+end
+
+local function fadeOut(callback)
+	for _, obj in ipairs(loaderGui:GetDescendants()) do
+		if obj:IsA("GuiObject") then
+			local props = {BackgroundTransparency = 1}
+			if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+				props.TextTransparency = 1
+			end
+			TweenService:Create(obj, TweenInfo.new(0.6), props):Play()
+		end
+	end
+	task.delay(0.9, function()
+		loaderGui:Destroy()
+		if typeof(callback) == "function" then callback() end
+	end)
+end
+
+local function loadScripts()
+	animateBar(2.25)
+	fadeOut(function()
+		local placeId = game.PlaceId
+
+		if table.find(slapbattles, placeId) then
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Slap%20Battles%20(OS)", true))()
+		elseif table.find(azurelatch, placeId) then
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Azure%20Latch%20(OS)"))()
+		elseif table.find(fleethefacility, placeId) then
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Flee%20The%20Facility%20(OS)"))()
+		elseif table.find(towerofhell, placeId) then
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Tower%20Of%20Hell%20(OS)"))()
+		elseif table.find(saktk, placeId) then
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/SurviveAndKillTheKillers%20(OS)"))()
+		elseif table.find(grg, placeId) then
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Generic%20Roleplay%20Game%20(OS)"))()
+		end
+
+		if script:IsA("LocalScript") then
+			script:Destroy()
+		end
+	end)
+end
+
+loadScripts()
