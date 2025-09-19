@@ -19,6 +19,7 @@ local sfoth = 117232463555132
 local bindmaze = 74169485398268
 local icetrials = 17290438723
 local hexagon = 98726100529621
+local shattered = 75803343514634
 
 local currentPlaceId = game.PlaceId
 
@@ -7009,11 +7010,108 @@ StarterGui:SetCore("SendNotification", {
     Duration = 120,
     Button1 = "alright fella",
 })
+elseif currentPlaceId == shattered then
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (SB: Shattered Mirror)",
+    ThemeColor = Color3.fromRGB(14, 14, 14),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+maintab:Label("Phase One Features Below.")
+
+maintab:Button("Start Phase 1", function()
+local hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+firetouchinterest(workspace.Stage1.Lobby.Portals.normal.Teleport1, hrp, 0)
+firetouchinterest(workspace.Stage1.Lobby.Portals.normal.Teleport1, hrp, 1)
+task.wait(0.2)
+firetouchinterest(workspace.Stage1.glove.Touch, hrp, 0)
+firetouchinterest(workspace.Stage1.glove.Touch, hrp, 1)
+end)
+
+maintab:Button("Kill Shadows", function()
+for _,v in ipairs(workspace:GetDescendants())do if v.Name=="shadow_npc"then local h=v:FindFirstChildOfClass("Humanoid")if h then h.Health=0 end end end
+end)
+
+maintab:Label("Phase Two Features Below.")
+
+maintab:Button("Start Phase 2", function()
+local hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+firetouchinterest(workspace.Stage2.Lobby.Portals.normal.Teleport1, hrp, 0)
+firetouchinterest(workspace.Stage2.Lobby.Portals.normal.Teleport1, hrp, 1)
+end)
+
+maintab:Button("Safezone", function()
+local p=Instance.new("Part",workspace)p.Size=Vector3.new(50,1,50)p.Position=Vector3.new(290,81,981)p.Anchored=true;game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame=CFrame.new(290,82,981)
+end)
+
+maintab:Label("Phase Three Features Below.")
+
+maintab:Button("Start Phase 3", function()
+local hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+firetouchinterest(workspace.Stage3.Lobby.Portals.default.Teleport2, hrp, 0)
+firetouchinterest(workspace.Stage3.Lobby.Portals.default.Teleport2, hrp, 1)
+wait(0.5)
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(222, 502, -1543))
+wait(0.5)
+fireproximityprompt(workspace.Stage3.HunterHatch.Model.Union.ProximityPrompt)
+end)
+
+maintab:Button("Kill Boss", function()
+local lp = game.Players.LocalPlayer
+local char = lp.Character or lp.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local rig = workspace:FindFirstChild("Rig")
+local head = rig and rig:FindFirstChild("Head")
+local hum = rig and rig:FindFirstChildOfClass("Humanoid")
+
+if head and hum then
+	hrp.CFrame = head.CFrame + Vector3.new(0, 2, 0)
+	hum.Health = 0
+end
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
 else
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Not Supported",
-    Text = "This Mode Is Not Supported.",
+    Text = "This Game / Mode Is Not Supported, Please Try Again Later.",
     Duration = 3,
     Button1 = "alright fella",
 })
