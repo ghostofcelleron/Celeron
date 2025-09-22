@@ -50,7 +50,7 @@ maintab2:Button("Suppress Notifications", function()
     StarterGui:SetCore("SendNotification", {
         Title = "Notifications",
         Text = _G.suppressNotifs and "Suppressed." or "Un-Suppressed.",
-        Duration = 3
+        Duration = 1
     })
 end)
 
@@ -77,7 +77,7 @@ maintab:Button("Auto Goal", function()
         game.StarterGui:SetCore("SendNotification", {
             Title = "Auto Goal",
             Text = "Enabled.",
-            Duration = 5
+            Duration = 1
         })
 		
 local Players = game:GetService("Players")
@@ -201,7 +201,7 @@ end))
         game.StarterGui:SetCore("SendNotification", {
             Title = "Auto Goal",
             Text = "Disabled.",
-            Duration = 5
+            Duration = 1
         })
     end
 end)
@@ -212,7 +212,7 @@ if _G.ALWAYS_BALL_ACTIVE then
     game.StarterGui:SetCore("SendNotification", {
         Title = "Always Ball",
         Text = "Enabled.",
-        Duration = 5
+        Duration = 1
     })
 
     workspace.Gravity = 0
@@ -258,7 +258,7 @@ else
     game.StarterGui:SetCore("SendNotification", {
         Title = "Always Ball",
         Text = "Disabled.",
-        Duration = 5
+        Duration = 1
     })
 
     workspace.Gravity = 196.2
@@ -685,7 +685,7 @@ maintab2:Button("Ball Magnet", function()
 	game.StarterGui:SetCore("SendNotification", {
 		Title = "Ball Magnet",
 		Text = getgenv().ballMagnetActive and "Enabled." or "Disabled.",
-		Duration = 5
+		Duration = 1
 	})
 
 	if getgenv().ballMagnetActive then
@@ -870,7 +870,7 @@ maintab:Button("Auto QuickTimeEvent", function()
             starterGui:SetCore("SendNotification", {
                 Title = "QuickTimeEvent",
                 Text = status,
-                Duration = 3
+                Duration = 1
             })
         end
     end
@@ -1017,7 +1017,7 @@ local function sendNotification(status)
     starterGui:SetCore("SendNotification", {
         Title = "Hide Ace Toggle",
         Text = status,
-        Duration = 3
+        Duration = 1
     })
 end
 
@@ -1162,6 +1162,66 @@ local plr = game.Players.LocalPlayer
 
 maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
 
+maintab2:Button("Auto Formless (Binds To T.)", function()
+	local UIS = game:GetService("UserInputService")
+	local Players = game:GetService("Players")
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local StarterGui = game:GetService("StarterGui")
+	local Camera = workspace.CurrentCamera
+
+	local LP = Players.LocalPlayer
+	local ByteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
+
+	_G.autoFormlessEnabled = not (_G.autoFormlessEnabled or false)
+	if not _G.suppressNotifs then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Auto Formless",
+			Text = _G.autoFormlessEnabled and "Enabled." or "Disabled.",
+			Duration = 2
+		})
+	end
+
+	if not _G.autoFormlessEnabled then return end
+
+	UIS.InputBegan:Connect(function(input, gp)
+		if not _G.autoFormlessEnabled or gp or input.KeyCode ~= Enum.KeyCode.T or UIS.MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
+
+		local char = LP.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if not hrp or not hum then return end
+
+		hum.AutoRotate = false
+		hrp.CFrame *= CFrame.Angles(0, math.rad(180), 0)
+
+		local camType, camSubject = Camera.CameraType, Camera.CameraSubject
+		Camera.CameraType = Enum.CameraType.Scriptable
+		Camera.CFrame = hrp.CFrame + Vector3.new(0, 2, 0)
+
+		task.delay(0.1, function()
+			if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
+				Camera.CameraSubject = LP.Character:FindFirstChildOfClass("Humanoid")
+				Camera.CameraType = Enum.CameraType.Custom
+			else
+				Camera.CameraSubject = camSubject
+				Camera.CameraType = camType
+			end
+			hum.AutoRotate = true
+		end)
+
+		task.wait(0.05)
+		ByteNetReliable:FireServer(
+			buffer.fromstring("\020\001"),
+			{ { "kick", 24, false, vector.create(0, 1, 0) } }
+		)
+
+		ByteNetReliable:FireServer(
+			buffer.fromstring("\020\001"),
+			{ { "skill1" } }
+		)
+	end)
+end)
+
 _G.AutoToggles = _G.AutoToggles or {
 	CF = false,
 	GK = false,
@@ -1204,7 +1264,7 @@ maintab2:Button("Auto CF", function()
 	game:GetService("StarterGui"):SetCore("SendNotification", {
 		Title = "Auto CF",
 		Text = _G.AutoToggles.CF and "Enabled." or "Disabled.",
-		Duration = 3
+		Duration = 1
 	})
 
 	if _G.AutoToggles.CF then
@@ -1231,7 +1291,7 @@ maintab2:Button("Auto GK", function()
 	game:GetService("StarterGui"):SetCore("SendNotification", {
 		Title = "Auto-GK",
 		Text = _G.AutoToggles.GK and "Enabled." or "Disabled.",
-		Duration = 3
+		Duration = 1
 	})
 
 	if _G.AutoToggles.GK then
@@ -1982,11 +2042,28 @@ funtab:Button("Trolling Moveset", function()
     hotbar.MagicHealth.Health.Frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 end)
 
-misctab:Button("Mute Crowd (REJOIN TO FIX)", function()
-while true do
-task.wait(0.05)
-game:GetService("SoundService")["football-crowd-3-69245"].Volume = 0
-end
+_G.mutecrowd = false
+
+misctab:Button("Toggle Crowd", function()
+	_G.mutecrowd = not _G.mutecrowd
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Crowd Volume",
+		Text = _G.mutecrowd and "Muted Crowd." or "Unmuted Crowd.",
+		Duration = 1
+	})
+
+	task.spawn(function()
+		while true do
+			if _G.mutecrowd then
+				game:GetService("SoundService")["football-crowd-3-69245"].Volume = 0
+			else
+				game:GetService("SoundService")["football-crowd-3-69245"].Volume = 0.3
+				break
+			end
+			task.wait(0.05)
+		end
+	end)
 end)
 
 emotetab:Button("Toosie Slide", function()
