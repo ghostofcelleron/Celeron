@@ -41,9 +41,31 @@ helptab:Button("Show Keybinds", function()
     end)
 end)
 
-_G._rushingSoundPlaying = false
-_G._rushing = false
-_G._sideDashing = false
+maintab2:Label("Notification Suppression: Useful When Streaming.")
+
+maintab2:Button("Suppress Notifications", function()
+    _G.suppressNotifs = not (_G.suppressNotifs or false)
+    local StarterGui = game:GetService("StarterGui")
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Notifications",
+        Text = _G.suppressNotifs and "Suppressed." or "Un-Suppressed.",
+        Duration = 3
+    })
+end)
+
+task.spawn(function()
+	while true do
+		pcall(function()
+			for _, obj in ipairs(workspace:WaitForChild("map"):WaitForChild("gkbarriar"):GetDescendants()) do
+				if obj:IsA("BasePart") and obj.CanCollide then
+					obj.CanCollide = false
+				end
+			end
+		end)
+		task.wait(5)
+	end
+end)
 
 maintab:Button("Metavision", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
@@ -292,459 +314,147 @@ if humanoidRootPart then
 end
 end)
 
-maintab2:Label("Notification Suppression: Useful When Streaming.")
-
-maintab2:Button("Suppress Notifications", function()
-    _G.suppressNotifs = not (_G.suppressNotifs or false)
-    local StarterGui = game:GetService("StarterGui")
-
-    StarterGui:SetCore("SendNotification", {
-        Title = "Notifications",
-        Text = _G.suppressNotifs and "Suppressed." or "Un-Suppressed.",
-        Duration = 3
-    })
-end)
-
-maintab2:Label("Ball Magnet: Allows You To Grab The Ball From Further Away.")
-
-maintab2:Button("Ball Magnet", function()
-	local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-	local runService = game:GetService("RunService")
-
-	getgenv().ballMagnetActive = not getgenv().ballMagnetActive
-
-	game.StarterGui:SetCore("SendNotification", {
-		Title = "Ball Magnet",
-		Text = getgenv().ballMagnetActive and "Enabled." or "Disabled.",
-		Duration = 5
-	})
-
-	if getgenv().ballMagnetActive then
-		if getgenv().ballMagnetConnection then
-			getgenv().ballMagnetConnection:Disconnect()
-		end
-
-		getgenv().ballMagnetConnection = runService.RenderStepped:Connect(function()
-			pcall(function()
-				remote:FireServer(buffer.fromstring("\019"))
-			end)
-		end)
-	else
-		if getgenv().ballMagnetConnection then
-			getgenv().ballMagnetConnection:Disconnect()
-			getgenv().ballMagnetConnection = nil
-		end
-	end
-end)
-
-maintab2:Button("Bind Magnet (M2 BIND)", function()
 local userInputService = game:GetService("UserInputService")
-local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-
-userInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        remote:FireServer(buffer.fromstring("\019"))
-    end
-end)
-end)
-
-maintab2:Label("Set The Auto-Counter Number To Your Character's Counter Move!")
-
-_G.suppressNotifs = false
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
-
-local player = Players.LocalPlayer
-local ANIMATION_ID = "rbxassetid://109744655458082"
-local cooldowns = {}
-
-local function notify(title, text, duration)
-    if not _G.suppressNotifs then
-        StarterGui:SetCore("SendNotification", {
-            Title = title,
-            Text = text,
-            Duration = duration or 2
-        })
-    end
-end
-
-local function setupAutoBehavior(toggleKey, skillName, humanoidRootPart)
-    RunService.Stepped:Connect(function()
-        if not _G[toggleKey] or not humanoidRootPart then return end
-
-        for _, target in ipairs(Players:GetPlayers()) do
-            if target ~= player and target.Character and target.Team ~= player.Team then
-                local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
-                local targetHumanoid = target.Character:FindFirstChild("Humanoid")
-                local animator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
-
-                if targetHRP and animator then
-                    local distance = (humanoidRootPart.Position - targetHRP.Position).Magnitude
-                    if distance <= 35 then
-                        local now = tick()
-                        local last = cooldowns[target] or 0
-                        if now - last >= 0.5 then
-                            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                                if track.Animation.AnimationId == ANIMATION_ID then
-                                    cooldowns[target] = now
-
-                                    local args
-                                    if skillName == "dribble" then
-                                        args = {
-                                            buffer.fromstring("\020\001"),
-                                            {
-                                                { skillName, false }
-                                            }
-                                        }
-                                    else
-                                        args = {
-                                            buffer.fromstring("\020\001"),
-                                            {
-                                                { skillName }
-                                            }
-                                        }
-                                    end
-
-                                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end)
-end
-
-local function createAutoCounter(label, toggleKey, skillName)
-    maintab2:Button(label, function()
-        _G[toggleKey] = not (_G[toggleKey] or false)
-        notify(label, _G[toggleKey] and "Enabled." or "Disabled.", 3)
-
-        local function onCharacterLoaded(char)
-            local humanoidRootPart = char:WaitForChild("HumanoidRootPart")
-            setupAutoBehavior(toggleKey, skillName, humanoidRootPart)
-        end
-
-        if player.Character then
-            onCharacterLoaded(player.Character)
-        end
-
-        player.CharacterAdded:Connect(onCharacterLoaded)
-    end)
-end
-
-createAutoCounter("Auto-Dribble", "toggleDetection", "dribble")
-createAutoCounter("Auto-Counter (Move One)", "toggleCounter1", "skill1")
-createAutoCounter("Auto-Counter (Move Two)", "toggleCounter2", "skill2")
-createAutoCounter("Auto-Counter (Move Three)", "toggleCounter3", "skill3")
-createAutoCounter("Auto-Counter (Move Four)", "toggleCounter4", "skill4")
-createAutoCounter("Auto-Counter (Move Five)", "toggleCounter5", "skill5")
-
-if not _G._keybindSetup then
-    _G._keybindSetup = true
-
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        local key = input.KeyCode
-
-        local keyMap = {
-            [Enum.KeyCode.Z] = {"toggleDetection", "Auto-Dribble", "dribble"},
-            [Enum.KeyCode.X] = {"toggleCounter1", "Auto-Counter (Move One)", "skill1"},
-            [Enum.KeyCode.C] = {"toggleCounter2", "Auto-Counter (Move Two)", "skill2"},
-            [Enum.KeyCode.V] = {"toggleCounter3", "Auto-Counter (Move Three)", "skill3"},
-            [Enum.KeyCode.N] = {"toggleCounter4", "Auto-Counter (Move Four)", "skill4"},
-            [Enum.KeyCode.M] = {"toggleCounter5", "Auto-Counter (Move Five)", "skill5"},
-        }
-
-        local mapping = keyMap[key]
-        if mapping then
-            local toggleKey, label, skillName = unpack(mapping)
-            _G[toggleKey] = not (_G[toggleKey] or false)
-            notify(label, _G[toggleKey] and "Enabled." or "Disabled.")
-
-            local function onCharacterLoaded(char)
-                local humanoidRootPart = char:WaitForChild("HumanoidRootPart")
-                setupAutoBehavior(toggleKey, skillName, humanoidRootPart)
-            end
-
-            if player.Character then
-                onCharacterLoaded(player.Character)
-            end
-
-            player.CharacterAdded:Connect(onCharacterLoaded)
-        end
-    end)
-end
-
-maintab:Button("Hide Ace Eater", function()
-local char = game.Players.LocalPlayer.Character
-local ogAnim = char.Animate.idle.Animation1.AnimationId
-
-local UserInputService = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
 local starterGui = game:GetService("StarterGui")
+local player = game.Players.LocalPlayer
 
-_G.HideAce = not _G.HideAce
+_G.ForwardRushEnabled = false
+_G.SideDashEnabled = false
+_G._rushing = false
+_G._sideDashing = false
+_G._dashBindsSetup = false
 
-local function sendNotification(status)
-    starterGui:SetCore("SendNotification", {
-        Title = "Hide Ace Toggle",
-        Text = status,
-        Duration = 3
-    })
+local character, humanoid, rootPart
+
+local function updateCharacter()
+	character = player.Character or player.CharacterAdded:Wait()
+	humanoid = character:WaitForChild("Humanoid")
+	rootPart = character:WaitForChild("HumanoidRootPart")
 end
 
-function onKeyPress(inputObject, gameProcessedEvent)
-    if not gameProcessedEvent and _G.HideAce then
-        if inputObject.KeyCode == Enum.KeyCode.Five and game.Players.LocalPlayer:GetAttribute("style") == "donlorenzo" then 
-            task.wait(0.1)
-            for _, track in ipairs(char.Humanoid:GetPlayingAnimationTracks()) do
-                if track.Animation.AnimationId == "rbxassetid://108103339994438" then
-                    track:Stop()
-                    break
-                end
-            end
-        end
-    end
+updateCharacter()
+player.CharacterAdded:Connect(updateCharacter)
+
+local function notify(title, text)
+	starterGui:SetCore("SendNotification", {
+		Title = title,
+		Text = text,
+		Duration = 2
+	})
 end
 
-UserInputService.InputBegan:Connect(onKeyPress)
+local function safeUnbind(id, flag)
+	runService:UnbindFromRenderStep(id)
+	_G[flag] = false
+end
 
-sendNotification(_G.HideAce and "Enabled." or "Disabled.")
-end)
+local function forwardRush()
+	if _G._rushing or not _G.ForwardRushEnabled or not humanoid or not rootPart then return end
+	_G._rushing = true
 
-maintab:Button("Team Goal (YOUR GOAL)", function()
-local plr = game.Players.LocalPlayer
-				if plr.Team == game.Teams:FindFirstChild("A") then
-					plr.Character.HumanoidRootPart.Position = Vector3.new(-538, 3, 1603)
-				elseif plr.Team == game.Teams:FindFirstChild("B") then
-					plr.Character.HumanoidRootPart.Position = Vector3.new(-535, 3, 946)
-				end
-end)
-
-maintab:Button("Auto QuickTimeEvent", function()
-    local runService = game:GetService("RunService")
-    local players = game:GetService("Players")
-    local virtualInputManager = game:GetService("VirtualInputManager")
-    local starterGui = game:GetService("StarterGui")
-    local player = players.LocalPlayer
-
-    _G.QuickTimeEvent = not _G.QuickTimeEvent
-
-    local function sendNotification(status)
-        if not _G.suppressNotifs then
-            starterGui:SetCore("SendNotification", {
-                Title = "QuickTimeEvent",
-                Text = status,
-                Duration = 3
-            })
-        end
-    end
-
-    local function getAllTextLabels(parent)
-        local textLabels = {}
-        for _, descendant in ipairs(parent:GetDescendants()) do
-            if descendant:IsA("TextLabel") then
-                table.insert(textLabels, descendant)
-            end
-        end
-        return textLabels
-    end
-
-    local function convertNumberToKeyText(text)
-        local numberMap = {
-            ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
-            ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
-        }
-        return numberMap[text] or text
-    end
-
-    local function checkQTE()
-        if _G.QuickTimeEvent and player and player:FindFirstChild("PlayerGui") then
-            local qteGui = player.PlayerGui:FindFirstChild("Qte")
-            if qteGui and qteGui:FindFirstChild("QTE") and qteGui.QTE:FindFirstChild("Frame") then
-                local qteFrame = qteGui.QTE.Frame
-                if qteFrame.Size.X.Scale <= 0.740000169 and qteFrame.Size.X.Scale >= 0.720000019 and
-                   qteFrame.Size.Y.Scale <= 0.74999999 and qteFrame.Size.Y.Scale >= 0.720000019 then
-
-                    local textLabels = getAllTextLabels(qteGui.QTE)
-
-                    for _, label in ipairs(textLabels) do
-                        local keyText = convertNumberToKeyText(label.Text)
-                        local keyCode = Enum.KeyCode[keyText]
-                        if keyCode then
-                            virtualInputManager:SendKeyEvent(true, keyCode, false, game)
-                            virtualInputManager:SendKeyEvent(false, keyCode, false, game)
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    runService.RenderStepped:Connect(checkQTE)
-    sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
-end)
-
-maintab:Button("No Rush Cooldown", function()
-    local userInputService = game:GetService("UserInputService")
-    local runService = game:GetService("RunService")
-    local starterGui = game:GetService("StarterGui")
-    local player = game.Players.LocalPlayer
-
-    _G.ForwardRushEnabled = not _G.ForwardRushEnabled
-    _G._rushing = false
-    _G._rushingSoundPlaying = false
-
-    if not _G.suppressNotifs then
-        starterGui:SetCore("SendNotification", {
-            Title = "No Rush CD",
-            Text = _G.ForwardRushEnabled and "Enabled." or "Disabled.",
-            Duration = 2
-        })
-    end
-
-    local function forwardRush()
-        if _G._rushing or not _G.ForwardRushEnabled then return end
-        _G._rushing = true
-
-        local character = player.Character or player.CharacterAdded:Wait()
-        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-
-        if not humanoid or not rootPart then
-            _G._rushing = false
-            return
-        end
-
-        local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
-        local animation = Instance.new("Animation")
-        animation.AnimationId = "rbxassetid://79394729551302"
-        local animationTrack = animator:LoadAnimation(animation)
-        animationTrack:Play()
+	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+	local animation = Instance.new("Animation")
+	animation.AnimationId = "rbxassetid://79394729551302"
+	local animationTrack = animator:LoadAnimation(animation)
+	animationTrack:Play()
 
 	task.delay(0.05, function()
-    	if animationTrack.IsPlaying then
-       		local sound = Instance.new("Sound")
-        	sound.SoundId = "rbxassetid://105267293181745"
-        	sound.Parent = rootPart
-        	sound.Looped = false
-        	sound:Play()
-        	sound.Ended:Connect(function()
-            sound:Destroy()
-        	end)
-    	end
+		if animationTrack.IsPlaying then
+			local sound = Instance.new("Sound")
+			sound.SoundId = "rbxassetid://105267293181745"
+			sound.Parent = rootPart
+			sound:Play()
+			sound.Ended:Connect(function() sound:Destroy() end)
+		end
 	end)
 
-        local startPos = rootPart.Position
-        local endPos = startPos + rootPart.CFrame.LookVector * 45
-        local duration, elapsed = 0.5, 0
-        local dashId = "ForwardRush_" .. tostring(os.clock())
+	local startPos = rootPart.Position
+	local endPos = startPos + rootPart.CFrame.LookVector * 45
+	local duration, elapsed = 0.5, 0
+	local dashId = "ForwardRush_" .. tostring(os.clock())
 
-        runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
-            if not rootPart or not rootPart.Parent then
-                runService:UnbindFromRenderStep(dashId)
-                _G._rushing = false
-                return
-            end
+	runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
+		if not rootPart or not rootPart.Parent then
+			safeUnbind(dashId, "_rushing")
+			return
+		end
 
-            elapsed += dt
-            local alpha = math.clamp(elapsed / duration, 0, 1)
-            local newPos = startPos:Lerp(endPos, alpha)
-            rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
+		elapsed += dt
+		local alpha = math.clamp(elapsed / duration, 0, 1)
+		local newPos = startPos:Lerp(endPos, alpha)
+		rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
 
-            if alpha >= 1 then
-                runService:UnbindFromRenderStep(dashId)
-                _G._rushing = false
-            end
-        end)
-    end
+		if alpha >= 1 then
+			safeUnbind(dashId, "_rushing")
+		end
+	end)
+end
 
-    userInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == Enum.KeyCode.F then
-            forwardRush()
-        end
-    end)
+local function sideDash(direction)
+	if _G._sideDashing or not _G.SideDashEnabled or not humanoid or not rootPart then return end
+	_G._sideDashing = true
+
+	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+	local animation = Instance.new("Animation")
+	animation.AnimationId = direction == "right" and "rbxassetid://114016332539655" or "rbxassetid://100207093237932"
+	local animationTrack = animator:LoadAnimation(animation)
+	animationTrack:Play()
+
+	local sound = Instance.new("Sound")
+	sound.SoundId = "rbxassetid://71212694698006"
+	sound.Parent = rootPart
+	sound:Play()
+	sound.Ended:Connect(function() sound:Destroy() end)
+
+	local offset = rootPart.CFrame.RightVector * (direction == "right" and 25 or -25)
+	local startPos = rootPart.Position
+	local endPos = startPos + offset
+	local duration, elapsed = 0.55, 0
+	local dashId = "SideDash_" .. tostring(os.clock())
+
+	runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
+		if not rootPart or not rootPart.Parent then
+			safeUnbind(dashId, "_sideDashing")
+			return
+		end
+
+		elapsed += dt
+		local alpha = math.clamp(elapsed / duration, 0, 1)
+		local newPos = startPos:Lerp(endPos, alpha)
+		rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
+
+		if alpha >= 1 then
+			safeUnbind(dashId, "_sideDashing")
+		end
+	end)
+end
+
+maintab:Button("No Rush Cooldown", function()
+	_G.ForwardRushEnabled = not _G.ForwardRushEnabled
+	notify("No Rush CD", _G.ForwardRushEnabled and "Enabled." or "Disabled.")
 end)
 
 maintab:Button("No Side Dash Cooldown", function()
-    local userInputService = game:GetService("UserInputService")
-    local runService = game:GetService("RunService")
-    local starterGui = game:GetService("StarterGui")
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-
-    _G.SideDashEnabled = not _G.SideDashEnabled
-
-    if not _G.suppressNotifs then
-        starterGui:SetCore("SendNotification", {
-            Title = "No Side Dash CD",
-            Text = _G.SideDashEnabled and "Enabled." or "Disabled.",
-            Duration = 2
-        })
-    end
-
-    local function playDashSound()
-        local sound = Instance.new("Sound")
-        sound.SoundId = "rbxassetid://71212694698006"
-        sound.Parent = rootPart
-        sound:Play()
-        sound.Ended:Connect(function() sound:Destroy() end)
-    end
-
-local function sideDash(direction)
-    if humanoid and rootPart and _G.SideDashEnabled and not _G._sideDashing then
-        _G._sideDashing = true
-
-        local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
-        local animation = Instance.new("Animation")
-        animation.AnimationId = direction == "right" and "rbxassetid://114016332539655" or "rbxassetid://100207093237932"
-        local animationTrack = animator:LoadAnimation(animation)
-        animationTrack:Play()
-        playDashSound()
-
-        local offset = rootPart.CFrame.RightVector * (direction == "right" and 25 or -25)
-        local startPos = rootPart.Position
-        local endPos = startPos + offset
-        local duration, elapsed = 0.55, 0 
-        local dashId = "SideDash_" .. tostring(os.clock())
-
-        runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
-            if not rootPart or not rootPart.Parent then
-                runService:UnbindFromRenderStep(dashId)
-                _G._sideDashing = false
-                return
-            end
-
-            elapsed += dt
-            local alpha = math.clamp(elapsed / duration, 0, 1)
-            local newPos = startPos:Lerp(endPos, alpha)
-            rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
-
-            if alpha >= 1 then
-                runService:UnbindFromRenderStep(dashId)
-                _G._sideDashing = false
-            end
-        end)
-    end
-end
-
-    userInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == Enum.KeyCode.Q then
-            local isA = userInputService:IsKeyDown(Enum.KeyCode.A)
-            local isD = userInputService:IsKeyDown(Enum.KeyCode.D)
-            if isD then sideDash("right") elseif isA then sideDash("left") end
-        end
-    end)
+	_G.SideDashEnabled = not _G.SideDashEnabled
+	notify("No Side Dash CD", _G.SideDashEnabled and "Enabled." or "Disabled.")
 end)
+
+if not _G._dashBindsSetup then
+	_G._dashBindsSetup = true
+
+	userInputService.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed then return end
+
+		if input.KeyCode == Enum.KeyCode.F then
+			forwardRush()
+		elseif input.KeyCode == Enum.KeyCode.Q then
+			local isA = userInputService:IsKeyDown(Enum.KeyCode.A)
+			local isD = userInputService:IsKeyDown(Enum.KeyCode.D)
+			if isD then sideDash("right") elseif isA then sideDash("left") end
+		end
+	end)
+end
 
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local UserInputService = game:GetService("UserInputService")
@@ -906,18 +616,16 @@ end)
 end)
 
 maintab:Button("Manual Score", function()
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local MapFolder = workspace:WaitForChild("map")
-local AGoal = MapFolder:WaitForChild("Agoal")
-local BGoal = MapFolder:WaitForChild("Bgoal")
-
-local char = LocalPlayer.Character
-local hrp = char and char:FindFirstChild("HumanoidRootPart")
-local goal = LocalPlayer.Team.Name == "A" and BGoal or AGoal
-
-if hrp and goal then
-	hrp.CFrame = goal.CFrame
+if game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+	if workspace:WaitForChild("map"):WaitForChild("Agoal") and workspace:WaitForChild("map"):WaitForChild("Bgoal") then
+		if game:GetService("Players").LocalPlayer.Team then
+			game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame =
+				(game:GetService("Players").LocalPlayer.Team.Name == "A"
+					and workspace.map.Bgoal
+					or workspace.map.Agoal
+				).CFrame
+		end
+	end
 end
 end)
 
@@ -964,6 +672,252 @@ end)
 maintab:Button("Permanent Break Ball (Req. Ball)", function()
 workspace.FallenPartsDestroyHeight = -50000
 game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(1, -49999, 1))
+end)
+
+maintab2:Label("Ball Magnet: Allows You To Grab The Ball From Further Away.")
+
+maintab2:Button("Ball Magnet", function()
+	local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+	local runService = game:GetService("RunService")
+
+	getgenv().ballMagnetActive = not getgenv().ballMagnetActive
+
+	game.StarterGui:SetCore("SendNotification", {
+		Title = "Ball Magnet",
+		Text = getgenv().ballMagnetActive and "Enabled." or "Disabled.",
+		Duration = 5
+	})
+
+	if getgenv().ballMagnetActive then
+		if getgenv().ballMagnetConnection then
+			getgenv().ballMagnetConnection:Disconnect()
+		end
+
+		getgenv().ballMagnetConnection = runService.RenderStepped:Connect(function()
+			pcall(function()
+				remote:FireServer(buffer.fromstring("\019"))
+			end)
+		end)
+	else
+		if getgenv().ballMagnetConnection then
+			getgenv().ballMagnetConnection:Disconnect()
+			getgenv().ballMagnetConnection = nil
+		end
+	end
+end)
+
+maintab2:Button("Bind Magnet (M2 BIND)", function()
+local userInputService = game:GetService("UserInputService")
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+
+userInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        remote:FireServer(buffer.fromstring("\019"))
+    end
+end)
+end)
+
+maintab2:Label("Set The Auto-Counter Number To Your Character's Counter Move!")
+
+_G.suppressNotifs = false
+
+_G.autoSkills = {
+	["toggleDetection"] = "dribble",
+	["toggleCounter1"] = "skill1",
+	["toggleCounter2"] = "skill2",
+	["toggleCounter3"] = "skill3",
+	["toggleCounter4"] = "skill4",
+	["toggleCounter5"] = "skill5"
+}
+
+buffer = buffer or {
+	fromstring = function(str)
+		return str
+	end
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local ANIMATION_ID = "rbxassetid://109744655458082"
+local cooldowns = {}
+
+function notify(title, text, duration)
+	if not _G.suppressNotifs then
+		StarterGui:SetCore("SendNotification", {
+			Title = title,
+			Text = text,
+			Duration = duration or 2
+		})
+	end
+end
+
+RunService.Stepped:Connect(function()
+	local char = player.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	for _, target in ipairs(Players:GetPlayers()) do
+		if target ~= player and target.Character and target.Team ~= player.Team then
+			local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
+			local targetHumanoid = target.Character:FindFirstChild("Humanoid")
+			local animator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
+
+			if targetHRP and animator then
+				local distance = (root.Position - targetHRP.Position).Magnitude
+				if distance <= 35 then
+					local now = tick()
+					local last = cooldowns[target] or 0
+					if now - last >= 0.5 then
+						for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+							if track.Animation.AnimationId == ANIMATION_ID then
+								cooldowns[target] = now
+
+								for _, toggleKey in ipairs({
+									"toggleDetection",
+									"toggleCounter1",
+									"toggleCounter2",
+									"toggleCounter3",
+									"toggleCounter4",
+									"toggleCounter5"
+								}) do
+									local skillName = _G.autoSkills[toggleKey]
+									if _G[toggleKey] and skillName then
+										local args
+										if skillName == "dribble" then
+											args = {
+												buffer.fromstring("\020\001"),
+												{ { skillName, false } }
+											}
+										else
+											args = {
+												buffer.fromstring("\020\001"),
+												{ { skillName } }
+											}
+										end
+										ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+									end
+								end
+								break
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end)
+
+function createAutoCounter(label, toggleKey)
+	maintab2:Button(label, function()
+		_G[toggleKey] = not (_G[toggleKey] or false)
+		notify(label, _G[toggleKey] and "Enabled." or "Disabled.", 3)
+	end)
+end
+
+maintab2:Button("Toggle Keybinds", function()
+	_G.keybindsEnabled = not (_G.keybindsEnabled or false)
+	notify("Keybinds", _G.keybindsEnabled and "Enabled." or "Disabled.", 3)
+end)
+
+createAutoCounter("Auto-Dribble", "toggleDetection")
+createAutoCounter("Auto-Counter (Move One)", "toggleCounter1")
+createAutoCounter("Auto-Counter (Move Two)", "toggleCounter2")
+createAutoCounter("Auto-Counter (Move Three)", "toggleCounter3")
+createAutoCounter("Auto-Counter (Move Four)", "toggleCounter4")
+createAutoCounter("Auto-Counter (Move Five)", "toggleCounter5")
+
+if not _G._keybindSetup then
+	_G._keybindSetup = true
+
+	UserInputService.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed or not _G.keybindsEnabled then return end
+
+		local keyMap = {
+			[Enum.KeyCode.Z] = {"toggleDetection", "Auto-Dribble"},
+			[Enum.KeyCode.X] = {"toggleCounter1", "Auto-Counter (Move One)"},
+			[Enum.KeyCode.C] = {"toggleCounter2", "Auto-Counter (Move Two)"},
+			[Enum.KeyCode.V] = {"toggleCounter3", "Auto-Counter (Move Three)"},
+			[Enum.KeyCode.N] = {"toggleCounter4", "Auto-Counter (Move Four)"},
+			[Enum.KeyCode.M] = {"toggleCounter5", "Auto-Counter (Move Five)"}
+		}
+
+		local mapping = keyMap[input.KeyCode]
+		if mapping then
+			local toggleKey, label = unpack(mapping)
+			_G[toggleKey] = not (_G[toggleKey] or false)
+			notify(label, _G[toggleKey] and "Enabled." or "Disabled.", 3)
+		end
+	end)
+end
+
+maintab:Button("Auto QuickTimeEvent", function()
+    local runService = game:GetService("RunService")
+    local players = game:GetService("Players")
+    local virtualInputManager = game:GetService("VirtualInputManager")
+    local starterGui = game:GetService("StarterGui")
+    local player = players.LocalPlayer
+
+    _G.QuickTimeEvent = not _G.QuickTimeEvent
+
+    local function sendNotification(status)
+        if not _G.suppressNotifs then
+            starterGui:SetCore("SendNotification", {
+                Title = "QuickTimeEvent",
+                Text = status,
+                Duration = 3
+            })
+        end
+    end
+
+    local function getAllTextLabels(parent)
+        local textLabels = {}
+        for _, descendant in ipairs(parent:GetDescendants()) do
+            if descendant:IsA("TextLabel") then
+                table.insert(textLabels, descendant)
+            end
+        end
+        return textLabels
+    end
+
+    local function convertNumberToKeyText(text)
+        local numberMap = {
+            ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
+            ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
+        }
+        return numberMap[text] or text
+    end
+
+    local function checkQTE()
+        if _G.QuickTimeEvent and player and player:FindFirstChild("PlayerGui") then
+            local qteGui = player.PlayerGui:FindFirstChild("Qte")
+            if qteGui and qteGui:FindFirstChild("QTE") and qteGui.QTE:FindFirstChild("Frame") then
+                local qteFrame = qteGui.QTE.Frame
+                if qteFrame.Size.X.Scale <= 0.740000169 and qteFrame.Size.X.Scale >= 0.720000019 and
+                   qteFrame.Size.Y.Scale <= 0.74999999 and qteFrame.Size.Y.Scale >= 0.720000019 then
+
+                    local textLabels = getAllTextLabels(qteGui.QTE)
+
+                    for _, label in ipairs(textLabels) do
+                        local keyText = convertNumberToKeyText(label.Text)
+                        local keyCode = Enum.KeyCode[keyText]
+                        if keyCode then
+                            virtualInputManager:SendKeyEvent(true, keyCode, false, game)
+                            virtualInputManager:SendKeyEvent(false, keyCode, false, game)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    runService.RenderStepped:Connect(checkQTE)
+    sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
 maintab:Button("Auto-GK (Made By Daffy, Reset To Disable.)", function()
@@ -1031,6 +985,59 @@ repeat
     task.wait()
 until char.Humanoid.Healh <= 0
 con:Disconnect()
+end)
+
+maintab:Button("Team Goal (YOUR GOAL)", function()
+local plr = game.Players.LocalPlayer
+				if plr.Team == game.Teams:FindFirstChild("A") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-538, 3, 1603)
+				elseif plr.Team == game.Teams:FindFirstChild("B") then
+					plr.Character.HumanoidRootPart.Position = Vector3.new(-535, 3, 946)
+				end
+end)
+
+maintab:Button("Fix Duplicate Ball", function()
+for _, obj in ipairs(workspace.Terrain:GetDescendants()) do
+	if obj:IsA("MeshPart") and obj.Name == "Ball" then
+		obj:Destroy()
+	end
+end
+end)
+
+maintab:Button("Hide Ace Eater", function()
+local char = game.Players.LocalPlayer.Character
+local ogAnim = char.Animate.idle.Animation1.AnimationId
+
+local UserInputService = game:GetService("UserInputService")
+local starterGui = game:GetService("StarterGui")
+
+_G.HideAce = not _G.HideAce
+
+local function sendNotification(status)
+    starterGui:SetCore("SendNotification", {
+        Title = "Hide Ace Toggle",
+        Text = status,
+        Duration = 3
+    })
+end
+
+function onKeyPress(inputObject, gameProcessedEvent)
+    if not gameProcessedEvent and _G.HideAce then
+        if inputObject.KeyCode == Enum.KeyCode.Five and game.Players.LocalPlayer:GetAttribute("style") == "donlorenzo" then 
+            task.wait(0.1)
+            for _, track in ipairs(char.Humanoid:GetPlayingAnimationTracks()) do
+                if track.Animation.AnimationId == "rbxassetid://108103339994438" then
+                    track:Stop()
+                    break
+                end
+            end
+        end
+    end
+end
+
+UserInputService.InputBegan:Connect(onKeyPress)
+
+sendNotification(_G.HideAce and "Enabled." or "Disabled.")
 end)
 
 maintab:Button("Barou Devour Goal", function()
@@ -1155,88 +1162,94 @@ local plr = game.Players.LocalPlayer
 
 maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
 
-maintab2:Button("Auto Formless (Binds To T.)", function()
-	local UIS = game:GetService("UserInputService")
-	local Players = game:GetService("Players")
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local StarterGui = game:GetService("StarterGui")
-	local Camera = workspace.CurrentCamera
+_G.AutoToggles = _G.AutoToggles or {
+	CF = false,
+	GK = false,
+	CFConn = nil,
+	GKConn = nil
+}
 
-	local LP = Players.LocalPlayer
-	local ByteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
-
-	_G.autoFormlessEnabled = not (_G.autoFormlessEnabled or false)
-	if not _G.suppressNotifs then
-		StarterGui:SetCore("SendNotification", {
-			Title = "Auto Formless",
-			Text = _G.autoFormlessEnabled and "Enabled." or "Disabled.",
-			Duration = 2
-		})
+buffer = buffer or {
+	fromstring = function(str)
+		return str
 	end
+}
 
-	if not _G.autoFormlessEnabled then return end
+function _G.firePacketsIfNear()
+	local char = game:GetService("Players").LocalPlayer.Character
+	if not char then return end
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
 
-	UIS.InputBegan:Connect(function(input, gp)
-		if not _G.autoFormlessEnabled or gp or input.KeyCode ~= Enum.KeyCode.T or UIS.MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
+	if (root.Position - Vector3.new(-260, 4, -1474)).Magnitude <= 15 or
+	   (root.Position - Vector3.new(-262, 4, -1722)).Magnitude <= 15 then
+		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\003\001\001\000A"))
+		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\003\001\001\000B"))
+	end
+end
 
-		local char = LP.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		local hum = char and char:FindFirstChildOfClass("Humanoid")
-		if not hrp or not hum then return end
+function _G.fireGKPackets()
+	local char = game:GetService("Players").LocalPlayer.Character
+	if not char then return end
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
 
-		hum.AutoRotate = false
-		hrp.CFrame *= CFrame.Angles(0, math.rad(180), 0)
+	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\003\005\001\000B"))
+	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\003\005\001\000A"))
+end
 
-		local camType, camSubject = Camera.CameraType, Camera.CameraSubject
-		Camera.CameraType = Enum.CameraType.Scriptable
-		Camera.CFrame = hrp.CFrame + Vector3.new(0, 2, 0)
+maintab2:Button("Auto CF", function()
+	_G.AutoToggles.CF = not _G.AutoToggles.CF
 
-		task.delay(0.1, function()
-			if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
-				Camera.CameraSubject = LP.Character:FindFirstChildOfClass("Humanoid")
-				Camera.CameraType = Enum.CameraType.Custom
-			else
-				Camera.CameraSubject = camSubject
-				Camera.CameraType = camType
-			end
-			hum.AutoRotate = true
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Auto CF",
+		Text = _G.AutoToggles.CF and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+
+	if _G.AutoToggles.CF then
+		_G.AutoToggles.CFConn = game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function()
+			task.wait(1)
+			_G.firePacketsIfNear()
 		end)
 
-		task.wait(0.05)
-		ByteNetReliable:FireServer(
-			buffer.fromstring("\020\001"),
-			{ { "kick", 24, false, vector.create(0, 1, 0) } }
-		)
-
-		ByteNetReliable:FireServer(
-			buffer.fromstring("\020\001"),
-			{ { "skill1" } }
-		)
-	end)
+		task.spawn(function()
+			repeat task.wait() until game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+			_G.firePacketsIfNear()
+		end)
+	else
+		if _G.AutoToggles.CFConn then
+			_G.AutoToggles.CFConn:Disconnect()
+			_G.AutoToggles.CFConn = nil
+		end
+	end
 end)
 
-maintab2:Button("Get Center-Field", function()
-local args = {
-	buffer.fromstring("\003\001\001\000A")
-}
-game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+maintab2:Button("Auto GK", function()
+	_G.AutoToggles.GK = not _G.AutoToggles.GK
 
-local args = {
-	buffer.fromstring("\003\001\001\000B")
-}
-game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-end)
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Auto-GK",
+		Text = _G.AutoToggles.GK and "Enabled." or "Disabled.",
+		Duration = 3
+	})
 
-maintab2:Button("Get Goalie", function()
-local args = {
-	buffer.fromstring("\003\005\001\000B")
-}
-game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+	if _G.AutoToggles.GK then
+		_G.AutoToggles.GKConn = game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function()
+			task.wait(1)
+			_G.fireGKPackets()
+		end)
 
-local args = {
-	buffer.fromstring("\003\005\001\000A")
-}
-game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+		task.spawn(function()
+			repeat task.wait() until game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+			_G.fireGKPackets()
+		end)
+	else
+		if _G.AutoToggles.GKConn then
+			_G.AutoToggles.GKConn:Disconnect()
+			_G.AutoToggles.GKConn = nil
+		end
+	end
 end)
 
 funtab:Button("Don Lorenzo (Nagi)", function()
