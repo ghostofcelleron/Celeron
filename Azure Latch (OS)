@@ -142,7 +142,7 @@ local function StealBall()
                 LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\020\001"),
+						buffer.fromstring("\021\001"),
 						{
 							{
 								"tackle"
@@ -179,7 +179,7 @@ coroutine.resume(coroutine.create(function()
 					wait(0.185)
 
 					local args = {
-						buffer.fromstring("\020\001"),
+						buffer.fromstring("\021\001"),
 						{
 							{
 								"kick",
@@ -238,7 +238,7 @@ if _G.ALWAYS_BALL_ACTIVE then
                         LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 						local args = {
-							buffer.fromstring("\020\001"),
+							buffer.fromstring("\021\001"),
 							{
 								{
 									"tackle"
@@ -286,7 +286,7 @@ task.spawn(function()
 	local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
 	local flow = workspace:WaitForChild("characters"):WaitForChild(player.Name):WaitForChild("state"):WaitForChild("flow")
 	while flow.Value < 100 do
-		remote:FireServer(buffer.fromstring("\020\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
+		remote:FireServer(buffer.fromstring("\021\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
 		task.wait(0.01)
 	end
 	wait(0.9)
@@ -513,7 +513,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\020\001"),
+						buffer.fromstring("\021\001"),
 							{
 								{
 								"tackle"
@@ -564,7 +564,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\020\001"),
+						buffer.fromstring("\021\001"),
 						{
 							{
 								"tackle"
@@ -675,7 +675,7 @@ maintab2:Button("Ball Magnet", function()
 
 		getgenv().ballMagnetConnection = runService.RenderStepped:Connect(function()
 			pcall(function()
-				remote:FireServer(buffer.fromstring("\019"))
+				remote:FireServer(buffer.fromstring("\020"))
 			end)
 		end)
 	else
@@ -693,7 +693,7 @@ local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliabl
 userInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        remote:FireServer(buffer.fromstring("\019"))
+        remote:FireServer(buffer.fromstring("\020"))
     end
 end)
 end)
@@ -771,12 +771,12 @@ RunService.Stepped:Connect(function()
 										local args
 										if skillName == "dribble" then
 											args = {
-												buffer.fromstring("\020\001"),
+												buffer.fromstring("\021\001"),
 												{ { skillName, false } }
 											}
 										else
 											args = {
-												buffer.fromstring("\020\001"),
+												buffer.fromstring("\021\001"),
 												{ { skillName } }
 											}
 										end
@@ -940,7 +940,7 @@ local con = game["Run Service"].RenderStepped:Connect(function()
             end
 
             local args = {
-                buffer.fromstring("\020\001"),
+                buffer.fromstring("\021\001"),
                 {
                     { "tackle" }
                 }
@@ -1191,12 +1191,12 @@ maintab2:Button("Auto Formless (Binds To T.)", function()
 
 		task.wait(0.05)
 		ByteNetReliable:FireServer(
-			buffer.fromstring("\020\001"),
+			buffer.fromstring("\021\001"),
 			{ { "kick", 24, false, vector.create(0, 1, 0) } }
 		)
 
 		ByteNetReliable:FireServer(
-			buffer.fromstring("\020\001"),
+			buffer.fromstring("\021\001"),
 			{ { "skill1" } }
 		)
 	end)
