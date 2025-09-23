@@ -265,53 +265,33 @@ else
 end
 end)
 
-maintab:Button("Get Flow (Enable Header, Req. Ball)", function()
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-local virtualInputManager = game:GetService("VirtualInputManager")
+maintab:Button("Get Flow (Req. Ball)", function()
+local player = game:GetService("Players").LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local root = char:WaitForChild("HumanoidRootPart")
+local original = root.CFrame
 
-if humanoidRootPart then
-    local originalPosition = humanoidRootPart.Position
-    humanoidRootPart.CFrame = CFrame.new(Vector3.new(-390, 475, 354))
-	task.wait(0.3)
-    virtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-    task.wait(0.1)
-    virtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-	workspace.Gravity = 0
-
-	spawn(function()
-    local startTime = tick()
-
-    while tick() - startTime < 20 do
-        local LocalCharacter = game.Players.LocalPlayer.Character
-        local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
-        local Football = workspace.Terrain:FindFirstChild("Ball")
-        
-        if LocalHumanoidRootPart and Football then
-            LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position.X, Football.Position.Y, Football.Position.Z)
-        end
-
-        for _, OtherPlayer in pairs(game.Players:GetPlayers()) do
-            if OtherPlayer.Name ~= game.Players.LocalPlayer.Name then
-                local OtherCharacter = OtherPlayer.Character
-                local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
-                local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
-
-                if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
-                    LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
-                    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Q, false, game)
-                    game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Q, false, game)
-                end
-            end
-        end
-        
-        task.wait(0.1)
-    end
-    workspace.Gravity = 196.2
-	end)
-    humanoidRootPart.CFrame = CFrame.new(originalPosition)
+local spawns = {}
+for _, obj in ipairs(workspace:GetDescendants()) do
+	if obj:IsA("SpawnLocation") then
+		table.insert(spawns, obj)
+	end
 end
+
+if #spawns > 0 then
+	root.CFrame = spawns[math.random(#spawns)].CFrame + Vector3.new(0, 3, 0)
+end
+wait(0.67)
+task.spawn(function()
+	local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+	local flow = workspace:WaitForChild("characters"):WaitForChild(player.Name):WaitForChild("state"):WaitForChild("flow")
+	while flow.Value < 100 do
+		remote:FireServer(buffer.fromstring("\020\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
+		task.wait(0.01)
+	end
+	wait(0.9)
+	root.CFrame = original
+end)
 end)
 
 local userInputService = game:GetService("UserInputService")
