@@ -789,6 +789,16 @@ maintab:Button("Semi-Invisible Run Portal (Equip Run.)", function()
 	)
 end)
 
+maintab:Button("Get Pillows (Req. Pillow)", function()
+if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and workspace:FindFirstChild("pillows_") then
+    for _, v in ipairs(workspace:FindFirstChild("pillows_"):GetChildren()) do
+        if v:IsA("Model") and v.PrimaryPart then
+            v:SetPrimaryPartCFrame(game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame)
+        end
+    end
+end
+end)
+
 maintab:Button("Spam Quake (Equip Quake.)", function()
 	for i = 1, 250 do
 		game:GetService("ReplicatedStorage"):WaitForChild("QuakeQuake"):FireServer({ start = true })
