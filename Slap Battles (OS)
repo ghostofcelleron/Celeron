@@ -1413,6 +1413,96 @@ exptab:Textbox("Delete Player", function(v)
 	end
 end)
 
+exptab:Label("Rob Glove Exploits.")
+
+local function getClosestPlayer(name)
+    for _, plr in ipairs(game:GetService("Players"):GetPlayers()) do
+        if plr.Name:lower():sub(1, #name) == name:lower() then
+            return plr
+        end
+    end
+end
+
+exptab:Textbox("Kill Player", function(v)
+    local target = getClosestPlayer(v)
+    if target then
+        game:GetService("ReplicatedStorage").Events.rob_r:FireServer(
+            "throw",
+            {
+                victim = target,
+                cf = CFrame.new(
+                    -270.997803, -6.65184021, 0.999665737,
+                    0.413466334, 0, -0.910519361,
+                    0, 1, 0,
+                    0.910519361, 0, 0.413466334
+                )
+            }
+        )
+    end
+end)
+
+exptab:Textbox("Kick Player (Brazil Portal)", function(v)
+    local target = getClosestPlayer(v)
+    if target then
+        game:GetService("ReplicatedStorage").Events.rob_r:FireServer(
+            "throw",
+            {
+                victim = target,
+                cf = CFrame.new(
+                    -924.052002, 304.538788, -1.89993906,
+                    -0.0000810623169, -1, 0.0000810623169,
+                    0.0000810623169, 0.0000810623169, 1,
+                    -1, 0.0000810623169, 0.0000810623169
+                )
+            }
+        )
+    end
+end)
+
+exptab:Textbox("Kick Player (Guide Portal)", function(v)
+    local target = getClosestPlayer(v)
+    if target then
+        game:GetService("ReplicatedStorage").Events.rob_r:FireServer(
+            "throw",
+            {
+                victim = target,
+                cf = CFrame.new(
+                    17943.7773, -122.255447, -3560.4231,
+                    1, 0, 0,
+                    0, 1, 0,
+                    0, 0, 1
+                )
+            }
+        )
+    end
+end)
+
+exptab:Textbox("Delete Player", function(v)
+    local target = getClosestPlayer(v)
+    if target then
+        game:GetService("ReplicatedStorage").Events.rob_r:FireServer(
+            "throw",
+            {
+                victim = target,
+                cf = CFrame.new(1118, -50005, 18258)
+            }
+        )
+    end
+end)
+
+exptab:Textbox("Remove Limbs Player", function(v)
+    local target = getClosestPlayer(v)
+    if target then
+        game:GetService("ReplicatedStorage").Events.rob_r:FireServer(
+            "throw",
+            {
+                victim = target,
+                cf = CFrame.new(1118, -50000, 18258)
+            }
+        )
+    end
+end)
+
 exptab:Label("Guardian Angel Glove Exploits.")
 
 exptab:Textbox("Angel Player", function(v)
