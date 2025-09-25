@@ -426,6 +426,69 @@ funtab:Button("OP Alchemist GUI", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/alchemist%20gui",true))()
 end)
 
+funtab:Label("Glove-Specific Features.")
+
+funtab:Textbox("Set Pillows (Req. Pillow)", function(v)
+for _=1,v do pcall(function() game.ReplicatedStorage.Events.PillowEvent:FireServer("AddPillow") end) end
+end)
+
+funtab:Button("Semi-Invisible Run Portal (Req. Run)", function()
+	game:GetService("ReplicatedStorage"):WaitForChild("GeneralAbility"):FireServer(
+		Vector3.new(
+			game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").Position.X,
+			game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").Position.Y - 7,
+			game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").Position.Z
+		)
+	)
+end)
+
+getgenv().spamAbility = false
+
+spawn(function()
+    while task.wait(0.05) do
+        if getgenv().spamAbility then
+            pcall(function()
+                game:GetService("ReplicatedStorage"):WaitForChild("GeneralAbility"):FireServer()
+            end)
+        end
+    end
+end)
+
+funtab:Button("Spam Fan (Req. Fan)", function()
+    getgenv().spamAbility = not getgenv().spamAbility
+
+    local status = getgenv().spamAbility and "Enabled." or "Disabled."
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Spam Fan",
+        Text = status,
+        Duration = 3
+    })
+end)
+
+getgenv().spamQuake = false
+
+spawn(function()
+    local quake = game:GetService("ReplicatedStorage"):WaitForChild("QuakeQuake")
+    while task.wait() do
+        if getgenv().spamQuake then
+            pcall(function()
+                quake:FireServer({ start = true })
+                quake:FireServer({ finished = true })
+            end)
+        end
+    end
+end)
+
+funtab:Button("Spam Quake (Req. Quake)", function()
+    getgenv().spamQuake = not getgenv().spamQuake
+    local status = getgenv().spamQuake and "Enabled." or "Disabled."
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Spam Quake",
+        Text = "Spam Quake " .. status,
+        Duration = 3
+    })
+end)
+
 getgenv().slapaura_enabled = false
 getgenv().slapaura_cachedRemotes = {}
 getgenv().slapaura_lastFireTime = 0
@@ -777,34 +840,6 @@ maintab:Button("Bind Muck (Binds To Y, Use With Any Glove.)", function()
 			game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("Muck"):FireServer()
 		end
 	end)
-end)
-
-maintab:Button("Semi-Invisible Run Portal (Equip Run.)", function()
-	game:GetService("ReplicatedStorage"):WaitForChild("GeneralAbility"):FireServer(
-		Vector3.new(
-			game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").Position.X,
-			game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").Position.Y - 7,
-			game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").Position.Z
-		)
-	)
-end)
-
-maintab:Button("Get Pillows (Req. Pillow)", function()
-if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and workspace:FindFirstChild("pillows_") then
-    for _, v in ipairs(workspace:FindFirstChild("pillows_"):GetChildren()) do
-        if v:IsA("Model") and v.PrimaryPart then
-            v:SetPrimaryPartCFrame(game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame)
-        end
-    end
-end
-end)
-
-maintab:Button("Spam Quake (Equip Quake.)", function()
-	for i = 1, 250 do
-		game:GetService("ReplicatedStorage"):WaitForChild("QuakeQuake"):FireServer({ start = true })
-		game:GetService("ReplicatedStorage"):WaitForChild("QuakeQuake"):FireServer({ finished = true })
-		task.wait()
-	end
 end)
 
 maintab:Button("Crash / Lag Server (Req. Glovel)", function()
