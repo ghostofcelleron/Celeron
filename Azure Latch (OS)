@@ -1969,6 +1969,10 @@ plr.CharacterAdded:Connect(function(char)
 end)
 end)
 
+funtab:Button("Loki Moveset", function()
+loadstring(game:HttpGet("https://pastebin.com/LbRRX7SK"))()
+end)
+
 funtab:Button("Trolling Moveset", function()
     local char = game.Players.LocalPlayer.Character
     local plr = game.Players.LocalPlayer
