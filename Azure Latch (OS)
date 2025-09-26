@@ -1203,6 +1203,24 @@ maintab2:Button("Auto Formless (Binds To T.)", function()
 	end)
 end)
 
+maintab2:Button("Air Dribble (Binds To Y.)", function()
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+local UIS = game:GetService("UserInputService")
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Y then
+        remote:FireServer(
+            buffer.fromstring("\021\001"),
+            { { "kick", 25, false, vector.create(0, 1, 0) } }
+        )
+        task.wait(0.4)
+        remote:FireServer(buffer.fromstring("\020"))
+    end
+end)
+end)
+
+
 _G.AutoToggles = _G.AutoToggles or {
 	CF = false,
 	GK = false,
