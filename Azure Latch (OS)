@@ -1970,7 +1970,7 @@ end)
 end)
 
 funtab:Button("Loki Moveset", function()
-loadstring(game:HttpGet("https://pastebin.com/LbRRX7SK"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/LbRRX7SK"))()
 end)
 
 funtab:Button("Trolling Moveset", function()
