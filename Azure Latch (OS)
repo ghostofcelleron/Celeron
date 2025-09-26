@@ -1,4 +1,5 @@
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+loadstring(game:HttpGet("https://pastebin.com/raw/gNAMb8Qw",true))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
