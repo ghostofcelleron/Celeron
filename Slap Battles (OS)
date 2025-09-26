@@ -20,6 +20,8 @@ local bindmaze = 74169485398268
 local icetrials = 17290438723
 local hexagon = 98726100529621
 local shattered = 75803343514634
+local slender = 132277598079047
+local toh = 115782629143468
 
 local currentPlaceId = game.PlaceId
 
@@ -7242,6 +7244,51 @@ StarterGui:SetCore("SendNotification", {
 })
 setclipboard("https://discord.gg/8stFYxJv4R")
 end)
+elseif currentPlaceId == slender then
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Slender Auto-Complete",
+    Text = "Turn Your Camera To Look Fully Down.",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+wait(3)
+local player = game:GetService("Players").LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local vim = game:GetService("VirtualInputManager")
+
+for _, model in ipairs(workspace.Pages:GetChildren()) do
+    for _, obj in ipairs(model:GetDescendants()) do
+        if obj:IsA("ProximityPrompt") then
+            pcall(function()
+                obj.HoldDuration = 0
+
+                local target = obj.Parent
+                if target:IsA("BasePart") then
+                    hrp.CFrame = target.CFrame + Vector3.new(0, 3, 0)
+                    local lookAt = CFrame.new(hrp.Position, target.Position)
+                    hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, lookAt.LookVector:Angle(Vector3.new(0, 0, -1)), 0)
+                    task.wait(0.2)
+                    vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                    task.wait(0.1)
+                    vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                    task.wait(0.2)
+                end
+            end)
+        end
+    end
+end
+elseif currentPlaceId == toh then
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Untitled Tag Glove",
+    Text = "Obtaining...",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+wait(1)
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(-23, 225, -2))
 else
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
