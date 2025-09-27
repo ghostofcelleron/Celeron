@@ -909,14 +909,6 @@ local function ball()
     return game.Workspace.Terrain:FindFirstChild("Ball")
 end
 
-local function getGKpos()
-    if plr.Team == game.Teams.A then
-        return Vector3.new(-535, 3, 1698)
-    elseif plr.Team == game.Teams.B then
-        return Vector3.new(-535, 3, 845)
-    end
-end
-
 local function getGKgoal()
     if plr.Team == game.Teams.A then
         return workspace.map.Agoal
@@ -932,7 +924,6 @@ local con = game["Run Service"].RenderStepped:Connect(function()
 
         local dist = (plr.Character.HumanoidRootPart.Position - ball.Position).Magnitude
         if dist <= 50 then
-
             if ball.Position.Y >= plr.Character.HumanoidRootPart.Position.Y + 6 then
                 plr.Character.Humanoid.Jump = true
             else
@@ -947,23 +938,13 @@ local con = game["Run Service"].RenderStepped:Connect(function()
             }
 
             game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-        else
-            local goaldist = (getGKgoal().Position - plr.Character.HumanoidRootPart.Position).Magnitude
-            if goaldist > 38 then
-                plr.Character.Humanoid:MoveTo(getGKpos())
-            end
-        end
-    else
-        local goaldist = (getGKgoal().Position - plr.Character.HumanoidRootPart.Position).Magnitude
-        if goaldist > 38 then
-            plr.Character.Humanoid:MoveTo(getGKpos())
         end
     end
 end)
 
 repeat
     task.wait()
-until char.Humanoid.Healh <= 0
+until char.Humanoid.Health <= 0
 con:Disconnect()
 end)
 
