@@ -900,7 +900,7 @@ maintab:Button("Auto QuickTimeEvent", function()
     sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
-maintab:Button("Auto-GK (Made By Daffy, Reset To Disable.)", function()
+maintab:Button("Auto GK (Made By Daffy, Reset To Disable.)", function()
 local plr = game.Players.LocalPlayer
 local char = plr.Character
 local cam = game.Workspace.CurrentCamera
