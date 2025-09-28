@@ -1,5 +1,4 @@
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
-loadstring(game:HttpGet("https://pastebin.com/raw/LEBgs3Ki",true))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
@@ -901,13 +900,21 @@ maintab:Button("Auto QuickTimeEvent", function()
     sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
-maintab:Button("Auto GK (Made By Daffy, Reset To Disable.)", function()
+maintab:Button("Auto-GK (Made By Daffy, Reset To Disable.)", function()
 local plr = game.Players.LocalPlayer
 local char = plr.Character
 local cam = game.Workspace.CurrentCamera
 
 local function ball()
     return game.Workspace.Terrain:FindFirstChild("Ball")
+end
+
+local function getGKpos()
+    if plr.Team == game.Teams.A then
+        return Vector3.new(-535, 3, 1698)
+    elseif plr.Team == game.Teams.B then
+        return Vector3.new(-535, 3, 845)
+    end
 end
 
 local function getGKgoal()
@@ -925,6 +932,7 @@ local con = game["Run Service"].RenderStepped:Connect(function()
 
         local dist = (plr.Character.HumanoidRootPart.Position - ball.Position).Magnitude
         if dist <= 50 then
+
             if ball.Position.Y >= plr.Character.HumanoidRootPart.Position.Y + 6 then
                 plr.Character.Humanoid.Jump = true
             else
@@ -939,13 +947,23 @@ local con = game["Run Service"].RenderStepped:Connect(function()
             }
 
             game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+        else
+            local goaldist = (getGKgoal().Position - plr.Character.HumanoidRootPart.Position).Magnitude
+            if goaldist > 38 then
+                plr.Character.Humanoid:MoveTo(getGKpos())
+            end
+        end
+    else
+        local goaldist = (getGKgoal().Position - plr.Character.HumanoidRootPart.Position).Magnitude
+        if goaldist > 38 then
+            plr.Character.Humanoid:MoveTo(getGKpos())
         end
     end
 end)
 
 repeat
     task.wait()
-until char.Humanoid.Health <= 0
+until char.Humanoid.Healh <= 0
 con:Disconnect()
 end)
 
@@ -1092,7 +1110,7 @@ if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
 end
 end)
 
-maintab:Button("Isagi U-20 Goal", function()
+maintab:Button("Isagi U-20 Goal (Overtime)", function()
 local plr = game.Players.LocalPlayer
 local character = plr.Character or plr.CharacterAdded:Wait()
 local hrp = character:WaitForChild("HumanoidRootPart")
@@ -1110,7 +1128,7 @@ local skillRemote = game.ReplicatedStorage:WaitForChild("SkillRemote")
 skillRemote:FireServer("Skill3")
 end)
 
-maintab:Button("Shidou Back-Heel Goal (Must Be Overtime.)", function()
+maintab:Button("Shidou Back-Heel Goal (Overtime)", function()
 local plr = game.Players.LocalPlayer
 				if plr.Team == game.Teams:FindFirstChild("A") then
 					plr.Character.HumanoidRootPart.Position = Vector3.new(-625, 3, 925)
@@ -1206,7 +1224,7 @@ UIS.InputBegan:Connect(function(input, gp)
 
 local dir = cam.CFrame.LookVector
 local kickVec = vector.create(dir.X * 0.7, 1, dir.Z * 0.7)
-remote:FireServer(buffer.fromstring("\021\001"), { { "kick", 30, false, kickVec } })
+remote:FireServer(buffer.fromstring("\021\001"), { { "kick", 37, false, kickVec } })
     task.wait(0.5)
     remote:FireServer(buffer.fromstring("\020"))
 	wait(0.05)
@@ -2035,6 +2053,163 @@ funtab:Button("Trolling Moveset", function()
 
     hotbar.MagicHealth.ModeText.Text = ""
     hotbar.MagicHealth.Health.Frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+
+	local UIS = game:GetService("UserInputService")
+	local r = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+	local cam = workspace.CurrentCamera
+	local tweenService = game:GetService("TweenService")
+	local p = game.Players.LocalPlayer
+
+task.spawn(function()
+    while true do
+        pcall(function()
+            local gui = p:WaitForChild("PlayerGui"):WaitForChild("Hotbar")
+            local skill1 = gui.Backpack.Hotbar.skill1.Base.ToolName
+            local skill2 = gui.Backpack.Hotbar.skill2.Base.ToolName
+            local skill3 = gui.Backpack.Hotbar.skill3.Base.ToolName
+
+            if skill1 and skill1:IsA("TextLabel") then
+                skill1.Text = "curved shot lol"
+            end
+            if skill2 and skill2:IsA("TextLabel") then
+                skill2.Text = "super rush"
+            end
+            if skill3 and skill3:IsA("TextLabel") then
+                skill3.Text = "instant transmission"
+            end
+        end)
+        task.wait(1.5)
+    end
+end)
+
+UIS.InputBegan:Connect(function(i, gp)
+    if gp then return end
+
+    if i.KeyCode == Enum.KeyCode.One then
+        local charFolder = workspace.characters[p.Name]
+        if not (charFolder and charFolder:FindFirstChild("Ball") and charFolder.Ball:IsA("MeshPart")) then return end
+
+        local c = p.Character or p.CharacterAdded:Wait()
+        local h, hrp = c:WaitForChild("Humanoid"), c:WaitForChild("HumanoidRootPart")
+        local l, o = hrp.CFrame.LookVector, hrp.CFrame
+
+        local a = Instance.new("Animation")
+        a.AnimationId = "rbxassetid://83123931455588"
+        h:LoadAnimation(a):Play()
+
+        local s = charFolder.state.stun
+        s.Value = true
+
+        hrp.CFrame = o + l * 35
+
+        task.delay(0.3, function()
+            s.Value = false
+            r:FireServer(buffer.fromstring("\021\001"), {
+                { "kick", 100, true, vector.create(l.X, l.Y + 0.55, l.Z + 0.045) }
+            })
+            hrp.CFrame = o
+        end)
+    end
+
+    if i.KeyCode == Enum.KeyCode.Two then
+        local charFolder = workspace.characters[p.Name]
+        local s = charFolder.state.stun
+        s.Value = true
+
+        task.delay(0.3, function()
+            s.Value = false
+        end)
+
+        local c = p.Character or p.CharacterAdded:Wait()
+        local h = c:WaitForChild("Humanoid")
+        local hrp = c:WaitForChild("HumanoidRootPart")
+
+        local anim = Instance.new("Animation")
+        anim.AnimationId = "rbxassetid://91506202951715"
+        local track = h:LoadAnimation(anim)
+        track:Play()
+
+        local sound = Instance.new("Sound", hrp)
+        sound.SoundId = "rbxassetid://119510072087564"
+        sound.Volume = 1
+        sound:Play()
+
+        hrp.AssemblyLinearVelocity = hrp.CFrame.LookVector * 375
+    end
+
+    if i.KeyCode == Enum.KeyCode.Three then
+        local charFolder = workspace.characters[p.Name]
+        local s = charFolder.state.stun
+        s.Value = true
+
+        task.delay(0.3, function()
+            s.Value = false
+        end)
+
+        local c = p.Character or p.CharacterAdded:Wait()
+        local h = c:WaitForChild("Humanoid")
+        local hrp = c:WaitForChild("HumanoidRootPart")
+
+        local anim = Instance.new("Animation")
+        anim.AnimationId = "rbxassetid://136837676477730"
+        local track = h:LoadAnimation(anim)
+        track:Play()
+
+        local ray = Ray.new(cam.CFrame.Position, cam.CFrame.LookVector * 500)
+        local hit, pos = workspace:FindPartOnRay(ray, c)
+
+        if hit then
+            hrp.CFrame = CFrame.new(pos)
+
+            local sound = Instance.new("Sound", hrp)
+            sound.SoundId = "rbxassetid://4861638982"
+            sound.Volume = 1
+            sound:Play()
+
+            for i = 1, 80 do
+                local line = Instance.new("Part")
+                line.Size = Vector3.new(0.05, 0.05, math.random(1, 3))
+                line.Anchored = false
+                line.CanCollide = false
+                line.Material = Enum.Material.Neon
+                line.Color = Color3.fromRGB(0, 170, 255)
+                line.Transparency = 0
+                line.Massless = true
+                line.CFrame = hrp.CFrame * CFrame.new(
+                    math.random(-1, 1) * 0.5,
+                    math.random(-1, 1) * 0.5,
+                    math.random(-1, 1) * 0.5
+                ) * CFrame.Angles(
+                    math.rad(math.random(-180, 180)),
+                    math.rad(math.random(-180, 180)),
+                    math.rad(math.random(-180, 180))
+                )
+                line.AssemblyLinearVelocity = Vector3.new(
+                    math.random(-6, 6),
+                    math.random(8, 14),
+                    math.random(-6, 6)
+                )
+                line.Parent = hrp
+
+                local light = Instance.new("PointLight", line)
+                light.Color = line.Color
+                light.Range = math.random(4, 7)
+                light.Brightness = math.random(1, 3)
+
+                local fade = tweenService:Create(line, TweenInfo.new(0.3), { Transparency = 1 })
+                fade:Play()
+
+                task.delay(0.35, function()
+                    line:Destroy()
+                end)
+            end
+        end
+
+        task.delay(0.65, function()
+            track:Stop()
+        end)
+    end
+end)
 end)
 
 _G.mutecrowd = false
@@ -2257,7 +2432,7 @@ end)
 
 teleporttab:Button("Spawn Area", function()
 if game.PlaceId == 94647229517154 then
-	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-269, 4, -1599)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-269, 4, -1599)
 elseif game.PlaceId == 85946466968831 then
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(857, 9, -3263)
 end
