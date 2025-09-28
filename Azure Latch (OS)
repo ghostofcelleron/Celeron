@@ -1184,23 +1184,34 @@ maintab2:Button("Auto Formless (Binds To T.)", function()
 	end)
 end)
 
-maintab2:Button("Air Dribble (Binds To Y.)", function()
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
 local UIS = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local cam = workspace.CurrentCamera
 
-UIS.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.Y then
-        remote:FireServer(
-            buffer.fromstring("\021\001"),
-            { { "kick", 25, false, vector.create(0, 1, 0) } }
-        )
-        task.wait(0.4)
-        remote:FireServer(buffer.fromstring("\020"))
-    end
-end)
+local airDribbleEnabled = false
+
+maintab2:Button("Air Dribble (Binds To LeftAlt.)", function()
+    airDribbleEnabled = not airDribbleEnabled
+    StarterGui:SetCore("SendNotification", {
+        Title = "Air Dribble",
+        Text = airDribbleEnabled and "Enabled." or "Disabled.",
+        Duration = 2
+    })
 end)
 
+UIS.InputBegan:Connect(function(input, gp)
+    if gp or input.KeyCode ~= Enum.KeyCode.LeftAlt then return end
+    if not airDribbleEnabled then return end
+
+local dir = cam.CFrame.LookVector
+local kickVec = vector.create(dir.X * 0.7, 1, dir.Z * 0.7)
+remote:FireServer(buffer.fromstring("\021\001"), { { "kick", 30, false, kickVec } })
+    task.wait(0.5)
+    remote:FireServer(buffer.fromstring("\020"))
+	wait(0.05)
+    remote:FireServer(buffer.fromstring("\020"))	
+end)
 
 _G.AutoToggles = _G.AutoToggles or {
 	CF = false,
