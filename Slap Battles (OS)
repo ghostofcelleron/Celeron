@@ -486,7 +486,7 @@ funtab:Button("Spam Quake (Req. Quake)", function()
     local status = getgenv().spamQuake and "Enabled." or "Disabled."
     game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = "Spam Quake",
-        Text = "Spam Quake " .. status,
+        Text = status,
         Duration = 3
     })
 end)
@@ -772,8 +772,8 @@ maintab:Button("One Million Buses (Very Blatant, Equip Bus.)", function()
 	getgenv().BusSpamLast = 0
 
 	game:GetService("RunService").Heartbeat:Connect(function()
-		if tick() - getgenv().BusSpamStart >= 2 then return end
-		if tick() - getgenv().BusSpamLast >= 0.05 then
+		if tick() - getgenv().BusSpamStart >= 3 then return end
+		if tick() - getgenv().BusSpamLast >= 0.0001 then
 			getgenv().BusSpamLast = tick()
 			game:GetService("ReplicatedStorage"):WaitForChild("busmoment"):FireServer()
 		end
@@ -1545,6 +1545,19 @@ exptab:Textbox("Remove Limbs Player", function(v)
             {
                 victim = target,
                 cf = CFrame.new(1118, -50000, 18258)
+            }
+        )
+    end
+end)
+
+exptab:Textbox("Remove Spectator Godmode", function(v)
+    local target = getClosestPlayer(v)
+    if target then
+        game:GetService("ReplicatedStorage").Events.rob_r:FireServer(
+            "throw",
+            {
+                victim = target,
+                cf = CFrame.new(-11, -5, 1)
             }
         )
     end
@@ -2914,7 +2927,7 @@ local function onCharacterSpawn(character)
 		local offset = targetRoot.CFrame.LookVector.Unit * 5
 		local destination = targetRoot.Position + offset + Vector3.new(0, 7, 0)
 
-		for i = 1, 25 do
+		for i = 1, 100 do
 			rootPart.CFrame = CFrame.new(destination, targetRoot.Position)
 			task.wait(0.05)
 		end
@@ -3172,6 +3185,131 @@ farmtab:Button("Set Up Bomb Snipe (Alt Account.)", function()
 while true do
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(4785, 241, 4812)
 wait(0.05)
+end
+end)
+
+farmtab:Label("Shard Farm: Silent, Teleport To Baseplate.")
+farmtab:Button("Spam Shard (Main Account.)", function()
+while true do
+game:GetService("ReplicatedStorage").Shards:FireServer()
+wait(3.75)
+end
+end)
+
+farmtab:Textbox("Shard Multi-Farm (Set Username To Main.)", function(v)
+    local Players = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+    local LocalPlayer = Players.LocalPlayer
+
+    local function getTargetCFrame(username)
+        local target = Players:FindFirstChild(username)
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            return target.Character.HumanoidRootPart.CFrame
+        end
+        return nil
+    end
+
+    local function teleportLoop()
+        while true do
+            local cf = getTargetCFrame(v)
+            if cf and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local offset = cf.LookVector * 7
+                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(cf.Position + offset)
+            end
+            task.wait(0.5)
+        end
+    end
+
+    task.spawn(teleportLoop)
+end)
+
+farmtab:Textbox("Shard Snipe Farm (Set Username To Main.)", function(v)
+    local Players = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+    local LocalPlayer = Players.LocalPlayer
+
+    local function getTargetCFrame(username)
+        local target = Players:FindFirstChild(username)
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            return target.Character.HumanoidRootPart.CFrame
+        end
+        return nil
+    end
+
+    local function teleportLoop()
+        while true do
+            local cf = getTargetCFrame(v)
+            if cf and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local offset = cf.LookVector * 165
+                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(cf.Position + offset)
+            end
+            task.wait(0.5)
+        end
+    end
+
+    task.spawn(teleportLoop)
+end)
+
+
+farmtab:Label("Voodoo Farm: Silent, Teleport To Baseplate.")
+
+farmtab:Button("Voodoo Multi-Farm (Main Account.)", function()
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+while true do
+    for _ = 1, 2 do
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+        task.wait(0.05)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+        task.wait(0.1)
+    end
+
+    for _ = 1, 2 do
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+        task.wait(0.05)
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+        task.wait(0.05)
+		wait(1.05)
+    end
+
+    task.wait(10)
+end
+end)
+
+farmtab:Button("Voodoo Multi-Farm (Alt Account.)", function()
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local function getClosestPlayer()
+    local character = player.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+    local hrp = character.HumanoidRootPart
+    local closest, shortest = nil, math.huge
+
+    for _, otherPlayer in ipairs(Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local targetHRP = otherPlayer.Character.HumanoidRootPart
+            local distance = (hrp.Position - targetHRP.Position).Magnitude
+            if distance < shortest then
+                shortest = distance
+                closest = targetHRP
+            end
+        end
+    end
+
+    return closest
+end
+
+while true do
+    local targetHRP = getClosestPlayer()
+    local character = player.Character
+    if targetHRP and character and character:FindFirstChild("HumanoidRootPart") then
+        local lookVector = targetHRP.CFrame.LookVector
+        local offset = lookVector * 5
+        character.HumanoidRootPart.CFrame = targetHRP.CFrame + offset
+    end
+    task.wait(11.05)
 end
 end)
 
@@ -3456,6 +3594,28 @@ end)
 tooltab:Button("Grappling Hook (Optional, If Legit Grinding)", function()
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(4975, 5321, -560)
 fireproximityprompt(workspace.TheOffice.HallwaySection3:GetChildren()[7].Hook.ProximityPrompt)
+end)
+
+maintab:Button("Remove Screenshake", function()
+game:GetService("ReplicatedStorage").Remotes.ShakeCamera:Destroy()
+end)
+
+maintab:Button("Cursed Dice", function()
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+local cursedDice = workspace:FindFirstChild("Cursed Dice")
+if cursedDice then
+    hrp.CFrame = cursedDice.CFrame + Vector3.new(0, 3, 0)
+
+    for _, descendant in ipairs(cursedDice:GetDescendants()) do
+        if descendant:IsA("ProximityPrompt") then
+            descendant.HoldDuration = 0
+        end
+    end
+end
 end)
 
 maintab:Button("Auto Slap Hand", function()
@@ -6834,6 +6994,21 @@ maintab:Button("Anti-Null", function()
 			Duration = 3;
 		})
 	end
+end)
+
+maintab:Button("Remove Cooldown", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local tool = character:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
+    while character.Humanoid.Health ~= 0 do
+    local localscript = tool:FindFirstChildOfClass("LocalScript")
+    local localscriptclone = localscript:Clone()
+    localscriptclone = localscript:Clone()
+    localscriptclone:Clone()
+    localscript:Destroy()
+    localscriptclone.Parent = tool
+    wait(0.1)
+    end
 end)
 
 maintab:Button("TP To Null Glove", function()
