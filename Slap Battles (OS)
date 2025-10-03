@@ -23,6 +23,7 @@ local shattered = 75803343514634
 local slender = 132277598079047
 local toh = 115782629143468
 local elude = 11828384869
+local plate = 106620300132058
 
 local currentPlaceId = game.PlaceId
 
@@ -1226,7 +1227,21 @@ exptab:Button("Instant Egg Quest (Accept Quest From Hitman First.)", function()
 	end
 end)
 
-exptab:Label("Rob Glove Exploits.")
+exptab:Label("Rob Glove Specific Features.")
+
+exptab:Button("Rob Glove Instructions", function()
+game:GetService("StarterGui"):SetCore("SendNotification", {
+	Title = "Instructions";
+	Text = "You must be in the arena with the rob glove equipped.";
+	Duration = 30;
+})
+wait(1)
+game:GetService("StarterGui"):SetCore("SendNotification", {
+	Title = "Instructions";
+	Text = "In order to keep someone banned, same thing as above. ";
+	Duration = 30;
+})
+end)
 
 local function getClosestPlayer(name)
     for _, plr in ipairs(game:GetService("Players"):GetPlayers()) do
@@ -1262,10 +1277,7 @@ exptab:Textbox("Kick Player (Brazil Portal)", function(v)
             {
                 victim = target,
                 cf = CFrame.new(
-                    -924.052002, 304.538788, -1.89993906,
-                    -0.0000810623169, -1, 0.0000810623169,
-                    0.0000810623169, 0.0000810623169, 1,
-                    -1, 0.0000810623169, 0.0000810623169
+				-1024.052, 304.538788, -1.89993906, -8.10623169e-05, -1, 8.10623169e-05, 8.10623169e-05, 8.10623169e-05, 1, -1, 8.10623169e-05, 8.10623169e-05
                 )
             }
         )
@@ -1296,10 +1308,7 @@ local function kick(target)
     game:GetService("ReplicatedStorage").Events.rob_r:FireServer("throw", {
         victim = target,
         cf = CFrame.new(
-            -924.052002, 304.538788, -1.89993906,
-            -0.0000810623169, -1, 0.0000810623169,
-            0.0000810623169, 0.0000810623169, 1,
-            -1, 0.0000810623169, 0.0000810623169
+		-1024.052, 304.538788, -1.89993906, -8.10623169e-05, -1, 8.10623169e-05, 8.10623169e-05, 8.10623169e-05, 1, -1, 8.10623169e-05, 8.10623169e-05
         )
     })
 end
@@ -7329,6 +7338,25 @@ StarterGui:SetCore("SendNotification", {
 })
 setclipboard("https://discord.gg/8stFYxJv4R")
 end)
+elseif currentPlaceId == plate then
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Plate Glove",
+    Text = "Obtaining... Please Wait.",
+    Duration = 240
+})
+workspace:FindFirstChild("Obstacles"):Destroy()
+local lp = game.Players.LocalPlayer
+local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+local hand = workspace:FindFirstChild("Glove Model") and workspace["Glove Model"]:FindFirstChild("Hand")
+
+if hand and hrp then
+    while hand:IsDescendantOf(workspace) do
+        firetouchinterest(hand, hrp, 0)
+        firetouchinterest(hand, hrp, 1)
+        task.wait(0.25)
+    end
+end
 else
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
