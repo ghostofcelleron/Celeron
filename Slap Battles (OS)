@@ -22,6 +22,7 @@ local hexagon = 98726100529621
 local shattered = 75803343514634
 local slender = 132277598079047
 local toh = 115782629143468
+local elude = 11828384869
 
 local currentPlaceId = game.PlaceId
 
@@ -53,16 +54,39 @@ local farmtab = win:Tab("Farms")
 local teletab = win:Tab("Map")
 local funtab = win:Tab("Fun")
 local modetab = win:Tab("Modes")
-local usefultab = win:Tab("Useful")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
-usefultab:Label("Useful Things May Be Found Here.")
 exptab:Label("Useful / Game-Breaking Scripts.")
+misctab:Label("Other Features.")
 antitab:Label("Protection Settings May Be Blatant.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
+
+misctab:Textbox("Teleport to Glove", function(input)
+	local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	local function bestMatch(query)
+		query = query:lower()
+		local best, score = nil, math.huge
+		for _, g in pairs(workspace.Lobby:GetChildren()) do
+			local name = g.Name:lower()
+			local dist = #name:gsub(query, "") + math.abs(#name - #query)
+			if name:find(query) and dist < score then
+				best, score = g, dist
+			end
+		end
+		return best
+	end
+
+	local glove = bestMatch(input)
+	if glove then
+		local pos = glove.Position
+		hrp.CFrame = CFrame.new(pos + glove.CFrame.LookVector * 4 + Vector3.new(0, 3, 0), pos)
+	end
+end)
 
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
@@ -418,20 +442,58 @@ game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(c)
 	getgenv().applySpeed()
 end)
 
-funtab:Label("Some Fun Features I Made.")
+funtab:Label("Universal Features.")
 
-funtab:Button("OP Avatar GUI", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/avatar%20gui",true))()
+getgenv().SpamPropEffectEnabled = false
+
+funtab:Button("Spam Prop Effect", function()
+	getgenv().SpamPropEffectEnabled = not getgenv().SpamPropEffectEnabled
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Prop Effect";
+		Text = getgenv().SpamPropEffectEnabled and "Enabled." or "Disabled.";
+		Duration = 3;
+	})
+
+	if getgenv().SpamPropEffectEnabled then
+		task.spawn(function()
+			while getgenv().SpamPropEffectEnabled do
+				game:GetService("ReplicatedStorage").Prop:FireServer(math.huge)
+				task.wait(0.05)
+			end
+		end)
+	end
 end)
 
-funtab:Button("OP Alchemist GUI", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/alchemist%20gui",true))()
+getgenv().SpamErrorSoundEnabled = false
+
+funtab:Button("Spam Error Sound", function()
+	getgenv().SpamErrorSoundEnabled = not getgenv().SpamErrorSoundEnabled
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Error Spam";
+		Text = getgenv().SpamErrorSoundEnabled and "Enabled." or "Disabled.";
+		Duration = 3;
+	})
+
+	if getgenv().SpamErrorSoundEnabled then
+		task.spawn(function()
+			while getgenv().SpamErrorSoundEnabled do
+				game:GetService("ReplicatedStorage").ErrorDeath:FireServer()
+				task.wait(0.5)
+			end
+		end)
+	end
 end)
 
 funtab:Label("Glove-Specific Features.")
 
-funtab:Textbox("Set Pillows (Req. Pillow)", function(v)
-for _=1,v do pcall(function() game.ReplicatedStorage.Events.PillowEvent:FireServer("AddPillow") end) end
+funtab:Button("Avatar GUI", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/avatar%20gui",true))()
+end)
+
+funtab:Button("Alchemist GUI", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/alchemist%20gui",true))()
 end)
 
 funtab:Button("Semi-Invisible Run Portal (Req. Run)", function()
@@ -489,6 +551,10 @@ funtab:Button("Spam Quake (Req. Quake)", function()
         Text = status,
         Duration = 3
     })
+end)
+
+funtab:Textbox("Set Pillows (Req. Pillow)", function(v)
+for _=1,v do pcall(function() game.ReplicatedStorage.Events.PillowEvent:FireServer("AddPillow") end) end
 end)
 
 getgenv().slapaura_enabled = false
@@ -689,6 +755,35 @@ maintab:Button("Slap Aura (Legit)", function()
 	})
 end)
 
+maintab:Button("Godmode (Use In Lobby, Breaks Some Gloves.)", function()
+local p = game.Players.LocalPlayer
+local log = game:GetService("LogService")
+local c = p.Character or p.CharacterAdded:Wait()
+
+firetouchinterest(c.Head, workspace.Lobby.Teleport1, 0) task.wait(0.1) firetouchinterest(c.Head, workspace.Lobby.Teleport1, 1)
+repeat task.wait() until c:FindFirstChildWhichIsA("Tool") or p.Backpack:FindFirstChildWhichIsA("Tool")
+for _,v in ipairs({c, p.Backpack}) do for _,t in ipairs(v:GetChildren()) do if t:IsA("Tool") then t.Parent = log end end end
+
+task.wait(0.75) c.Humanoid.Health = 0 task.wait(3.75)
+local nc = p.Character or p.CharacterAdded:Wait()
+for _,t in ipairs(log:GetChildren()) do t.Parent = p.Backpack nc.Humanoid:EquipTool(t) end
+nc.HumanoidRootPart.CFrame = workspace.Origo.CFrame * CFrame.new(0, -5, 0)
+end)
+
+maintab:Button("Remove Cooldown", function()
+	while (game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):FindFirstChildOfClass("Humanoid").Health ~= 0 do
+		local tool = (game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):FindFirstChildOfClass("Tool")
+			or game:GetService("Players").LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+
+		if tool and tool:FindFirstChildOfClass("LocalScript") then
+			local cloned = tool:FindFirstChildOfClass("LocalScript"):Clone()
+			cloned.Parent = tool
+			tool:FindFirstChildOfClass("LocalScript"):Destroy()
+		end
+		task.wait(0.1)
+	end
+end)
+
 local enabled = false
 local lastClick = 0
 local range = 15
@@ -720,20 +815,6 @@ maintab:Button("Glove Triggerbot", function()
 	})
 end)
 
-maintab:Button("Remove Cooldown", function()
-	while (game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):FindFirstChildOfClass("Humanoid").Health ~= 0 do
-		local tool = (game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):FindFirstChildOfClass("Tool")
-			or game:GetService("Players").LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
-
-		if tool and tool:FindFirstChildOfClass("LocalScript") then
-			local cloned = tool:FindFirstChildOfClass("LocalScript"):Clone()
-			cloned.Parent = tool
-			tool:FindFirstChildOfClass("LocalScript"):Destroy()
-		end
-		task.wait(0.1)
-	end
-end)
-
 getgenv().AutoClickTycoonEnabled = false
 
 maintab:Button("Auto-Click Tycoon (Must Be Near.)", function()
@@ -762,9 +843,32 @@ maintab:Button("Auto-Click Tycoon (Must Be Near.)", function()
 	end
 end)
 
-maintab:Button("Extra Life (Req. Guardian Angel)", function()
-	game:GetService("ReplicatedStorage"):WaitForChild("GeneralAbility"):FireServer(
-	game:GetService("Players"):WaitForChild(game:GetService("Players").LocalPlayer.Name))
+maintab:Button("Extra Life (34K Slaps, Use In Lobby.)", function()
+local p = game.Players.LocalPlayer
+local rs, vim, ws = game:GetService("ReplicatedStorage"), game:GetService("VirtualInputManager"), game:GetService("Workspace")
+local cam, char = ws.CurrentCamera, p.Character or p.CharacterAdded:Wait()
+local g = p:FindFirstChild("leaderstats") and p.leaderstats:FindFirstChild("Glove")
+if g and g.Value == "Guardian Angel" then return rs.GeneralAbility:FireServer(p) end
+
+local hrp, orig, old = char.HumanoidRootPart, char.HumanoidRootPart.CFrame, g.Value
+local function click(x)
+	local pos = x.Position
+	hrp.CFrame = CFrame.new(pos + x.CFrame.LookVector * 4 + Vector3.new(0,3,0), pos)
+	cam.CameraType = Enum.CameraType.Scriptable
+	cam.CFrame = CFrame.new(pos + Vector3.new(0,3,4), pos)
+	task.wait(0.25)
+	local s = cam:WorldToViewportPoint(pos)
+	vim:SendMouseButtonEvent(s.X,s.Y,0,true,game,1)
+	vim:SendMouseButtonEvent(s.X,s.Y,0,false,game,1)
+	task.wait(0.25)
+end
+
+click(ws.Lobby["Guardian Angel"])
+rs.GeneralAbility:FireServer(p)
+click(ws.Lobby[old])
+hrp.CFrame = orig
+cam.CameraType = Enum.CameraType.Custom
+game.StarterGui:SetCore("SendNotification", {Title="Extra Life", Text="Extra Life Given.", Duration=3})
 end)
 
 maintab:Button("One Million Buses (Very Blatant, Equip Bus.)", function()
@@ -865,57 +969,6 @@ for i = 1, 25 do
         table.insert(connections, conn)
     end)
 end
-end)
-
-getgenv().SpamPropEffectEnabled = false
-
-maintab:Button("Spam Prop Effect", function()
-	getgenv().SpamPropEffectEnabled = not getgenv().SpamPropEffectEnabled
-
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Prop Effect";
-		Text = getgenv().SpamPropEffectEnabled and "Enabled." or "Disabled.";
-		Duration = 3;
-	})
-
-	if getgenv().SpamPropEffectEnabled then
-		task.spawn(function()
-			while getgenv().SpamPropEffectEnabled do
-				game:GetService("ReplicatedStorage").Prop:FireServer(math.huge)
-				task.wait(0.05)
-			end
-		end)
-	end
-end)
-
-getgenv().SpamErrorSoundEnabled = false
-
-maintab:Button("Spam Error Sound", function()
-	getgenv().SpamErrorSoundEnabled = not getgenv().SpamErrorSoundEnabled
-
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Error Spam";
-		Text = getgenv().SpamErrorSoundEnabled and "Enabled." or "Disabled.";
-		Duration = 3;
-	})
-
-	if getgenv().SpamErrorSoundEnabled then
-		task.spawn(function()
-			while getgenv().SpamErrorSoundEnabled do
-				game:GetService("ReplicatedStorage").ErrorDeath:FireServer()
-				task.wait(0.5)
-			end
-		end)
-	end
-end)
-
-
-usefultab:Button("UBH (Badge Obtaining Hub, Use At Your Own Risk.)", function()
-loadstring(game:HttpGet('https://raw.githubusercontent.com/Pro666Pro/UltimateBadgeHub/main/main.lua'))()
-end)
-
-usefultab:Button("Mastery Farming GUI (Mastery Farming, Use At Your Own Risk.)", function()
-loadstring(game:HttpGet('https://raw.githubusercontent.com/Ekanite-a/Scripts/refs/heads/main/Slap%20battles/Mastery_helper.lua'))()
 end)
 
 getgenv().AntiFlingEnabled = false
@@ -1173,293 +1226,6 @@ exptab:Button("Instant Egg Quest (Accept Quest From Hitman First.)", function()
 	end
 end)
 
-exptab:Label("Eggler Glove Exploits.")
-
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
-local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local HRP = Character:WaitForChild("HumanoidRootPart")
-
-local escapePosition = Vector3.new(17944.336, -130.158, -3549.880)
-local escapeRotation = Vector3.new(0.000, 179.367, 0.000)
-
-local function stringSimilarity(a, b)
-	a, b = a:lower(), b:lower()
-	local score = 0
-	for i = 1, math.min(#a, #b) do
-		if a:sub(i, i) == b:sub(i, i) then
-			score = score + 1
-		end
-	end
-	return score
-end
-
-local function getBestMatch(name)
-	local bestScore = -1
-	local bestPlayer = nil
-
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer then
-			local unameScore = stringSimilarity(name, player.Name)
-			local dnameScore = stringSimilarity(name, player.DisplayName)
-			local score = math.max(unameScore, dnameScore)
-
-			if score > bestScore then
-				bestScore = score
-				bestPlayer = player
-			end
-		end
-	end
-
-	return bestPlayer
-end
-
-local function getLiveHRP(player)
-	if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-		return player.Character.HumanoidRootPart
-	end
-end
-
-local function teleportBehindAndFace(targetHRP)
-	if not targetHRP then return end
-	local backOffset = targetHRP.CFrame.LookVector * -3
-	local newPos = targetHRP.Position + backOffset + Vector3.new(0, 2, 0)
-	local lookAt = targetHRP.Position
-	local newCFrame = CFrame.new(newPos, lookAt)
-	HRP.CFrame = newCFrame
-end
-
-local function pressE()
-	VirtualInputManager:SendKeyEvent(true, "E", false, game)
-	task.wait(0.05)
-	VirtualInputManager:SendKeyEvent(false, "E", false, game)
-end
-
-local function teleportToEscape()
-	local rotationCFrame = CFrame.Angles(
-		math.rad(escapeRotation.X),
-		math.rad(escapeRotation.Y),
-		math.rad(escapeRotation.Z)
-	)
-	HRP.CFrame = CFrame.new(escapePosition) * rotationCFrame
-end
-
-exptab:Textbox("Kick Player (Guide Portal)", function(v)
-	local targetPlayer = getBestMatch(v)
-	if targetPlayer then
-		for i = 1, 3 do
-			local targetHRP = getLiveHRP(targetPlayer)
-			if targetHRP then
-				teleportBehindAndFace(targetHRP)
-				task.wait(0.05)
-				pressE()
-			end
-			task.wait(0.05)
-		end
-		task.wait(0.2)
-		teleportToEscape()
-	end
-end)
-
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
-local LocalPlayer = Players.LocalPlayer
-
-local escapePosition = Vector3.new(-908.989, 310.044, -0.153)
-local escapeRotation = Vector3.new(0.401, -90.002, 0.000)
-
-local function stringSimilarity(a, b)
-	a, b = a:lower(), b:lower()
-	local score = 0
-	for i = 1, math.min(#a, #b) do
-		if a:sub(i, i) == b:sub(i, i) then
-			score = score + 1
-		end
-	end
-	return score
-end
-
-local function getBestMatch(name)
-	local bestScore = -1
-	local bestPlayer = nil
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer then
-			local unameScore = stringSimilarity(name, player.Name)
-			local dnameScore = stringSimilarity(name, player.DisplayName)
-			local score = math.max(unameScore, dnameScore)
-			if score > bestScore then
-				bestScore = score
-				bestPlayer = player
-			end
-		end
-	end
-	return bestPlayer
-end
-
-local function getLiveHRP(player)
-	if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-		return player.Character.HumanoidRootPart
-	end
-end
-
-local function teleportBehindAndFace(targetHRP)
-	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local hrp = character:WaitForChild("HumanoidRootPart")
-	if not targetHRP then return end
-	local backOffset = targetHRP.CFrame.LookVector * -3
-	local newPos = targetHRP.Position + backOffset + Vector3.new(0, 2, 0)
-	local lookAt = targetHRP.Position
-	local newCFrame = CFrame.new(newPos, lookAt)
-	hrp.CFrame = newCFrame
-end
-
-local function pressE()
-	VirtualInputManager:SendKeyEvent(true, "E", false, game)
-	task.wait(0.05)
-	VirtualInputManager:SendKeyEvent(false, "E", false, game)
-end
-
-local function teleportToEscape()
-	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local hrp = character:WaitForChild("HumanoidRootPart")
-	local rotationCFrame = CFrame.Angles(
-		math.rad(escapeRotation.X),
-		math.rad(escapeRotation.Y),
-		math.rad(escapeRotation.Z)
-	)
-	hrp.CFrame = CFrame.new(escapePosition) * rotationCFrame
-
-	if not workspace:FindFirstChild("kickplate") then
-		local baseplate = Instance.new("Part")
-		baseplate.Size = Vector3.new(3, 3, 3)
-		baseplate.Position = Vector3.new(escapePosition.X, escapePosition.Y - 3, escapePosition.Z)
-		baseplate.Anchored = true
-		baseplate.Material = Enum.Material.SmoothPlastic
-		baseplate.Color = Color3.fromRGB(163, 162, 165)
-		baseplate.Name = "kickplate"
-		baseplate.Parent = workspace
-	end
-end
-
-exptab:Textbox("Kick Player (Brazil Portal)", function(v)
-	local targetPlayer = getBestMatch(v)
-	if targetPlayer then
-		for i = 1, 3 do
-			local targetHRP = getLiveHRP(targetPlayer)
-			if targetHRP then
-				teleportBehindAndFace(targetHRP)
-				task.wait(0.05)
-				pressE()
-			end
-			task.wait(0.05)
-		end
-		task.wait(0.2)
-		teleportToEscape()
-	end
-end)
-
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
-local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local HRP = Character:WaitForChild("HumanoidRootPart")
-
-local escapePosition = Vector3.new(18621, -49484, -3927)
-local escapeRotation = Vector3.new(0.000, 179.367, 0.000)
-
-local function stringSimilarity(a, b)
-	a, b = a:lower(), b:lower()
-	local score = 0
-	for i = 1, math.min(#a, #b) do
-		if a:sub(i, i) == b:sub(i, i) then
-			score = score + 1
-		end
-	end
-	return score
-end
-
-local function getBestMatch(name)
-	local bestScore = -1
-	local bestPlayer = nil
-
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer then
-			local unameScore = stringSimilarity(name, player.Name)
-			local dnameScore = stringSimilarity(name, player.DisplayName)
-			local score = math.max(unameScore, dnameScore)
-
-			if score > bestScore then
-				bestScore = score
-				bestPlayer = player
-			end
-		end
-	end
-
-	return bestPlayer
-end
-
-local function getLiveHRP(player)
-	if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-		return player.Character.HumanoidRootPart
-	end
-end
-
-local function teleportBehindAndFace(targetHRP)
-	if not targetHRP then return end
-	local backOffset = targetHRP.CFrame.LookVector * -3
-	local newPos = targetHRP.Position + backOffset + Vector3.new(0, 2, 0)
-	local lookAt = targetHRP.Position
-	local newCFrame = CFrame.new(newPos, lookAt)
-	HRP.CFrame = newCFrame
-end
-
-local function pressE()
-	VirtualInputManager:SendKeyEvent(true, "E", false, game)
-	task.wait(0.05)
-	VirtualInputManager:SendKeyEvent(false, "E", false, game)
-end
-
-local function teleportToEscape()
-	local rotationCFrame = CFrame.Angles(
-		math.rad(escapeRotation.X),
-		math.rad(escapeRotation.Y),
-		math.rad(escapeRotation.Z)
-	)
-	HRP.CFrame = CFrame.new(escapePosition) * rotationCFrame
-end
-
-	if not workspace:FindFirstChild("kickplate1") then
-		local baseplate = Instance.new("Part")
-		baseplate.Size = Vector3.new(3, 3, 3)
-		baseplate.Position = Vector3.new(escapePosition.X, escapePosition.Y - 3, escapePosition.Z)
-		baseplate.Anchored = true
-		baseplate.Material = Enum.Material.SmoothPlastic
-		baseplate.Color = Color3.fromRGB(163, 162, 165)
-		baseplate.Name = "kickplate1"
-		baseplate.Parent = workspace
-	end
-
-exptab:Textbox("Delete Player", function(v)
-	local targetPlayer = getBestMatch(v)
-	if targetPlayer then
-		for i = 1, 3 do
-			local targetHRP = getLiveHRP(targetPlayer)
-			if targetHRP then
-				teleportBehindAndFace(targetHRP)
-				task.wait(0.05)
-				pressE()
-			end
-			task.wait(0.05)
-		end
-		task.wait(0.2)
-		teleportToEscape()
-	end
-end)
-
 exptab:Label("Rob Glove Exploits.")
 
 local function getClosestPlayer(name)
@@ -1524,6 +1290,44 @@ exptab:Textbox("Kick Player (Guide Portal)", function(v)
     end
 end)
 
+local banned = {}
+
+local function kick(target)
+    game:GetService("ReplicatedStorage").Events.rob_r:FireServer("throw", {
+        victim = target,
+        cf = CFrame.new(
+            -924.052002, 304.538788, -1.89993906,
+            -0.0000810623169, -1, 0.0000810623169,
+            0.0000810623169, 0.0000810623169, 1,
+            -1, 0.0000810623169, 0.0000810623169
+        )
+    })
+end
+
+exptab:Textbox("Server Ban Player (Brazil Portal)", function(v)
+    local target = getClosestPlayer(v)
+    if target then
+        banned[target.Name] = true
+        task.spawn(function()
+            while banned[target.Name] and game.Players:FindFirstChild(target.Name) do
+                kick(target)
+                task.wait(0.5)
+            end
+        end)
+    end
+end)
+
+game.Players.PlayerAdded:Connect(function(plr)
+    if banned[plr.Name] then
+        task.spawn(function()
+            while banned[plr.Name] and game.Players:FindFirstChild(plr.Name) do
+                kick(plr)
+                task.wait(0.5)
+            end
+        end)
+    end
+end)
+
 exptab:Textbox("Delete Player", function(v)
     local target = getClosestPlayer(v)
     if target then
@@ -1561,6 +1365,10 @@ exptab:Textbox("Remove Spectator Godmode", function(v)
             }
         )
     end
+end)
+
+exptab:Button("Clear Ban List", function()
+    table.clear(banned)
 end)
 
 exptab:Label("Guardian Angel Glove Exploits.")
@@ -3311,6 +3119,15 @@ while true do
     end
     task.wait(11.05)
 end
+end)
+
+farmtab:Label("Useful Scripts, Not Made By Me.")
+farmtab:Button("UBH (Badge Obtaining Hub, Use At Your Own Risk.)", function()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/Pro666Pro/UltimateBadgeHub/main/main.lua'))()
+end)
+
+farmtab:Button("Mastery Farming GUI (Mastery Farming, Use At Your Own Risk.)", function()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/Ekanite-a/Scripts/refs/heads/main/Slap%20battles/Mastery_helper.lua'))()
 end)
 
 helptab:Button("Copy Owner Discord Username", function()
@@ -7464,6 +7281,54 @@ StarterGui:SetCore("SendNotification", {
 })
 wait(1)
 game.Players.LocalPlayer.Character:PivotTo(CFrame.new(-23, 225, -2))
+elseif currentPlaceId == elude then
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (SB: Elude)",
+    ThemeColor = Color3.fromRGB(14, 14, 14),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+maintab:Button("Obtain Elude", function()
+for _,v in pairs(workspace.Collectable:GetChildren()) do v.CFrame=game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame end
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
 else
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
