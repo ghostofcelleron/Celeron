@@ -1247,6 +1247,52 @@ antitab:Button("Anti-Knockoff", function()
 	end
 end)
 
+antitab:Button("Anti-Bus", function()
+	_G.AntiBus = not _G.AntiBus
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Anti-Bus";
+		Text = _G.AntiBus and "Enabled." or "Disabled.";
+		Duration = 3;
+	})
+
+	if _G.AntiBus then
+		task.spawn(function()
+			while _G.AntiBus do
+				for _, obj in ipairs(workspace:GetChildren()) do
+					if obj:IsA("MeshPart") and obj.Name == "BusModel" then
+						obj:Destroy()
+					end
+				end
+				task.wait()
+			end
+		end)
+	end
+end)
+
+antitab:Button("Anti-Pusher", function()
+	_G.AntiWall = not _G.AntiWall
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Anti-Pusher";
+		Text = _G.AntiWall and "Enabled." or "Disabled.";
+		Duration = 3;
+	})
+
+	if _G.AntiWall then
+		task.spawn(function()
+			while _G.AntiWall do
+				for _, obj in ipairs(workspace:GetChildren()) do
+					if obj:IsA("Part") and obj.Name == "wall" then
+						obj:Destroy()
+					end
+				end
+				task.wait()
+			end
+		end)
+	end
+end)
+
 getgenv().AntiOneShotEnabled = false
 
 getgenv().HasDangerousTool = function(player)
