@@ -435,6 +435,52 @@ maintab:Slider("Player Speed", 19.5, 1, 125, function(v)
 	getgenv().applySpeed()
 end)
 
+maintab:Button("Infinite Jump", function()
+	getgenv().infiniteJumpEnabled = not getgenv().infiniteJumpEnabled
+
+	local lp = game:GetService("Players").LocalPlayer
+	local uis = game:GetService("UserInputService")
+
+	local hum, root, animTrack
+
+	local function bindCharacter(char)
+		hum = char:WaitForChild("Humanoid")
+		root = char:WaitForChild("HumanoidRootPart")
+
+		local animate = char:FindFirstChild("Animate")
+		if animate and animate:FindFirstChild("jump") and animate.jump:FindFirstChild("JumpAnim") then
+			local animId = animate.jump.JumpAnim.AnimationId
+			local anim = Instance.new("Animation")
+			anim.AnimationId = animId
+			animTrack = hum:LoadAnimation(anim)
+		end
+	end
+
+	bindCharacter(lp.Character or lp.CharacterAdded:Wait())
+	lp.CharacterAdded:Connect(bindCharacter)
+
+	if not getgenv()._infiniteJumpBound then
+		getgenv()._infiniteJumpBound = true
+		uis.InputBegan:Connect(function(input, gp)
+			if gp or input.KeyCode ~= Enum.KeyCode.Space then return end
+			if not getgenv().infiniteJumpEnabled or not root then return end
+
+			if animTrack then
+				animTrack:Stop()
+				animTrack:Play()
+			end
+
+			root.AssemblyLinearVelocity = Vector3.new(root.AssemblyLinearVelocity.X, 50, root.AssemblyLinearVelocity.Z)
+		end)
+	end
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Infinite Jump",
+		Text = getgenv().infiniteJumpEnabled and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+end)
+
 game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(c)
 	c:WaitForChild("Humanoid"):GetPropertyChangedSignal("Parent"):Connect(function()
 		getgenv().applySpeed()
@@ -487,7 +533,17 @@ funtab:Button("Spam Error Sound", function()
 	end
 end)
 
-funtab:Label("Glove-Specific Features.")
+funtab:Label("Custom Gloves.")
+
+funtab:Button("FE Killerfish (Req. Diamond, R To Use Ability.)", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/killerfish",true))()
+end)
+
+funtab:Button("FE Frost God (Req. Frostbite, R + Y To Use Abilities.)", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/fe%20frost%20god%20(slap%20battles)",true))()
+end)
+
+funtab:Label("Glove-Specific GUIs.")
 
 funtab:Button("Avatar GUI", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/avatar%20gui",true))()
@@ -496,6 +552,8 @@ end)
 funtab:Button("Alchemist GUI", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/alchemist%20gui",true))()
 end)
+
+funtab:Label("Other Fun Features.")
 
 funtab:Button("Semi-Invisible Run Portal (Req. Run)", function()
 	game:GetService("ReplicatedStorage"):WaitForChild("GeneralAbility"):FireServer(
@@ -544,6 +602,29 @@ spawn(function()
     end
 end)
 
+getgenv().frostbiteSpamEnabled = false
+
+spawn(function()
+    while task.wait(0.05) do
+        if getgenv().frostbiteSpamEnabled then
+            pcall(function()
+                game:GetService("ReplicatedStorage"):WaitForChild("GeneralAbility"):FireServer(0.3)
+            end)
+        end
+    end
+end)
+
+funtab:Button("Spam Frostbite", function()
+    getgenv().frostbiteSpamEnabled = not getgenv().frostbiteSpamEnabled
+
+    local status = getgenv().frostbiteSpamEnabled and "Enabled." or "Disabled."
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Spam Frostbite",
+        Text = status,
+        Duration = 3
+    })
+end)
+
 funtab:Button("Spam Quake (Req. Quake)", function()
     getgenv().spamQuake = not getgenv().spamQuake
     local status = getgenv().spamQuake and "Enabled." or "Disabled."
@@ -562,22 +643,43 @@ getgenv().slapaura_enabled = false
 getgenv().slapaura_cachedRemotes = {}
 getgenv().slapaura_lastFireTime = 0
 getgenv().slapaura_connection = nil
+getgenv().lastKnownGloveName = ""
 
-getgenv().findEquippedGlove = function()
-	local char = game:GetService("Players").LocalPlayer.Character
-	if not char then return end
-	for _, tool in ipairs(char:GetChildren()) do
-		if tool:IsA("Tool") then return tool end
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local LocalPlayer = Players.LocalPlayer
+
+local function trackGlove()
+	local function update(char)
+		char.ChildAdded:Connect(function(child)
+			if child:IsA("Tool") then
+				getgenv().lastKnownGloveName = child.Name
+			end
+		end)
+		for _, tool in ipairs(char:GetChildren()) do
+			if tool:IsA("Tool") then
+				getgenv().lastKnownGloveName = tool.Name
+			end
+		end
 	end
+
+	if LocalPlayer.Character then
+		update(LocalPlayer.Character)
+	end
+	LocalPlayer.CharacterAdded:Connect(update)
 end
 
+trackGlove()
+
 getgenv().getClosestPlayer = function()
-	local myRoot = (game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
+	local myRoot = (LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()):FindFirstChild("HumanoidRootPart")
 	if not myRoot then return end
 
 	local closest, dist = nil, math.huge
-	for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
-		if p ~= game:GetService("Players").LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
 			local mag = (p.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
 			if mag < dist then
 				dist = mag
@@ -589,23 +691,45 @@ getgenv().getClosestPlayer = function()
 end
 
 getgenv().findRelevantHitRemotes = function(gloveName)
-	if getgenv().slapaura_cachedRemotes[gloveName] then return getgenv().slapaura_cachedRemotes[gloveName] end
+	if getgenv().slapaura_cachedRemotes[gloveName] then
+		return getgenv().slapaura_cachedRemotes[gloveName]
+	end
 
 	local hits = {}
-	for _, obj in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-		if obj:IsA("RemoteEvent") then
-			local n = string.lower(gloveName or "")
-			local r = string.lower(obj.Name)
-			if r == n .. "hi" or (r:find(n) and r:find("hit")) then
-				table.insert(hits, obj)
+	local n = string.lower(gloveName or "")
+
+	local specialCases = {
+		killstreak = { "KSHit" },
+		zahando = { "zhramt" },
+		trap = { "traphi" }
+	}
+
+	if specialCases[n] then
+		for _, remoteName in ipairs(specialCases[n]) do
+			local remote = ReplicatedStorage:FindFirstChild(remoteName)
+			if remote and remote:IsA("RemoteEvent") then
+				table.insert(hits, remote)
+			end
+		end
+	end
+
+	if #hits == 0 then
+		for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+			if obj:IsA("RemoteEvent") then
+				local r = string.lower(obj.Name)
+				if r == n .. "hi" or (r:find(n) and r:find("hit")) then
+					table.insert(hits, obj)
+				end
 			end
 		end
 	end
 
 	if #hits == 0 then
 		for _, fallback in ipairs({ "GeneralHit", "b", "KSHit" }) do
-			local f = game:GetService("ReplicatedStorage"):FindFirstChild(fallback)
-			if f then table.insert(hits, f) end
+			local f = ReplicatedStorage:FindFirstChild(fallback)
+			if f and f:IsA("RemoteEvent") then
+				table.insert(hits, f)
+			end
 		end
 	end
 
@@ -617,20 +741,24 @@ maintab:Button("Slap Aura", function()
 	getgenv().slapaura_enabled = not getgenv().slapaura_enabled
 
 	if getgenv().slapaura_enabled and not getgenv().slapaura_connection then
-		getgenv().slapaura_connection = game:GetService("RunService").Heartbeat:Connect(function()
+		getgenv().slapaura_connection = RunService.Heartbeat:Connect(function()
 			local now = os.clock()
 			if now - getgenv().slapaura_lastFireTime < 0.5 then return end
 
-			local glove = getgenv().findEquippedGlove()
+			local gloveName = getgenv().lastKnownGloveName
+			if not gloveName or gloveName == "" then return end
+
 			local target = getgenv().getClosestPlayer()
 			if not (target and target.Character) then return end
 
 			local torso = target.Character:FindFirstChild("Torso") or target.Character:FindFirstChild("UpperTorso") or target.Character:FindFirstChild("HumanoidRootPart")
 			if not torso then return end
 
-			local remotes = glove and getgenv().findRelevantHitRemotes(glove.Name) or {}
+			local remotes = getgenv().findRelevantHitRemotes(gloveName)
 			for _, remote in ipairs(remotes) do
-				remote:FireServer(target.Character:FindFirstChild(torso.Name))
+				pcall(function()
+					remote:FireServer(target.Character:FindFirstChild(torso.Name))
+				end)
 			end
 
 			getgenv().slapaura_lastFireTime = now
@@ -640,7 +768,7 @@ maintab:Button("Slap Aura", function()
 		getgenv().slapaura_connection = nil
 	end
 
-	game:GetService("StarterGui"):SetCore("SendNotification", {
+	StarterGui:SetCore("SendNotification", {
 		Title = "Slap Aura",
 		Text = getgenv().slapaura_enabled and "Enabled." or "Disabled.",
 		Duration = 3
@@ -662,6 +790,54 @@ getgenv().legitslapaura = {
 	yBlockMin = 314,
 	yBlockMax = 350
 }
+
+local function findLegitRemotes(gloveName)
+	if getgenv().legitslapaura.cachedRemotes[gloveName] then
+		return getgenv().legitslapaura.cachedRemotes[gloveName]
+	end
+
+	local hits = {}
+	local rs = game:GetService("ReplicatedStorage")
+	local n = string.lower(gloveName or "")
+
+	local specialCases = {
+		killstreak = { "KSHit" },
+		zahando = { "zhramt" },
+		trap = { "traphi" }
+	}
+
+	if specialCases[n] then
+		for _, remoteName in ipairs(specialCases[n]) do
+			local remote = rs:FindFirstChild(remoteName)
+			if remote and remote:IsA("RemoteEvent") then
+				table.insert(hits, remote)
+			end
+		end
+	end
+
+	if #hits == 0 then
+		for _, obj in ipairs(rs:GetDescendants()) do
+			if obj:IsA("RemoteEvent") then
+				local r = string.lower(obj.Name)
+				if r == n .. "hi" or (r:find(n) and r:find("hit")) then
+					table.insert(hits, obj)
+				end
+			end
+		end
+	end
+
+	if #hits == 0 then
+		for _, fallback in ipairs({ "GeneralHit", "b", "KSHit" }) do
+			local f = rs:FindFirstChild(fallback)
+			if f and f:IsA("RemoteEvent") then
+				table.insert(hits, f)
+			end
+		end
+	end
+
+	getgenv().legitslapaura.cachedRemotes[gloveName] = hits
+	return hits
+end
 
 maintab:Button("Slap Aura (Legit)", function()
 	getgenv().legitslapaura.enabled = not getgenv().legitslapaura.enabled
@@ -706,26 +882,7 @@ maintab:Button("Slap Aura (Legit)", function()
 				getgenv().legitslapaura.cooldownActive = false
 			end)
 
-			local remotes = getgenv().legitslapaura.cachedRemotes[glove.Name]
-			if not remotes then
-				remotes = {}
-				for _, obj in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-					if obj:IsA("RemoteEvent") then
-						local n = string.lower(glove.Name)
-						local r = string.lower(obj.Name)
-						if r == n .. "hi" or (r:find(n) and r:find("hit")) then
-							table.insert(remotes, obj)
-						end
-					end
-				end
-				if #remotes == 0 then
-					for _, fallback in ipairs({ "GeneralHit", "b", "KSHit" }) do
-						local f = game:GetService("ReplicatedStorage"):FindFirstChild(fallback)
-						if f then table.insert(remotes, f) end
-					end
-				end
-				getgenv().legitslapaura.cachedRemotes[glove.Name] = remotes
-			end
+			local remotes = findLegitRemotes(glove.Name)
 
 			myRoot.CFrame = CFrame.new(myRoot.Position) * CFrame.Angles(0, math.atan2(-(torso.Position - myRoot.Position).Unit.Z, (torso.Position - myRoot.Position).Unit.X), 0)
 			task.wait(0.05)
@@ -970,6 +1127,16 @@ for i = 1, 25 do
         table.insert(connections, conn)
     end)
 end
+end)
+
+maintab:Button("Tournament Safety (Auto-Win Tournament)", function()
+local p = Instance.new("Part", workspace)
+p.Size = Vector3.new(100,1,100)
+p.Position = Vector3.new(3441,314,-3)
+p.Anchored = true
+
+local hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+hrp.CFrame = CFrame.new(p.Position + Vector3.new(0,5,0))
 end)
 
 getgenv().AntiFlingEnabled = false
