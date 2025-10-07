@@ -1,0 +1,66 @@
+local lp = game:GetService("Players").LocalPlayer
+local uis = game:GetService("UserInputService")
+local cam = workspace.CurrentCamera
+local rs = game:GetService("ReplicatedStorage")
+local remote = rs:FindFirstChild("SelfKnockback")
+if not remote or not remote:IsA("RemoteEvent") then return end
+
+local cooldown = false
+
+local function findDiamond()
+	local b = lp:FindFirstChild("Backpack")
+	local c = lp.Character
+	return (b and b:FindFirstChild("Diamond")) or (c and c:FindFirstChild("Diamond"))
+end
+
+local function syncGlove(tool)
+	local tgt = tool:FindFirstChild("Glove")
+	local src = workspace["Debug Room"].UncollectedGloves.Killerfish:FindFirstChild("Glove")
+	if not tgt or not src then return end
+
+	for _, c in ipairs(tgt:GetChildren()) do
+		if c:IsA("Texture") or c:IsA("Decal") or c:IsA("SurfaceAppearance") then c:Destroy() end
+	end
+	for _, c in ipairs(src:GetChildren()) do
+		if c:IsA("Texture") or c:IsA("Decal") or c:IsA("SurfaceAppearance") then c:Clone().Parent = tgt end
+	end
+
+	tgt.Material = src.Material
+	tgt.Color = src.Color
+	tgt.Transparency = src.Transparency
+	tgt.Reflectance = src.Reflectance
+	tgt.CastShadow = src.CastShadow
+	tgt.CanCollide = src.CanCollide
+end
+
+local tool = findDiamond()
+if tool then
+	syncGlove(tool)
+	tool.Name = "Killerfish"
+	tool.ToolTip = "actually the killer fish from san diego"
+
+	local stats = lp:FindFirstChild("leaderstats")
+	local gloveStat = stats and stats:FindFirstChild("Glove")
+	if gloveStat and gloveStat:IsA("StringValue") then
+		gloveStat.Value = "Killerfish"
+	end
+
+	uis.InputBegan:Connect(function(input, gp)
+		if gp or input.KeyCode ~= Enum.KeyCode.R or cooldown then return end
+		cooldown = true
+
+		local dir = cam.CFrame.LookVector.Unit
+		remote:FireServer({ Force = 110, Direction = dir })
+
+		local sound = Instance.new("Sound")
+		sound.SoundId = "rbxassetid://11889069911"
+		sound.Volume = 1
+		sound.PlayOnRemove = true
+		sound.Parent = lp:FindFirstChild("PlayerGui") or lp:WaitForChild("PlayerGui")
+		sound:Destroy()
+
+		task.delay(0.65, function()
+			cooldown = false
+		end)
+	end)
+end
