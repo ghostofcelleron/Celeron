@@ -539,7 +539,7 @@ funtab:Button("FE Killerfish (Req. Diamond, R To Use Ability.)", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/killerfish",true))()
 end)
 
-funtab:Button("FE Frost God (Req. Frostbite, R + Y To Use Abilities.)", function()
+funtab:Button("FE Frost God (Req. Frostbite, R + Y + F To Use Abilities.)", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/fe%20frost%20god%20(slap%20battles)",true))()
 end)
 
