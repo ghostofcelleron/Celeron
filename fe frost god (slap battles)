@@ -5,24 +5,12 @@ local lp = game:GetService("Players").LocalPlayer
 local ability = rs:WaitForChild("GeneralAbility")
 local muck = rs:WaitForChild("Events"):WaitForChild("Muck")
 
-local function hasFrostbiteEquipped()
-	local char = lp.Character
-	if not char then return false end
-
-	for _, tool in ipairs(char:GetChildren()) do
-		if tool:IsA("Tool") and tool.Name == "Frostbite" then
-			return true
-		end
-	end
-	return false
-end
-
 local function addFireEffect()
 	local char = lp.Character
 	if not char then return end
 
 	local glove = char:FindFirstChild("Glove") or char:FindFirstChild("RightHand") or char:FindFirstChildWhichIsA("Tool")
-	if not glove or not glove:IsA("Tool") or glove.Name ~= "Frostbite" then return end
+	if not glove or not glove:IsA("Tool") then return end
 
 	local handle = glove:FindFirstChild("Handle") or glove:FindFirstChildWhichIsA("BasePart")
 	if not handle then return end
@@ -35,6 +23,29 @@ local function addFireEffect()
 		fire.Size = 8
 		fire.Heat = 10
 		fire.Parent = handle
+	end
+
+	if not handle:FindFirstChild("BlueLightning") then
+		local lightning = Instance.new("ParticleEmitter")
+		lightning.Name = "BlueLightning"
+		lightning.Texture = "rbxassetid://26356442"
+		lightning.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 170, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 85, 255))
+		}
+		lightning.LightEmission = 0.8
+		lightning.Size = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, 0.3),
+			NumberSequenceKeypoint.new(1, 0.1)
+		}
+		lightning.Transparency = NumberSequence.new(0.2)
+		lightning.Speed = NumberRange.new(0, 0)
+		lightning.Rate = 50
+		lightning.Lifetime = NumberRange.new(0.2, 0.4)
+		lightning.Rotation = NumberRange.new(0, 360)
+		lightning.RotSpeed = NumberRange.new(-180, 180)
+		lightning.ZOffset = 0.5
+		lightning.Parent = handle
 	end
 end
 
@@ -65,7 +76,7 @@ local function renameGlove()
 end
 
 uis.InputBegan:Connect(function(input, gp)
-	if gp or not hasFrostbiteEquipped() then return end
+	if gp then return end
 
 	if input.KeyCode == Enum.KeyCode.R then
 		ability:FireServer(2)
@@ -74,7 +85,5 @@ uis.InputBegan:Connect(function(input, gp)
 	end
 end)
 
-if hasFrostbiteEquipped() then
-	addFireEffect()
-	renameGlove()
-end
+addFireEffect()
+renameGlove()
