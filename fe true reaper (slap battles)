@@ -1,0 +1,347 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UIS = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+local cooldown = 1.2
+local animIds = {
+	"rbxassetid://133068451086106",
+	"rbxassetid://109511274923523"
+}
+
+local function getClosestPlayer()
+	local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not myRoot then return end
+
+	local closest, dist = nil, math.huge
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			local mag = (p.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
+			if mag < dist then
+				dist = mag
+				closest = p
+			end
+		end
+	end
+	return closest
+end
+
+local function createFireEffect(char, handName)
+	local hand = char:FindFirstChild(handName)
+	if not hand then
+		hand = char:FindFirstChild(handName == "RightHand" and "Right Arm" or "Left Arm")
+	end
+	if not hand then return end
+
+	local fire = Instance.new("Fire")
+	fire.Color = Color3.new(0.4, 0, 0)
+	fire.SecondaryColor = Color3.new(0.2, 0, 0)
+	fire.Size = 5
+	fire.Heat = 1
+	fire.Parent = hand
+
+	task.delay(1, function()
+		fire:Destroy()
+	end)
+end
+
+local function bindEffectsForLife(char)
+	local humanoid = char:FindFirstChild("Humanoid")
+	if not humanoid then return end
+
+	local lastClick = 0
+	local animToggle = false
+	local connection
+
+	connection = UIS.InputBegan:Connect(function(input, gp)
+		if gp or input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+		if os.clock() - lastClick < cooldown then return end
+		lastClick = os.clock()
+
+		local animId = animIds[animToggle and 2 or 1]
+		local anim = Instance.new("Animation")
+		anim.AnimationId = animId
+		local track = humanoid:LoadAnimation(anim)
+		track:Play()
+
+		local handName = animId == animIds[1] and "RightHand" or "LeftHand"
+		createFireEffect(char, handName)
+		animToggle = not animToggle
+
+		local target = getClosestPlayer()
+		local hitPart = target and target.Character and (
+			target.Character:FindFirstChild("Torso") or
+			target.Character:FindFirstChild("UpperTorso") or
+			target.Character:FindFirstChild("HumanoidRootPart")
+		)
+
+		local remote = ReplicatedStorage:FindFirstChild("ReaperHit")
+		if hitPart and remote and remote:IsA("RemoteEvent") then
+			remote:FireServer(hitPart)
+		end
+	end)
+
+	humanoid.Died:Connect(function()
+		if connection then
+			connection:Disconnect()
+		end
+	end)
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+	bindEffectsForLife(char)
+end)
+
+if LocalPlayer.Character then
+	bindEffectsForLife(LocalPlayer.Character)
+end
+
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Debris = game:GetService("Debris")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LP = Players.LocalPlayer
+
+local dashCD, voidCD, afflictedCD = 1.5, 10, 1.75
+local lastDash, lastVoid, lastAfflicted = 0, 0, 0
+local gui, container
+local inputConn
+local boundChar = nil
+
+local function setupGui()
+	if gui then gui:Destroy() end
+	gui = Instance.new("ScreenGui", LP:WaitForChild("PlayerGui"))
+	gui.Name = "CooldownGui"
+	container = Instance.new("Frame", gui)
+	container.Size = UDim2.new(0, 150, 1, 0)
+	container.Position = UDim2.new(1, -160, 0, 0)
+	container.BackgroundTransparency = 1
+end
+
+local function createBar(name, duration)
+	local bar = Instance.new("Frame", container)
+	bar.Size = UDim2.new(1, 0, 0, 30)
+	bar.Position = UDim2.new(0, 0, 0, 0)
+	bar.BackgroundColor3 = Color3.new(1, 1, 1)
+	bar.ZIndex = 2
+
+	local label = Instance.new("TextLabel", bar)
+	label.Size = UDim2.new(1, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.Text = name
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Font = Enum.Font.GothamBold
+	label.TextScaled = true
+	label.TextStrokeTransparency = 0.5
+	label.ZIndex = 4
+
+	local fill = Instance.new("Frame", bar)
+	fill.Size = UDim2.new(1, 0, 1, 0)
+	fill.BackgroundColor3 = Color3.new(0, 0, 0)
+	fill.ZIndex = 3
+
+	TweenService:Create(fill, TweenInfo.new(duration), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+	task.delay(duration, function()
+		TweenService:Create(bar, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+		task.delay(0.5, function() bar:Destroy() end)
+	end)
+
+	for _, child in container:GetChildren() do
+		if child:IsA("Frame") and child ~= bar then
+			child.Position += UDim2.new(0, 0, 0, 35)
+		end
+	end
+end
+
+local function dash()
+	local char = LP.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	local hum = char and char:FindFirstChild("Humanoid")
+	if not root or not hum then return end
+
+	local bv = Instance.new("BodyVelocity", root)
+	bv.Velocity = root.CFrame.LookVector * 85
+	bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+	bv.P = 1e4
+	Debris:AddItem(bv, 0.2)
+
+	local anim = Instance.new("Animation")
+	anim.AnimationId = "rbxassetid://15775787411"
+	local track = hum:LoadAnimation(anim)
+	track:Play()
+	task.delay(1, function() track:Stop() end)
+
+	createBar("Phantom Dash", dashCD)
+end
+
+local function voidWalker()
+	local char = LP.Character
+	if not char then return end
+
+	local lowestY = math.huge
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			lowestY = math.min(lowestY, part.Position.Y)
+		end
+	end
+
+	local plate = Instance.new("Part", workspace)
+	plate.Size = Vector3.new(5, 1, 5)
+	plate.Anchored = true
+	plate.CanCollide = true
+	plate.Material = Enum.Material.Air
+	plate.Color = Color3.new(0, 0, 0)
+	plate.Transparency = 1
+	plate.Position = Vector3.new(char:GetPivot().X, lowestY - 1.5, char:GetPivot().Z)
+	Debris:AddItem(plate, 10)
+
+	local fire = Instance.new("Fire", plate)
+	fire.Color = Color3.new(0, 0, 0)
+	fire.SecondaryColor = Color3.new(0, 0, 0)
+	fire.Size = 15
+	fire.Heat = 1.5
+
+	local sound = Instance.new("Sound", plate)
+	sound.SoundId = "rbxassetid://136176176556875"
+	sound.Volume = 3
+	sound.PlaybackSpeed = 0.425
+	sound:Play()
+
+	local start = os.clock()
+	local conn = RS.Heartbeat:Connect(function()
+		if not char or not plate then return end
+		local pos = char:GetPivot().Position
+		local y = math.huge
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") then
+				y = math.min(y, part.Position.Y)
+			end
+		end
+		plate.Position = Vector3.new(pos.X, y - 1.5, pos.Z)
+		if os.clock() - start >= 10 then conn:Disconnect() end
+	end)
+
+	createBar("Reaper's Protection", voidCD)
+end
+
+local function getClosestPlayer()
+	local myRoot = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+	if not myRoot then return end
+
+	local closest, dist = nil, math.huge
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			local mag = (p.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
+			if mag < dist then
+				dist = mag
+				closest = p
+			end
+		end
+	end
+	return closest
+end
+
+local function afflictedCurse()
+	if os.clock() - lastAfflicted < afflictedCD then return end
+	lastAfflicted = os.clock()
+
+	local target = getClosestPlayer()
+	local myRoot = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+	local targetRoot = target and target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+	if not (target and myRoot and targetRoot) then return end
+
+	myRoot.CFrame = CFrame.new(targetRoot.Position - targetRoot.CFrame.LookVector * 7.5)
+
+	task.delay(0.175, function()
+		local hum = LP.Character and LP.Character:FindFirstChild("Humanoid")
+		if hum then
+			local anim = Instance.new("Animation")
+			anim.AnimationId = "rbxassetid://133068451086106"
+			local track = hum:LoadAnimation(anim)
+			track:Play()
+		end
+
+		local hitPart = target.Character:FindFirstChild("Torso") or target.Character:FindFirstChild("UpperTorso") or target.Character:FindFirstChild("HumanoidRootPart")
+		local remote = ReplicatedStorage:FindFirstChild("ReaperHit")
+		if hitPart and remote and remote:IsA("RemoteEvent") then
+			remote:FireServer(hitPart)
+		end
+	end)
+
+	createBar("Afflicted Curse", afflictedCD)
+end
+
+local function bindInputs(char)
+	if boundChar == char then return end
+	boundChar = char
+
+	local stats = LP:FindFirstChild("leaderstats")
+	local glove = stats and stats:FindFirstChild("Glove")
+	if not glove or glove.Value ~= "Reaper" then return end
+
+	setupGui()
+
+	inputConn = UIS.InputBegan:Connect(function(input, gp)
+		if gp then return end
+		if input.KeyCode == Enum.KeyCode.E and os.clock() - lastDash >= dashCD then
+			lastDash = os.clock()
+			dash()
+		elseif input.KeyCode == Enum.KeyCode.R and os.clock() - lastVoid >= voidCD then
+			lastVoid = os.clock()
+			voidWalker()
+		elseif input.KeyCode == Enum.KeyCode.F then
+			afflictedCurse()
+		end
+	end)
+
+	char:WaitForChild("Humanoid").Died:Connect(function()
+		if inputConn then inputConn:Disconnect() inputConn = nil end
+		if gui then gui:Destroy() end
+		boundChar = nil
+	end)
+end
+
+if LP.Character then bindInputs(LP.Character) end
+LP.CharacterAdded:Connect(function(char)
+	if boundChar == nil then bindInputs(char) end
+end)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function updateGlove()
+	local stats = LocalPlayer:FindFirstChild("leaderstats")
+	local gloveStat = stats and stats:FindFirstChild("Glove")
+	if gloveStat and gloveStat:IsA("StringValue") then
+		gloveStat.Value = "TRUE REAPER"
+	end
+end
+
+local function updateTool()
+	local backpack = LocalPlayer:FindFirstChild("Backpack")
+	local char = LocalPlayer.Character
+
+	local function rename(tool)
+		if tool:IsA("Tool") then
+			tool.Name = "True Reaper"
+			tool.ToolTip = "this is to go... even further beyond!"
+		end
+	end
+
+	if backpack then
+		for _, tool in ipairs(backpack:GetChildren()) do
+			rename(tool)
+		end
+	end
+
+	if char then
+		for _, tool in ipairs(char:GetChildren()) do
+			rename(tool)
+		end
+	end
+end
+
+updateGlove()
+updateTool()
