@@ -114,7 +114,7 @@ uis.InputBegan:Connect(function(input, gp)
 		local target = getClosestPlayer()
 		if target then
 			teleportBehind(target)
-			ability:FireServer(0.3)
+			wait(0.3)
 			local args = {[1] = "Ban Hammer"}
 			retro:FireServer(unpack(args))
 		end
