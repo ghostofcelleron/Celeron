@@ -4,6 +4,34 @@ local lp = game:GetService("Players").LocalPlayer
 
 local ability = rs:WaitForChild("GeneralAbility")
 local muck = rs:WaitForChild("Events"):WaitForChild("Muck")
+local retro = rs:WaitForChild("RetroAbility")
+
+local function getClosestPlayer()
+	local myRoot = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+	if not myRoot then return end
+
+	local closest, dist = nil, math.huge
+	for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+		if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			local mag = (p.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
+			if mag < dist then
+				dist = mag
+				closest = p
+			end
+		end
+	end
+	return closest
+end
+
+local function teleportBehind(target)
+	local myChar = lp.Character
+	local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+	local targetRoot = target and target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+	if not myRoot or not targetRoot then return end
+
+	local offset = targetRoot.CFrame.LookVector * -3
+	myRoot.CFrame = CFrame.new(targetRoot.Position + offset, targetRoot.Position)
+end
 
 local function addFireEffect()
 	local char = lp.Character
@@ -82,6 +110,14 @@ uis.InputBegan:Connect(function(input, gp)
 		ability:FireServer(2)
 	elseif input.KeyCode == Enum.KeyCode.T then
 		muck:FireServer()
+	elseif input.KeyCode == Enum.KeyCode.F then
+		local target = getClosestPlayer()
+		if target then
+			teleportBehind(target)
+			ability:FireServer(0.3)
+			local args = {[1] = "Ban Hammer"}
+			retro:FireServer(unpack(args))
+		end
 	end
 end)
 
