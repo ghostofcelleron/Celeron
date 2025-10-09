@@ -286,63 +286,73 @@ local Abilities = {
 		end
 	},
 
-	ReapersProtection = {
-		Name = "Reaper's Protection",
-		Key = Enum.KeyCode.R,
-		Cooldown = 10,
-		Trigger = function()
-			local char = LP.Character
-			if not char then return end
+ReapersProtection = {
+	Name = "Reaper's Protection",
+	Key = Enum.KeyCode.R,
+	Cooldown = 10,
+	Trigger = function()
+		local char = LP.Character
+		if not char then return end
 
-			local lowestY = math.huge
-			for _, part in ipairs(char:GetDescendants()) do
-				if part:IsA("BasePart") then
-					lowestY = math.min(lowestY, part.Position.Y)
-				end
-			end
-
-			local plate = Instance.new("Part", workspace)
-			plate.Size = Vector3.new(5, 1, 5)
-			plate.Anchored = true
-			plate.CanCollide = true
-			plate.Material = Enum.Material.Air
-			plate.Color = Color3.new(0, 0, 0)
-			plate.Transparency = 1
-			plate.Position = Vector3.new(char:GetPivot().X, lowestY - 1.5, char:GetPivot().Z)
-			Debris:AddItem(plate, 10)
-
-			local fire = Instance.new("Fire", plate)
-			fire.Color = Color3.new(0, 0, 0)
-			fire.SecondaryColor = Color3.new(0, 0, 0)
-			fire.Size = 15
-			fire.Heat = 1.5
-
-			local sound = Instance.new("Sound", plate)
-			sound.SoundId = "rbxassetid://136176176556875"
-			sound.Volume = 3
-			sound.PlaybackSpeed = 0.425
-			sound:Play()
-
-			local start = os.clock()
-			local conn = RS.Heartbeat:Connect(function()
-				if not char or not plate then return end
-				local pos = char:GetPivot().Position
-				local y = math.huge
-				for _, part in ipairs(char:GetDescendants()) do
-					if part:IsA("BasePart") then
-						y = math.min(y, part.Position.Y)
-					end
-				end
-			plate.Position = Vector3.new(pos.X, y - 1.5, pos.Z)
-			if os.clock() - start >= 10 then
-			if conn then
-			conn:Disconnect()
-			conn = nil
+		local lowestY = math.huge
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") then
+				lowestY = math.min(lowestY, part.Position.Y)
 			end
 		end
-	end)
-end
-	},
+
+		local plate = Instance.new("Part", workspace)
+		plate.Size = Vector3.new(5, 1, 5)
+		plate.Anchored = true
+		plate.CanCollide = true
+		plate.Material = Enum.Material.Air
+		plate.Color = Color3.new(0, 0, 0)
+		plate.Transparency = 1
+		plate.Position = Vector3.new(char:GetPivot().X, lowestY - 1.5, char:GetPivot().Z)
+		Debris:AddItem(plate, 10)
+
+		local fire = Instance.new("Fire", plate)
+		fire.Color = Color3.new(0, 0, 0)
+		fire.SecondaryColor = Color3.new(0, 0, 0)
+		fire.Size = 15
+		fire.Heat = 1.5
+
+		local sound = Instance.new("Sound", plate)
+		sound.SoundId = "rbxassetid://136176176556875"
+		sound.Volume = 3
+		sound.PlaybackSpeed = 0.425
+		sound:Play()
+
+		local start = os.clock()
+		local conn
+		conn = RS.Heartbeat:Connect(function()
+			if not char or not plate or not plate.Parent then
+				if conn then
+					conn:Disconnect()
+					conn = nil
+				end
+				return
+			end
+
+			local pos = char:GetPivot().Position
+			local y = math.huge
+			for _, part in ipairs(char:GetDescendants()) do
+				if part:IsA("BasePart") then
+					y = math.min(y, part.Position.Y)
+				end
+			end
+
+			plate.Position = Vector3.new(pos.X, y - 1.5, pos.Z)
+
+			if os.clock() - start >= 10 then
+				if conn then
+					conn:Disconnect()
+					conn = nil
+				end
+			end
+		end)
+	end
+},
 
 	AfflictedCurse = {
 		Name = "Afflicted Curse",
