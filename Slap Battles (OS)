@@ -543,8 +543,8 @@ funtab:Button("FE Frost God (Req. Frostbite, R + Y + F To Use Abilities.)", func
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/fe%20frost%20god%20(slap%20battles)",true))()
 end)
 
-funtab:Button("True Reaper (Req. Reaper, M1, E, R, F To Use Abilities.)", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/fe%20true%20reaper%20(slap%20battles)",true))()
+funtab:Button("Death Glove (Req. Reaper, Use In Arena.)", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/fe%20death%20(slap%20battles)",true))()
 end)
 
 funtab:Label("Glove-Specific GUIs.")
