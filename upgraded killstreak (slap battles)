@@ -1,0 +1,359 @@
+-- glove customization 
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local tool = character:FindFirstChild("Killstreak") or player.Backpack:FindFirstChild("Killstreak")
+if not tool then return end
+
+tool.ToolTip = "take the souls of the children to become strong"
+
+local glove = tool:FindFirstChild("Glove")
+local lightning = workspace:FindFirstChild("Lobby")
+	and workspace.Lobby:FindFirstChild("OVERKILL")
+	and workspace.Lobby.OVERKILL:FindFirstChild("lighning")
+
+if glove and glove:IsA("MeshPart") and lightning and lightning:IsA("ParticleEmitter") then
+	local emitter1 = lightning:Clone()
+	emitter1.Brightness = 1
+	emitter1.Parent = glove
+
+	local emitter2 = lightning:Clone()
+	emitter2.Brightness = 1
+	emitter2.Color = ColorSequence.new(Color3.new(0, 0, 0))
+	emitter2.Parent = glove
+end
+
+-- cooldown ui
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local TS = game:GetService("TweenService")
+local LP = Players.LocalPlayer
+
+local GUI = Instance.new("ScreenGui", LP:WaitForChild("PlayerGui"))
+GUI.Name = "AbilityUI"
+
+local abilities = {
+	{ name = "Punch", key = "M1", cooldown = 0 },
+	{ name = "Blitz Step", key = Enum.KeyCode.R, cooldown = 0.75 },
+	{ name = "Sneak Attack", key = Enum.KeyCode.F, cooldown = 2},
+	{ name = "Savior Grace", key = Enum.KeyCode.G, cooldown = 10}
+}
+
+local baseY, spacing = 0.75, 0.05
+local activeCooldowns = {}
+
+for i, ability in ipairs(abilities) do
+	local frame = Instance.new("Frame", GUI)
+	frame.Name = ability.name:gsub("%s+", "") .. "Frame"
+	frame.Size = UDim2.new(0, 160, 0, 28)
+	frame.Position = UDim2.new(0, 30, baseY + (i - 1) * spacing, 0)
+	frame.BackgroundColor3 = Color3.new(0, 0, 0)
+	frame.BorderSizePixel = 2
+	frame.BorderColor3 = Color3.new(0, 0, 0)
+
+	local keyFrame = Instance.new("Frame", GUI)
+	keyFrame.Name = ability.name:gsub("%s+", "") .. "KeyFrame"
+	keyFrame.Size = UDim2.new(0, 20, 0, 28)
+	keyFrame.Position = UDim2.new(0, 10, baseY + (i - 1) * spacing, 0)
+	keyFrame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
+	keyFrame.BorderSizePixel = 1
+	keyFrame.BorderColor3 = Color3.new(0.3, 0.3, 0.3)
+
+	local keyLabel = Instance.new("TextLabel", keyFrame)
+	keyLabel.Size = UDim2.new(1, 0, 1, 0)
+	keyLabel.BackgroundTransparency = 1
+	keyLabel.Text = typeof(ability.key) == "EnumItem" and ability.key.Name or ability.key
+	keyLabel.TextColor3 = Color3.new(1, 1, 1)
+	keyLabel.Font = Enum.Font.Fantasy
+	keyLabel.TextScaled = true
+
+	local bar = Instance.new("Frame", frame)
+	bar.Name = "CooldownBar"
+	bar.Size = UDim2.new(0, 0, 1, 0)
+	bar.AnchorPoint = Vector2.new(1, 0)
+	bar.Position = UDim2.new(1, 0, 0, 0)
+	bar.BackgroundColor3 = Color3.new(1, 0, 0)
+	bar.BorderSizePixel = 0
+
+	local label = Instance.new("TextLabel", frame)
+	label.Size = UDim2.new(1, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.Text = ability.name
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Font = Enum.Font.Fantasy
+	label.TextScaled = true
+end
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	for _, ability in ipairs(abilities) do
+		if typeof(ability.key) == "EnumItem" and input.KeyCode == ability.key and not activeCooldowns[ability.name] then
+			activeCooldowns[ability.name] = true
+			local frame = GUI:FindFirstChild(ability.name:gsub("%s+", "") .. "Frame")
+			local bar = frame and frame:FindFirstChild("CooldownBar")
+			if bar then
+				bar.Size = UDim2.new(1, 0, 1, 0)
+				bar.Position = UDim2.new(1, 0, 0, 0)
+				local tween = TS:Create(bar, TweenInfo.new(ability.cooldown, Enum.EasingStyle.Linear), {
+					Size = UDim2.new(0, 0, 1, 0),
+					Position = UDim2.new(1, -160, 0, 0)
+				})
+				tween:Play()
+			end
+			task.delay(ability.cooldown, function()
+				activeCooldowns[ability.name] = nil
+				if bar then
+					bar.Size = UDim2.new(0, 0, 1, 0)
+					bar.Position = UDim2.new(1, 0, 0, 0)
+				end
+			end)
+		end
+	end
+end)
+
+-- abilities 
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UIS = game:GetService("UserInputService")
+
+local LP = Players.LocalPlayer
+local cooldown = 0.75
+
+local animIds = {
+	"rbxassetid://133068451086106", -- right hand
+	"rbxassetid://109511274923523" -- left hand
+}
+
+local animToggle = false
+local activeCooldowns = {}
+local inputConn = nil
+
+local function getClosestPlayer()
+	local myRoot = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+	if not myRoot then return end
+
+	local closest, dist = nil, math.huge
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			local mag = (p.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
+			if mag < dist then
+				dist = mag
+				closest = p
+			end
+		end
+	end
+	return closest
+end
+
+local Abilities = {
+	M1 = {
+		Name = "M1 Strike",
+		MouseButton = Enum.UserInputType.MouseButton1,
+		Cooldown = cooldown,
+		Trigger = function()
+			local char = LP.Character
+			local hum = char and char:FindFirstChild("Humanoid")
+			if not hum then return end
+
+			local animId = animIds[animToggle and 2 or 1]
+			local anim = Instance.new("Animation")
+			anim.AnimationId = animId
+			local track = hum:LoadAnimation(anim)
+			track:Play()
+
+			animToggle = not animToggle
+
+			local target = getClosestPlayer()
+			local hitPart = target and target.Character and (
+				target.Character:FindFirstChild("Torso") or
+				target.Character:FindFirstChild("UpperTorso") or
+				target.Character:FindFirstChild("HumanoidRootPart")
+			)
+
+			local remote = ReplicatedStorage:FindFirstChild("KSHit")
+			if hitPart and remote and remote:IsA("RemoteEvent") then
+				remote:FireServer(hitPart)
+			end
+		end
+	},
+	
+BlitzStep = {
+	Name = "Blitz Step",
+	Key = Enum.KeyCode.R,
+	Cooldown = 0.75,
+	Trigger = function()
+		local char = LP.Character
+		local hum = char and char:FindFirstChild("Humanoid")
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if not char or not hum or not root then return end
+
+		local anim = Instance.new("Animation")
+		anim.AnimationId = "rbxassetid://75735749980204"
+		local track = hum:LoadAnimation(anim)
+		track:Play()
+		task.delay(0.5, function()
+			track:Stop()
+		end)
+
+		local sound = Instance.new("Sound")
+		sound.SoundId = "rbxassetid://3077287610"
+		sound.Volume = 1
+		sound.PlayOnRemove = true
+		sound.Parent = root
+		sound:Destroy()
+
+		local forward = root.CFrame.LookVector * 45
+		root.CFrame = root.CFrame + forward
+
+		local vfxFolder = game:GetService("ReplicatedStorage").Assets.Triple.vfx.black_slashes
+		local emitters = {
+			vfxFolder:GetChildren()[2],
+			vfxFolder.SpiralBlack
+		}
+
+		for _, emitterTemplate in ipairs(emitters) do
+			if emitterTemplate:IsA("ParticleEmitter") then
+				local emitter = emitterTemplate:Clone()
+				emitter.Parent = root
+				task.delay(0.75, function()
+					emitter.Enabled = false
+					task.delay(emitter.Lifetime.Max, function()
+						emitter:Destroy()
+					end)
+				end)
+			end
+		end
+	end
+},
+
+QuickAttack = {
+	Name = "Quick Attack",
+	Key = Enum.KeyCode.F,
+	Cooldown = 0.5,
+	Trigger = function()
+		local char = LP.Character
+		local hum = char and char:FindFirstChildWhichIsA("Humanoid")
+		local root = hum and hum.RootPart
+		if not char or not hum or not root then return end
+
+		local closest = getClosestPlayer()
+		local targetRoot = closest and closest.Character and closest.Character:FindFirstChild("HumanoidRootPart")
+		if not (closest and targetRoot) then return end
+
+		root.CFrame = CFrame.new(targetRoot.Position - targetRoot.CFrame.LookVector * 6)
+		wait(0.15)
+		local hitPart = closest.Character:FindFirstChild("Torso") or closest.Character:FindFirstChild("UpperTorso") or closest.Character:FindFirstChild("HumanoidRootPart")
+		local remote = ReplicatedStorage:FindFirstChild("KSHit")
+		if hitPart and remote and remote:IsA("RemoteEvent") then
+			remote:FireServer(hitPart)
+		end
+
+		local anim = Instance.new("Animation")
+		anim.AnimationId = "rbxassetid://133068451086106"
+		local track = hum:LoadAnimation(anim)
+		track:Play()
+	end
+},
+
+SaviorGrace = {
+	Name = "Saving Grace",
+	Key = Enum.KeyCode.G,
+	Cooldown = 10,
+	Trigger = function()
+		local Debris = game:GetService("Debris")
+		local RS = game:GetService("RunService")
+		local char = LP.Character
+		if not char then return end
+
+		local lowestY = math.huge
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") then
+				lowestY = math.min(lowestY, part.Position.Y)
+			end
+		end
+
+		local plate = Instance.new("Part", workspace)
+		plate.Size = Vector3.new(50, 1, 50)
+		plate.Anchored = true
+		plate.CanCollide = true
+		plate.Material = Enum.Material.Air
+		plate.Color = Color3.new(0, 0, 0)
+		plate.Transparency = 1
+		plate.Position = Vector3.new(char:GetPivot().Position.X, lowestY - 1, char:GetPivot().Position.Z)
+		Debris:AddItem(plate, 10)
+
+		local start = os.clock()
+		local conn = RS.Heartbeat:Connect(function()
+			if not char or not plate then return end
+
+			local pos = char:GetPivot().Position
+			local y = math.huge
+			for _, part in ipairs(char:GetDescendants()) do
+				if part:IsA("BasePart") then
+					y = math.min(y, part.Position.Y)
+				end
+			end
+
+			plate.Position = Vector3.new(pos.X, y - 1.5, pos.Z)
+
+			if os.clock() - start >= 10 then
+				conn:Disconnect()
+			end
+		end)
+	end
+}
+}
+
+local function resetCooldowns()
+	for key in pairs(activeCooldowns) do
+		activeCooldowns[key] = nil
+	end
+end
+
+local function bindInputs(char)
+	local hum = char:FindFirstChild("Humanoid")
+	if not hum then return end
+
+	if inputConn then
+		inputConn:Disconnect()
+		inputConn = nil
+	end
+
+	inputConn = UIS.InputBegan:Connect(function(input, gp)
+		if gp then return end
+
+		for id, ability in pairs(Abilities) do
+			if ability.Key and input.KeyCode == ability.Key then
+				if not activeCooldowns[id] then
+					activeCooldowns[id] = true
+					ability.Trigger()
+					task.delay(ability.Cooldown, function()
+						activeCooldowns[id] = nil
+					end)
+				end
+			elseif ability.MouseButton and input.UserInputType == ability.MouseButton then
+				if not activeCooldowns[id] then
+					activeCooldowns[id] = true
+					ability.Trigger()
+					task.delay(ability.Cooldown, function()
+						activeCooldowns[id] = nil
+					end)
+				end
+			end
+		end
+	end)
+
+	hum.Died:Connect(function()
+		resetCooldowns()
+		if inputConn then
+			inputConn:Disconnect()
+			inputConn = nil
+		end
+	end)
+end
+
+if LP.Character then bindInputs(LP.Character) end
+LP.CharacterAdded:Connect(bindInputs)
