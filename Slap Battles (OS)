@@ -547,6 +547,10 @@ funtab:Button("Death Glove (Req. Reaper, Use In Arena.)", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/fe%20death%20(slap%20battles)",true))()
 end)
 
+funtab:Button("Killstreak V2 (Req. Killstreak, Use In Arena.)", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/upgraded%20killstreak%20(slap%20battles)",true))()
+end)
+
 funtab:Label("Glove-Specific GUIs.")
 
 funtab:Button("Avatar GUI", function()
