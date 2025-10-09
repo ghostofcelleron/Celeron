@@ -1728,7 +1728,7 @@ end)
 
 funtab:Button("Gojo Moveset", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/TH8xDy9X"))()
-emd)
+end)
 
 funtab:Button("Loki Moveset", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/LbRRX7SK"))()
