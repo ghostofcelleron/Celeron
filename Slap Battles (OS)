@@ -435,6 +435,14 @@ maintab:Slider("Player Speed", 19.5, 1, 125, function(v)
 	getgenv().applySpeed()
 end)
 
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(c)
+	c:WaitForChild("Humanoid"):GetPropertyChangedSignal("Parent"):Connect(function()
+		getgenv().applySpeed()
+	end)
+
+	getgenv().applySpeed()
+end)
+
 maintab:Button("Infinite Jump", function()
 	getgenv().infiniteJumpEnabled = not getgenv().infiniteJumpEnabled
 
@@ -479,14 +487,6 @@ maintab:Button("Infinite Jump", function()
 		Text = getgenv().infiniteJumpEnabled and "Enabled." or "Disabled.",
 		Duration = 3
 	})
-end)
-
-game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(c)
-	c:WaitForChild("Humanoid"):GetPropertyChangedSignal("Parent"):Connect(function()
-		getgenv().applySpeed()
-	end)
-
-	getgenv().applySpeed()
 end)
 
 funtab:Label("Universal Features.")
@@ -983,6 +983,72 @@ maintab:Button("Glove Triggerbot", function()
 	})
 end)
 
+local autoRhythmEnabled = false
+local barStates = {}
+
+maintab:Button("Auto Rhythm", function()
+	autoRhythmEnabled = not autoRhythmEnabled
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Auto Rhythm",
+		Text = autoRhythmEnabled and "Enabled." or "Disabled.",
+		Duration = 2
+	})
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+	if not autoRhythmEnabled then return end
+
+	local player = game:GetService("Players").LocalPlayer
+	local gui = player:FindFirstChild("PlayerGui")
+	if not gui then return end
+
+	local rhythm = gui:FindFirstChild("Rhythm")
+	if not rhythm then return end
+
+	local main = rhythm:FindFirstChild("MainFrame")
+	if not main then return end
+
+	local pointer = main:FindFirstChild("Pointer")
+	local bars = main:FindFirstChild("Bars")
+	if not pointer or not bars then return end
+
+	for _, bar in ipairs(bars:GetChildren()) do
+		if bar:IsA("Frame") and bar.Name ~= "BarHit" then
+			local id = bar:GetDebugId(5)
+			local aPos, aSize = pointer.AbsolutePosition, pointer.AbsoluteSize
+			local bPos, bSize = bar.AbsolutePosition, bar.AbsoluteSize
+
+			local nowOverlapping = not (
+				aPos.X + aSize.X < bPos.X or
+				aPos.X > bPos.X + bSize.X or
+				aPos.Y + aSize.Y < bPos.Y or
+				aPos.Y > bPos.Y + bSize.Y
+			)
+
+			if nowOverlapping and not barStates[id] then
+				barStates[id] = true
+				local clickPos = aPos + (aSize / 2)
+				game:GetService("VirtualInputManager"):SendMouseButtonEvent(clickPos.X, clickPos.Y, 0, true, game, 0)
+				game:GetService("VirtualInputManager"):SendMouseButtonEvent(clickPos.X, clickPos.Y, 0, false, game, 0)
+			elseif not nowOverlapping then
+				barStates[id] = false
+			end
+		end
+	end
+end)
+
+maintab:Button("Indestructible Tycoon", function()
+(game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):WaitForChild("HumanoidRootPart").CFrame = CFrame.new(Vector3.new(17860, -107, -3536))
+
+game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
+wait(0.05)
+game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
+task.wait(0.2)
+game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
+wait(0.05)
+game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end)
+
 maintab:Button("Extra Life (34K Slaps, Use In Lobby.)", function()
 local p = game.Players.LocalPlayer
 local rs, vim, ws = game:GetService("ReplicatedStorage"), game:GetService("VirtualInputManager"), game:GetService("Workspace")
@@ -1009,62 +1075,6 @@ click(ws.Lobby[old])
 hrp.CFrame = orig
 cam.CameraType = Enum.CameraType.Custom
 game.StarterGui:SetCore("SendNotification", {Title="Extra Life", Text="Extra Life Given.", Duration=3})
-end)
-
-local Players = game:GetService("Players")
-local VIM = game:GetService("VirtualInputManager")
-local RS = game:GetService("RunService")
-local StarterGui = game:GetService("StarterGui")
-
-local LP = Players.LocalPlayer
-local gui = LP:WaitForChild("PlayerGui"):WaitForChild("Rhythm")
-local main = gui:WaitForChild("MainFrame")
-local pointer = main:WaitForChild("Pointer")
-local bars = main:WaitForChild("Bars")
-
-local autoRhythmEnabled = false
-local barStates = {}
-
-maintab:Button("Auto Rhythm", function()
-	autoRhythmEnabled = not autoRhythmEnabled
-	StarterGui:SetCore("SendNotification", {
-		Title = "Auto Rhythm",
-		Text = autoRhythmEnabled and "Enabled." or "Disabled.",
-		Duration = 2
-	})
-end)
-
-local function isOverlapping(a, b)
-	local aPos, aSize = a.AbsolutePosition, a.AbsoluteSize
-	local bPos, bSize = b.AbsolutePosition, b.AbsoluteSize
-
-	return not (
-		aPos.X + aSize.X < bPos.X or
-		aPos.X > bPos.X + bSize.X or
-		aPos.Y + aSize.Y < bPos.Y or
-		aPos.Y > bPos.Y + bSize.Y
-	)
-end
-
-RS.RenderStepped:Connect(function()
-	if not autoRhythmEnabled then return end
-
-	for _, bar in ipairs(bars:GetChildren()) do
-		if bar:IsA("Frame") and bar.Name ~= "BarHit" then
-			local id = bar:GetDebugId(5)
-			local wasOverlapping = barStates[id]
-			local nowOverlapping = isOverlapping(pointer, bar)
-
-			if nowOverlapping and not wasOverlapping then
-				barStates[id] = true
-				local clickPos = pointer.AbsolutePosition + (pointer.AbsoluteSize / 2)
-				VIM:SendMouseButtonEvent(clickPos.X, clickPos.Y, 0, true, game, 0)
-				VIM:SendMouseButtonEvent(clickPos.X, clickPos.Y, 0, false, game, 0)
-			elseif not nowOverlapping then
-				barStates[id] = false
-			end
-		end
-	end
 end)
 
 getgenv().AutoClickTycoonEnabled = false
@@ -4241,6 +4251,52 @@ LocalPlayer.CharacterAdded:Connect(function(character)
 	end
 end)
 
+maintab:Button("Infinite Jump", function()
+	getgenv().infiniteJumpEnabled = not getgenv().infiniteJumpEnabled
+
+	local lp = game:GetService("Players").LocalPlayer
+	local uis = game:GetService("UserInputService")
+
+	local hum, root, animTrack
+
+	local function bindCharacter(char)
+		hum = char:WaitForChild("Humanoid")
+		root = char:WaitForChild("HumanoidRootPart")
+
+		local animate = char:FindFirstChild("Animate")
+		if animate and animate:FindFirstChild("jump") and animate.jump:FindFirstChild("JumpAnim") then
+			local animId = animate.jump.JumpAnim.AnimationId
+			local anim = Instance.new("Animation")
+			anim.AnimationId = animId
+			animTrack = hum:LoadAnimation(anim)
+		end
+	end
+
+	bindCharacter(lp.Character or lp.CharacterAdded:Wait())
+	lp.CharacterAdded:Connect(bindCharacter)
+
+	if not getgenv()._infiniteJumpBound then
+		getgenv()._infiniteJumpBound = true
+		uis.InputBegan:Connect(function(input, gp)
+			if gp or input.KeyCode ~= Enum.KeyCode.Space then return end
+			if not getgenv().infiniteJumpEnabled or not root then return end
+
+			if animTrack then
+				animTrack:Stop()
+				animTrack:Play()
+			end
+
+			root.AssemblyLinearVelocity = Vector3.new(root.AssemblyLinearVelocity.X, 50, root.AssemblyLinearVelocity.Z)
+		end)
+	end
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Infinite Jump",
+		Text = getgenv().infiniteJumpEnabled and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+end)
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
@@ -4252,7 +4308,7 @@ local SlapRemote = ReplicatedStorage:WaitForChild("Events"):WaitForChild("Slap")
 local slapaura = {
 	enabled = false,
 	connection = nil,
-	radius = 50
+	radius = 100
 }
 
 local function getClosestPlayer(radius)
@@ -4426,6 +4482,103 @@ end)
 
 maintab:Button("Exit Bus", function()
 game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("BusJumping"):FireServer()
+end)
+
+maintab:Button("Attempt Portal Bus (Use Before Match, Req. Void Glove)", function()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Debris = game:GetService("Debris")
+local StarterGui = game:GetService("StarterGui")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local LP = Players.LocalPlayer
+
+local function notify(title, text, duration)
+	StarterGui:SetCore("SendNotification", {
+		Title = title,
+		Text = text,
+		Duration = duration or 3
+	})
+end
+
+notify("Void Kill", "Waiting for bus to spawn...", 3)
+local busModel = workspace:WaitForChild("BusModel")
+
+local event = ReplicatedStorage:WaitForChild("Events"):WaitForChild("BusJumping")
+event:FireServer()
+notify("Void Kill", "Predicting Drop Point...", 2)
+
+local positions = {}
+local startTime = os.clock()
+
+local conn
+conn = RunService.Heartbeat:Connect(function()
+	local now = os.clock()
+	if now - startTime >= 2 then
+		if conn then conn:Disconnect() end
+		return
+	end
+	table.insert(positions, {time = now, pos = busModel.Position})
+end)
+
+task.delay(2.1, function()
+	if #positions < 2 then
+		notify("Void Kill", "Not enough checks loaded. Aborting...", 4)
+		return
+	end
+
+	local first = positions[1]
+	local last = positions[#positions]
+	local deltaTime = last.time - first.time
+	local deltaPos = last.pos - first.pos
+	local velocity = deltaPos / deltaTime
+
+	local predictedPos = busModel.Position + velocity * 6.85
+	local targetPos = predictedPos - Vector3.new(0, 5, 0)
+
+	local char = LP.Character or LP.CharacterAdded:Wait()
+	local root = char:WaitForChild("HumanoidRootPart")
+
+	local baseplatePos = Vector3.new(112, -69, -241)
+	local baseplate = Instance.new("Part")
+	baseplate.Size = Vector3.new(20, 1, 20)
+	baseplate.Anchored = true
+	baseplate.CanCollide = true
+	baseplate.Material = Enum.Material.SmoothPlastic
+	baseplate.Color = Color3.fromRGB(50, 50, 50)
+	baseplate.Position = baseplatePos
+	baseplate.Parent = workspace
+	Debris:AddItem(baseplate, 15)
+
+	root.CFrame = CFrame.new(baseplatePos + Vector3.new(0, 3, 0))
+	local backpack = LP:WaitForChild("Backpack")
+	local tool
+	repeat
+		tool = backpack:FindFirstChild("Void")
+		task.wait(0.05)
+	until tool and tool:IsA("Tool")
+
+	tool.Parent = char
+	notify("Void Kill", "Placing Portals...", 2)
+
+	VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+	VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+
+	wait(0.1)
+	local dropPlate = Instance.new("Part")
+	dropPlate.Size = Vector3.new(20, 1, 20)
+	dropPlate.Anchored = true
+	dropPlate.CanCollide = true
+	dropPlate.Material = Enum.Material.SmoothPlastic
+	dropPlate.Color = Color3.fromRGB(50, 50, 50)
+	dropPlate.Position = targetPos
+	dropPlate.Parent = workspace
+	Debris:AddItem(dropPlate, 15)
+
+	root.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+	notify("Void Kill", "Attempted to send players to void successfully.", 3)
+end)
 end)
 
 itemtab:Button("Disable Bunker (Instant.)", function()
@@ -6840,6 +6993,12 @@ maintab:Button("Bind Muck (Binds To T.)", function()
 		Text = muckBindEnabled and "Enabled." or "Disabled.",
 		Duration = 3
 	})
+end)
+
+maintab:Label("These Glove May Cause Lag, Rejoin If It Becomes Laggy.")
+
+maintab:Button("Killstreak V2 (Req. Killstreak, Use In Arena.)", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/upgraded%20killstreak%20(slap%20battles)",true))()
 end)
 
 local Workspace = game:GetService("Workspace")
