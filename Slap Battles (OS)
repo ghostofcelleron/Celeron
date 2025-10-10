@@ -2128,45 +2128,47 @@ end)
 farmtab:Label("Kill Farm: Recommended To Teleport Main To Baseplate.")
 
 farmtab:Textbox("Kill Farm (Set Username To Main, Use In Arena.)", function(v)
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
+	local Players = game:GetService("Players")
+	local Workspace = game:GetService("Workspace")
 
-local LocalPlayer = Players.LocalPlayer
+	local LocalPlayer = Players.LocalPlayer
 
-local function onCharacterSpawn(character)
-	local rootPart = character:WaitForChild("HumanoidRootPart")
+	local function onCharacterSpawn(character)
+		local rootPart = character:WaitForChild("HumanoidRootPart")
 
-	local teleportPart = Workspace:WaitForChild("Lobby"):WaitForChild("Teleport1")
-	rootPart.CFrame = teleportPart.CFrame + Vector3.new(0, 1, 0)
-	firetouchinterest(rootPart, teleportPart, 0)
-	task.wait(0.1)
-	firetouchinterest(rootPart, teleportPart, 1)
+		local teleportPart = Workspace:WaitForChild("Lobby"):WaitForChild("Teleport1")
+		rootPart.CFrame = teleportPart.CFrame + Vector3.new(0, 1, 0)
+		firetouchinterest(rootPart, teleportPart, 0)
+		task.wait(0.1)
+		firetouchinterest(rootPart, teleportPart, 1)
 
-	task.wait(0.7)
+		task.wait(0.7)
 
-	local target = Players:FindFirstChild(v)
-	if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-		local targetRoot = target.Character.HumanoidRootPart
-		local offset = targetRoot.CFrame.LookVector.Unit * 5
-		local destination = targetRoot.Position + offset + Vector3.new(0, 1, 0)
+		local target = Players:FindFirstChild(v)
+		if target then
+			for i = 1, 25 do
+				local targetChar = target.Character
+				local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+				if targetRoot then
+					local offset = targetRoot.CFrame.LookVector.Unit * 5
+					local destination = targetRoot.Position + offset + Vector3.new(0, 1, 0)
+					rootPart.CFrame = CFrame.new(destination, targetRoot.Position)
+				end
+				task.wait(0.05)
+			end
+		end
 
-		for i = 1, 25 do
-			rootPart.CFrame = CFrame.new(destination, targetRoot.Position)
-			task.wait(0.05)
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.Health = 0
 		end
 	end
 
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		humanoid.Health = 0
+	LocalPlayer.CharacterAdded:Connect(onCharacterSpawn)
+
+	if LocalPlayer.Character then
+		onCharacterSpawn(LocalPlayer.Character)
 	end
-end
-
-LocalPlayer.CharacterAdded:Connect(onCharacterSpawn)
-
-if LocalPlayer.Character then
-	onCharacterSpawn(LocalPlayer.Character)
-end
 end)
 
 farmtab:Label("Rob Farm: Silent, Teleport To Baseplate.")
