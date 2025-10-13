@@ -292,6 +292,9 @@ local runService = game:GetService("RunService")
 local camera = workspace.CurrentCamera
 local player = game:GetService("Players").LocalPlayer
 
+local inputConnection = nil
+local renderConnection = nil
+
 maintab:Button("Lock On", function()
 	lockOnEnabled = not lockOnEnabled
 
@@ -302,7 +305,7 @@ maintab:Button("Lock On", function()
 	})
 
 	if lockOnEnabled then
-		inputService.InputBegan:Connect(function(input, gp)
+		inputConnection = inputService.InputBegan:Connect(function(input, gp)
 			if gp then return end
 			if input.UserInputType == Enum.UserInputType.MouseButton2 then
 				if lockedTarget then
@@ -332,11 +335,21 @@ maintab:Button("Lock On", function()
 			end
 		end)
 
-		runService.RenderStepped:Connect(function()
+		renderConnection = runService.RenderStepped:Connect(function()
 			if lockedTarget then
 				camera.CFrame = CFrame.new(camera.CFrame.Position, lockedTarget.Position)
 			end
 		end)
+	else
+		lockedTarget = nil
+		if inputConnection then
+			inputConnection:Disconnect()
+			inputConnection = nil
+		end
+		if renderConnection then
+			renderConnection:Disconnect()
+			renderConnection = nil
+		end
 	end
 end)
 
