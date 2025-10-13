@@ -1,0 +1,583 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local PlaceId = game.PlaceId
+local JobId = game.JobId
+
+local darkUI = CoreGui:FindFirstChild("dark_UI")
+if darkUI and typeof(syn) == "table" and syn.protect_gui then
+	syn.protect_gui(darkUI)
+end
+
+local win = ui:Create({
+	Name = "Celeron's GUI (Jujutsu Shenanigans)",
+	ThemeColor = Color3.fromRGB(18, 18, 18),
+	StartupSound = "rbxassetid://6958727243",
+	ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local antitab = win:Tab("Protection")
+local funtab = win:Tab("Fun")
+local autotab = win:Tab("Auto")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+antitab:Label("Protection Features.")
+funtab:Label("Fun Features.")
+misctab:Label("Other Features.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+misctab:Textbox("Invite Player (Better Player Finder, Enter Exact Username.)", function(v)
+	task.spawn(function()
+		while true do
+			local gui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+			local container = gui and gui:FindFirstChild("Ranked") and gui.Ranked:FindFirstChild("Invite") and gui.Ranked.Invite:FindFirstChild("Players")
+
+			if container then
+				for _, frame in ipairs(container:GetChildren()) do
+					if frame:IsA("Frame") and not string.find(string.lower(frame.Name), string.lower(v)) then
+						frame:Destroy()
+					end
+				end
+			end
+
+			task.wait()
+		end
+	end)
+end)
+
+misctab:Button("Infinite Yield", function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Shutdown Game", function()
+	game:Shutdown()
+end)
+
+misctab:Button("Rejoin Server", function()
+	TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
+end)
+
+misctab:Button("Switch Servers", function()
+	local servers = {}
+	local success, req = pcall(function()
+		return game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+	end)
+	if success then
+		local body = HttpService:JSONDecode(req)
+		if body and body.data then
+			for _, v in next, body.data do
+				if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
+					table.insert(servers, 1, v.id)
+				end
+			end
+		end
+	end
+	if #servers > 0 then
+		TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], player)
+	end
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+	StarterGui:SetCore("SendNotification", {
+		Title = "Discord Username",
+		Text = "Copied to your clipboard!",
+		Duration = 3,
+		Button1 = "alright fella",
+	})
+	setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+	StarterGui:SetCore("SendNotification", {
+		Title = "Discord Invite",
+		Text = "Copied to your clipboard!",
+		Duration = 3,
+		Button1 = "alright fella",
+	})
+	setclipboard("https://discord.gg/8stFYxJv4R")
+end)
+
+getgenv().lastSliderSet = nil
+getgenv().tpWalkConnection = nil
+
+getgenv().applyTPWalk = function()
+	if not getgenv().lastSliderSet then return end
+
+	local player = game:GetService("Players").LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local hrp = character:WaitForChild("HumanoidRootPart")
+	local humanoid = character:WaitForChild("Humanoid")
+
+	if getgenv().tpWalkConnection then
+		getgenv().tpWalkConnection:Disconnect()
+	end
+
+	getgenv().tpWalkConnection = game:GetService("RunService").Heartbeat:Connect(function(dt)
+		if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+		if humanoid.MoveDirection.Magnitude > 0 then
+			hrp.CFrame = hrp.CFrame + (humanoid.MoveDirection * getgenv().lastSliderSet * dt)
+		end
+	end)
+end
+
+maintab:Slider("Player Speed", 19.5, 1, 85, function(v)
+	getgenv().lastSliderSet = (v == 8) and 16 or v
+	getgenv().applyTPWalk()
+end)
+
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(c)
+	c:WaitForChild("Humanoid"):GetPropertyChangedSignal("Parent"):Connect(function()
+		getgenv().applyTPWalk()
+	end)
+	getgenv().applyTPWalk()
+end)
+
+getgenv().lastJumpSet = nil
+
+maintab:Slider("Player Jump", 10, 50, 200, function(v)
+	getgenv().lastJumpSet = v
+
+	local player = game:GetService("Players").LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+
+	humanoid.JumpPower = getgenv().lastJumpSet
+end)
+
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(c)
+	c:WaitForChild("Humanoid"):GetPropertyChangedSignal("Parent"):Connect(function()
+		if getgenv().lastJumpSet then
+			c:FindFirstChildOfClass("Humanoid").JumpPower = getgenv().lastJumpSet
+		end
+	end)
+	if getgenv().lastJumpSet then
+		c:FindFirstChildOfClass("Humanoid").JumpPower = getgenv().lastJumpSet
+	end
+end)
+
+local flightEnabled = false
+local flightLoop = nil
+local animTrack = nil
+local idleTrack = nil
+local flightSound = nil
+local bv = nil
+local bg = nil
+
+maintab:Button("Flight", function()
+	flightEnabled = not flightEnabled
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Flight",
+		Text = flightEnabled and "Enabled." or "Disabled.",
+		Duration = 2
+	})
+
+	if flightLoop then
+		flightLoop:Disconnect()
+		flightLoop = nil
+	end
+
+	local player = game:GetService("Players").LocalPlayer
+	local uis = game:GetService("UserInputService")
+	local cam = workspace.CurrentCamera
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	local hum = char:WaitForChild("Humanoid")
+
+	if animTrack then animTrack:Stop() animTrack = nil end
+	if idleTrack then idleTrack:Stop() idleTrack = nil end
+	if flightSound then flightSound:Destroy() flightSound = nil end
+	if bv then bv:Destroy() bv = nil end
+	if bg then bg:Destroy() bg = nil end
+
+	if flightEnabled then
+		hum.PlatformStand = true
+
+		local flightAnim = Instance.new("Animation")
+		flightAnim.AnimationId = "rbxassetid://15984964491"
+		animTrack = hum:LoadAnimation(flightAnim)
+		animTrack.Looped = true
+		animTrack:Play()
+		animTrack.TimePosition = 0.7
+		animTrack:AdjustSpeed(0)
+
+		local idleAnim = Instance.new("Animation")
+		idleAnim.AnimationId = "rbxassetid://91428863336534"
+		idleTrack = hum:LoadAnimation(idleAnim)
+		idleTrack.Looped = true
+
+		flightSound = Instance.new("Sound")
+		flightSound.SoundId = "rbxassetid://3308152153"
+		flightSound.Looped = true
+		flightSound.Volume = 1
+		flightSound.Parent = hrp
+		flightSound:Play()
+
+		bv = Instance.new("BodyVelocity")
+		bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+		bv.Velocity = Vector3.zero
+		bv.Parent = hrp
+
+		bg = Instance.new("BodyGyro")
+		bg.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+		bg.P = 1e5
+		bg.CFrame = hrp.CFrame
+		bg.Parent = hrp
+
+		local currentVel = Vector3.zero
+		local currentSpeed = 165
+
+		flightLoop = game:GetService("RunService").RenderStepped:Connect(function(dt)
+			local direction = Vector3.zero
+			if uis:IsKeyDown(Enum.KeyCode.W) then direction += cam.CFrame.LookVector end
+			if uis:IsKeyDown(Enum.KeyCode.S) then direction -= cam.CFrame.LookVector end
+			if uis:IsKeyDown(Enum.KeyCode.A) then direction -= cam.CFrame.RightVector end
+			if uis:IsKeyDown(Enum.KeyCode.D) then direction += cam.CFrame.RightVector end
+			if uis:IsKeyDown(Enum.KeyCode.Space) then direction += Vector3.new(0, 1, 0) end
+			if uis:IsKeyDown(Enum.KeyCode.LeftControl) then direction -= Vector3.new(0, 1, 0) end
+
+			currentSpeed = 165
+			local targetVel = direction.Magnitude > 0 and direction.Unit * currentSpeed or Vector3.zero
+			currentVel = currentVel:Lerp(targetVel, 0.25)
+			bv.Velocity = currentVel
+
+			bg.CFrame = CFrame.new(hrp.Position, hrp.Position + cam.CFrame.LookVector)
+
+			if currentVel.Magnitude < 1 then
+				if animTrack.IsPlaying then animTrack:Stop() end
+				if not idleTrack.IsPlaying then idleTrack:Play() end
+				flightSound.Volume = 1
+			else
+				if idleTrack.IsPlaying then idleTrack:Stop() end
+				if not animTrack.IsPlaying then
+					animTrack:Play()
+					animTrack.TimePosition = 0.7
+					animTrack:AdjustSpeed(0)
+				end
+				flightSound.Volume = 3
+			end
+		end)
+	else
+		hum.PlatformStand = false
+
+		if animTrack then animTrack:Stop() animTrack = nil end
+		if idleTrack then idleTrack:Stop() idleTrack = nil end
+		if flightSound then flightSound:Destroy() flightSound = nil end
+		if bv then bv:Destroy() bv = nil end
+		if bg then bg:Destroy() bg = nil end
+	end
+end)
+
+funtab:Button("Climb Walls", function()
+	getgenv().climbWallsEnabled = not getgenv().climbWallsEnabled
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Climb Walls",
+		Text = getgenv().climbWallsEnabled and "Enabled." or "Disabled.",
+		Duration = 2
+	})
+
+	if getgenv().climbWallsConnection then
+		getgenv().climbWallsConnection:Disconnect()
+		getgenv().climbWallsConnection = nil
+	end
+
+	if getgenv().climbWallsEnabled then
+		getgenv().climbWallsConnection = game:GetService("RunService").RenderStepped:Connect(function()
+			if not game:GetService("Players").LocalPlayer.Character then return end
+			if not game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+			if not game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then return end
+
+			local climbing = false
+
+			if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) or game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Up) then
+				local result = workspace:Raycast(
+					game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 2, 0),
+					game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame.LookVector * 2,
+					(function()
+						local p = RaycastParams.new()
+						p.FilterDescendantsInstances = {game:GetService("Players").LocalPlayer.Character}
+						p.FilterType = Enum.RaycastFilterType.Blacklist
+						return p
+					end)()
+				)
+
+				if result and result.Normal.Y == 0 then
+					game:GetService("Players").LocalPlayer.Character.Humanoid.PlatformStand = false
+					game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(0, 25, 0)
+					climbing = true
+
+					if game:GetService("Players").LocalPlayer.Character:FindFirstChild("Animate") then
+						if game:GetService("Players").LocalPlayer.Character.Animate:FindFirstChild("fall") then
+							game:GetService("Players").LocalPlayer.Character.Animate.fall:Destroy()
+						end
+					end
+
+					if not game:GetService("Players").LocalPlayer.Character:FindFirstChild("ClimbAnim") then
+						local a = Instance.new("Animation")
+						a.AnimationId = "rbxassetid://180436334"
+						a.Name = "ClimbAnim"
+						a.Parent = game:GetService("Players").LocalPlayer.Character
+					end
+
+					local playing = false
+					for _, track in ipairs(game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):GetPlayingAnimationTracks()) do
+						if track.Animation.AnimationId == "rbxassetid://180436334" then
+							playing = true
+						end
+						if track.Animation.AnimationId == "rbxassetid://180436117" then
+							track:Stop()
+						end
+					end
+
+					if not playing then
+						game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):LoadAnimation(
+							game:GetService("Players").LocalPlayer.Character:FindFirstChild("ClimbAnim")
+						):Play()
+					end
+				end
+			end
+
+			if not climbing then
+				for _, track in ipairs(game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):GetPlayingAnimationTracks()) do
+					if track.Animation.AnimationId == "rbxassetid://180436334" then
+						track:Stop()
+					end
+				end
+			end
+		end)
+	end
+end)
+
+funtab:Button("Invade Domain (Look At Domain.)", function()
+game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame+=workspace.CurrentCamera.CFrame.LookVector*10
+end)
+
+
+
+funtab:Button("Call Train", function()
+local player = game:GetService("Players").LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+hrp:SetAttribute("ReturnPosition", hrp.Position)
+
+local button = workspace:WaitForChild("Map"):WaitForChild("Destructible"):WaitForChild("Model")
+	:WaitForChild("StationControl"):WaitForChild("ButtonTrain"):WaitForChild("Button")
+
+hrp.CFrame = button.CFrame + Vector3.new(0, 3, 0)
+
+task.wait(0.1)
+
+local prompt = button:FindFirstChildWhichIsA("ProximityPrompt")
+if prompt then
+	prompt.HoldDuration = 0
+	fireproximityprompt(prompt)
+end
+
+task.wait(1)
+
+local returnPos = hrp:GetAttribute("ReturnPosition")
+if returnPos then
+	hrp.CFrame = CFrame.new(returnPos)
+end
+end)
+
+local antiDomainEnabled = false
+local activeTarget = nil
+local lerpStart = nil
+local lerpEnd = nil
+local lerpTime = 0.8
+local lerpProgress = 0
+
+local animationIds = {
+	"rbxassetid://132725601768618",
+	"rbxassetid://118861398234801",
+	"rbxassetid://73048386765082",
+	"rbxassetid://80922461169812",
+	"rbxassetid://121984128639453",
+	"rbxassetid://121984128639453",
+	"rbxassetid://125335594549446",
+	"rbxassetid://83241775239139"
+}
+
+antitab:Button("Anti-Domain", function()
+	antiDomainEnabled = not antiDomainEnabled
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Anti-Domain",
+		Text = antiDomainEnabled and "Enabled." or "Disabled.",
+		Duration = 2
+	})
+end)
+
+local player = game:GetService("Players").LocalPlayer
+local runService = game:GetService("RunService")
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+player.CharacterAdded:Connect(function(c)
+	char = c
+	hrp = c:WaitForChild("HumanoidRootPart")
+end)
+
+local function isAnimationPlaying(humanoid)
+	for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+		for _, id in ipairs(animationIds) do
+			if track.Animation and track.Animation.AnimationId == id then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+runService.RenderStepped:Connect(function(dt)
+	if not antiDomainEnabled or not char or not hrp then return end
+
+	if activeTarget and lerpProgress < lerpTime then
+		lerpProgress += dt
+		local alpha = math.clamp(lerpProgress / lerpTime, 0, 1)
+		local targetHRP = activeTarget:FindFirstChild("HumanoidRootPart")
+		if targetHRP then
+			local startCF = CFrame.new(lerpStart, lerpStart + hrp.CFrame.LookVector)
+			local endCF = CFrame.new(lerpEnd, lerpEnd + hrp.CFrame.LookVector)
+			hrp.CFrame = startCF:Lerp(endCF, alpha)
+		end
+		return
+	end
+
+	if activeTarget then
+		local targetHRP = activeTarget:FindFirstChild("HumanoidRootPart")
+		if not targetHRP or (hrp.Position - targetHRP.Position).Magnitude > 75 then
+			activeTarget = nil
+			lerpStart = nil
+			lerpEnd = nil
+			lerpProgress = 0
+		end
+	end
+
+	for _, otherPlayer in ipairs(game:GetService("Players"):GetPlayers()) do
+		if otherPlayer ~= player then
+			local otherChar = otherPlayer.Character
+			local otherHRP = otherChar and otherChar:FindFirstChild("HumanoidRootPart")
+			local otherHum = otherChar and otherChar:FindFirstChildOfClass("Humanoid")
+
+			if otherHRP and otherHum then
+				local dist = (hrp.Position - otherHRP.Position).Magnitude
+				if dist <= 50 and isAnimationPlaying(otherHum) then
+					local direction = (hrp.Position - otherHRP.Position).Unit
+					local escapePos = otherHRP.Position + direction * 75
+
+					activeTarget = otherChar
+					lerpStart = hrp.Position
+					lerpEnd = escapePos
+					lerpProgress = 0
+					break
+				end
+			end
+		end
+	end
+end)
+
+autotab:Button("Black Flash", function()
+
+end)
+
+local itemesp = false
+
+funtab:Button("Item ESP", function()
+	itemesp = not itemesp
+
+	for _, obj in ipairs(workspace.Items:GetDescendants()) do
+		if obj:IsA("BasePart") then
+			local existing = obj:FindFirstChild("ItemESPHighlight")
+			if itemesp then
+				if not existing then
+					local hl = Instance.new("Highlight")
+					hl.Name = "ItemESPHighlight"
+					hl.FillColor = Color3.fromRGB(255, 0, 0)
+					hl.FillTransparency = 0.5
+					hl.OutlineTransparency = 1
+					hl.Adornee = obj
+					hl.Parent = obj
+				end
+			else
+				if existing then
+					existing:Destroy()
+				end
+			end
+		end
+	end
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Item ESP",
+		Text = itemesp and "Enabled." or "Disabled.",
+		Duration = 2
+	})
+end)
+
+misctab:Button("Infinite Yield", function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Shutdown Game", function()
+	game:Shutdown()
+end)
+
+misctab:Button("Rejoin Server", function()
+	TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
+end)
+
+misctab:Button("Switch Servers", function()
+	local servers = {}
+	local success, req = pcall(function()
+		return game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+	end)
+	if success then
+		local body = HttpService:JSONDecode(req)
+		if body and body.data then
+			for _, v in next, body.data do
+				if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
+					table.insert(servers, 1, v.id)
+				end
+			end
+		end
+	end
+	if #servers > 0 then
+		TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], player)
+	end
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+	StarterGui:SetCore("SendNotification", {
+		Title = "Discord Username",
+		Text = "Copied to your clipboard!",
+		Duration = 3,
+		Button1 = "alright fella",
+	})
+	setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+	StarterGui:SetCore("SendNotification", {
+		Title = "Discord Invite",
+		Text = "Copied to your clipboard!",
+		Duration = 3,
+		Button1 = "alright fella",
+	})
+	setclipboard("https://discord.gg/8stFYxJv4R")
+end)
