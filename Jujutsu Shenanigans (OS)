@@ -147,26 +147,30 @@ end)
 
 getgenv().lastJumpSet = nil
 
-maintab:Slider("Player Jump", 10, 50, 200, function(v)
+maintab:Slider("Player Jump", 10, 50, 300, function(v)
 	getgenv().lastJumpSet = v
-
-	local player = game:GetService("Players").LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid")
-
-	humanoid.JumpPower = getgenv().lastJumpSet
 end)
 
-game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(c)
-	c:WaitForChild("Humanoid"):GetPropertyChangedSignal("Parent"):Connect(function()
-		if getgenv().lastJumpSet then
-			c:FindFirstChildOfClass("Humanoid").JumpPower = getgenv().lastJumpSet
+local player = game:GetService("Players").LocalPlayer
+
+local function hookJump(char)
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	local hum = char:WaitForChild("Humanoid")
+
+	hum.StateChanged:Connect(function(old, new)
+		if new == Enum.HumanoidStateType.Jumping and getgenv().lastJumpSet then
+			task.defer(function()
+				hrp.Velocity = Vector3.new(0, getgenv().lastJumpSet, 0)
+			end)
 		end
 	end)
-	if getgenv().lastJumpSet then
-		c:FindFirstChildOfClass("Humanoid").JumpPower = getgenv().lastJumpSet
-	end
-end)
+end
+
+if player.Character then
+	hookJump(player.Character)
+end
+
+player.CharacterAdded:Connect(hookJump)
 
 local flightEnabled = false
 local flightLoop = nil
@@ -546,10 +550,6 @@ runService.RenderStepped:Connect(function(dt)
 			end
 		end
 	end
-end)
-
-autotab:Button("Black Flash", function()
-
 end)
 
 local itemesp = false
