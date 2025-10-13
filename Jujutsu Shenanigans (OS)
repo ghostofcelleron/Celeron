@@ -281,6 +281,61 @@ maintab:Button("Flight", function()
 	end
 end)
 
+local lockOnEnabled = false
+local lockedTarget = nil
+local inputService = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local camera = workspace.CurrentCamera
+local player = game:GetService("Players").LocalPlayer
+
+maintab:Button("Lock On", function()
+	lockOnEnabled = not lockOnEnabled
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Lock On",
+		Text = lockOnEnabled and "Enabled." or "Disabled.",
+		Duration = 2
+	})
+
+	if lockOnEnabled then
+		inputService.InputBegan:Connect(function(input, gp)
+			if gp then return end
+			if input.UserInputType == Enum.UserInputType.MouseButton2 then
+				if lockedTarget then
+					lockedTarget = nil
+				else
+					local char = player.Character
+					local hrp = char and char:FindFirstChild("HumanoidRootPart")
+					if not hrp then return end
+
+					local closest = nil
+					local shortest = math.huge
+
+					for _, other in ipairs(game:GetService("Players"):GetPlayers()) do
+						if other ~= player and other.Character and other.Character:FindFirstChild("HumanoidRootPart") then
+							local dist = (hrp.Position - other.Character.HumanoidRootPart.Position).Magnitude
+							if dist < shortest then
+								shortest = dist
+								closest = other
+							end
+						end
+					end
+
+					if closest then
+						lockedTarget = closest.Character:FindFirstChild("HumanoidRootPart")
+					end
+				end
+			end
+		end)
+
+		runService.RenderStepped:Connect(function()
+			if lockedTarget then
+				camera.CFrame = CFrame.new(camera.CFrame.Position, lockedTarget.Position)
+			end
+		end)
+	end
+end)
+
 funtab:Button("Climb Walls", function()
 	getgenv().climbWallsEnabled = not getgenv().climbWallsEnabled
 
