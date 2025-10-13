@@ -7,6 +7,7 @@ local slapbattles = {6403373529,124596094333302,9015014224,11520107397,943115661
 local azurelatch = {94647229517154,85946466968831}
 local fleethefacility = {893973440}
 local towerofhell = {1962086868,3582763398}
+local jjs = {9391468976,17016840407}
 local saktk = {155382109}
 local grg = {4598019433}
 
@@ -112,6 +113,8 @@ local function loadScripts()
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/SurviveAndKillTheKillers%20(OS)"))()
 		elseif table.find(grg, placeId) then
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Generic%20Roleplay%20Game%20(OS)"))()
+		elseif table.find(jjs, placeId) then
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Jujutsu%20Shenanigans%20(OS)",true))()
 		end
 
 		if script:IsA("LocalScript") then
