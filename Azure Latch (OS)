@@ -837,6 +837,44 @@ if not _G._keybindSetup then
 	end)
 end
 
+autoDefensiveEnabled = false
+lastFire = 0
+
+autotab:Button("Auto Defensive Stance", function()
+	autoDefensiveEnabled = not autoDefensiveEnabled
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Auto Defensive Stance",
+		Text = autoDefensiveEnabled and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+	if not autoDefensiveEnabled then return end
+
+	local plr = game:GetService("Players").LocalPlayer
+	if plr:GetAttribute("style") ~= "donlorenzo" then return end
+
+	local char = plr.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local hasBall = char and char:FindFirstChild("Ball")
+
+	if not hasBall and hrp then
+		local ball = game.Workspace.Terrain:FindFirstChild("Ball")
+		if ball and (ball.Position - hrp.Position).Magnitude <= 60 then
+			local now = tick()
+			if now - lastFire > 0.2 then
+				lastFire = now
+				if char:FindFirstChild("Move") then
+					char.Move:Fire("Three")
+				end
+			end
+		end
+	end
+end)
+
 maintab:Button("Auto QuickTimeEvent", function()
     local runService = game:GetService("RunService")
     local players = game:GetService("Players")
