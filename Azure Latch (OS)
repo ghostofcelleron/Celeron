@@ -840,7 +840,7 @@ end
 autoDefensiveEnabled = false
 lastFire = 0
 
-autotab:Button("Auto Defensive Stance", function()
+maintab2:Button("Auto Defensive Stance", function()
 	autoDefensiveEnabled = not autoDefensiveEnabled
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
