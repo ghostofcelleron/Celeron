@@ -29,31 +29,52 @@ local maintab = win:Tab("Main")
 local antitab = win:Tab("Protection")
 local funtab = win:Tab("Fun")
 local autotab = win:Tab("Auto")
+local qoltab = win:Tab("QOL")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
 antitab:Label("Protection Features.")
 funtab:Label("Fun Features.")
+qoltab:Label("Quality Of Life Features, No Advantages.")
+autotab:Label("Ping Must Be Around 80, Non-Adaptive.")
 misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
-misctab:Textbox("Invite Player (Better Player Finder, Enter Exact Username.)", function(v)
+loopId = 0
+
+qoltab:Textbox("Invite Player (Duel Queue, Only Shows Entered Username.)", function(v)
+	loopId += 1
+	local currentLoop = loopId
+
 	task.spawn(function()
-		while true do
+		while currentLoop == loopId do
 			local gui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
 			local container = gui and gui:FindFirstChild("Ranked") and gui.Ranked:FindFirstChild("Invite") and gui.Ranked.Invite:FindFirstChild("Players")
 
 			if container then
-				for _, frame in ipairs(container:GetChildren()) do
-					if frame:IsA("Frame") and not string.find(string.lower(frame.Name), string.lower(v)) then
-						frame:Destroy()
+				local children = container:GetChildren()
+
+				for i = 1, #children do
+					local frame = children[i]
+					if frame:IsA("Frame") then
+						frame.Visible = true
 					end
+				end
+
+				for i = 1, #children do
+					task.defer(function()
+						if currentLoop ~= loopId then return end
+						local frame = children[i]
+						if frame:IsA("Frame") and not string.find(string.lower(frame.Name), string.lower(v)) then
+							frame.Visible = false
+						end
+					end)
 				end
 			end
 
-			task.wait()
+			game:GetService("RunService").RenderStepped:Wait()
 		end
 	end)
 end)
@@ -353,6 +374,72 @@ maintab:Button("Lock On", function()
 	end
 end)
 
+local inputService = game:GetService("UserInputService")
+local vim = game:GetService("VirtualInputManager")
+local starterGui = game:GetService("StarterGui")
+
+autoBlackFlashEnabled = false
+currentConnection = nil
+pendingTask = nil
+
+function cancelPending()
+	if pendingTask and typeof(pendingTask) == "RBXScriptConnection" then
+		pcall(function() pendingTask:Disconnect() end)
+	end
+	pendingTask = nil
+end
+
+function createNewConnection()
+	if currentConnection then
+		currentConnection:Disconnect()
+		currentConnection = nil
+	end
+
+	currentConnection = inputService.InputBegan:Connect(function(input, gp)
+		if gp or not autoBlackFlashEnabled then return end
+		if input.KeyCode == Enum.KeyCode.X then
+			currentConnection:Disconnect()
+			currentConnection = nil
+
+			vim:SendKeyEvent(true, Enum.KeyCode.Three, false, game)
+			vim:SendKeyEvent(false, Enum.KeyCode.Three, false, game)
+
+			pendingTask = task.delay(0.27, function()
+				if autoBlackFlashEnabled then
+					vim:SendKeyEvent(true, Enum.KeyCode.Three, false, game)
+					vim:SendKeyEvent(false, Enum.KeyCode.Three, false, game)
+				end
+			end)
+
+			task.delay(0.3, function()
+				if autoBlackFlashEnabled then
+					createNewConnection()
+				end
+			end)
+		end
+	end)
+end
+
+autotab:Button("Black Flash", function()
+	autoBlackFlashEnabled = not autoBlackFlashEnabled
+
+	starterGui:SetCore("SendNotification", {
+		Title = "Auto Black Flash",
+		Text = autoBlackFlashEnabled and "Enabled." or "Disabled.",
+		Duration = 2
+	})
+
+	if autoBlackFlashEnabled then
+		createNewConnection()
+	else
+		cancelPending()
+		if currentConnection then
+			currentConnection:Disconnect()
+			currentConnection = nil
+		end
+	end
+end)
+
 funtab:Button("Climb Walls", function()
 	getgenv().climbWallsEnabled = not getgenv().climbWallsEnabled
 
@@ -466,6 +553,57 @@ local returnPos = hrp:GetAttribute("ReturnPosition")
 if returnPos then
 	hrp.CFrame = CFrame.new(returnPos)
 end
+end)
+
+escapeEnabled = false
+escapeConnection = nil
+
+antitab:Button("Anti-Damage", function()
+	escapeEnabled = not escapeEnabled
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Anti-Damage",
+		Text = escapeEnabled and "Enabled." or "Disabled.",
+		Duration = 2
+	})
+
+	if escapeEnabled then
+		if escapeConnection then escapeConnection:Disconnect() end
+
+		lastHealth = game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health
+
+		escapeConnection = game:GetService("RunService").Heartbeat:Connect(function()
+			char = game:GetService("Players").LocalPlayer.Character
+			hum = char and char:FindFirstChildOfClass("Humanoid")
+			hrp = char and char:FindFirstChild("HumanoidRootPart")
+			if not hum or not hrp then return end
+
+			if hum.Health < lastHealth then
+				closest = nil
+				shortest = math.huge
+				for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+					if p ~= game:GetService("Players").LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+						d = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
+						if d < shortest then
+							shortest = d
+							closest = p
+						end
+					end
+				end
+				if closest and closest.Character and closest.Character:FindFirstChild("HumanoidRootPart") then
+					dir = (hrp.Position - closest.Character.HumanoidRootPart.Position).Unit
+					hrp.CFrame = CFrame.new(hrp.Position + dir * 10)
+				end
+			end
+
+			lastHealth = hum.Health
+		end)
+	else
+		if escapeConnection then
+			escapeConnection:Disconnect()
+			escapeConnection = nil
+		end
+	end
 end)
 
 local antiDomainEnabled = false
