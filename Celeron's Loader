@@ -10,6 +10,7 @@ local towerofhell = {1962086868,3582763398}
 local jjs = {9391468976,17016840407}
 local saktk = {155382109}
 local grg = {4598019433}
+local bbz = {130739873848552,95656979989750}
 
 local loaderGui = Instance.new("ScreenGui")
 loaderGui.Name = "gui"
@@ -97,7 +98,7 @@ local function fadeOut(callback)
 end
 
 local function loadScripts()
-	animateBar(2.25)
+	animateBar(1.75)
 	fadeOut(function()
 		local placeId = game.PlaceId
 
@@ -115,6 +116,8 @@ local function loadScripts()
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Generic%20Roleplay%20Game%20(OS)"))()
 		elseif table.find(jjs, placeId) then
 		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Jujutsu%20Shenanigans%20(OS)",true))()
+		elseif table.find(bbz, placeId) then
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Basketball%3A%20Zero%20(OS)",true))()
 		end
 
 		if script:IsA("LocalScript") then
