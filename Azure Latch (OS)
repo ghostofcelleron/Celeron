@@ -837,46 +837,6 @@ if not _G._keybindSetup then
 	end)
 end
 
-local plr = game.Players.LocalPlayer
-local style = plr:GetAttribute("style")
-local vim = game:GetService("VirtualInputManager")
-local runService = game:GetService("RunService")
-local starterGui = game:GetService("StarterGui")
-
-if style == "donlorenzo" then
-	autoDefensiveEnabled = false
-	lastFire = 0
-
-	autotab:Button("Auto Defensive Stance", function()
-		autoDefensiveEnabled = not autoDefensiveEnabled
-
-		starterGui:SetCore("SendNotification", {
-			Title = "Auto Defensive Stance",
-			Text = autoDefensiveEnabled and "Enabled." or "Disabled.",
-			Duration = 3
-		})
-	end)
-
-	runService.RenderStepped:Connect(function()
-		if not autoDefensiveEnabled then return end
-
-		local char = plr.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		local hasBall = char and char:FindFirstChild("Ball")
-
-		if not hasBall and hrp then
-			local ball = game.Workspace.Terrain:FindFirstChild("Ball")
-			if ball and (ball.Position - hrp.Position).Magnitude <= 60 then
-				if tick() - lastFire > 0.2 then
-					lastFire = tick()
-					vim:SendKeyEvent(true, Enum.KeyCode.Four, false, game)
-					vim:SendKeyEvent(false, Enum.KeyCode.Four, false, game)
-				end
-			end
-		end
-	end)
-end
-
 maintab:Button("Auto QuickTimeEvent", function()
     local runService = game:GetService("RunService")
     local players = game:GetService("Players")
