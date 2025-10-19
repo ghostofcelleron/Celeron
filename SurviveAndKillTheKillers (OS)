@@ -240,60 +240,73 @@ juggtab:Textbox("Gun Grabber (MUST BE SPAWNED)", function(v)
 	runGunSequence(gunPart)
 end)
 
-juggtab:Button("Aimlock (HOLD RIGHT CLICK)", function()
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local P = game:GetService("Players")
+local R = game:GetService("RunService")
+local S = game:GetService("StarterGui")
+local LP = P.LocalPlayer
+local C = workspace.CurrentCamera
 
-local localPlayer = Players.LocalPlayer
-local camera = workspace.CurrentCamera
-local mouse = localPlayer:GetMouse()
+getgenv().AimlockEnabled = getgenv().AimlockEnabled or false
+local conn, tgt
 
-local isLocking = false
-local targetCharacter = nil
-
-local function getTarget()
-	local ignoreList = {localPlayer.Character}
-	local unitRay = camera:ScreenPointToRay(mouse.X, mouse.Y)
-	local ray = Ray.new(unitRay.Origin, unitRay.Direction * 500)
-	local part = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
-	if part then
-		local model = part:FindFirstAncestorOfClass("Model")
-		if model and model ~= localPlayer.Character and Players:GetPlayerFromCharacter(model) then
-			return model
-		end
-	end
-	return nil
+local function notify(t)
+    pcall(function()
+        S:SetCore("SendNotification", {Title="Aimlock",Text=t,Duration=2})
+    end)
 end
 
-local function updateAim()
-	if not isLocking or not targetCharacter then return end
-	local targetPart = targetCharacter:FindFirstChild("UpperTorso") or targetCharacter:FindFirstChild("HumanoidRootPart")
-	if not targetPart then return end
-	local targetPos = targetPart.Position
-	local camPos = camera.CFrame.Position
-	local newLookVector = (targetPos - camPos).Unit
-	camera.CFrame = CFrame.new(camPos, camPos + newLookVector)
+local function nearest()
+    local k = workspace:FindFirstChild("Killers")
+    if not k then return end
+    local c = LP.Character
+    if not c or not c:FindFirstChild("HumanoidRootPart") then return end
+    local p, d, m = c.HumanoidRootPart.Position, math.huge
+    for _, v in ipairs(k:GetChildren()) do
+        if v:IsA("Model") then
+            local h = v:FindFirstChildOfClass("Humanoid")
+            local r = v:FindFirstChild("HumanoidRootPart") or v:FindFirstChild("UpperTorso") or v.PrimaryPart
+            if h and r then
+                local dist = (r.Position - p).Magnitude
+                if dist < d then d, m = dist, v end
+            end
+        end
+    end
+    return m
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if input.UserInputType == Enum.UserInputType.MouseButton2 then
-		local target = getTarget()
-		if target then
-			targetCharacter = target
-			isLocking = true
-		end
-	end
-end)
+local function aim()
+    if not getgenv().AimlockEnabled or not tgt then return end
+    local part = tgt:FindFirstChild("HumanoidRootPart") or tgt:FindFirstChild("UpperTorso") or tgt.PrimaryPart
+    if not part then return end
+    local tp, cp = part.Position, C.CFrame.Position
+    C.CFrame = CFrame.new(cp, cp + (tp - cp).Unit)
+end
 
-UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton2 then
-		isLocking = false
-		targetCharacter = nil
-	end
-end)
+local function toggle()
+    getgenv().AimlockEnabled = not getgenv().AimlockEnabled
+    if getgenv().AimlockEnabled then
+        tgt = nearest()
+        if tgt then
+            if not conn then conn = R.RenderStepped:Connect(aim) end
+            notify("Enabled.")
+        else
+            getgenv().AimlockEnabled = false
+            notify("No killer found.")
+        end
+    else
+        if conn then conn:Disconnect() conn = nil end
+        tgt = nil
+        notify("Disabled.")
+    end
+end
 
-RunService.RenderStepped:Connect(updateAim)
+juggtab:Button("Aimlock", toggle)
+
+game:GetService("UserInputService").InputBegan:Connect(function(i,g)
+    if g then return end
+    if i.UserInputType == Enum.UserInputType.MouseButton2 then
+        toggle()
+    end
 end)
 
 juggtab:Button("Show Current Weapons", function()
