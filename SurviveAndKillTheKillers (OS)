@@ -302,13 +302,6 @@ end
 
 juggtab:Button("Aimlock", toggle)
 
-game:GetService("UserInputService").InputBegan:Connect(function(i,g)
-    if g then return end
-    if i.UserInputType == Enum.UserInputType.MouseButton2 then
-        toggle()
-    end
-end)
-
 juggtab:Button("Show Current Weapons", function()
 local StarterGui = game:GetService("StarterGui")
 local Workspace = game:GetService("Workspace")
