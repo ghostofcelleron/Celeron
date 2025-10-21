@@ -658,33 +658,34 @@ end)
 maintab2:Label("Ball Magnet: Allows You To Grab The Ball From Further Away.")
 
 maintab2:Button("Ball Magnet", function()
-	local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-	local runService = game:GetService("RunService")
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
 
-	getgenv().ballMagnetActive = not getgenv().ballMagnetActive
+getgenv().ballMagnetActive = not getgenv().ballMagnetActive
 
-	game.StarterGui:SetCore("SendNotification", {
-		Title = "Ball Magnet",
-		Text = getgenv().ballMagnetActive and "Enabled." or "Disabled.",
-		Duration = 1
-	})
+game.StarterGui:SetCore("SendNotification", {
+	Title = "Ball Magnet",
+	Text = getgenv().ballMagnetActive and "Enabled." or "Disabled.",
+	Duration = 1
+})
 
-	if getgenv().ballMagnetActive then
-		if getgenv().ballMagnetConnection then
-			getgenv().ballMagnetConnection:Disconnect()
-		end
+if getgenv().ballMagnetActive then
+	if getgenv().ballMagnetConnection then
+		getgenv().ballMagnetConnection:Disconnect()
+	end
 
-		getgenv().ballMagnetConnection = runService.RenderStepped:Connect(function()
+	getgenv().ballMagnetConnection = task.spawn(function()
+		while getgenv().ballMagnetActive do
 			pcall(function()
 				remote:FireServer(buffer.fromstring("\021"))
 			end)
-		end)
-	else
-		if getgenv().ballMagnetConnection then
-			getgenv().ballMagnetConnection:Disconnect()
-			getgenv().ballMagnetConnection = nil
+			task.wait(0.5)
 		end
+	end)
+else
+	if getgenv().ballMagnetConnection then
+		getgenv().ballMagnetConnection = nil
 	end
+end
 end)
 
 maintab2:Button("Bind Magnet (M2 BIND)", function()
