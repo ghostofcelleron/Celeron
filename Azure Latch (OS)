@@ -514,7 +514,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\021\001"),
+						buffer.fromstring("\022\001"),
 							{
 								{
 								"tackle"
@@ -565,7 +565,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\021\001"),
+						buffer.fromstring("\022\001"),
 						{
 							{
 								"tackle"
@@ -676,7 +676,7 @@ maintab2:Button("Ball Magnet", function()
 
 		getgenv().ballMagnetConnection = runService.RenderStepped:Connect(function()
 			pcall(function()
-				remote:FireServer(buffer.fromstring("\020"))
+				remote:FireServer(buffer.fromstring("\021"))
 			end)
 		end)
 	else
@@ -694,7 +694,7 @@ local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliabl
 userInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        remote:FireServer(buffer.fromstring("\020"))
+        remote:FireServer(buffer.fromstring("\021"))
     end
 end)
 end)
@@ -772,12 +772,12 @@ RunService.Stepped:Connect(function()
 										local args
 										if skillName == "dribble" then
 											args = {
-												buffer.fromstring("\021\001"),
+												buffer.fromstring("\022\001"),
 												{ { skillName, false } }
 											}
 										else
 											args = {
-												buffer.fromstring("\021\001"),
+												buffer.fromstring("\022\001"),
 												{ { skillName } }
 											}
 										end
@@ -932,7 +932,7 @@ local con = game["Run Service"].RenderStepped:Connect(function()
             end
 
             local args = {
-                buffer.fromstring("\021\001"),
+                buffer.fromstring("\022\001"),
                 {
                     { "tackle" }
                 }
