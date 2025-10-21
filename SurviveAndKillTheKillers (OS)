@@ -1,68 +1,78 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local StarterGui = game:GetService("StarterGui")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local classic = 2092166489
+local juggernaut = 4678052190
+local endless = 2675280735
+
+if game.PlaceId == classic then
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
-    Name = "Celeron's GUI (SAKTK)",
+    Name = "Celeron's GUI (SAKTK: Classic)",
     ThemeColor = Color3.fromRGB(20, 20, 20),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne
 })
 
-local classtab = win:Tab("Classic")
-local juggtab = win:Tab("Juggernaut")
-local endtab = win:Tab("Endless")
+local maintab = win:Tab("Main")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
-classtab:Label("Script Made By Celeron + Daffy!")
-juggtab:Label("Anti-Cheat Bypassed By Celeron!")
-endtab:Label("Endless Scripts By Celeron!")
+maintab:Label("Script Made By Celeron + Daffy!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
-local function applyEmulatedSpeed(speed)
-	local player = game.Players.LocalPlayer
+local runService = game:GetService("RunService")
+local players = game:GetService("Players")
+local player = players.LocalPlayer
+
+local currentConnection = nil
+local deathConnection = nil
+
+function applyEmulatedSpeed(speed)
+	if currentConnection then currentConnection:Disconnect() end
+	if deathConnection then deathConnection:Disconnect() end
+
 	local character = player.Character or player.CharacterAdded:Wait()
 	local humanoid = character:WaitForChild("Humanoid")
 	local rootPart = character:WaitForChild("HumanoidRootPart")
 
-	for _, force in pairs(rootPart:GetChildren()) do
-		if force:IsA("BodyVelocity") or force:IsA("VectorForce") then
-			force:Destroy()
-		end
-	end
-
-	local bodyVelocity = Instance.new("BodyVelocity")
-	bodyVelocity.MaxForce = Vector3.new(1e5, 0, 1e5)
-	bodyVelocity.P = 1250
-	bodyVelocity.Velocity = Vector3.zero
-	bodyVelocity.Name = "EmulatedWalkSpeed"
-	bodyVelocity.Parent = rootPart
-
-	local runService = game:GetService("RunService")
-	local connection
-
-	connection = runService.RenderStepped:Connect(function()
-		if not character or not character.Parent then
-			connection:Disconnect()
+	currentConnection = runService.RenderStepped:Connect(function()
+		if not character or not character.Parent or humanoid.Health <= 0 then
+			if currentConnection then currentConnection:Disconnect() end
+			currentConnection = nil
 			return
 		end
-		bodyVelocity.Velocity = humanoid.MoveDirection * speed
+
+		local moveDir = humanoid.MoveDirection
+		if moveDir.Magnitude > 0 then
+			local horizontalVelocity = Vector3.new(moveDir.X, 0, moveDir.Z).Unit * speed
+			rootPart.Velocity = Vector3.new(horizontalVelocity.X, rootPart.Velocity.Y, horizontalVelocity.Z)
+		end
+	end)
+
+	deathConnection = humanoid.Died:Connect(function()
+		if currentConnection then currentConnection:Disconnect() end
+		currentConnection = nil
 	end)
 end
 
-classtab:Textbox("Player Speed (Velocity)", function(v)
-	local speed = tonumber(v)
+maintab:Textbox("Player Speed", function(v)
+	speed = tonumber(v)
 	if not speed then return end
 
 	applyEmulatedSpeed(speed)
 
-	game.Players.LocalPlayer.CharacterAdded:Connect(function()
+	player.CharacterAdded:Connect(function()
 		task.wait(0.25)
 		applyEmulatedSpeed(speed)
 	end)
 end)
 
-classtab:Textbox("Gun Grabber", function(v)
+maintab:Textbox("Gun Grabber", function(v)
 	local Players = game:GetService("Players")
 	local VirtualInputManager = game:GetService("VirtualInputManager")
 	local Workspace = game:GetService("Workspace")
@@ -113,7 +123,7 @@ classtab:Textbox("Gun Grabber", function(v)
 	runGunSequence(gunPart)
 end)
 
-classtab:Button("Kill All NPCs", function()
+maintab:Button("Kill All NPCs", function()
 local Workspace = game:GetService("Workspace")
 
 local killersFolder = Workspace:FindFirstChild("Killers")
@@ -126,7 +136,7 @@ if killersFolder then
 end
 end)
 
-classtab:Button("Killer ESP", function()
+maintab:Button("Killer ESP", function()
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 
@@ -157,7 +167,90 @@ task.spawn(function()
 end)
 end)
 
-classtab:Button("Remove Doors (Client)", function()
+local runService = game:GetService("RunService")
+local players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local player = players.LocalPlayer
+
+local model = workspace:WaitForChild("AREA51"):WaitForChild("PlantRoom"):WaitForChild("Box of Shells")
+local box = model:WaitForChild("Box")
+local originalCFrame = box.CFrame
+local loopConnection
+local infiniteAmmoEnabled = false
+
+local function notifyy(title, text)
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = title,
+			Text = text,
+			Duration = 3
+		})
+	end)
+end
+
+local function ghostifyModel()
+	for _, item in ipairs(model:GetDescendants()) do
+		if item:IsA("BasePart") then
+			item.Transparency = 1
+			item.CanCollide = false
+		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
+			item.Transparency = 1
+		end
+	end
+end
+
+local function enableInfiniteAmmo()
+	infiniteAmmoEnabled = true
+	notifyy("Infinite Ammo", "Enabled.")
+	ghostifyModel()
+	box.Anchored = true
+	box.CanCollide = false
+
+	local toggle = false
+	local lastToggle = 0
+
+	loopConnection = runService.RenderStepped:Connect(function(dt)
+		local char = player.Character
+		if not char then return end
+
+		local root = char:FindFirstChild("HumanoidRootPart")
+		if not root then return end
+
+		lastToggle += dt
+		if lastToggle >= 0.5 then
+			lastToggle = 0
+			toggle = not toggle
+
+			if toggle then
+				local offset = Vector3.new(0, -(root.Size.Y / 2 + box.Size.Y / 2 + 0.1), 0)
+				local position = root.Position + offset
+				box.CFrame = CFrame.new(position)
+			else
+				box.CFrame = originalCFrame
+			end
+		end
+	end)
+end
+
+local function disableInfiniteAmmo()
+	infiniteAmmoEnabled = false
+	notifyy("Infinite Ammo", "Disabled.")
+	if loopConnection then
+		loopConnection:Disconnect()
+		loopConnection = nil
+	end
+	box.CFrame = originalCFrame
+end
+
+maintab:Button("Infinite Ammo", function()
+	if infiniteAmmoEnabled then
+		disableInfiniteAmmo()
+	else
+		enableInfiniteAmmo()
+	end
+end)
+
+maintab:Button("Remove Doors (Client)", function()
 for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
     if obj.Name == "Door" then
         obj:Destroy()
@@ -165,7 +258,104 @@ for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
 end
 end)
 
-juggtab:Textbox("Player Speed (Velocity)", function(v)
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Switch Servers", function()
+    local servers = {}
+    local req = game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+    local body = HttpService:JSONDecode(req)
+
+    if body and body.data then
+        for i, v in next, body.data do
+            if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
+                table.insert(servers, 1, v.id)
+            end
+        end
+    end
+
+    if #servers > 0 then
+        TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], Players.LocalPlayer)
+end
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
+
+elseif game.PlaceId == endless then
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (SAKTK: Endless)",
+    ThemeColor = Color3.fromRGB(20, 20, 20),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+local runService = game:GetService("RunService")
+local players = game:GetService("Players")
+local player = players.LocalPlayer
+
+local currentConnection = nil
+
+function applyEmulatedSpeed(speed)
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+
+	if currentConnection then currentConnection:Disconnect() end
+
+	currentConnection = runService.RenderStepped:Connect(function(dt)
+		if not character or not character.Parent or humanoid.Health <= 0 then
+			currentConnection:Disconnect()
+			currentConnection = nil
+			return
+		end
+
+		local moveDir = humanoid.MoveDirection
+		if moveDir.Magnitude > 0 then
+			local horizontalVelocity = Vector3.new(moveDir.X, 0, moveDir.Z).Unit * speed
+			rootPart.Velocity = Vector3.new(horizontalVelocity.X, rootPart.Velocity.Y, horizontalVelocity.Z)
+		end
+	end)
+
+	humanoid.Died:Connect(function()
+		if currentConnection then currentConnection:Disconnect() end
+		currentConnection = nil
+	end)
+end
+
+maintab:Textbox("Player Speed", function(v)
 	local speed = tonumber(v)
 	if not speed then return end
 
@@ -177,7 +367,208 @@ juggtab:Textbox("Player Speed (Velocity)", function(v)
 	end)
 end)
 
-endtab:Textbox("Player Speed (Velocity)", function(v)
+local gunPositions = {
+	["raygun"] = Vector3.new(114, 335, 569),
+	["landmine"] = Vector3.new(243, 313, 332),
+	["mp5k"] = Vector3.new(232, 373, 47),
+	["awp"] = Vector3.new(466, 313, 756),
+	["m4a1"] = Vector3.new(-154, 303, 703),
+	["r870"] = Vector3.new(20, 292, 241),
+	["freezegun"] = Vector3.new(307, 333, 709),
+	["desert eagle"] = Vector3.new(171, 260, 406),
+	["m14"] = Vector3.new(184, 314, 379),
+	["mg42"] = Vector3.new(22, 313, 371),
+	["svd"] = Vector3.new(159, 333, 445),
+	["db shotgun"] = Vector3.new(106, 272, 101),
+	["energy can"] = Vector3.new(173, 333, 587),
+	["m16a2"] = Vector3.new(71, 282, 31),
+	["m1911"] = Vector3.new(340, 313, 370)
+}
+
+maintab:Textbox("Gun Grabber (Legit, Requires Points!)", function(v)
+	local Players = game:GetService("Players")
+	local VirtualInputManager = game:GetService("VirtualInputManager")
+	local Workspace = game:GetService("Workspace")
+
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+	local camera = Workspace.CurrentCamera
+
+	local gunOrigin = humanoidRootPart.Position
+
+	local function findGunModel(name)
+		local weapons = Workspace:FindFirstChild("Weapons")
+		if not weapons then return nil end
+		for _, child in ipairs(weapons:GetChildren()) do
+			if child:IsA("Model") and child.Name:lower() == name:lower() then
+				return child
+			end
+		end
+		return nil
+	end
+
+	local function getGunPart(model)
+		if not model then return nil end
+		for _, d in ipairs(model:GetDescendants()) do
+			if d:IsA("BasePart") then
+				return d
+			end
+		end
+		return nil
+	end
+
+	local function runGunSequence(gunPart, position)
+		if not gunPart then return end
+		humanoidRootPart.CFrame = CFrame.new(position)
+		camera.CFrame = CFrame.new(camera.CFrame.Position, gunPart.Position)
+		task.wait(0.1)
+		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+		task.wait(0.75)
+		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+		humanoidRootPart.CFrame = CFrame.new(gunOrigin)
+	end
+
+	local input = v:lower()
+	local gunModel = findGunModel(input)
+	local gunPart = getGunPart(gunModel)
+	local gunPos = gunPositions[input]
+
+	if gunModel and gunPart and gunPos then
+		runGunSequence(gunPart, gunPos)
+	else
+		warn("Gun \"" .. v .. "\" not found or missing position.")
+	end
+end)
+
+maintab:Button("Kill All NPCs", function()
+local Workspace = game:GetService("Workspace")
+
+local killersFolder = Workspace:FindFirstChild("Killers")
+if killersFolder then
+	for _, obj in ipairs(killersFolder:GetDescendants()) do
+		if obj:IsA("Humanoid") and obj.Health > 0 then
+			obj.Health = 0
+		end
+	end
+end
+end)
+
+maintab:Button("Enable Power", function()
+game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(127, 323, 599)
+game:GetService("Workspace").CurrentCamera.CFrame = CFrame.new(game:GetService("Workspace").CurrentCamera.CFrame.Position, game:GetService("Workspace").AREA51.ElectricityRoom.PowerManager.Interruptor.Base.Position)
+game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
+task.wait(3)
+game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
+game:GetService("Workspace").Doors.Horizontal.ElectricityRoom.Door.Door:Destroy()
+end)
+
+maintab:Button("Remove Doors (Client)", function()
+for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
+    if obj.Name == "Door" then
+        obj:Destroy()
+    end
+end
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Switch Servers", function()
+    local servers = {}
+    local req = game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+    local body = HttpService:JSONDecode(req)
+
+    if body and body.data then
+        for i, v in next, body.data do
+            if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
+                table.insert(servers, 1, v.id)
+            end
+        end
+    end
+
+    if #servers > 0 then
+        TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], Players.LocalPlayer)
+end
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
+
+elseif game.PlaceId == juggernaut then
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (SAKTK: Juggernaut)",
+    ThemeColor = Color3.fromRGB(20, 20, 20),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+local runService = game:GetService("RunService")
+local players = game:GetService("Players")
+local player = players.LocalPlayer
+
+local currentConnection = nil
+
+function applyEmulatedSpeed(speed)
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:WaitForChild("Humanoid")
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+
+	if currentConnection then currentConnection:Disconnect() end
+
+	currentConnection = runService.RenderStepped:Connect(function(dt)
+		if not character or not character.Parent or humanoid.Health <= 0 then
+			currentConnection:Disconnect()
+			currentConnection = nil
+			return
+		end
+
+		local moveDir = humanoid.MoveDirection
+		if moveDir.Magnitude > 0 then
+			local horizontalVelocity = Vector3.new(moveDir.X, 0, moveDir.Z).Unit * speed
+			rootPart.Velocity = Vector3.new(horizontalVelocity.X, rootPart.Velocity.Y, horizontalVelocity.Z)
+		end
+	end)
+
+	humanoid.Died:Connect(function()
+		if currentConnection then currentConnection:Disconnect() end
+		currentConnection = nil
+	end)
+end
+
+maintab:Textbox("Player Speed", function(v)
 	local speed = tonumber(v)
 	if not speed then return end
 
@@ -189,7 +580,180 @@ endtab:Textbox("Player Speed (Velocity)", function(v)
 	end)
 end)
 
-juggtab:Textbox("Gun Grabber (MUST BE SPAWNED)", function(v)
+maintab:Label("Juggernaut Aimlock.")
+players = game:GetService("Players")
+runService = game:GetService("RunService")
+input = game:GetService("UserInputService")
+gui = game:GetService("StarterGui")
+player = players.LocalPlayer
+camera = workspace.CurrentCamera
+
+getgenv().aimlockEnabled = false
+getgenv().bindEnabled = false
+
+aimConnection = nil
+target = nil
+bindConnection = nil
+
+function notifyy(text)
+	pcall(function()
+		gui:SetCore("SendNotification", {Title = "Aimlock", Text = text, Duration = 2})
+	end)
+end
+
+function getNearestTarget()
+	local killers = workspace:FindFirstChild("Killers")
+	if not killers then return end
+	local character = player.Character
+	if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+	local origin = character.HumanoidRootPart.Position
+	local closest = nil
+	local shortest = math.huge
+
+	for _, model in ipairs(killers:GetChildren()) do
+		if model:IsA("Model") and model.Name ~= "Zombie" then
+			local humanoid = model:FindFirstChildOfClass("Humanoid")
+			local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("UpperTorso") or model.PrimaryPart
+			if humanoid and root then
+				local distance = (root.Position - origin).Magnitude
+				if distance < shortest then
+					shortest = distance
+					closest = model
+				end
+			end
+		end
+	end
+	return closest
+end
+
+function aimAtTarget()
+	if not getgenv().aimlockEnabled or not target then return end
+	local part = target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("UpperTorso") or target.PrimaryPart
+	if not part then return end
+	local goal = part.Position
+	local origin = camera.CFrame.Position
+	camera.CFrame = CFrame.new(origin, origin + (goal - origin).Unit)
+end
+
+function toggleAimlock()
+	getgenv().aimlockEnabled = not getgenv().aimlockEnabled
+	if getgenv().aimlockEnabled then
+		target = getNearestTarget()
+		if target then
+			if not aimConnection then aimConnection = runService.RenderStepped:Connect(aimAtTarget) end
+			notifyy("Enabled.")
+		else
+			getgenv().aimlockEnabled = false
+			notifyy("Disabled.")
+		end
+	else
+		if aimConnection then aimConnection:Disconnect() aimConnection = nil end
+		target = nil
+		notifyy("Disabled.")
+	end
+end
+
+maintab:Button("Aimlock", function()
+	toggleAimlock()
+end)
+
+maintab:Button("Aimlock (Bind: M2)", function()
+	getgenv().bindEnabled = not getgenv().bindEnabled
+	if getgenv().bindEnabled then
+		if not bindConnection then
+			bindConnection = input.InputBegan:Connect(function(key, processed)
+				if processed then return end
+				if key.UserInputType == Enum.UserInputType.MouseButton2 then
+					toggleAimlock()
+				end
+			end)
+			notifyy("Keybind Enabled.")
+		end
+	else
+		if bindConnection then
+			bindConnection:Disconnect()
+			bindConnection = nil
+			notifyy("Keybind Disabled.")
+		end
+	end
+end)
+
+maintab:Label("Weapon Features.")
+
+maintab:Button("Show Current Weapons", function()
+local StarterGui = game:GetService("StarterGui")
+local Workspace = game:GetService("Workspace")
+
+local weaponsFolder = Workspace:FindFirstChild("Weapons")
+
+local gunNames = {}
+
+for _, obj in ipairs(weaponsFolder:GetChildren()) do
+	if obj:IsA("Model") then
+		table.insert(gunNames, obj.Name)
+	end
+end
+
+local finalText = #gunNames > 0 and table.concat(gunNames, ", ") or "No guns found."
+
+StarterGui:SetCore("SendNotification", {
+	Title = "Current Weapons";
+	Text = finalText;
+	Duration = 10;
+})
+end)
+
+maintab:Button("Weapon ESP", function()
+local weaponsFolder = workspace:FindFirstChild("Weapons")
+local player = game.Players.LocalPlayer
+if not weaponsFolder or not player.Character then return end
+
+local root = player.Character:WaitForChild("HumanoidRootPart")
+
+for _, obj in ipairs(weaponsFolder:GetChildren()) do
+	if obj:IsA("Model") and obj.Parent == weaponsFolder then
+		local part = obj:FindFirstChildWhichIsA("BasePart")
+		if part then
+			local gui = Instance.new("BillboardGui")
+			gui.Size = UDim2.new(0, 100, 0, 30)
+			gui.StudsOffset = Vector3.new(0, 3, 0)
+			gui.AlwaysOnTop = true
+			gui.Adornee = part
+			gui.Parent = part
+
+			local nameLabel = Instance.new("TextLabel")
+			nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+			nameLabel.Position = UDim2.new(0, 0, 0, 0)
+			nameLabel.BackgroundTransparency = 1
+			nameLabel.TextColor3 = Color3.new(1, 1, 1)
+			nameLabel.TextScaled = true
+			nameLabel.Font = Enum.Font.Arial
+			nameLabel.Text = obj.Name
+			nameLabel.Parent = gui
+
+			local distLabel = Instance.new("TextLabel")
+			distLabel.Size = UDim2.new(1, 0, 0.5, 0)
+			distLabel.Position = UDim2.new(0, 0, 0.5, 0)
+			distLabel.BackgroundTransparency = 1
+			distLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+			distLabel.TextScaled = true
+			distLabel.Font = Enum.Font.Code
+			distLabel.Text = "..."
+			distLabel.Parent = gui
+
+			task.spawn(function()
+				while gui.Parent do
+					local dist = (part.Position - root.Position).Magnitude
+					distLabel.Text = math.floor(dist) .. " studs"
+					task.wait()
+				end
+			end)
+		end
+	end
+end
+end)
+
+maintab:Textbox("Obtain Gun", function(v)
 	local Players = game:GetService("Players")
 	local VirtualInputManager = game:GetService("VirtualInputManager")
 	local Workspace = game:GetService("Workspace")
@@ -240,100 +804,9 @@ juggtab:Textbox("Gun Grabber (MUST BE SPAWNED)", function(v)
 	runGunSequence(gunPart)
 end)
 
-local P = game:GetService("Players")
-local R = game:GetService("RunService")
-local S = game:GetService("StarterGui")
-local LP = P.LocalPlayer
-local C = workspace.CurrentCamera
+maintab:Label("Auto Win Features.")
 
-getgenv().AimlockEnabled = getgenv().AimlockEnabled or false
-local conn, tgt
-
-local function notify(t)
-    pcall(function()
-        S:SetCore("SendNotification", {Title="Aimlock",Text=t,Duration=2})
-    end)
-end
-
-local function nearest()
-    local k = workspace:FindFirstChild("Killers")
-    if not k then return end
-    local c = LP.Character
-    if not c or not c:FindFirstChild("HumanoidRootPart") then return end
-    local p, d, m = c.HumanoidRootPart.Position, math.huge
-    for _, v in ipairs(k:GetChildren()) do
-        if v:IsA("Model") then
-            local h = v:FindFirstChildOfClass("Humanoid")
-            local r = v:FindFirstChild("HumanoidRootPart") or v:FindFirstChild("UpperTorso") or v.PrimaryPart
-            if h and r then
-                local dist = (r.Position - p).Magnitude
-                if dist < d then d, m = dist, v end
-            end
-        end
-    end
-    return m
-end
-
-local function aim()
-    if not getgenv().AimlockEnabled or not tgt then return end
-    local part = tgt:FindFirstChild("HumanoidRootPart") or tgt:FindFirstChild("UpperTorso") or tgt.PrimaryPart
-    if not part then return end
-    local tp, cp = part.Position, C.CFrame.Position
-    C.CFrame = CFrame.new(cp, cp + (tp - cp).Unit)
-end
-
-local function toggle()
-    getgenv().AimlockEnabled = not getgenv().AimlockEnabled
-    if getgenv().AimlockEnabled then
-        tgt = nearest()
-        if tgt then
-            if not conn then conn = R.RenderStepped:Connect(aim) end
-            notify("Enabled.")
-        else
-            getgenv().AimlockEnabled = false
-            notify("No killer found.")
-        end
-    else
-        if conn then conn:Disconnect() conn = nil end
-        tgt = nil
-        notify("Disabled.")
-    end
-end
-
-juggtab:Button("Aimlock", toggle)
-
-juggtab:Button("Show Current Weapons", function()
-local StarterGui = game:GetService("StarterGui")
-local Workspace = game:GetService("Workspace")
-
-local weaponsFolder = Workspace:FindFirstChild("Weapons")
-if not weaponsFolder then
-	StarterGui:SetCore("SendNotification", {
-		Title = "Possible Guns";
-		Text = "Weapons folder not found.";
-		Duration = 5;
-	})
-	return
-end
-
-local gunNames = {}
-
-for _, obj in ipairs(weaponsFolder:GetChildren()) do
-	if obj:IsA("Model") then
-		table.insert(gunNames, obj.Name)
-	end
-end
-
-local finalText = #gunNames > 0 and table.concat(gunNames, ", ") or "No guns found."
-
-StarterGui:SetCore("SendNotification", {
-	Title = "Current Weapons";
-	Text = finalText;
-	Duration = 10;
-})
-end)
-
-juggtab:Button("Win As Juggernaut", function()
+maintab:Button("Juggernaut Auto-Win (Blatant)", function()
 	local Players = game:GetService("Players")
 	local Workspace = game:GetService("Workspace")
 	local StarterGui = game:GetService("StarterGui")
@@ -418,53 +891,96 @@ juggtab:Button("Win As Juggernaut", function()
 	end
 end)
 
-juggtab:Button("Wall Gun (Random)", function()
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local root = character:WaitForChild("HumanoidRootPart")
+maintab:Button("Survivor Auto-Win (Blatant)", function()
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(112,335,56))
+end)
 
-local weaponsFolder = workspace:WaitForChild("Weapons")
-local candidateModels = {}
+maintab:Label("Survivor-Only Features.")
 
-for _, model in pairs(weaponsFolder:GetDescendants()) do
-	if model:IsA("Model") and (model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")) then
-		table.insert(candidateModels, model)
+local runService = game:GetService("RunService")
+local players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local player = players.LocalPlayer
+
+local model = workspace:WaitForChild("AREA51"):WaitForChild("PlantRoom"):WaitForChild("Box of Shells")
+local box = model:WaitForChild("Box")
+local originalCFrame = box.CFrame
+local loopConnection
+local infiniteAmmoEnabled = false
+
+local function notifyy(title, text)
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = title,
+			Text = text,
+			Duration = 3
+		})
+	end)
+end
+
+local function ghostifyModel()
+	for _, item in ipairs(model:GetDescendants()) do
+		if item:IsA("BasePart") then
+			item.Transparency = 1
+			item.CanCollide = false
+		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
+			item.Transparency = 1
+		end
 	end
 end
 
-table.sort(candidateModels, function(a, b)
-	local priorityList = { "Raygun", "M4A1" }
-	local function getPriority(model)
-		for i, name in ipairs(priorityList) do
-			if model.Name:lower() == name then
-				return #priorityList - i + 1
+local function enableInfiniteAmmo()
+	infiniteAmmoEnabled = true
+	notifyy("Infinite Ammo", "Enabled.")
+	ghostifyModel()
+	box.Anchored = true
+	box.CanCollide = false
+
+	local toggle = false
+	local lastToggle = 0
+
+	loopConnection = runService.RenderStepped:Connect(function(dt)
+		local char = player.Character
+		if not char then return end
+
+		local root = char:FindFirstChild("HumanoidRootPart")
+		if not root then return end
+
+		lastToggle += dt
+		if lastToggle >= 0.5 then
+			lastToggle = 0
+			toggle = not toggle
+
+			if toggle then
+				local offset = Vector3.new(0, -(root.Size.Y / 2 + box.Size.Y / 2 + 0.1), 0)
+				local position = root.Position + offset
+				box.CFrame = CFrame.new(position)
+			else
+				box.CFrame = originalCFrame
 			end
 		end
-		return 0
-	end
-	return getPriority(a) > getPriority(b)
-end)
-
-if #candidateModels > 0 then
-	local weightTop = math.min(3, #candidateModels)
-	local chosenIndex = math.random() < 0.6 and math.random(1, weightTop) or math.random(1, #candidateModels)
-	local chosenModel = candidateModels[chosenIndex]
-
-	if not chosenModel.PrimaryPart then
-		chosenModel.PrimaryPart = chosenModel:FindFirstChildWhichIsA("BasePart")
-	end
-
-	if chosenModel.PrimaryPart then
-		local baseCFrame = chosenModel:GetPrimaryPartCFrame()
-		local forward = baseCFrame.LookVector.Unit
-		local destination = baseCFrame.Position + forward * 3
-		root.CFrame = CFrame.new(destination, destination + forward)
-	end
+	end)
 end
+
+local function disableInfiniteAmmo()
+	infiniteAmmoEnabled = false
+	notifyy("Infinite Ammo", "Disabled.")
+	if loopConnection then
+		loopConnection:Disconnect()
+		loopConnection = nil
+	end
+	box.CFrame = originalCFrame
+end
+
+maintab:Button("Infinite Ammo", function()
+	if infiniteAmmoEnabled then
+		disableInfiniteAmmo()
+	else
+		enableInfiniteAmmo()
+	end
 end)
 
-juggtab:Button("Juggernaut TP", function()
+maintab:Button("TP To Juggernaut", function()
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
@@ -476,64 +992,157 @@ for _, player in ipairs(Players:GetPlayers()) do
 		local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
 
 		if humanoid and targetRoot and humanoid.Health > 200 then
-			humanoidRootPart.CFrame = targetRoot.CFrame + Vector3.new(1, 1, 1)
+			humanoidRootPart.CFrame = targetRoot.CFrame + Vector3.new(2, 2, 2)
 			break
 		end
 	end
 end
 end)
 
-juggtab:Button("Juggernaut ESP", function()
+maintab:Button("Juggernaut Health Bar", function()
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local localPlayer = Players.LocalPlayer
+local player = Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "BossHealthBars"
+screenGui.ResetOnSpawn = false
 
-RunService.RenderStepped:Connect(function()
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= localPlayer and player.Character then
-			local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-			local root = player.Character:FindFirstChild("HumanoidRootPart")
+local function createHealthBar(model)
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+	if screenGui:FindFirstChild(model.Name .. "_Bar") then return end
 
-			if humanoid and root then
-				local tag = root:FindFirstChild("JuggernautTag")
+	local displayName = model.Name
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p.Character == model then
+			displayName = p.DisplayName
+			break
+		end
+	end
 
-				if humanoid.Health > 400 and not tag then
-					local billboard = Instance.new("BillboardGui")
-					billboard.Name = "JuggernautTag"
-					billboard.Adornee = root
-					billboard.Size = UDim2.new(0, 160, 0, 25)
-					billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-					billboard.AlwaysOnTop = true
-					billboard.LightInfluence = 0
-					billboard.MaxDistance = 1000
-					billboard.Parent = root
+	local frame = Instance.new("Frame")
+	frame.Name = model.Name .. "_Bar"
+	frame.Size = UDim2.new(0.4, 0, 0, 30)
+	frame.Position = UDim2.new(0.3, 0, 0.05, 0)
+	frame.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+	frame.BorderSizePixel = 0
+	frame.Parent = screenGui
 
-					local textLabel = Instance.new("TextLabel")
-					textLabel.Size = UDim2.new(1, 0, 1, 0)
-					textLabel.BackgroundTransparency = 1
-					textLabel.Text = "JUGGERNAUT"
-					textLabel.TextColor3 = Color3.new(1, 1, 1)
-					textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-					textLabel.TextStrokeTransparency = 0
-					textLabel.TextScaled = true
-					textLabel.Font = Enum.Font.Arcade
-					textLabel.Parent = billboard
+	local fill = Instance.new("Frame")
+	fill.Name = "HealthFill"
+	fill.Size = UDim2.new(1, 0, 1, 0)
+	fill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	fill.BorderSizePixel = 0
+	fill.Parent = frame
 
-					local highlight = Instance.new("Highlight")
-					highlight.Name = "JuggernautESP"
-					highlight.Adornee = player.Character
-					highlight.FillTransparency = 1
-					highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
-					highlight.OutlineTransparency = 0
-					highlight.Parent = game.CoreGui
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextScaled = true
+	label.Font = Enum.Font.Fantasy
+	label.Text = displayName .. " - " .. math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
+	label.Parent = frame
+
+	task.spawn(function()
+		while humanoid and humanoid.Parent and humanoid.Health > 0 do
+			local ratio = humanoid.Health / humanoid.MaxHealth
+			fill.Size = UDim2.new(ratio, 0, 1, 0)
+			label.Text = displayName .. " - " .. math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
+			task.wait(0.2)
+		end
+		frame:Destroy()
+	end)
+end
+
+task.spawn(function()
+	while true do
+		local killersFolder = workspace:FindFirstChild("Killers")
+		if killersFolder then
+			local models = {}
+			for _, model in ipairs(killersFolder:GetChildren()) do
+				if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
+					table.insert(models, model)
+				end
+			end
+
+			if #models == 1 and models[1].Name == "Zombie" then
+				createHealthBar(models[1])
+			else
+				for _, model in ipairs(models) do
+					if model.Name ~= "Zombie" then
+						createHealthBar(model)
+					end
 				end
 			end
 		end
+		task.wait(1)
 	end
 end)
 end)
 
-juggtab:Button("Pack-A-Punch (LEGIT, Req. 100 Points)", function()
+maintab:Button("Juggernaut ESP", function()
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local localPlayer = Players.LocalPlayer
+
+	RunService.RenderStepped:Connect(function()
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player ~= localPlayer and player.Character then
+				local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+				local root = player.Character:FindFirstChild("HumanoidRootPart")
+
+				if humanoid and root and humanoid.Health > 200 then
+					local distance = (root.Position - localPlayer.Character.HumanoidRootPart.Position).Magnitude
+					if distance <= 750 then
+						local existingGui = root:FindFirstChild("JuggernautTag")
+						if not existingGui then
+							local billboard = Instance.new("BillboardGui")
+							billboard.Name = "JuggernautTag"
+							billboard.Adornee = root
+							billboard.Size = UDim2.new(0, 140, 0, 30)
+							billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+							billboard.AlwaysOnTop = true
+							billboard.LightInfluence = 0
+							billboard.MaxDistance = 500
+							billboard.Parent = root
+
+							local nameLabel = Instance.new("TextLabel")
+							nameLabel.Size = UDim2.new(1, 0, 1, 0)
+							nameLabel.BackgroundTransparency = 1
+							nameLabel.Text = player.DisplayName
+							nameLabel.TextColor3 = Color3.new(1, 1, 1)
+							nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+							nameLabel.TextStrokeTransparency = 0
+							nameLabel.TextScaled = true
+							nameLabel.Font = Enum.Font.Arcade
+							nameLabel.Parent = billboard
+						end
+					else
+						local existingGui = root:FindFirstChild("JuggernautTag")
+						if existingGui then
+							existingGui:Destroy()
+						end
+					end
+
+					local highlightName = "JuggernautESP_" .. player.UserId
+					if not game.CoreGui:FindFirstChild(highlightName) then
+						local highlight = Instance.new("Highlight")
+						highlight.Name = highlightName
+						highlight.Adornee = player.Character
+						highlight.FillTransparency = 1
+						highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+						highlight.OutlineTransparency = 0
+						highlight.Parent = game.CoreGui
+					end
+				end
+			end
+		end
+	end)
+end)
+
+maintab:Label("Other Features.")
+
+maintab:Button("Pack-A-Punch", function()
 local p = game.Players.LocalPlayer
 local c = p.Character or p.CharacterAdded:Wait()
 local vim = game:GetService("VirtualInputManager")
@@ -550,115 +1159,8 @@ task.delay(0.2, function()
 end)
 end)
 
-juggtab:Button("Remove Doors (Client)", function()
-for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
-    if obj.Name == "Door" then
-        obj:Destroy()
-    end
-end
-end)
-
-local gunPositions = {
-	["raygun"] = Vector3.new(114, 335, 569),
-	["landmine"] = Vector3.new(243, 313, 332),
-	["mp5k"] = Vector3.new(232, 373, 47),
-	["awp"] = Vector3.new(466, 313, 756),
-	["m4a1"] = Vector3.new(-154, 303, 703),
-	["r870"] = Vector3.new(20, 292, 241),
-	["freezegun"] = Vector3.new(307, 333, 709),
-	["desert eagle"] = Vector3.new(171, 260, 406),
-	["m14"] = Vector3.new(184, 314, 379),
-	["mg42"] = Vector3.new(22, 313, 371),
-	["svd"] = Vector3.new(159, 333, 445),
-	["db shotgun"] = Vector3.new(106, 272, 101),
-	["energy can"] = Vector3.new(173, 333, 587),
-	["m16a2"] = Vector3.new(71, 282, 31),
-	["m1911"] = Vector3.new(340, 313, 370)
-}
-
-endtab:Textbox("Gun Grabber (Legit, Requires Points!)", function(v)
-	local Players = game:GetService("Players")
-	local VirtualInputManager = game:GetService("VirtualInputManager")
-	local Workspace = game:GetService("Workspace")
-
-	local player = Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-	local camera = Workspace.CurrentCamera
-
-	local gunOrigin = humanoidRootPart.Position
-
-	local function findGunModel(name)
-		local weapons = Workspace:FindFirstChild("Weapons")
-		if not weapons then return nil end
-		for _, child in ipairs(weapons:GetChildren()) do
-			if child:IsA("Model") and child.Name:lower() == name:lower() then
-				return child
-			end
-		end
-		return nil
-	end
-
-	local function getGunPart(model)
-		if not model then return nil end
-		for _, d in ipairs(model:GetDescendants()) do
-			if d:IsA("BasePart") then
-				return d
-			end
-		end
-		return nil
-	end
-
-	local function runGunSequence(gunPart, position)
-		if not gunPart then return end
-		humanoidRootPart.CFrame = CFrame.new(position)
-		camera.CFrame = CFrame.new(camera.CFrame.Position, gunPart.Position)
-		task.wait(0.1)
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-		task.wait(0.75)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-		humanoidRootPart.CFrame = CFrame.new(gunOrigin)
-	end
-
-	local input = v:lower()
-	local gunModel = findGunModel(input)
-	local gunPart = getGunPart(gunModel)
-	local gunPos = gunPositions[input]
-
-	if gunModel and gunPart and gunPos then
-		runGunSequence(gunPart, gunPos)
-	else
-		warn("Gun \"" .. v .. "\" not found or missing position.")
-	end
-end)
-
-endtab:Button("Remove Doors (Client)", function()
-for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
-    if obj.Name == "Door" then
-        obj:Destroy()
-    end
-end
-end)
-
-endtab:Button("Kill All NPCs", function()
-local Workspace = game:GetService("Workspace")
-
-local killersFolder = Workspace:FindFirstChild("Killers")
-if killersFolder then
-	for _, obj in ipairs(killersFolder:GetDescendants()) do
-		if obj:IsA("Humanoid") and obj.Health > 0 then
-			obj.Health = 0
-		end
-	end
-end
-end)
-
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-end)
-
-misctab:Button("Shutdown Game", function()
-game:Shutdown()
 end)
 
 misctab:Button("Switch Servers", function()
@@ -697,8 +1199,9 @@ local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Discord Invite",
     Text = "Copied to your clipboard!",
-    Duration = 3,
+    Duration = 3,w
     Button1 = "alright fella",
 })
 setclipboard("https://discord.gg/8stFYxJv4R")
 end)
+end
