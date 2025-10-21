@@ -1199,7 +1199,7 @@ local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Discord Invite",
     Text = "Copied to your clipboard!",
-    Duration = 3,w
+    Duration = 3,
     Button1 = "alright fella",
 })
 setclipboard("https://discord.gg/8stFYxJv4R")
