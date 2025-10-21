@@ -703,54 +703,146 @@ StarterGui:SetCore("SendNotification", {
 })
 end)
 
+local weaponESPEnabled = false
+local activeESP = {}
+local lastWeaponNames = {}
+local currentRoot = nil
+
 maintab:Button("Weapon ESP", function()
-local weaponsFolder = workspace:FindFirstChild("Weapons")
-local player = game.Players.LocalPlayer
-if not weaponsFolder or not player.Character then return end
+	weaponESPEnabled = not weaponESPEnabled
 
-local root = player.Character:WaitForChild("HumanoidRootPart")
+	local StarterGui = game:GetService("StarterGui")
+	StarterGui:SetCore("SendNotification", {
+		Title = "Weapon ESP",
+		Text = weaponESPEnabled and "Enabled." or "Disabled.",
+		Duration = 3
+	})
 
-for _, obj in ipairs(weaponsFolder:GetChildren()) do
-	if obj:IsA("Model") and obj.Parent == weaponsFolder then
-		local part = obj:FindFirstChildWhichIsA("BasePart")
-		if part then
-			local gui = Instance.new("BillboardGui")
-			gui.Size = UDim2.new(0, 100, 0, 30)
-			gui.StudsOffset = Vector3.new(0, 3, 0)
-			gui.AlwaysOnTop = true
-			gui.Adornee = part
-			gui.Parent = part
+	local player = game.Players.LocalPlayer
+	local weaponsFolder = workspace:FindFirstChild("Weapons")
+	if not weaponsFolder then return end
 
-			local nameLabel = Instance.new("TextLabel")
-			nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
-			nameLabel.Position = UDim2.new(0, 0, 0, 0)
-			nameLabel.BackgroundTransparency = 1
-			nameLabel.TextColor3 = Color3.new(1, 1, 1)
-			nameLabel.TextScaled = true
-			nameLabel.Font = Enum.Font.Arial
-			nameLabel.Text = obj.Name
-			nameLabel.Parent = gui
+	local function updateRoot()
+		local char = player.Character or player.CharacterAdded:Wait()
+		local root = char:WaitForChild("HumanoidRootPart")
+		currentRoot = root
 
-			local distLabel = Instance.new("TextLabel")
-			distLabel.Size = UDim2.new(1, 0, 0.5, 0)
-			distLabel.Position = UDim2.new(0, 0, 0.5, 0)
-			distLabel.BackgroundTransparency = 1
-			distLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-			distLabel.TextScaled = true
-			distLabel.Font = Enum.Font.Code
-			distLabel.Text = "..."
-			distLabel.Parent = gui
-
-			task.spawn(function()
-				while gui.Parent do
-					local dist = (part.Position - root.Position).Magnitude
-					distLabel.Text = math.floor(dist) .. " studs"
-					task.wait()
+		local humanoid = char:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.Died:Connect(function()
+				currentRoot = nil
+				player.CharacterAdded:Wait():WaitForChild("HumanoidRootPart")
+				task.wait(0.5)
+				updateRoot()
+				if weaponESPEnabled then
+					createESP()
 				end
 			end)
 		end
+
+		root:GetPropertyChangedSignal("Parent"):Connect(function()
+			if not root:IsDescendantOf(workspace) then
+				task.wait(0.5)
+				updateRoot()
+			end
+		end)
 	end
-end
+
+	updateRoot()
+	player.CharacterAdded:Connect(function()
+		task.wait(0.5)
+		updateRoot()
+		if weaponESPEnabled then
+			createESP()
+		end
+	end)
+
+	local function clearESP()
+		for _, gui in pairs(activeESP) do
+			if gui and gui.Parent then
+				gui:Destroy()
+			end
+		end
+		activeESP = {}
+	end
+
+	local function createESP()
+		clearESP()
+		lastWeaponNames = {}
+		for _, obj in ipairs(weaponsFolder:GetChildren()) do
+			if obj:IsA("Model") then
+				table.insert(lastWeaponNames, obj.Name)
+				local part = obj:FindFirstChildWhichIsA("BasePart")
+				if part then
+					local gui = Instance.new("BillboardGui")
+					gui.Size = UDim2.new(0, 100, 0, 30)
+					gui.StudsOffset = Vector3.new(0, 3, 0)
+					gui.AlwaysOnTop = true
+					gui.Adornee = part
+					gui.Parent = part
+
+					local nameLabel = Instance.new("TextLabel")
+					nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+					nameLabel.Position = UDim2.new(0, 0, 0, 0)
+					nameLabel.BackgroundTransparency = 1
+					nameLabel.TextColor3 = Color3.new(1, 1, 1)
+					nameLabel.TextScaled = true
+					nameLabel.Font = Enum.Font.Arial
+					nameLabel.Text = obj.Name
+					nameLabel.Parent = gui
+
+					local distLabel = Instance.new("TextLabel")
+					distLabel.Size = UDim2.new(1, 0, 0.5, 0)
+					distLabel.Position = UDim2.new(0, 0, 0.5, 0)
+					distLabel.BackgroundTransparency = 1
+					distLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+					distLabel.TextScaled = true
+					distLabel.Font = Enum.Font.Code
+					distLabel.Text = "..."
+					distLabel.Parent = gui
+
+					table.insert(activeESP, gui)
+
+					task.spawn(function()
+						while gui.Parent and weaponESPEnabled do
+							if currentRoot then
+								local dist = (part.Position - currentRoot.Position).Magnitude
+								distLabel.Text = math.floor(dist) .. " studs"
+							end
+							task.wait()
+						end
+					end)
+				end
+			end
+		end
+	end
+
+	local function weaponsChanged()
+		local currentNames = {}
+		for _, obj in ipairs(weaponsFolder:GetChildren()) do
+			if obj:IsA("Model") then
+				table.insert(currentNames, obj.Name)
+			end
+		end
+		if #currentNames ~= #lastWeaponNames then return true end
+		for i, name in ipairs(currentNames) do
+			if name ~= lastWeaponNames[i] then return true end
+		end
+		return false
+	end
+
+	task.spawn(function()
+		while true do
+			if weaponESPEnabled and weaponsChanged() then
+				createESP()
+			end
+			task.wait(3)
+		end
+	end)
+
+	if weaponESPEnabled then
+		createESP()
+	end
 end)
 
 maintab:Textbox("Obtain Gun", function(v)
@@ -947,7 +1039,7 @@ local function enableInfiniteAmmo()
 		if not root then return end
 
 		lastToggle += dt
-		if lastToggle >= 0.5 then
+		if lastToggle >= 0.1 then
 			lastToggle = 0
 			toggle = not toggle
 
@@ -1081,58 +1173,48 @@ end)
 end)
 
 maintab:Button("Juggernaut ESP", function()
-	local Players = game:GetService("Players")
 	local RunService = game:GetService("RunService")
-	local localPlayer = Players.LocalPlayer
+	local killersFolder = workspace:FindFirstChild("Killers")
 
 	RunService.RenderStepped:Connect(function()
-		for _, player in ipairs(Players:GetPlayers()) do
-			if player ~= localPlayer and player.Character then
-				local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-				local root = player.Character:FindFirstChild("HumanoidRootPart")
+		if not killersFolder then return end
 
-				if humanoid and root and humanoid.Health > 200 then
-					local distance = (root.Position - localPlayer.Character.HumanoidRootPart.Position).Magnitude
-					if distance <= 750 then
-						local existingGui = root:FindFirstChild("JuggernautTag")
-						if not existingGui then
-							local billboard = Instance.new("BillboardGui")
-							billboard.Name = "JuggernautTag"
-							billboard.Adornee = root
-							billboard.Size = UDim2.new(0, 140, 0, 30)
-							billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-							billboard.AlwaysOnTop = true
-							billboard.LightInfluence = 0
-							billboard.MaxDistance = 500
-							billboard.Parent = root
+		for _, model in ipairs(killersFolder:GetChildren()) do
+			if model:IsA("Model") then
+				local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
+				if root then
+					local tagName = "JuggernautESP"
 
-							local nameLabel = Instance.new("TextLabel")
-							nameLabel.Size = UDim2.new(1, 0, 1, 0)
-							nameLabel.BackgroundTransparency = 1
-							nameLabel.Text = player.DisplayName
-							nameLabel.TextColor3 = Color3.new(1, 1, 1)
-							nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-							nameLabel.TextStrokeTransparency = 0
-							nameLabel.TextScaled = true
-							nameLabel.Font = Enum.Font.Arcade
-							nameLabel.Parent = billboard
-						end
-					else
-						local existingGui = root:FindFirstChild("JuggernautTag")
-						if existingGui then
-							existingGui:Destroy()
-						end
-					end
-
-					local highlightName = "JuggernautESP_" .. player.UserId
-					if not game.CoreGui:FindFirstChild(highlightName) then
+					if not model:FindFirstChild(tagName) then
 						local highlight = Instance.new("Highlight")
-						highlight.Name = highlightName
-						highlight.Adornee = player.Character
+						highlight.Name = tagName
+						highlight.Adornee = model
 						highlight.FillTransparency = 1
 						highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
 						highlight.OutlineTransparency = 0
-						highlight.Parent = game.CoreGui
+						highlight.Parent = model
+					end
+
+					if not root:FindFirstChild("JuggernautTag") then
+						local billboard = Instance.new("BillboardGui")
+						billboard.Name = "JuggernautTag"
+						billboard.Adornee = root
+						billboard.Size = UDim2.new(0, 100, 0, 20)
+						billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+						billboard.AlwaysOnTop = true
+						billboard.LightInfluence = 0
+						billboard.Parent = root
+
+						local nameLabel = Instance.new("TextLabel")
+						nameLabel.Size = UDim2.new(1, 0, 1, 0)
+						nameLabel.BackgroundTransparency = 1
+						nameLabel.Text = model.Name
+						nameLabel.TextColor3 = Color3.new(1, 1, 1)
+						nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+						nameLabel.TextStrokeTransparency = 0
+						nameLabel.TextScaled = true
+						nameLabel.Font = Enum.Font.Arial
+						nameLabel.Parent = billboard
 					end
 				end
 			end
