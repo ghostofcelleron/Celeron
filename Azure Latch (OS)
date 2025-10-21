@@ -596,6 +596,16 @@ spawn(function()
 end)
 end)
 
+maintab:Textbox("Give Ball", function(v)
+	local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+	local target = game.Players:FindFirstChild(v)
+	if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+		target.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(0, 1, 0))
+		wait(0.2)
+		remote:FireServer(buffer.fromstring("\022\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
+	end
+end)
+
 maintab:Button("Manual Score", function()
 if game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 	if workspace:WaitForChild("map"):WaitForChild("Agoal") and workspace:WaitForChild("map"):WaitForChild("Bgoal") then
