@@ -1,1820 +1,1244 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (OPBG)",
+    ThemeColor = Color3.fromRGB(19, 19, 19),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local targtab = win:Tab("Target")
+local movetab = win:Tab("Moves")
+local chartab = win:Tab("Characters")
+local cmovetab = win:Tab("Fun")
+local ulttab = win:Tab("Awakens")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+targtab:Textbox("Void Player", function(v)
+local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
+if remotes then
+    local todo = remotes:WaitForChild("Todo", 5)
+    if todo then
+        local character = game.Players.LocalPlayer.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+        local function findTarget(partialName)
+            partialName = partialName:lower()
+            for _, plr in pairs(game.Players:GetPlayers()) do
+                local uname = plr.Name:lower()
+                local dname = plr.DisplayName:lower()
+                if uname:find(partialName) or dname:find(partialName) then
+                    return plr
+                end
+            end
+            return nil
+        end
+
+        local targetPlayer = findTarget(v)
+
+        if hrp and targetPlayer and targetPlayer.Character then
+            local originalCF = hrp.CFrame
+            hrp.CFrame = CFrame.new(-2726, 442, -530)
+            hrp.Velocity = Vector3.zero
+            task.wait(0.5)
+
+            todo:FireServer("Boogie", nil, targetPlayer.Character)
+            task.wait(0.5)
+
+            hrp.CFrame = originalCF
+        end
+    end
+end
+end)
+
+targtab:Textbox("Save Player", function(v)
+local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
+if remotes then
+    local todo = remotes:WaitForChild("Todo", 5)
+    if todo then
+        local character = game.Players.LocalPlayer.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+        local function findTarget(partialName)
+            partialName = partialName:lower()
+            for _, plr in pairs(game.Players:GetPlayers()) do
+                local uname = plr.Name:lower()
+                local dname = plr.DisplayName:lower()
+                if uname:find(partialName) or dname:find(partialName) then
+                    return plr
+                end
+            end
+            return nil
+        end
+
+        local targetPlayer = findTarget(v)
+
+        if hrp and targetPlayer and targetPlayer.Character then
+            local originalCF = CFrame.new(-95, 356, 519)
+            hrp.CFrame = CFrame.new(-95, 356, 519)
+            hrp.Velocity = Vector3.zero
+            task.wait(0.5)
+
+            todo:FireServer("Boogie", nil, targetPlayer.Character)
+            task.wait(0.5)
+
+            hrp.CFrame = CFrame.new(-95, 356, 519)
+        end
+    end
+end
+end)
+
+targtab:Textbox("Jail Player", function(v)
+local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
+if remotes then
+    local todo = remotes:WaitForChild("Todo", 5)
+    if todo then
+        local character = game.Players.LocalPlayer.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+        local function findTarget(partialName)
+            partialName = partialName:lower()
+            for _, plr in pairs(game.Players:GetPlayers()) do
+                local uname = plr.Name:lower()
+                local dname = plr.DisplayName:lower()
+                if uname:find(partialName) or dname:find(partialName) then
+                    return plr
+                end
+            end
+            return nil
+        end
+
+        local targetPlayer = findTarget(v)
+
+        if hrp and targetPlayer and targetPlayer.Character then
+            local originalCF = hrp.CFrame
+            hrp.CFrame = CFrame.new(200, 178, 431)
+            hrp.Velocity = Vector3.zero
+            task.wait(0.5)
+
+            todo:FireServer("Boogie", nil, targetPlayer.Character)
+            task.wait(0.5)
+
+            hrp.CFrame = originalCF
+        end
+    end
+end
+end)
+
+targtab:Textbox("Glitch Player", function(v)
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local StarterGui = game:GetService("StarterGui")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local classic = 2092166489
-local juggernaut = 4678052190
-local endless = 2675280735
-local infection = 1076129670
+local character = Players.LocalPlayer.Character
+local hrp = character and character:FindFirstChild("HumanoidRootPart")
+local stats = Players.LocalPlayer:FindFirstChild("Stats")
+local characterName = stats and stats:FindFirstChild("Character") and stats.Character.Value
 
-if game.PlaceId == classic then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
-
-local win = ui:Create({
-    Name = "Celeron's GUI (SAKTK: Classic)",
-    ThemeColor = Color3.fromRGB(20, 20, 20),
-    StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
-})
-
-local maintab = win:Tab("Main")
-local misctab = win:Tab("Others")
-local helptab = win:Tab("Info")
-
-maintab:Label("Script Made By Celeron + Daffy!")
-helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
-helptab:Label("Show / Hide GUI: Right Alt")
-
-local runService = game:GetService("RunService")
-local players = game:GetService("Players")
-local player = players.LocalPlayer
-
-local currentConnection = nil
-local deathConnection = nil
-
-function applyEmulatedSpeed(speed)
-	if currentConnection then currentConnection:Disconnect() end
-	if deathConnection then deathConnection:Disconnect() end
-
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid")
-	local rootPart = character:WaitForChild("HumanoidRootPart")
-
-	currentConnection = runService.RenderStepped:Connect(function()
-		if not character or not character.Parent or humanoid.Health <= 0 then
-			if currentConnection then currentConnection:Disconnect() end
-			currentConnection = nil
-			return
-		end
-
-		local moveDir = humanoid.MoveDirection
-		if moveDir.Magnitude > 0 then
-			local horizontalVelocity = Vector3.new(moveDir.X, 0, moveDir.Z).Unit * speed
-			rootPart.Velocity = Vector3.new(horizontalVelocity.X, rootPart.Velocity.Y, horizontalVelocity.Z)
-		end
-	end)
-
-	deathConnection = humanoid.Died:Connect(function()
-		if currentConnection then currentConnection:Disconnect() end
-		currentConnection = nil
-	end)
+local function findTarget(partialName)
+    partialName = partialName:lower()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr.Name:lower():find(partialName) or plr.DisplayName:lower():find(partialName) then
+            return plr
+        end
+    end
+    return nil
 end
 
-maintab:Textbox("Player Speed", function(v)
-	speed = tonumber(v)
-	if not speed then return end
+local targetPlayer = findTarget(v)
+if hrp and targetPlayer and targetPlayer.Character then
+    local targetHRP = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if targetHRP then
+        local glitchRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuji")
+        local charRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
 
-	applyEmulatedSpeed(speed)
+        local loopTeleporting = true
 
-	player.CharacterAdded:Connect(function()
-		task.wait(0.25)
-		applyEmulatedSpeed(speed)
-	end)
-end)
+        task.spawn(function()
+            while loopTeleporting do
+                local behindCF = targetHRP.CFrame * CFrame.new(0, 0, -3)
+                hrp.CFrame = CFrame.new(behindCF.Position, targetHRP.Position)
+                hrp.Velocity = Vector3.zero
+                task.wait(0.05)
+            end
+        end)
 
-maintab:Textbox("Gun Grabber", function(v)
-	local Players = game:GetService("Players")
-	local VirtualInputManager = game:GetService("VirtualInputManager")
-	local Workspace = game:GetService("Workspace")
+        glitchRemote:FireServer("Cranium")
+        task.wait(1)
 
-	local player = Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-	local camera = Workspace.CurrentCamera
+        if characterName then
+            charRemote:FireServer(characterName)
+        end
 
-	local gunOrigin = humanoidRootPart.Position
-
-	local function findGunModel(name)
-		local weapons = Workspace:FindFirstChild("Weapons")
-		if not weapons then return nil end
-		for _, child in ipairs(weapons:GetChildren()) do
-			if child:IsA("Model") and child.Name:lower() == name:lower() then
-				return child
-			end
-		end
-		return nil
-	end
-
-	local function getGunPart(model)
-		if not model then return nil end
-		for _, part in ipairs(model:GetDescendants()) do
-			if part:IsA("BasePart") then
-				return part
-			end
-		end
-		return nil
-	end
-
-	local function runGunSequence(gunPart)
-		if not gunPart then return end
-		local position = gunPart.Position
-		humanoidRootPart.CFrame = CFrame.new(position)
-		camera.CFrame = CFrame.new(camera.CFrame.Position, position)
-		task.wait(0.1)
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-		task.wait(0.05)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-		humanoidRootPart.CFrame = CFrame.new(gunOrigin)
-	end
-
-	local input = v:lower()
-	local gunModel = findGunModel(input)
-	local gunPart = getGunPart(gunModel)
-	runGunSequence(gunPart)
-end)
-
-maintab:Button("Kill All NPCs", function()
-local Workspace = game:GetService("Workspace")
-
-local killersFolder = Workspace:FindFirstChild("Killers")
-if killersFolder then
-	for _, obj in ipairs(killersFolder:GetDescendants()) do
-		if obj:IsA("Humanoid") and obj.Health > 0 then
-			obj.Health = 0
-		end
-	end
-end
-end)
-
-maintab:Button("Killer ESP", function()
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-
-local function highlightKillers()
-	local killersFolder = Workspace:FindFirstChild("Killers")
-	if not killersFolder then return end
-
-	for _, obj in ipairs(killersFolder:GetDescendants()) do
-		if obj:IsA("Humanoid") and obj.Health > 0 then
-			local model = obj.Parent
-			if model and not model:FindFirstChildOfClass("Highlight") then
-				local hl = Instance.new("Highlight")
-				hl.FillTransparency = 1
-				hl.OutlineTransparency = 0
-				hl.OutlineColor = Color3.fromRGB(255, 0, 0)
-				hl.Adornee = model
-				hl.Parent = model
-			end
-		end
-	end
-end
-
-task.spawn(function()
-	while true do
-		highlightKillers()
-		task.wait(1)
-	end
-end)
-end)
-
-maintab:Label("Gun Mods.")
-local runService = game:GetService("RunService")
-local players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-local player = players.LocalPlayer
-
-local model = workspace:WaitForChild("AREA51"):WaitForChild("PlantRoom"):WaitForChild("Box of Shells")
-local box = model:WaitForChild("Box")
-local originalCFrame = box.CFrame
-local loopConnection
-local infiniteAmmoEnabled = false
-
-local function notifyy(title, text)
-	pcall(function()
-		StarterGui:SetCore("SendNotification", {
-			Title = title,
-			Text = text,
-			Duration = 3
-		})
-	end)
-end
-
-local function ghostifyModel()
-	for _, item in ipairs(model:GetDescendants()) do
-		if item:IsA("BasePart") then
-			item.Transparency = 1
-			item.CanCollide = false
-		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
-			item.Transparency = 1
-		end
-	end
-end
-
-local function enableInfiniteAmmo()
-	infiniteAmmoEnabled = true
-	notifyy("Infinite Ammo", "Enabled.")
-	ghostifyModel()
-	box.Anchored = true
-	box.CanCollide = false
-
-	local toggle = false
-	local lastToggle = 0
-
-	loopConnection = runService.RenderStepped:Connect(function(dt)
-		local char = player.Character
-		if not char then return end
-
-		local root = char:FindFirstChild("HumanoidRootPart")
-		if not root then return end
-
-		lastToggle += dt
-		if lastToggle >= 0.5 then
-			lastToggle = 0
-			toggle = not toggle
-
-			if toggle then
-				local offset = Vector3.new(0, -(root.Size.Y / 2 + box.Size.Y / 2 + 0.1), 0)
-				local position = root.Position + offset
-				box.CFrame = CFrame.new(position)
-			else
-				box.CFrame = originalCFrame
-			end
-		end
-	end)
-end
-
-local function disableInfiniteAmmo()
-	infiniteAmmoEnabled = false
-	notifyy("Infinite Ammo", "Disabled.")
-	if loopConnection then
-		loopConnection:Disconnect()
-		loopConnection = nil
-	end
-	box.CFrame = originalCFrame
-end
-
-maintab:Button("Infinite Ammo", function()
-	if infiniteAmmoEnabled then
-		disableInfiniteAmmo()
-	else
-		enableInfiniteAmmo()
-	end
-end)
-
-maintab:Button("Remove Doors (Client)", function()
-for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
-    if obj.Name == "Door" then
-        obj:Destroy()
+        loopTeleporting = false
     end
 end
 end)
 
-misctab:Button("Infinite Yield", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-end)
+targtab:Textbox("Bring Player", function(v)
+local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
+if remotes then
+    local todo = remotes:WaitForChild("Todo", 5)
+    if todo then
+        local character = game.Players.LocalPlayer.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
 
-misctab:Button("Switch Servers", function()
-    local servers = {}
-    local req = game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
-    local body = HttpService:JSONDecode(req)
+        local function findTarget(partialName)
+            partialName = partialName:lower()
+            for _, plr in pairs(game.Players:GetPlayers()) do
+                local uname = plr.Name:lower()
+                local dname = plr.DisplayName:lower()
+                if uname:find(partialName) or dname:find(partialName) then
+                    return plr
+                end
+            end
+            return nil
+        end
 
-    if body and body.data then
-        for i, v in next, body.data do
-            if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
-                table.insert(servers, 1, v.id)
+        local targetPlayer = findTarget(v)
+        if hrp and targetPlayer and targetPlayer.Character then
+            local originalCF = hrp.CFrame
+            local targetHRP = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+            if targetHRP then
+                targetHRP.CFrame = hrp.CFrame + Vector3.new(0, 0, -3)
+                targetHRP.Velocity = Vector3.zero
+
+                todo:FireServer("Boogie", nil, targetPlayer.Character)
+
+                task.wait(0.5)
+
+                hrp.CFrame = originalCF
+                hrp.Velocity = Vector3.zero
             end
         end
     end
-
-    if #servers > 0 then
-        TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], Players.LocalPlayer)
 end
 end)
 
-helptab:Button("Copy Owner Discord Username", function()
-local StarterGui = game:GetService("StarterGui")
+maintab:Button("Safe Zone GUI", function()
+local plr = game:GetService("Players").LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local root = char:WaitForChild("HumanoidRootPart")
 
-StarterGui:SetCore("SendNotification", {
-    Title = "Discord Username",
-    Text = "Copied to your clipboard!",
-    Duration = 3,
-    Button1 = "alright fella",
-})
-setclipboard("ghostofcelleron")
-end)
-
-helptab:Button("Copy Discord Server Invite", function()
-local StarterGui = game:GetService("StarterGui")
-
-StarterGui:SetCore("SendNotification", {
-    Title = "Discord Invite",
-    Text = "Copied to your clipboard!",
-    Duration = 3,
-    Button1 = "alright fella",
-})
-setclipboard("https://discord.gg/8stFYxJv4R")
-end)
-
-elseif game.PlaceId == endless then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
-
-local win = ui:Create({
-    Name = "Celeron's GUI (SAKTK: Endless)",
-    ThemeColor = Color3.fromRGB(20, 20, 20),
-    StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
-})
-
-local maintab = win:Tab("Main")
-local misctab = win:Tab("Others")
-local helptab = win:Tab("Info")
-
-maintab:Label("Script Made By Celeron + Daffy!")
-helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
-helptab:Label("Show / Hide GUI: Right Alt")
-
-local runService = game:GetService("RunService")
-local players = game:GetService("Players")
-local player = players.LocalPlayer
-
-local currentConnection = nil
-
-function applyEmulatedSpeed(speed)
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid")
-	local rootPart = character:WaitForChild("HumanoidRootPart")
-
-	if currentConnection then currentConnection:Disconnect() end
-
-	currentConnection = runService.RenderStepped:Connect(function(dt)
-		if not character or not character.Parent or humanoid.Health <= 0 then
-			currentConnection:Disconnect()
-			currentConnection = nil
-			return
-		end
-
-		local moveDir = humanoid.MoveDirection
-		if moveDir.Magnitude > 0 then
-			local horizontalVelocity = Vector3.new(moveDir.X, 0, moveDir.Z).Unit * speed
-			rootPart.Velocity = Vector3.new(horizontalVelocity.X, rootPart.Velocity.Y, horizontalVelocity.Z)
-		end
-	end)
-
-	humanoid.Died:Connect(function()
-		if currentConnection then currentConnection:Disconnect() end
-		currentConnection = nil
-	end)
+local guiName = "SafeZoneUI"
+local function randomBetween(min, max)
+	return math.random(min, max)
 end
 
-maintab:Textbox("Player Speed", function(v)
-	local speed = tonumber(v)
-	if not speed then return end
+local origin = Vector3.new(
+	randomBetween(10000, 100000),
+	randomBetween(10000, 100000),
+	randomBetween(10000, 100000)
+)
+local size, thickness, lastPos = 50, 2
+for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
+	if gui.Name == guiName then gui:Destroy() end
+end
+local existingRoom = workspace:FindFirstChild("SafeZoneRoom")
+if existingRoom then existingRoom:Destroy() end
 
-	applyEmulatedSpeed(speed)
+local folder = Instance.new("Model", workspace)
+folder.Name = "SafeZoneRoom"
 
-	game.Players.LocalPlayer.CharacterAdded:Connect(function()
-		task.wait(0.25)
-		applyEmulatedSpeed(speed)
-	end)
-end)
+local function createPart(props)
+	local p = Instance.new("Part")
+	for k, v in pairs(props) do p[k] = v end
+	p.Anchored = true
+	p.Parent = folder
+	return p
+end
 
-local gunPositions = {
-	["raygun"] = Vector3.new(114, 335, 569),
-	["landmine"] = Vector3.new(243, 313, 332),
-	["mp5k"] = Vector3.new(232, 373, 47),
-	["awp"] = Vector3.new(466, 313, 756),
-	["m4a1"] = Vector3.new(-154, 303, 703),
-	["r870"] = Vector3.new(20, 292, 241),
-	["freezegun"] = Vector3.new(307, 333, 709),
-	["desert eagle"] = Vector3.new(171, 260, 406),
-	["m14"] = Vector3.new(184, 314, 379),
-	["mg42"] = Vector3.new(22, 313, 371),
-	["svd"] = Vector3.new(159, 333, 445),
-	["db shotgun"] = Vector3.new(106, 272, 101),
-	["energy can"] = Vector3.new(173, 333, 587),
-	["m16a2"] = Vector3.new(71, 282, 31),
-	["m1911"] = Vector3.new(340, 313, 370)
+local function wall(off, sz, trans)
+	return createPart{
+		Size = sz,
+		Position = origin + off,
+		Material = Enum.Material.WoodPlanks,
+		Color = Color3.fromRGB(110, 85, 60),
+		Transparency = trans or 0
+	}
+end
+
+wall(Vector3.new(0,-size/2,0), Vector3.new(size, thickness, size)) -- Floor
+wall(Vector3.new(0,size/2,0), Vector3.new(size, thickness, size)) -- Ceiling
+wall(Vector3.new(-size/2,0,0), Vector3.new(thickness, size, size)) -- Left
+wall(Vector3.new(size/2,0,0), Vector3.new(thickness, size, size)) -- Right
+wall(Vector3.new(0,0,-size/2), Vector3.new(size, size, thickness)) -- Back
+wall(Vector3.new(0,0,size/2), Vector3.new(size, size, thickness)) -- Front
+
+wall(Vector3.new(0,0,-size/2 + 0.1), Vector3.new(size-10, size-10, 0.2), 0.5)
+wall(Vector3.new(0,8,size/2 - 0.1), Vector3.new(size-10, size-12, 0.2), 0.4)
+
+createPart{
+	Shape = Enum.PartType.Ball,
+	Size = Vector3.new(5,5,5),
+	Position = origin + Vector3.new(0,6,0),
+	Material = Enum.Material.Neon,
+	Color = Color3.fromRGB(0,255,170)
 }
 
-maintab:Textbox("Gun Grabber (Legit, Requires Points!)", function(v)
-	local Players = game:GetService("Players")
-	local VirtualInputManager = game:GetService("VirtualInputManager")
-	local Workspace = game:GetService("Workspace")
+local seat = Instance.new("Seat", folder)
+seat.Size = Vector3.new(4, 1, 4)
+seat.Position = origin + Vector3.new(0, -size/2 + 3, 0)
+seat.Material = Enum.Material.Wood
+seat.Color = Color3.fromRGB(100, 80, 60)
+seat.Name = "SafeZoneChair"
+seat.Anchored = false
+seat.CanCollide = true
 
-	local player = Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-	local camera = Workspace.CurrentCamera
+local base = Instance.new("Part", folder)
+base.Size = Vector3.new(0.1, 0.1, 0.1)
+base.Position = seat.Position
+base.Anchored = true
+base.Transparency = 1
+base.CanCollide = false
 
-	local gunOrigin = humanoidRootPart.Position
+local weldBase = Instance.new("WeldConstraint")
+weldBase.Part0 = base
+weldBase.Part1 = seat
+weldBase.Parent = base
 
-	local function findGunModel(name)
-		local weapons = Workspace:FindFirstChild("Weapons")
-		if not weapons then return nil end
-		for _, child in ipairs(weapons:GetChildren()) do
-			if child:IsA("Model") and child.Name:lower() == name:lower() then
-				return child
-			end
-		end
-		return nil
-	end
+local back = createPart{
+	Size = Vector3.new(4, 4, 0.5),
+	Position = seat.Position + Vector3.new(0, 2, 2.25),
+	Material = Enum.Material.Wood,
+	Color = seat.Color
+}
+back.Anchored = false
 
-	local function getGunPart(model)
-		if not model then return nil end
-		for _, d in ipairs(model:GetDescendants()) do
-			if d:IsA("BasePart") then
-				return d
-			end
-		end
-		return nil
-	end
+local weldBack = Instance.new("WeldConstraint")
+weldBack.Part0 = seat
+weldBack.Part1 = back
+weldBack.Parent = seat
 
-	local function runGunSequence(gunPart, position)
-		if not gunPart then return end
-		humanoidRootPart.CFrame = CFrame.new(position)
-		camera.CFrame = CFrame.new(camera.CFrame.Position, gunPart.Position)
-		task.wait(0.1)
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-		task.wait(0.75)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-		humanoidRootPart.CFrame = CFrame.new(gunOrigin)
-	end
+for _, offset in ipairs({
+	Vector3.new(-1.5, -0.5, -1.5),
+	Vector3.new(1.5, -0.5, -1.5),
+	Vector3.new(-1.5, -0.5, 1.5),
+	Vector3.new(1.5, -0.5, 1.5),
+}) do
+	local leg = createPart{
+		Size = Vector3.new(0.5, 2, 0.5),
+		Position = seat.Position + offset,
+		Material = Enum.Material.Wood,
+		Color = seat.Color
+	}
+	leg.Anchored = false
 
-	local input = v:lower()
-	local gunModel = findGunModel(input)
-	local gunPart = getGunPart(gunModel)
-	local gunPos = gunPositions[input]
-
-	if gunModel and gunPart and gunPos then
-		runGunSequence(gunPart, gunPos)
-	else
-		warn("Gun \"" .. v .. "\" not found or missing position.")
-	end
-end)
-
-maintab:Button("Kill All NPCs", function()
-local Workspace = game:GetService("Workspace")
-
-local killersFolder = Workspace:FindFirstChild("Killers")
-if killersFolder then
-	for _, obj in ipairs(killersFolder:GetDescendants()) do
-		if obj:IsA("Humanoid") and obj.Health > 0 then
-			obj.Health = 0
-		end
-	end
-end
-end)
-
-maintab:Button("Enable Power", function()
-game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(127, 323, 599)
-game:GetService("Workspace").CurrentCamera.CFrame = CFrame.new(game:GetService("Workspace").CurrentCamera.CFrame.Position, game:GetService("Workspace").AREA51.ElectricityRoom.PowerManager.Interruptor.Base.Position)
-game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
-task.wait(3)
-game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
-game:GetService("Workspace").Doors.Horizontal.ElectricityRoom.Door.Door:Destroy()
-end)
-
-maintab:Button("Remove Doors (Client)", function()
-for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
-    if obj.Name == "Door" then
-        obj:Destroy()
-    end
-end
-end)
-
-misctab:Button("Infinite Yield", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-end)
-
-misctab:Button("Switch Servers", function()
-    local servers = {}
-    local req = game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
-    local body = HttpService:JSONDecode(req)
-
-    if body and body.data then
-        for i, v in next, body.data do
-            if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
-                table.insert(servers, 1, v.id)
-            end
-        end
-    end
-
-    if #servers > 0 then
-        TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], Players.LocalPlayer)
-end
-end)
-
-helptab:Button("Copy Owner Discord Username", function()
-local StarterGui = game:GetService("StarterGui")
-
-StarterGui:SetCore("SendNotification", {
-    Title = "Discord Username",
-    Text = "Copied to your clipboard!",
-    Duration = 3,
-    Button1 = "alright fella",
-})
-setclipboard("ghostofcelleron")
-end)
-
-helptab:Button("Copy Discord Server Invite", function()
-local StarterGui = game:GetService("StarterGui")
-
-StarterGui:SetCore("SendNotification", {
-    Title = "Discord Invite",
-    Text = "Copied to your clipboard!",
-    Duration = 3,
-    Button1 = "alright fella",
-})
-setclipboard("https://discord.gg/8stFYxJv4R")
-end)
-
-elseif game.PlaceId == juggernaut then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
-
-local win = ui:Create({
-    Name = "Celeron's GUI (SAKTK: Juggernaut)",
-    ThemeColor = Color3.fromRGB(20, 20, 20),
-    StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
-})
-
-local maintab = win:Tab("Main")
-local misctab = win:Tab("Others")
-local helptab = win:Tab("Info")
-
-maintab:Label("Script Made By Celeron + Daffy!")
-helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
-helptab:Label("Show / Hide GUI: Right Alt")
-
-local runService = game:GetService("RunService")
-local players = game:GetService("Players")
-local player = players.LocalPlayer
-
-local currentConnection = nil
-
-function applyEmulatedSpeed(speed)
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid")
-	local rootPart = character:WaitForChild("HumanoidRootPart")
-
-	if currentConnection then currentConnection:Disconnect() end
-
-	currentConnection = runService.RenderStepped:Connect(function(dt)
-		if not character or not character.Parent or humanoid.Health <= 0 then
-			currentConnection:Disconnect()
-			currentConnection = nil
-			return
-		end
-
-		local moveDir = humanoid.MoveDirection
-		if moveDir.Magnitude > 0 then
-			local horizontalVelocity = Vector3.new(moveDir.X, 0, moveDir.Z).Unit * speed
-			rootPart.Velocity = Vector3.new(horizontalVelocity.X, rootPart.Velocity.Y, horizontalVelocity.Z)
-		end
-	end)
-
-	humanoid.Died:Connect(function()
-		if currentConnection then currentConnection:Disconnect() end
-		currentConnection = nil
-	end)
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = seat
+	weld.Part1 = leg
+	weld.Parent = seat
 end
 
-maintab:Textbox("Player Speed", function(v)
-	local speed = tonumber(v)
-	if not speed then return end
-
-	applyEmulatedSpeed(speed)
-
-	game.Players.LocalPlayer.CharacterAdded:Connect(function()
-		task.wait(0.25)
-		applyEmulatedSpeed(speed)
-	end)
-end)
-
-maintab:Label("Juggernaut Aimlock.")
-players = game:GetService("Players")
-runService = game:GetService("RunService")
-input = game:GetService("UserInputService")
-gui = game:GetService("StarterGui")
-player = players.LocalPlayer
-camera = workspace.CurrentCamera
-
-getgenv().aimlockEnabled = false
-getgenv().bindEnabled = false
-
-aimConnection = nil
-target = nil
-bindConnection = nil
-
-function notifyy(text)
-	pcall(function()
-		gui:SetCore("SendNotification", {Title = "Aimlock", Text = text, Duration = 2})
-	end)
-end
-
-function getNearestTarget()
-	local killers = workspace:FindFirstChild("Killers")
-	if not killers then return end
-	local character = player.Character
-	if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-	local origin = character.HumanoidRootPart.Position
-	local closest = nil
-	local shortest = math.huge
-
-	for _, model in ipairs(killers:GetChildren()) do
-		if model:IsA("Model") and model.Name ~= "Zombie" then
-			local humanoid = model:FindFirstChildOfClass("Humanoid")
-			local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("UpperTorso") or model.PrimaryPart
-			if humanoid and root then
-				local distance = (root.Position - origin).Magnitude
-				if distance < shortest then
-					shortest = distance
-					closest = model
-				end
-			end
-		end
-	end
-	return closest
-end
-
-function aimAtTarget()
-	if not getgenv().aimlockEnabled or not target then return end
-	local part = target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("UpperTorso") or target.PrimaryPart
-	if not part then return end
-	local goal = part.Position
-	local origin = camera.CFrame.Position
-	camera.CFrame = CFrame.new(origin, origin + (goal - origin).Unit)
-end
-
-function toggleAimlock()
-	getgenv().aimlockEnabled = not getgenv().aimlockEnabled
-	if getgenv().aimlockEnabled then
-		target = getNearestTarget()
-		if target then
-			if not aimConnection then aimConnection = runService.RenderStepped:Connect(aimAtTarget) end
-			notifyy("Enabled.")
-		else
-			getgenv().aimlockEnabled = false
-			notifyy("Disabled.")
-		end
-	else
-		if aimConnection then aimConnection:Disconnect() aimConnection = nil end
-		target = nil
-		notifyy("Disabled.")
-	end
-end
-
-maintab:Button("Aimlock", function()
-	toggleAimlock()
-end)
-
-maintab:Button("Aimlock (Bind: M2)", function()
-	getgenv().bindEnabled = not getgenv().bindEnabled
-	if getgenv().bindEnabled then
-		if not bindConnection then
-			bindConnection = input.InputBegan:Connect(function(key, processed)
-				if processed then return end
-				if key.UserInputType == Enum.UserInputType.MouseButton2 then
-					toggleAimlock()
-				end
-			end)
-			notifyy("Keybind Enabled.")
-		end
-	else
-		if bindConnection then
-			bindConnection:Disconnect()
-			bindConnection = nil
-			notifyy("Keybind Disabled.")
-		end
-	end
-end)
-
-maintab:Label("Weapon Features.")
-
-maintab:Button("Show Current Weapons", function()
-local StarterGui = game:GetService("StarterGui")
-local Workspace = game:GetService("Workspace")
-
-local weaponsFolder = Workspace:FindFirstChild("Weapons")
-
-local gunNames = {}
-
-for _, obj in ipairs(weaponsFolder:GetChildren()) do
-	if obj:IsA("Model") then
-		table.insert(gunNames, obj.Name)
-	end
-end
-
-local finalText = #gunNames > 0 and table.concat(gunNames, ", ") or "No guns found."
-
-StarterGui:SetCore("SendNotification", {
-	Title = "Current Weapons";
-	Text = finalText;
-	Duration = 10;
-})
-end)
-
-local weaponESPEnabled = false
-local activeESP = {}
-local lastWeaponNames = {}
-local currentRoot = nil
-
-maintab:Button("Weapon ESP", function()
-	weaponESPEnabled = not weaponESPEnabled
-
-	local StarterGui = game:GetService("StarterGui")
-	StarterGui:SetCore("SendNotification", {
-		Title = "Weapon ESP",
-		Text = weaponESPEnabled and "Enabled." or "Disabled.",
-		Duration = 3
-	})
-
-	local player = game.Players.LocalPlayer
-	local weaponsFolder = workspace:FindFirstChild("Weapons")
-	if not weaponsFolder then return end
-
-	local function updateRoot()
-		local char = player.Character or player.CharacterAdded:Wait()
-		local root = char:WaitForChild("HumanoidRootPart")
-		currentRoot = root
-
-		local humanoid = char:FindFirstChildOfClass("Humanoid")
-		if humanoid then
-			humanoid.Died:Connect(function()
-				currentRoot = nil
-				player.CharacterAdded:Wait():WaitForChild("HumanoidRootPart")
-				task.wait(0.5)
-				updateRoot()
-				if weaponESPEnabled then
-					createESP()
-				end
-			end)
-		end
-
-		root:GetPropertyChangedSignal("Parent"):Connect(function()
-			if not root:IsDescendantOf(workspace) then
-				task.wait(0.5)
-				updateRoot()
-			end
-		end)
-	end
-
-	updateRoot()
-	player.CharacterAdded:Connect(function()
-		task.wait(0.5)
-		updateRoot()
-		if weaponESPEnabled then
-			createESP()
-		end
-	end)
-
-	local function clearESP()
-		for _, gui in pairs(activeESP) do
-			if gui and gui.Parent then
-				gui:Destroy()
-			end
-		end
-		activeESP = {}
-	end
-
-	local function createESP()
-		clearESP()
-		lastWeaponNames = {}
-		for _, obj in ipairs(weaponsFolder:GetChildren()) do
-			if obj:IsA("Model") then
-				table.insert(lastWeaponNames, obj.Name)
-				local part = obj:FindFirstChildWhichIsA("BasePart")
-				if part then
-					local gui = Instance.new("BillboardGui")
-					gui.Size = UDim2.new(0, 100, 0, 30)
-					gui.StudsOffset = Vector3.new(0, 3, 0)
-					gui.AlwaysOnTop = true
-					gui.Adornee = part
-					gui.Parent = part
-
-					local nameLabel = Instance.new("TextLabel")
-					nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
-					nameLabel.Position = UDim2.new(0, 0, 0, 0)
-					nameLabel.BackgroundTransparency = 1
-					nameLabel.TextColor3 = Color3.new(1, 1, 1)
-					nameLabel.TextScaled = true
-					nameLabel.Font = Enum.Font.Arial
-					nameLabel.Text = obj.Name
-					nameLabel.Parent = gui
-
-					local distLabel = Instance.new("TextLabel")
-					distLabel.Size = UDim2.new(1, 0, 0.5, 0)
-					distLabel.Position = UDim2.new(0, 0, 0.5, 0)
-					distLabel.BackgroundTransparency = 1
-					distLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-					distLabel.TextScaled = true
-					distLabel.Font = Enum.Font.Code
-					distLabel.Text = "..."
-					distLabel.Parent = gui
-
-					table.insert(activeESP, gui)
-
-					task.spawn(function()
-						while gui.Parent and weaponESPEnabled do
-							if currentRoot then
-								local dist = (part.Position - currentRoot.Position).Magnitude
-								distLabel.Text = math.floor(dist) .. " studs"
-							end
-							task.wait()
-						end
-					end)
-				end
-			end
-		end
-	end
-
-	local function weaponsChanged()
-		local currentNames = {}
-		for _, obj in ipairs(weaponsFolder:GetChildren()) do
-			if obj:IsA("Model") then
-				table.insert(currentNames, obj.Name)
-			end
-		end
-		if #currentNames ~= #lastWeaponNames then return true end
-		for i, name in ipairs(currentNames) do
-			if name ~= lastWeaponNames[i] then return true end
-		end
-		return false
-	end
-
-	task.spawn(function()
-		while true do
-			if weaponESPEnabled and weaponsChanged() then
-				createESP()
-			end
-			task.wait(3)
-		end
-	end)
-
-	if weaponESPEnabled then
-		createESP()
-	end
-end)
-
-maintab:Textbox("Obtain Gun", function(v)
-	local Players = game:GetService("Players")
-	local VirtualInputManager = game:GetService("VirtualInputManager")
-	local Workspace = game:GetService("Workspace")
-
-	local player = Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-	local camera = Workspace.CurrentCamera
-
-	local gunOrigin = humanoidRootPart.Position
-
-	local function findGunModel(name)
-		local weapons = Workspace:FindFirstChild("Weapons")
-		if not weapons then return nil end
-		for _, child in ipairs(weapons:GetChildren()) do
-			if child:IsA("Model") and child.Name:lower() == name:lower() then
-				return child
-			end
-		end
-		return nil
-	end
-
-	local function getGunPart(model)
-		if not model then return nil end
-		for _, part in ipairs(model:GetDescendants()) do
-			if part:IsA("BasePart") then
-				return part
-			end
-		end
-		return nil
-	end
-
-	local function runGunSequence(gunPart)
-		if not gunPart then return end
-		local position = gunPart.Position
-		humanoidRootPart.CFrame = CFrame.new(position)
-		camera.CFrame = CFrame.new(camera.CFrame.Position, position)
-		task.wait(0.1)
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-		task.wait(0.05)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-		humanoidRootPart.CFrame = CFrame.new(gunOrigin)
-	end
-
-	local input = v:lower()
-	local gunModel = findGunModel(input)
-	local gunPart = getGunPart(gunModel)
-	runGunSequence(gunPart)
-end)
-
-maintab:Label("Auto Win Features.")
-
-maintab:Button("Juggernaut Auto-Win (Blatant)", function()
-	local Players = game:GetService("Players")
-	local Workspace = game:GetService("Workspace")
-	local StarterGui = game:GetService("StarterGui")
-
-	local LocalPlayer = Players.LocalPlayer
-	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local localRoot = character:WaitForChild("HumanoidRootPart")
-
-	_G.LoopKillEnabled = not _G.LoopKillEnabled
-	local visited = {}
-	local running = false
-
-	local function isDead(player)
-		local char = player.Character
-		local hum = char and char:FindFirstChildOfClass("Humanoid")
-		return not (hum and hum.Health > 0)
-	end
-
-	local function teleportTo(player)
-		local targetChar = player.Character
-		local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
-		if localRoot and targetRoot then
-			localRoot.CFrame = targetRoot.CFrame + Vector3.new(2, 0, 0)
-		end
-	end
-
-	local function sendNotification(state)
-		StarterGui:SetCore("SendNotification", {
-			Title = "Juggernaut Kill";
-			Text = state and "Enabled." or "Disabled.";
-			Duration = 5;
-		})
-	end
-
-	local function startLoopKill()
-		if running then return end
-		running = true
-		visited = {}
-		sendNotification(true)
-
-		task.spawn(function()
-			while _G.LoopKillEnabled do
-				for _, player in ipairs(Players:GetPlayers()) do
-					if player ~= LocalPlayer and not visited[player] then
-						repeat
-							if not _G.LoopKillEnabled then
-								running = false
-								visited = {}
-								sendNotification(false)
-								return
-							end
-
-							if isDead(player) then
-								visited[player] = true
-							else
-								teleportTo(player)
-							end
-							task.wait(0.05)
-						until visited[player]
-					end
-				end
-
-				if #Players:GetPlayers() - 1 == #visited then
-					running = false
-					sendNotification(false)
-					break
-				end
-
-				task.wait(1)
-			end
-
-			running = false
-			visited = {}
-			sendNotification(false)
-		end)
-	end
-
-	if _G.LoopKillEnabled then
-		startLoopKill()
-	else
-		sendNotification(false)
-	end
-end)
-
-maintab:Button("Survivor Auto-Win (Blatant)", function()
-game.Players.LocalPlayer.Character:PivotTo(CFrame.new(112,335,56))
-end)
-
-maintab:Label("Survivor-Only Features.")
-
-local runService = game:GetService("RunService")
-local players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-local player = players.LocalPlayer
-
-local model = workspace:WaitForChild("AREA51"):WaitForChild("PlantRoom"):WaitForChild("Box of Shells")
-local box = model:WaitForChild("Box")
-local originalCFrame = box.CFrame
-local loopConnection
-local infiniteAmmoEnabled = false
-
-local function notifyy(title, text)
-	pcall(function()
-		StarterGui:SetCore("SendNotification", {
-			Title = title,
-			Text = text,
-			Duration = 3
-		})
-	end)
-end
-
-local function ghostifyModel()
-	for _, item in ipairs(model:GetDescendants()) do
-		if item:IsA("BasePart") then
-			item.Transparency = 1
-			item.CanCollide = false
-		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
-			item.Transparency = 1
-		end
-	end
-end
-
-local function enableInfiniteAmmo()
-	infiniteAmmoEnabled = true
-	notifyy("Infinite Ammo", "Enabled.")
-	ghostifyModel()
-	box.Anchored = true
-	box.CanCollide = false
-
-	local toggle = false
-	local lastToggle = 0
-
-	loopConnection = runService.RenderStepped:Connect(function(dt)
-		local char = player.Character
-		if not char then return end
-
-		local root = char:FindFirstChild("HumanoidRootPart")
-		if not root then return end
-
-		lastToggle += dt
-		if lastToggle >= 0.1 then
-			lastToggle = 0
-			toggle = not toggle
-
-			if toggle then
-				local offset = Vector3.new(0, -(root.Size.Y / 2 + box.Size.Y / 2 + 0.1), 0)
-				local position = root.Position + offset
-				box.CFrame = CFrame.new(position)
-			else
-				box.CFrame = originalCFrame
-			end
-		end
-	end)
-end
-
-local function disableInfiniteAmmo()
-	infiniteAmmoEnabled = false
-	notifyy("Infinite Ammo", "Disabled.")
-	if loopConnection then
-		loopConnection:Disconnect()
-		loopConnection = nil
-	end
-	box.CFrame = originalCFrame
-end
-
-maintab:Button("Infinite Ammo", function()
-	if infiniteAmmoEnabled then
-		disableInfiniteAmmo()
-	else
-		enableInfiniteAmmo()
-	end
-end)
-
-maintab:Button("TP To Juggernaut", function()
-local Players = game:GetService("Players")
-local localPlayer = Players.LocalPlayer
-local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-
-for _, player in ipairs(Players:GetPlayers()) do
-	if player ~= localPlayer and player.Character then
-		local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-		local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
-
-		if humanoid and targetRoot and humanoid.Health > 200 then
-			humanoidRootPart.CFrame = targetRoot.CFrame + Vector3.new(2, 2, 2)
-			break
-		end
-	end
-end
-end)
-
-maintab:Button("Juggernaut Health Bar", function()
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-screenGui.Name = "BossHealthBars"
-screenGui.ResetOnSpawn = false
-
-local function createHealthBar(model)
-	local humanoid = model:FindFirstChildOfClass("Humanoid")
-	if not humanoid then return end
-	if screenGui:FindFirstChild(model.Name .. "_Bar") then return end
-
-	local displayName = model.Name
-	for _, p in ipairs(Players:GetPlayers()) do
-		if p.Character == model then
-			displayName = p.DisplayName
-			break
-		end
-	end
-
-	local frame = Instance.new("Frame")
-	frame.Name = model.Name .. "_Bar"
-	frame.Size = UDim2.new(0.4, 0, 0, 30)
-	frame.Position = UDim2.new(0.3, 0, 0.05, 0)
-	frame.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-	frame.BorderSizePixel = 0
-	frame.Parent = screenGui
-
-	local fill = Instance.new("Frame")
-	fill.Name = "HealthFill"
-	fill.Size = UDim2.new(1, 0, 1, 0)
-	fill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-	fill.BorderSizePixel = 0
-	fill.Parent = frame
-
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, 0, 1, 0)
-	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.new(1, 1, 1)
-	label.TextScaled = true
-	label.Font = Enum.Font.Fantasy
-	label.Text = displayName .. " - " .. math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
-	label.Parent = frame
-
-	task.spawn(function()
-		while humanoid and humanoid.Parent and humanoid.Health > 0 do
-			local ratio = humanoid.Health / humanoid.MaxHealth
-			fill.Size = UDim2.new(ratio, 0, 1, 0)
-			label.Text = displayName .. " - " .. math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
-			task.wait(0.2)
-		end
-		frame:Destroy()
-	end)
-end
+local screen = Instance.new("Part", folder)
+screen.Size = Vector3.new(10, 6, 0.2)
+screen.Position = origin + Vector3.new(0, -size/2 + 5, -8)
+screen.Anchored = true
+screen.Material = Enum.Material.Glass
+screen.Transparency = 0.5
+screen.Reflectance = 0.1
+screen.Color = Color3.fromRGB(20, 20, 20)
+screen.Name = "SafeZoneTV"
+
+local frame = Instance.new("Part", folder)
+frame.Size = Vector3.new(10.2, 6.2, 0.2)
+frame.Position = screen.Position + Vector3.new(0, 0, -0.21)
+frame.Anchored = true
+frame.Material = Enum.Material.Wood
+frame.Color = Color3.fromRGB(60, 45, 35)
+frame.Name = "TVFrame"
+
+local glow = Instance.new("PointLight", frame)
+glow.Color = Color3.fromRGB(90, 90, 120)
+glow.Range = 12
+glow.Brightness = 1.5
+glow.Shadows = false
+
+local stand = Instance.new("Part", folder)
+stand.Size = Vector3.new(12, 1, 4)
+stand.Position = screen.Position + Vector3.new(0, -3.5, -0.5)
+stand.Anchored = true
+stand.Material = Enum.Material.Wood
+stand.Color = Color3.fromRGB(70, 50, 40)
+stand.Name = "TVStand"
+
+local images = {
+	"rbxassetid://",
+	"rbxassetid://2096706",
+	"rbxassetid://12886904144",
+}
+
+local screenDecal = Instance.new("Decal")
+screenDecal.Texture = "rbxassetid://2058984"
+screenDecal.Face = Enum.NormalId.Bottom
+screenDecal.Parent = screen
+
+local surface = Instance.new("SurfaceGui", screen)
+surface.Face = Enum.NormalId.Front
+surface.CanvasSize = Vector2.new(500, 300)
+surface.AlwaysOnTop = true
+surface.Name = "TVDisplay"
+
+local imageLabel = Instance.new("ImageLabel", surface)
+imageLabel.Size = UDim2.new(1, 0, 1, 0)
+imageLabel.BackgroundTransparency = 1
+imageLabel.Image = "rbxassetid://2058984"
 
 task.spawn(function()
+	local index = 1
 	while true do
-		local killersFolder = workspace:FindFirstChild("Killers")
-		if killersFolder then
-			local models = {}
-			for _, model in ipairs(killersFolder:GetChildren()) do
-				if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
-					table.insert(models, model)
-				end
-			end
-
-			if #models == 1 and models[1].Name == "Zombie" then
-				createHealthBar(models[1])
-			else
-				for _, model in ipairs(models) do
-					if model.Name ~= "Zombie" then
-						createHealthBar(model)
-					end
-				end
-			end
-		end
-		task.wait(1)
+		index = (index % #images) + 1
+		imageLabel.Image = images[index]
+		task.wait(3)
 	end
 end)
-end)
 
-maintab:Button("Juggernaut ESP", function()
-	local RunService = game:GetService("RunService")
-	local killersFolder = workspace:FindFirstChild("Killers")
+local speaker = Instance.new("Part", folder)
+speaker.Size = Vector3.new(3, 3, 3)
+speaker.Position = origin + Vector3.new(6, -size/2 + 5, -8)
+speaker.Anchored = true
+speaker.Material = Enum.Material.SmoothPlastic
+speaker.Color = Color3.fromRGB(50, 50, 50)
+speaker.Name = "MusicSpeaker"
 
-	RunService.RenderStepped:Connect(function()
-		if not killersFolder then return end
+local mesh = Instance.new("SpecialMesh", speaker)
+mesh.MeshId = "rbxassetid://1323932968"
+mesh.TextureId = "rbxassetid://6057464213"
+mesh.Scale = Vector3.new(3, 3, 3)
 
-		for _, model in ipairs(killersFolder:GetChildren()) do
-			if model:IsA("Model") then
-				local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
-				if root then
-					local tagName = "JuggernautESP"
+local sound = Instance.new("Sound", speaker)
+sound.SoundId = "rbxassetid://1845341094"
+sound.Volume = 0.75
+sound.Looped = true
+sound.Playing = true
 
-					if not model:FindFirstChild(tagName) then
-						local highlight = Instance.new("Highlight")
-						highlight.Name = tagName
-						highlight.Adornee = model
-						highlight.FillTransparency = 1
-						highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
-						highlight.OutlineTransparency = 0
-						highlight.Parent = model
-					end
+local function lamp(pos)
+	local base = createPart{
+		Size = Vector3.new(1,6,1),
+		Position = origin + pos,
+		Color = Color3.fromRGB(45,45,45),
+		Material = Enum.Material.Metal
+	}
+	local light = Instance.new("PointLight", base)
+	light.Color = Color3.fromRGB(255, 240, 190)
+	light.Range = 75
+	light.Brightness = 2
+	light.Shadows = true
+end
 
-					if not root:FindFirstChild("JuggernautTag") then
-						local billboard = Instance.new("BillboardGui")
-						billboard.Name = "JuggernautTag"
-						billboard.Adornee = root
-						billboard.Size = UDim2.new(0, 100, 0, 20)
-						billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-						billboard.AlwaysOnTop = true
-						billboard.LightInfluence = 0
-						billboard.Parent = root
+local lampOff = size/2 - 3
+for _, vec in ipairs({
+	Vector3.new(-lampOff, lampOff - 5, -lampOff),
+	Vector3.new(lampOff, lampOff - 5, -lampOff),
+	Vector3.new(-lampOff, lampOff - 5, lampOff),
+	Vector3.new(lampOff, lampOff - 5, lampOff),
+}) do lamp(vec) end
 
-						local nameLabel = Instance.new("TextLabel")
-						nameLabel.Size = UDim2.new(1, 0, 1, 0)
-						nameLabel.BackgroundTransparency = 1
-						nameLabel.Text = model.Name
-						nameLabel.TextColor3 = Color3.new(1, 1, 1)
-						nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-						nameLabel.TextStrokeTransparency = 0
-						nameLabel.TextScaled = true
-						nameLabel.Font = Enum.Font.Arial
-						nameLabel.Parent = billboard
-					end
-				end
-			end
-		end
+local debounceTable = {}
+
+seat.Touched:Connect(function(hit)
+	local character = hit.Parent
+	local human = character and character:FindFirstChild("Humanoid")
+	local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+	if not (human and hrp) then return end
+	if debounceTable[character] then return end
+
+	debounceTable[character] = true
+
+	local seatCF = seat.CFrame
+	local offset = Vector3.new(0, 2.2, 0)
+	hrp.CFrame = CFrame.new(seat.Position + offset, seat.Position + seatCF.LookVector * 5)
+	human.Sit = true
+
+	task.delay(2, function()
+		debounceTable[character] = nil
 	end)
 end)
 
-maintab:Label("Other Features.")
+local gui = Instance.new("ScreenGui")
+gui.Name = guiName
+gui.ResetOnSpawn = false
+gui.Parent = game:GetService("CoreGui")
 
-maintab:Button("Pack-A-Punch", function()
-local p = game.Players.LocalPlayer
-local c = p.Character or p.CharacterAdded:Wait()
-local vim = game:GetService("VirtualInputManager")
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 260, 0, 140)
+frame.Position = UDim2.new(0, 20, 1, -20)
+frame.AnchorPoint = Vector2.new(0, 1)
+frame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+frame.BorderSizePixel = 0
 
-c:PivotTo(CFrame.new(111, 317, 73))
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0.25, 0)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 20
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Text = "🛡️ Safety 🛡️"
 
-task.delay(0.2, function()
-	vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-	vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+local function makeBtn(txt, ypos)
+	local b = Instance.new("TextButton", frame)
+	b.Size = UDim2.new(1, -20, 0.2, 0)
+	b.Position = UDim2.new(0, 10, ypos, 0)
+	b.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	b.BorderSizePixel = 0
+	b.TextColor3 = Color3.new(1,1,1)
+	b.Font = Enum.Font.Gotham
+	b.TextSize = 16
+	b.Text = txt
+	return b
+end
 
-	task.delay(0.1, function()
-		c:PivotTo(CFrame.new(112, 317, 42))
-	end)
+local toBtn = makeBtn("Teleport to SafeZone", 0.25)
+local backBtn = makeBtn("Previous Position", 0.71)
+local spawnBtn = makeBtn("Teleport to Spawn", 0.48)
+
+toBtn.MouseButton1Click:Connect(function()
+	lastPos = root.Position
+	root.CFrame = CFrame.new(origin + Vector3.new(0,5,0))
 end)
+
+backBtn.MouseButton1Click:Connect(function()
+	if lastPos then root.CFrame = CFrame.new(lastPos + Vector3.new(0,5,0)) end
 end)
 
-misctab:Button("Infinite Yield", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+spawnBtn.MouseButton1Click:Connect(function()
+	lastPos = root.Position
+	root.CFrame = CFrame.new(Vector3.new(0, 180, -13))
 end)
 
-misctab:Button("Switch Servers", function()
-    local servers = {}
-    local req = game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
-    local body = HttpService:JSONDecode(req)
+local UIS = game:GetService("UserInputService")
+local dragging, offset = false, Vector2.zero
 
-    if body and body.data then
-        for i, v in next, body.data do
-            if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
-                table.insert(servers, 1, v.id)
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		offset = input.Position - frame.AbsolutePosition
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		frame.Position = UDim2.new(0, input.Position.X - offset.X, 0, input.Position.Y - offset.Y)
+	end
+end)
+
+UIS.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+end)
+
+end)
+
+local killaura = false
+
+local function toggleKillAura()
+    killaura = not killaura
+
+    local statusText = killaura and "Enabled." or "Disabled."
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Kill Aura",
+        Text = statusText,
+        Duration = 3
+    })
+
+    if killaura then
+        task.spawn(function()
+            while killaura do
+                local remotes = game.ReplicatedStorage:WaitForChild("Remotes", 5)
+                if remotes then
+                    local yuji = remotes:WaitForChild("Yuji", 5)
+                    if yuji then
+                        yuji:FireServer("Cleave")
+                    end
+                end
+                task.wait()
             end
+        end)
+    end
+end
+
+maintab:Button("Kill Aura", function()
+    toggleKillAura()
+end)
+
+
+
+maintab:Button("God Mode", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local originalCF = hrp.CFrame
+
+local targetHRP = Workspace[" "]:FindFirstChild("HumanoidRootPart")
+if targetHRP then
+    hrp.CFrame = CFrame.new(Vector3.new(-29, 180, 95), targetHRP.Position)
+    hrp.Velocity = Vector3.zero
+
+    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat"):FireServer("Omni")
+
+    task.wait(3)
+
+    hrp.CFrame = CFrame.new(-134, 332, 570)
+    hrp.Velocity = Vector3.zero
+
+	wait(1)
+
+    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo"):FireServer("TrueDomain")
+
+    task.wait(25.75)
+
+    hrp.CFrame = originalCF
+    hrp.Velocity = Vector3.zero
+end
+end)
+
+_G.AutoHealEnabled = not _G.AutoHealEnabled
+
+maintab:Button("Auto Heal", function()
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+local heal1 = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Cid")
+local heal2 = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuta")
+
+_G.AutoHealEnabled = not _G.AutoHealEnabled
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Auto-Heal",
+    Text = _G.AutoHealEnabled and "Enabled." or "Disabled.",
+    Duration = 4
+})
+
+if _G.AutoHealConn then
+    _G.AutoHealConn:Disconnect()
+    _G.AutoHealConn = nil
+end
+
+if _G.AutoHealEnabled then
+    local function onHealthChange(health)
+        if health < 100 then
+            heal1:FireServer("SlimeHeal")
+            heal2:FireServer("Heal")
         end
     end
 
-    if #servers > 0 then
-        TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], Players.LocalPlayer)
+    _G.AutoHealConn = humanoid.HealthChanged:Connect(onHealthChange)
 end
 end)
 
-helptab:Button("Copy Owner Discord Username", function()
-local StarterGui = game:GetService("StarterGui")
+maintab:Button("Instant Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
 
-StarterGui:SetCore("SendNotification", {
-    Title = "Discord Username",
-    Text = "Copied to your clipboard!",
-    Duration = 3,
-    Button1 = "alright fella",
-})
-setclipboard("ghostofcelleron")
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Jotaro"):FireServer(unpack(args))
 end)
 
-helptab:Button("Copy Discord Server Invite", function()
-local StarterGui = game:GetService("StarterGui")
-
-StarterGui:SetCore("SendNotification", {
-    Title = "Discord Invite",
-    Text = "Copied to your clipboard!",
-    Duration = 3,
-    Button1 = "alright fella",
-})
-setclipboard("https://discord.gg/8stFYxJv4R")
-end)
-
-elseif game.PlaceId == infection then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
-
-local win = ui:Create({
-    Name = "Celeron's GUI (SAKTK: Juggernaut)",
-    ThemeColor = Color3.fromRGB(20, 20, 20),
-    StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
-})
-
-local maintab = win:Tab("Main")
-local misctab = win:Tab("Others")
-local helptab = win:Tab("Info")
-
-maintab:Label("Script Made By Celeron + Daffy!")
-helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
-helptab:Label("Show / Hide GUI: Right Alt")
-
-local runService = game:GetService("RunService")
-local players = game:GetService("Players")
-local player = players.LocalPlayer
-
-local currentConnection = nil
-
-function applyEmulatedSpeed(speed)
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoid = character:WaitForChild("Humanoid")
-	local rootPart = character:WaitForChild("HumanoidRootPart")
-
-	if currentConnection then currentConnection:Disconnect() end
-
-	currentConnection = runService.RenderStepped:Connect(function(dt)
-		if not character or not character.Parent or humanoid.Health <= 0 then
-			currentConnection:Disconnect()
-			currentConnection = nil
-			return
-		end
-
-		local moveDir = humanoid.MoveDirection
-		if moveDir.Magnitude > 0 then
-			local horizontalVelocity = Vector3.new(moveDir.X, 0, moveDir.Z).Unit * speed
-			rootPart.Velocity = Vector3.new(horizontalVelocity.X, rootPart.Velocity.Y, horizontalVelocity.Z)
-		end
-	end)
-
-	humanoid.Died:Connect(function()
-		if currentConnection then currentConnection:Disconnect() end
-		currentConnection = nil
-	end)
-end
-
-maintab:Textbox("Player Speed", function(v)
-	local speed = tonumber(v)
-	if not speed then return end
-
-	applyEmulatedSpeed(speed)
-
-	game.Players.LocalPlayer.CharacterAdded:Connect(function()
-		task.wait(0.25)
-		applyEmulatedSpeed(speed)
-	end)
-end)
-
-maintab:Label("Weapon Features.")
-
-maintab:Button("Show Current Weapons", function()
-local StarterGui = game:GetService("StarterGui")
-local Workspace = game:GetService("Workspace")
-
-local weaponsFolder = Workspace:FindFirstChild("Weapons")
-
-local gunNames = {}
-
-for _, obj in ipairs(weaponsFolder:GetChildren()) do
-	if obj:IsA("Model") then
-		table.insert(gunNames, obj.Name)
-	end
-end
-
-local finalText = #gunNames > 0 and table.concat(gunNames, ", ") or "No guns found."
-
-StarterGui:SetCore("SendNotification", {
-	Title = "Current Weapons";
-	Text = finalText;
-	Duration = 10;
-})
-end)
-
-local weaponESPEnabled = false
-local activeESP = {}
-local lastWeaponNames = {}
-local currentRoot = nil
-
-maintab:Button("Weapon ESP", function()
-	weaponESPEnabled = not weaponESPEnabled
-
-	local StarterGui = game:GetService("StarterGui")
-	StarterGui:SetCore("SendNotification", {
-		Title = "Weapon ESP",
-		Text = weaponESPEnabled and "Enabled." or "Disabled.",
-		Duration = 3
-	})
-
-	local player = game.Players.LocalPlayer
-	local weaponsFolder = workspace:FindFirstChild("Weapons")
-	if not weaponsFolder then return end
-
-	local function updateRoot()
-		local char = player.Character or player.CharacterAdded:Wait()
-		local root = char:WaitForChild("HumanoidRootPart")
-		currentRoot = root
-
-		local humanoid = char:FindFirstChildOfClass("Humanoid")
-		if humanoid then
-			humanoid.Died:Connect(function()
-				currentRoot = nil
-				player.CharacterAdded:Wait():WaitForChild("HumanoidRootPart")
-				task.wait(0.5)
-				updateRoot()
-				if weaponESPEnabled then
-					createESP()
-				end
-			end)
-		end
-
-		root:GetPropertyChangedSignal("Parent"):Connect(function()
-			if not root:IsDescendantOf(workspace) then
-				task.wait(0.5)
-				updateRoot()
-			end
-		end)
-	end
-
-	updateRoot()
-	player.CharacterAdded:Connect(function()
-		task.wait(0.5)
-		updateRoot()
-		if weaponESPEnabled then
-			createESP()
-		end
-	end)
-
-	local function clearESP()
-		for _, gui in pairs(activeESP) do
-			if gui and gui.Parent then
-				gui:Destroy()
-			end
-		end
-		activeESP = {}
-	end
-
-	local function createESP()
-		clearESP()
-		lastWeaponNames = {}
-		for _, obj in ipairs(weaponsFolder:GetChildren()) do
-			if obj:IsA("Model") then
-				table.insert(lastWeaponNames, obj.Name)
-				local part = obj:FindFirstChildWhichIsA("BasePart")
-				if part then
-					local gui = Instance.new("BillboardGui")
-					gui.Size = UDim2.new(0, 100, 0, 30)
-					gui.StudsOffset = Vector3.new(0, 3, 0)
-					gui.AlwaysOnTop = true
-					gui.Adornee = part
-					gui.Parent = part
-
-					local nameLabel = Instance.new("TextLabel")
-					nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
-					nameLabel.Position = UDim2.new(0, 0, 0, 0)
-					nameLabel.BackgroundTransparency = 1
-					nameLabel.TextColor3 = Color3.new(1, 1, 1)
-					nameLabel.TextScaled = true
-					nameLabel.Font = Enum.Font.Arial
-					nameLabel.Text = obj.Name
-					nameLabel.Parent = gui
-
-					local distLabel = Instance.new("TextLabel")
-					distLabel.Size = UDim2.new(1, 0, 0.5, 0)
-					distLabel.Position = UDim2.new(0, 0, 0.5, 0)
-					distLabel.BackgroundTransparency = 1
-					distLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-					distLabel.TextScaled = true
-					distLabel.Font = Enum.Font.Code
-					distLabel.Text = "..."
-					distLabel.Parent = gui
-
-					table.insert(activeESP, gui)
-
-					task.spawn(function()
-						while gui.Parent and weaponESPEnabled do
-							if currentRoot then
-								local dist = (part.Position - currentRoot.Position).Magnitude
-								distLabel.Text = math.floor(dist) .. " studs"
-							end
-							task.wait()
-						end
-					end)
-				end
-			end
-		end
-	end
-
-	local function weaponsChanged()
-		local currentNames = {}
-		for _, obj in ipairs(weaponsFolder:GetChildren()) do
-			if obj:IsA("Model") then
-				table.insert(currentNames, obj.Name)
-			end
-		end
-		if #currentNames ~= #lastWeaponNames then return true end
-		for i, name in ipairs(currentNames) do
-			if name ~= lastWeaponNames[i] then return true end
-		end
-		return false
-	end
-
-	task.spawn(function()
-		while true do
-			if weaponESPEnabled and weaponsChanged() then
-				createESP()
-			end
-			task.wait(3)
-		end
-	end)
-
-	if weaponESPEnabled then
-		createESP()
-	end
-end)
-
-maintab:Textbox("Obtain Gun", function(v)
-	local Players = game:GetService("Players")
-	local VirtualInputManager = game:GetService("VirtualInputManager")
-	local Workspace = game:GetService("Workspace")
-
-	local player = Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-	local camera = Workspace.CurrentCamera
-
-	local gunOrigin = humanoidRootPart.Position
-
-	local function findGunModel(name)
-		local weapons = Workspace:FindFirstChild("Weapons")
-		if not weapons then return nil end
-		for _, child in ipairs(weapons:GetChildren()) do
-			if child:IsA("Model") and child.Name:lower() == name:lower() then
-				return child
-			end
-		end
-		return nil
-	end
-
-	local function getGunPart(model)
-		if not model then return nil end
-		for _, part in ipairs(model:GetDescendants()) do
-			if part:IsA("BasePart") then
-				return part
-			end
-		end
-		return nil
-	end
-
-	local function runGunSequence(gunPart)
-		if not gunPart then return end
-		local position = gunPart.Position
-		humanoidRootPart.CFrame = CFrame.new(position)
-		camera.CFrame = CFrame.new(camera.CFrame.Position, position)
-		task.wait(0.1)
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-		task.wait(0.05)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-		humanoidRootPart.CFrame = CFrame.new(gunOrigin)
-	end
-
-	local input = v:lower()
-	local gunModel = findGunModel(input)
-	local gunPart = getGunPart(gunModel)
-	runGunSequence(gunPart)
-end)
-
-maintab:Label("Aimlock Features.")
-local players = game:GetService("Players")
-local runService = game:GetService("RunService")
-local input = game:GetService("UserInputService")
-local gui = game:GetService("StarterGui")
-local player = players.LocalPlayer
-local camera = workspace.CurrentCamera
-
-getgenv().aimlockEnabled = false
-getgenv().bindEnabled = false
-
-local aimConnection = nil
-local target = nil
-local bindConnection = nil
-
-local function notifyy(text)
-	pcall(function()
-		gui:SetCore("SendNotification", {Title = "Aimlock", Text = text, Duration = 2})
-	end)
-end
-
-local function getNearestTarget()
-	local killers = workspace:FindFirstChild("Killers")
-	if not killers then return end
-	local char = player.Character
-	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-	local origin = char.HumanoidRootPart.Position
-	local closest, shortest = nil, math.huge
-
-	for _, model in ipairs(killers:GetChildren()) do
-		if model:IsA("Model") then
-			local hum = model:FindFirstChildOfClass("Humanoid")
-			local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("UpperTorso") or model.PrimaryPart
-			if hum and hum.Health > 0 and root then
-				local dist = (root.Position - origin).Magnitude
-				if dist < shortest then
-					shortest = dist
-					closest = model
-				end
-			end
-		end
-	end
-	return closest
-end
-
-local function aimAtTarget()
-	if not getgenv().aimlockEnabled then return end
-
-	local valid = target and target:FindFirstChildOfClass("Humanoid") and target:FindFirstChildOfClass("Humanoid").Health > 0
-	if not valid then
-		local newTarget = getNearestTarget()
-		if newTarget and newTarget ~= target then
-			target = newTarget
-			notifyy("Switched to: " .. target.Name)
-		else
-			target = nil
-			return
-		end
-	end
-
-	if not target then return end
-	local part = target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("UpperTorso") or target.PrimaryPart
-	if not part then return end
-	camera.CFrame = CFrame.new(camera.CFrame.Position, part.Position)
-end
-
-local function toggleAimlock()
-	getgenv().aimlockEnabled = not getgenv().aimlockEnabled
-	if getgenv().aimlockEnabled then
-		target = getNearestTarget()
-		if target then
-			if not aimConnection then aimConnection = runService.RenderStepped:Connect(aimAtTarget) end
-			notifyy("Aimlock Enabled.")
-		else
-			getgenv().aimlockEnabled = false
-			notifyy("No target. Disabled.")
-		end
-	else
-		if aimConnection then aimConnection:Disconnect() aimConnection = nil end
-		target = nil
-		notifyy("Aimlock Disabled.")
-	end
-end
-
-maintab:Button("Aimlock", function()
-	toggleAimlock()
-end)
-
-maintab:Button("Aimlock (Bind: M2)", function()
-	getgenv().bindEnabled = not getgenv().bindEnabled
-	if getgenv().bindEnabled then
-		if not bindConnection then
-			bindConnection = input.InputBegan:Connect(function(key, processed)
-				if processed then return end
-				if key.UserInputType == Enum.UserInputType.MouseButton2 then
-					toggleAimlock()
-				end
-			end)
-			notifyy("Keybind Enabled.")
-		end
-	else
-		if bindConnection then
-			bindConnection:Disconnect()
-			bindConnection = nil
-			notifyy("Keybind Disabled.")
-		end
-	end
-end)
-
-maintab:Label("Visual Features.")
-maintab:Button("Killer ESP", function()
-local Workspace = game:GetService("Workspace")
+maintab:Button("Anti-Void", function()
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
-local function highlightKillers()
-	local killersFolder = Workspace:FindFirstChild("Killers")
-	if not killersFolder then return end
-
-	for _, obj in ipairs(killersFolder:GetDescendants()) do
-		if obj:IsA("Humanoid") and obj.Health > 0 then
-			local model = obj.Parent
-			if model and not model:FindFirstChildOfClass("Highlight") then
-				local hl = Instance.new("Highlight")
-				hl.FillTransparency = 1
-				hl.OutlineTransparency = 0
-				hl.OutlineColor = Color3.fromRGB(255, 0, 0)
-				hl.Adornee = model
-				hl.Parent = model
-			end
-		end
-	end
-end
+local player = Players.LocalPlayer
 
 task.spawn(function()
-	while true do
-		highlightKillers()
-		task.wait(1)
-	end
+    while true do
+        local character = player.Character or player.CharacterAdded:Wait()
+        local root = character:FindFirstChild("HumanoidRootPart")
+
+        if root then
+            local pos = root.Position
+            local velocity = root.Velocity
+
+            local falling = velocity.Y < -5
+            local tooLow = pos.Y <= -1
+
+            local ray = RaycastParams.new()
+            ray.FilterDescendantsInstances = {character}
+            ray.FilterType = Enum.RaycastFilterType.Blacklist
+
+            local result = workspace:Raycast(pos, Vector3.new(0, -50, 0), ray)
+
+            if tooLow and falling and not result then
+                root.CFrame = CFrame.new(1, 180, -29)
+            end
+        end
+
+        task.wait(0.1)
+    end
 end)
 end)
 
-maintab:Label("Gun Mods.")
-local runService = game:GetService("RunService")
-local players = game:GetService("Players")
+movetab:Button("Disable Ultra-Instinct", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+CombatRemote:FireServer("No Ultra Instinct")
+end)
+
+cmovetab:Button("Disable Ultra-Instinct", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+for _ = 1, 5000 do
+local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+CombatRemote:FireServer("No Ultra Instinct")
+end
+end)
+
+cmovetab:Button("Reverse Lag Technique (High-End Devices Only!)", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
-local player = players.LocalPlayer
 
-local model = workspace:WaitForChild("AREA51"):WaitForChild("PlantRoom"):WaitForChild("Box of Shells")
-local box = model:WaitForChild("Box")
-local originalCFrame = box.CFrame
-local loopConnection
-local infiniteAmmoEnabled = false
+local messageText = "If you are attacked while this is active, the attacker will lag until they either leave or stop attacking."
 
-local function notifyy(title, text)
-	pcall(function()
-		StarterGui:SetCore("SendNotification", {
-			Title = title,
-			Text = text,
-			Duration = 3
-		})
-	end)
+StarterGui:SetCore("SendNotification", {
+    Title = "Notice",
+    Text = messageText,
+    Duration = 15
+})
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Ultra Instinct")
 end
 
-local function ghostifyModel()
-	for _, item in ipairs(model:GetDescendants()) do
-		if item:IsA("BasePart") then
-			item.Transparency = 1
-			item.CanCollide = false
-		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
-			item.Transparency = 1
-		end
-	end
+for _ = 1, 5000 do
+    activate()
+end
+end)
+
+maintab:Button("Lag Server (MORE LAG EACH TIME RAN!)", function()
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+hrp.CFrame = CFrame.new(1, 180, -29)
+
+wait(1)
+
+local GojoRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo")
+for _ = 1, 10 do
+    GojoRemote:FireServer("MaxBlue")
 end
 
-local function enableInfiniteAmmo()
-	infiniteAmmoEnabled = true
-	notifyy("Infinite Ammo", "Enabled.")
-	ghostifyModel()
-	box.Anchored = true
-	box.CanCollide = false
+wait(5)
 
-	local toggle = false
-	local lastToggle = 0
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
 
-	loopConnection = runService.RenderStepped:Connect(function(dt)
-		local char = player.Character
-		if not char then return end
+local player = Players.LocalPlayer
+local placeId = game.PlaceId
 
-		local root = char:FindFirstChild("HumanoidRootPart")
-		if not root then return end
+TeleportService:Teleport(placeId, player)
+end)
 
-		lastToggle += dt
-		if lastToggle >= 0.5 then
-			lastToggle = 0
-			toggle = not toggle
+maintab:Button("No Cooldowns", function()
+game.Players.LocalPlayer.NoCD.Value = true
+end)
 
-			if toggle then
-				local offset = Vector3.new(0, -(root.Size.Y / 2 + box.Size.Y / 2 + 0.1), 0)
-				local position = root.Position + offset
-				box.CFrame = CFrame.new(position)
-			else
-				box.CFrame = originalCFrame
-			end
-		end
-	end)
+maintab:Button("No Dash CD", function()
+game.Players.LocalPlayer.NoDashCD.Value = true
+end)
+
+maintab:Button("Get Awaken", function()
+local player = game:GetService("Players").LocalPlayer
+local awakenBar = player:FindFirstChild("AwakenBar")
+
+if awakenBar and awakenBar:IsA("NumberValue") then
+    awakenBar.Value = 200
+end
+end)
+
+maintab:Button("Always Max Awaken", function()
+local player = game:GetService("Players").LocalPlayer
+
+task.spawn(function()
+    while true do
+        local awakenBar = player:FindFirstChild("AwakenBar")
+        if awakenBar and awakenBar:IsA("NumberValue") then
+            awakenBar.Value = 200
+        end
+        task.wait(0.01)
+    end
+end)
+end)
+
+maintab:Button("Get Kills (Will Kick, Use Anti-Kick!)", function()
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local Players = game:GetService("Players")
+
+    local player = Players.LocalPlayer
+    local GetKillsRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("GetKills")
+
+    task.spawn(function()
+        local startTime = os.clock()
+        while os.clock() - startTime < 60 do
+            GetKillsRemote:FireServer(player)
+            task.wait(0.001)
+        end
+    end)
+end)
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local combatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+
+local ultraState = false
+
+movetab:Button("Ultra Instinct (Red)", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Ultra Instinct")
+end
+    activate()
+end)
+
+cmovetab:Button("Ultra Instinct (Attempt: Blue)", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Ultra Instinct")
 end
 
-local function disableInfiniteAmmo()
-	infiniteAmmoEnabled = false
-	notifyy("Infinite Ammo", "Disabled.")
-	if loopConnection then
-		loopConnection:Disconnect()
-		loopConnection = nil
-	end
-	box.CFrame = originalCFrame
+for _ = 1, 500 do
+    activate()
+end
+end)
+
+movetab:Button("Ultra Sense", function()
+local args = {
+	"UltraSense"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Goku"):FireServer(unpack(args))
+end)
+
+movetab:Button("Omni-Directional Punch", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Omni")
 end
 
-maintab:Button("Infinite Ammo", function()
-	if infiniteAmmoEnabled then
-		disableInfiniteAmmo()
-	else
-		enableInfiniteAmmo()
-	end
+activate()
+end)
+
+movetab:Button("Infinite Void", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo")
+    Remote:FireServer("TrueDomain")
+end)
+
+movetab:Button("Malevolent Shrine", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuji")
+    Remote:FireServer("TrueDomain")
+end)
+
+cmovetab:Button("Simple Domain", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+local totalSpins = 5
+local spinDuration = 0.5
+local steps = 325
+local waitTime = 0.02
+
+for i = 1, steps do
+    Remote:FireServer("Blue")
+
+    local anglePerStep = (360 * totalSpins) / steps
+    local currentCF = humanoidRootPart.CFrame
+    humanoidRootPart.CFrame = currentCF * CFrame.Angles(0, math.rad(anglePerStep), 0)
+
+    wait(waitTime)
+end
+end)
+
+cmovetab:Button("Gojo's Death Combo", function()
+for _ = 1, 5 do
+	wait(0.125)
+   local args = {
+    [1] = "Blue"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gojo"):FireServer(unpack(args))
+end
+	wait(0.3)
+   local args = {
+    [1] = "Barrage"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gojo"):FireServer(unpack(args))
+wait(5.65)
+local args = {
+	"BlackFlash"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Yuta"):FireServer(unpack(args))
+wait(6.35)
+   local args = {
+    [1] = "Barrage"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gojo"):FireServer(unpack(args))
+end)
+cmovetab:Button("Super Blue", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gojo")
+
+for _ = 1, 20 do
+	wait(0.02)
+    Remote:FireServer("Blue")
+end
+end)
+
+movetab:Button("Giant Stomp", function()
+   local args = {
+    [1] = "Giant"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Luffy2"):FireServer(unpack(args))
+end)
+
+movetab:Button("Godly Combo", function()
+local args = {
+	"GodlyCombo"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Goku"):FireServer(unpack(args))
+end)
+
+movetab:Button("Black FLASH! (Yuta)", function()
+local args = {
+	"BlackFlash"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Yuta"):FireServer(unpack(args))
+end)
+
+cmovetab:Button("Super Cleave", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuji")
+
+for _ = 1, 500 do
+    Remote:FireServer("Cleave")
+end
+end)
+
+movetab:Button("Pure Love", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuta")
+
+Remote:FireServer("PureLove")
+end)
+
+movetab:Button("Yuta Heal", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuta")
+
+Remote:FireServer("Heal")
+end)
+
+movetab:Button("Slime Heal", function()
+local args = {
+	"SlimeHeal"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Cid"):FireServer(unpack(args))
+end)
+
+cmovetab:Button("Death Punch", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GonRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Gon")
+
+for _ = 1, 10 do
+	wait(0.05)
+    GonRemote:FireServer("Rock")
+end
+end)
+
+cmovetab:Button("Death Punch V2", function()
+for _ = 1, 5 do
+	wait(0.025)
+   local args = {
+    [1] = "FinalSmash"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Deku"):FireServer(unpack(args))
+end
+end)
+
+movetab:Button("Serious Punch", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Serious")
+end
+
+activate()
+end)
+
+movetab:Button("Time Stop", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("TimeStop")
+end
+
+activate()
+end)
+
+movetab:Button("Katakuri Buzz", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CombatRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Combat")
+    CombatRemote:FireServer("Buzz")
+end
+
+activate()
+end)
+
+cmovetab:Button("DIE!", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local YutaRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Yuta")
+
+for _ = 1, 10 do
+	wait(0.05)
+    YutaRemote:FireServer("Shine")
+end
+end)
+
+cmovetab:Button("Glitching Grab", function()
+   local args = {
+    [1] = "Muscle"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Luffy2"):FireServer(unpack(args))
+end)
+
+cmovetab:Button("Earthquake", function()
+for _ = 1, 15 do
+wait(0.05)
+   local args = {
+    [1] = "Giant"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Luffy2"):FireServer(unpack(args))
+end
+end)
+
+cmovetab:Button("Low-Gravity Explosion", function()
+
+for _ = 1, 20 do
+   local args = {
+    [1] = "Paper"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gon"):FireServer(unpack(args))
+end
+end)
+
+movetab:Button("FinalSmash", function()
+   local args = {
+    [1] = "FinalSmash"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Deku"):FireServer(unpack(args))
+end)
+
+movetab:Button("Rengoku.", function()
+local args = {
+	"Rengoku"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Rengoku"):FireServer(unpack(args))
+end)
+
+ulttab:Button("Yuta Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Yuta"):FireServer(unpack(args))
+end)
+
+ulttab:Button("Gon Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Gon"):FireServer(unpack(args))
+end)
+
+ulttab:Button("Gear 5 Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Luffy2"):FireServer(unpack(args))
+end)
+
+ulttab:Button("Deku Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Deku"):FireServer(unpack(args))
+end)
+
+ulttab:Button("Rengoku Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Rengoku"):FireServer(unpack(args))
+end)
+
+ulttab:Button("Yuji Awaken", function()
+   local args = {
+    [1] = "Awaken"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Yuji"):FireServer(unpack(args))
+end)
+
+chartab:Button("Gojo", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Gojo")
+end
+
+activate()
+end)
+
+chartab:Button("Yuji", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Yuji")
+end
+
+activate()
+end)
+
+chartab:Button("Goku", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Goku")
+end
+
+activate()
+end)
+
+chartab:Button("Rengoku", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Rengoku")
+end
+
+activate()
+end)
+
+chartab:Button("Luffy", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Luffy")
+end
+
+activate()
+end)
+
+chartab:Button("Akame", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Akame")
+end
+
+activate()
+end)
+
+chartab:Button("Todo", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Todo")
+end
+
+activate()
+end)
+
+chartab:Button("Jotaro", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Jotaro")
+end
+
+activate()
+end)
+
+chartab:Button("Akame", function()
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local function activate()
+    local CharactersRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Characters")
+    CharactersRemote:FireServer("Akame")
+end
+
+activate()
+end)
+
+chartab:Button("Cid", function()
+local args = {
+	"Cid"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Characters"):FireServer(unpack(args))
 end)
 
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
 
-misctab:Button("Switch Servers", function()
-    local servers = {}
-    local req = game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
-    local body = HttpService:JSONDecode(req)
+misctab:Button("Temporary Void Teleport (REJOIN IF BUGGED)", function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(22, -418, 299)
+end)
 
-    if body and body.data then
-        for i, v in next, body.data do
-            if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
-                table.insert(servers, 1, v.id)
-            end
-        end
-    end
+misctab:Button("Destroy GUI", function()
+    win:Exit()
+end)
 
-    if #servers > 0 then
-        TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], Players.LocalPlayer)
-end
+misctab:Button("Leave Game", function()
+    game:Shutdown()
 end)
 
 helptab:Button("Copy Owner Discord Username", function()
@@ -1838,6 +1262,5 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R")
+setclipboard("https://discord.gg/xSDwMhae")
 end)
-end
