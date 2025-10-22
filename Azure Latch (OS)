@@ -688,7 +688,7 @@ if getgenv().ballMagnetActive then
 			pcall(function()
 				remote:FireServer(buffer.fromstring("\021"))
 			end)
-			task.wait(0.5)
+			task.wait()
 		end
 	end)
 else
