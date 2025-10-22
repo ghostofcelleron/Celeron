@@ -612,19 +612,35 @@ function getNearestTarget()
 	local closest = nil
 	local shortest = math.huge
 
+	local nonZombies = {}
+	local zombies = {}
+
 	for _, model in ipairs(killers:GetChildren()) do
-		if model:IsA("Model") and model.Name ~= "Zombie" then
+		if model:IsA("Model") then
 			local humanoid = model:FindFirstChildOfClass("Humanoid")
 			local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("UpperTorso") or model.PrimaryPart
 			if humanoid and root then
 				local distance = (root.Position - origin).Magnitude
-				if distance < shortest then
-					shortest = distance
-					closest = model
+				if model.Name == "Zombie" then
+					table.insert(zombies, {model = model, dist = distance})
+				else
+					table.insert(nonZombies, {model = model, dist = distance})
 				end
 			end
 		end
 	end
+
+	if #nonZombies > 0 then
+		for _, entry in ipairs(nonZombies) do
+			if entry.dist < shortest then
+				shortest = entry.dist
+				closest = entry.model
+			end
+		end
+	elseif #zombies == 1 then
+		closest = zombies[1].model
+	end
+
 	return closest
 end
 
@@ -1293,7 +1309,7 @@ elseif game.PlaceId == infection then
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
-    Name = "Celeron's GUI (SAKTK: Infection)",
+    Name = "Celeron's GUI (SAKTK: Juggernaut)",
     ThemeColor = Color3.fromRGB(20, 20, 20),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne
