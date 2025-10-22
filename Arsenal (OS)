@@ -1,0 +1,443 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (Arsenal)",
+    ThemeColor = Color3.fromRGB(14, 14, 14),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local vistab = win:Tab("Visuals")
+local modtab = win:Tab("Mods")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+modtab:Label("Gun Modifiers! Rejoin To Disable Mods.")
+vistab:Label("Visual Settings.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+maintab:Button("Silent Aim", function()
+function getplrsname()
+    for i, v in pairs(game:GetChildren()) do
+        if v.ClassName == "Players" then
+            return v.Name
+        end
+    end
+end
+local players = getplrsname()
+local plr = game[players].LocalPlayer
+coroutine.resume(
+    coroutine.create(
+        function()
+            while wait(1) do
+                coroutine.resume(
+                    coroutine.create(
+                        function()
+                            for _, v in pairs(game[players]:GetPlayers()) do
+                                if v.Name ~= plr.Name and v.Character then
+                                    v.Character.RightUpperLeg.CanCollide = false
+                                    v.Character.RightUpperLeg.Transparency = 75
+                                    v.Character.RightUpperLeg.Size = Vector3.new(21, 21, 21)
+                                    v.Character.LeftUpperLeg.CanCollide = false
+                                    v.Character.LeftUpperLeg.Transparency = 75
+                                    v.Character.LeftUpperLeg.Size = Vector3.new(21, 21, 21)
+                                    v.Character.HeadHB.CanCollide = false
+                                    v.Character.HeadHB.Transparency = 75
+                                    v.Character.HeadHB.Size = Vector3.new(21, 21, 21)
+                                    v.Character.HumanoidRootPart.CanCollide = false
+                                    v.Character.HumanoidRootPart.Transparency = 75
+                                    v.Character.HumanoidRootPart.Size = Vector3.new(21, 21, 21)
+                                end
+                            end
+                        end
+                    )
+                )
+            end
+        end
+    )
+)
+end)
+
+vistab:Button("Player ESP (Team Mode)", function()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local espObjects = {}
+
+local function isValidVector(v)
+    return typeof(v) == "Vector3" and v.X == v.X and v.Y == v.Y and v.Z == v.Z
+end
+
+local function cleanupESP()
+    for _, data in pairs(espObjects) do
+        if data.box then data.box:Remove() end
+        if data.connection then data.connection:Disconnect() end
+        if data.tag and data.tag.Parent then data.tag:Destroy() end
+    end
+    espObjects = {}
+end
+
+local function createESP(player)
+    if player == LocalPlayer or player.Team == LocalPlayer.Team then return end
+    local char = player.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local head = char:FindFirstChild("Head")
+    if not hrp or not head then return end
+
+    local box = Drawing.new("Quad")
+    box.Visible = false
+    box.Color = Color3.fromRGB(170, 0, 255)
+    box.Thickness = 2
+    box.Transparency = 1
+
+    local tag = Instance.new("BillboardGui")
+    tag.Name = "ESP_NameTag"
+    tag.Adornee = head
+    tag.Size = UDim2.new(0, 100, 0, 20)
+    tag.StudsOffset = Vector3.new(0, 3.5, 0)
+    tag.AlwaysOnTop = true
+    tag.Parent = head
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = player.Name
+    label.TextColor3 = Color3.fromRGB(170, 0, 255)
+    label.TextStrokeTransparency = 0
+    label.TextScaled = true
+    label.Font = Enum.Font.SourceSansBold
+    label.Parent = tag
+
+    local connection = RunService.RenderStepped:Connect(function()
+        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+            box.Visible = false
+            return
+        end
+
+        local hrp = player.Character.HumanoidRootPart
+        local direction = (hrp.Position - Camera.CFrame.Position).Unit
+        if Camera.CFrame.LookVector:Dot(direction) <= 0 then
+            box.Visible = false
+            return
+        end
+
+        local cf = hrp.CFrame
+        local size = Vector3.new(2, 3, 0)
+
+        local topLeft = (cf * CFrame.new(-size.X, size.Y, 0)).Position
+        local topRight = (cf * CFrame.new(size.X, size.Y, 0)).Position
+        local bottomLeft = (cf * CFrame.new(-size.X, -size.Y, 0)).Position
+        local bottomRight = (cf * CFrame.new(size.X, -size.Y, 0)).Position
+
+        local tl, onScreenTL = Camera:WorldToViewportPoint(topLeft)
+        local tr, onScreenTR = Camera:WorldToViewportPoint(topRight)
+        local bl, onScreenBL = Camera:WorldToViewportPoint(bottomLeft)
+        local br, onScreenBR = Camera:WorldToViewportPoint(bottomRight)
+
+        if not (onScreenTL and onScreenTR and onScreenBL and onScreenBR) then
+            box.Visible = false
+            return
+        end
+
+        if not (isValidVector(tl) and isValidVector(tr) and isValidVector(bl) and isValidVector(br)) then
+            box.Visible = false
+            return
+        end
+
+        box.PointA = Vector2.new(tl.X, tl.Y)
+        box.PointB = Vector2.new(tr.X, tr.Y)
+        box.PointC = Vector2.new(br.X, br.Y)
+        box.PointD = Vector2.new(bl.X, bl.Y)
+        box.Visible = true
+    end)
+
+    espObjects[player] = {
+        box = box,
+        tag = tag,
+        connection = connection
+    }
+end
+
+local function refreshESP()
+    cleanupESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        createESP(player)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        task.wait(0.05)
+        refreshESP()
+    end)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if espObjects[player] then
+        cleanupESP()
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(0.05)
+        refreshESP()
+    end
+end)
+end)
+
+vistab:Button("Player ESP (FFA Mode)", function()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local espObjects = {}
+
+local function isValidVector(v)
+    return typeof(v) == "Vector3" and v.X == v.X and v.Y == v.Y and v.Z == v.Z
+end
+
+local function cleanupESP()
+    for _, data in pairs(espObjects) do
+        if data.box then data.box:Remove() end
+        if data.connection then data.connection:Disconnect() end
+        if data.tag and data.tag.Parent then data.tag:Destroy() end
+    end
+    espObjects = {}
+end
+
+local function createESP(player)
+    if player == LocalPlayer then return end
+    local char = player.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local head = char:FindFirstChild("Head")
+    if not hrp or not head then return end
+
+    local box = Drawing.new("Quad")
+    box.Visible = false
+    box.Color = Color3.fromRGB(170, 0, 255)
+    box.Thickness = 2
+    box.Transparency = 1
+
+    local tag = Instance.new("BillboardGui")
+    tag.Name = "ESP_NameTag"
+    tag.Adornee = head
+    tag.Size = UDim2.new(0, 100, 0, 20)
+    tag.StudsOffset = Vector3.new(0, 3.5, 0)
+    tag.AlwaysOnTop = true
+    tag.Parent = head
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = player.Name
+    label.TextColor3 = Color3.fromRGB(170, 0, 255)
+    label.TextStrokeTransparency = 0
+    label.TextScaled = true
+    label.Font = Enum.Font.SourceSansBold
+    label.Parent = tag
+
+    local connection = RunService.RenderStepped:Connect(function()
+        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+            box.Visible = false
+            return
+        end
+
+        local hrp = player.Character.HumanoidRootPart
+        local direction = (hrp.Position - Camera.CFrame.Position).Unit
+        if Camera.CFrame.LookVector:Dot(direction) <= 0 then
+            box.Visible = false
+            return
+        end
+
+        local cf = hrp.CFrame
+        local size = Vector3.new(2, 3, 0)
+
+        local topLeft = (cf * CFrame.new(-size.X, size.Y, 0)).Position
+        local topRight = (cf * CFrame.new(size.X, size.Y, 0)).Position
+        local bottomLeft = (cf * CFrame.new(-size.X, -size.Y, 0)).Position
+        local bottomRight = (cf * CFrame.new(size.X, -size.Y, 0)).Position
+
+        local tl, onScreenTL = Camera:WorldToViewportPoint(topLeft)
+        local tr, onScreenTR = Camera:WorldToViewportPoint(topRight)
+        local bl, onScreenBL = Camera:WorldToViewportPoint(bottomLeft)
+        local br, onScreenBR = Camera:WorldToViewportPoint(bottomRight)
+
+        if not (onScreenTL and onScreenTR and onScreenBL and onScreenBR) then
+            box.Visible = false
+            return
+        end
+
+        if not (isValidVector(tl) and isValidVector(tr) and isValidVector(bl) and isValidVector(br)) then
+            box.Visible = false
+            return
+        end
+
+        box.PointA = Vector2.new(tl.X, tl.Y)
+        box.PointB = Vector2.new(tr.X, tr.Y)
+        box.PointC = Vector2.new(br.X, br.Y)
+        box.PointD = Vector2.new(bl.X, bl.Y)
+        box.Visible = true
+    end)
+
+    espObjects[player] = {
+        box = box,
+        tag = tag,
+        connection = connection
+    }
+end
+
+local function refreshESP()
+    cleanupESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        createESP(player)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        task.wait(0.05)
+        refreshESP()
+    end)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if espObjects[player] then
+        cleanupESP()
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(0.05)
+        refreshESP()
+    end
+end)
+end)
+
+modtab:Button("Mod Gun (ALL MODS)", function()
+local repstorage = game.ReplicatedStorage
+
+for i, v in pairs(repstorage.Weapons:GetDescendants()) do
+   if v.Name == "Auto" then
+       v.Value = true
+   end
+   if v.Name == "RecoilControl" then
+       v.Value = 0
+   end
+   if v.Name == "MaxSpread" then
+       v.Value = 0
+   end
+   if v.Name == "ReloadTime" then
+      v.Value = 0.1
+   end
+   if v.Name == "FireRate" then
+       v.Value = 0.05
+   end
+end
+end)
+
+local repstorage = game.ReplicatedStorage
+local weapons = repstorage:WaitForChild("Weapons")
+
+function enableauto()
+    for _, v in pairs(weapons:GetDescendants()) do
+        if v.Name == "Auto" then
+            v.Value = true
+        end
+    end
+end
+
+function norecoil()
+    for _, v in pairs(weapons:GetDescendants()) do
+        if v.Name == "RecoilControl" then
+            v.Value = 0
+        end
+    end
+end
+
+function nospread()
+    for _, v in pairs(weapons:GetDescendants()) do
+        if v.Name == "MaxSpread" then
+            v.Value = 0
+        end
+    end
+end
+
+function autoreload()
+    for _, v in pairs(weapons:GetDescendants()) do
+        if v.Name == "ReloadTime" then
+            v.Value = 0.1
+        end
+    end
+end
+
+function fastfire()
+    for _, v in pairs(weapons:GetDescendants()) do
+        if v.Name == "FireRate" then
+            v.Value = 0.05
+        end
+    end
+end
+
+modtab:Button("Infinite Ammo", function()
+while wait() do
+	game:GetService("Players").LocalPlayer.PlayerGui.GUI.Client.Variables.ammocount.Value = 999
+	game:GetService("Players").LocalPlayer.PlayerGui.GUI.Client.Variables.ammocount2.Value = 999
+end
+end)
+
+modtab:Button("Full Auto Weapons", function()
+enableauto()
+fastfire()
+end)
+
+modtab:Button("Instant Reload", function()
+autoreload()
+end)
+
+modtab:Button("No Spread", function()
+nospread()
+end)
+
+modtab:Button("No Recoil", function()
+norecoil()
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
