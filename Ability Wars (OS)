@@ -1,0 +1,88 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (Ability Wars)",
+    ThemeColor = Color3.fromRGB(20, 20, 20),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local farmtab = win:Tab("Farms")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+farmtab:Label("Script Made By Celeron + Daffy!")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+farmtab:Button("Farm Area (Main Account.)", function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-4793, 131, -4733)
+end)
+
+farmtab:Textbox("Punch Farm (Set Username To Main.)", function(v)
+	local Players = game:GetService("Players")
+	local Workspace = game:GetService("Workspace")
+
+	local LocalPlayer = Players.LocalPlayer
+
+	local function onCharacterSpawn(character)
+		local rootPart = character:WaitForChild("HumanoidRootPart")
+
+		local teleportPart = Workspace:WaitForChild("Portals"):WaitForChild("Arena Frame"):WaitForChild("Portal"):WaitForChild("TouchInterest")
+		local portal = teleportPart.Parent
+		rootPart.CFrame = portal.CFrame + Vector3.new(0, 1, 0)
+		firetouchinterest(rootPart, portal, 0)
+		task.wait(0.1)
+		firetouchinterest(rootPart, portal, 1)
+
+		task.wait(0.7)
+
+		local target = Players:FindFirstChild(v)
+		if target then
+			for i = 1, 1000 do
+				local targetChar = target.Character
+				local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+				if targetRoot then
+					local offset = targetRoot.CFrame.LookVector.Unit * 2.5
+					local destination = targetRoot.Position + offset + Vector3.new(0, 1, 0)
+					rootPart.CFrame = CFrame.new(destination, targetRoot.Position)
+				end
+				task.wait(0.05)
+			end
+		end
+	end
+
+	LocalPlayer.CharacterAdded:Connect(onCharacterSpawn)
+
+	if LocalPlayer.Character then
+		onCharacterSpawn(LocalPlayer.Character)
+	end
+end)
+
+misctab:Button("Infinite Yield", function(v)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
