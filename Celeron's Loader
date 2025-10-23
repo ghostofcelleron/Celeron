@@ -20,15 +20,19 @@ loaderGui.Name = "gui"
 loaderGui.ResetOnSpawn = false
 loaderGui.Parent = PlayerGui
 
+local blur = Instance.new("BlurEffect")
+blur.Size = 6
+blur.Parent = game:GetService("Lighting")
+
 local bg = Instance.new("Frame")
-bg.Size = UDim2.new(0, 220, 0, 100)
-bg.Position = UDim2.new(0.5, -110, 0.5, -450)
-bg.BackgroundColor3 = Color3.fromRGB(0, 160, 255)
-bg.BackgroundTransparency = 0.4
+bg.Size = UDim2.new(0, 300, 0, 140)
+bg.Position = UDim2.new(0.5, -150, 0.5, -70)
+bg.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+bg.BackgroundTransparency = 0.2
 bg.BorderSizePixel = 0
 bg.Parent = loaderGui
 
-Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 12)
 
 local gradient = Instance.new("UIGradient")
 gradient.Rotation = 90
@@ -40,33 +44,33 @@ gradient.Color = ColorSequence.new{
 gradient.Parent = bg
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 24)
-title.Position = UDim2.new(0, 0, 0, 5)
+title.Size = UDim2.new(1, 0, 0, 28)
+title.Position = UDim2.new(0, 0, 0, 10)
 title.BackgroundTransparency = 1
 title.Text = "Celeron's Loader"
-title.TextColor3 = Color3.fromRGB(24, 24, 24)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 20
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 22
 title.Parent = bg
 
 local label = Instance.new("TextLabel")
 label.Size = UDim2.new(1, 0, 0, 20)
-label.Position = UDim2.new(0, 0, 0, 30)
+label.Position = UDim2.new(0, 0, 0, 40)
 label.BackgroundTransparency = 1
 label.Text = "Loading..."
-label.TextColor3 = Color3.fromRGB(24, 24, 24)
-label.Font = Enum.Font.SourceSansBold
+label.TextColor3 = Color3.fromRGB(200, 200, 200)
+label.Font = Enum.Font.Gotham
 label.TextSize = 16
 label.Parent = bg
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(1, -20, 0, 16)
-frame.Position = UDim2.new(0, 10, 0, 60)
-frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.Size = UDim2.new(0.9, 0, 0, 18)
+frame.Position = UDim2.new(0.05, 0, 0, 80)
+frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 frame.BorderSizePixel = 0
 frame.Parent = bg
 
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
 
 local bar = Instance.new("Frame")
 bar.Size = UDim2.new(0, 0, 1, 0)
@@ -74,7 +78,19 @@ bar.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 bar.BorderSizePixel = 0
 bar.Parent = frame
 
-Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 8)
+
+local sound = Instance.new("Sound")
+sound.SoundId = "rbxassetid://3320590485"
+sound.Volume = 0.5
+sound.Parent = workspace
+
+task.spawn(function()
+	repeat task.wait() until sound.IsLoaded
+	sound:Play()
+	task.wait(1)
+	sound:Play()
+end)
 
 local function animateBar(duration)
 	local tween = TweenService:Create(bar, TweenInfo.new(duration, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
@@ -95,16 +111,16 @@ local function fadeOut(callback)
 		end
 	end
 	task.delay(0.9, function()
+		blur:Destroy()
 		loaderGui:Destroy()
 		if typeof(callback) == "function" then callback() end
 	end)
 end
 
 local function loadScripts()
-	animateBar(1.75)
+	animateBar(2)
 	fadeOut(function()
 		local placeId = game.PlaceId
-
 		if table.find(slapbattles, placeId) then
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Slap%20Battles%20(OS)", true))()
 		elseif table.find(azurelatch, placeId) then
@@ -118,11 +134,14 @@ local function loadScripts()
 		elseif table.find(grg, placeId) then
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Generic%20Roleplay%20Game%20(OS)"))()
 		elseif table.find(jjs, placeId) then
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Jujutsu%20Shenanigans%20(OS)",true))()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Jujutsu%20Shenanigans%20(OS)", true))()
 		elseif table.find(bbz, placeId) then
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Basketball%3A%20Zero%20(OS)",true))()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Basketball%3A%20Zero%20(OS)", true))()
+		elseif table.find(arsenal, placeId) then
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Arsenal%20(OS)", true))()
+		elseif table.find(boxingleague, placeId) then
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Boxing%20League%20(OS)", true))()
 		end
-
 		if script:IsA("LocalScript") then
 			script:Destroy()
 		end
