@@ -8,9 +8,12 @@ local azurelatch = {94647229517154,85946466968831}
 local fleethefacility = {893973440}
 local towerofhell = {1962086868,3582763398}
 local jjs = {9391468976,17016840407}
-local saktk = {2092166489,4678052190,2675280735}
+local saktk = {2092166489,4678052190,2675280735,1076129670}
 local grg = {4598019433}
 local bbz = {130739873848552,95656979989750}
+local arsenal = {286090429}
+local boxingleague = {3738115442,4574912733,5161312636}
+local example = {}
 
 local loaderGui = Instance.new("ScreenGui")
 loaderGui.Name = "gui"
