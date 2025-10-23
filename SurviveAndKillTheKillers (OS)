@@ -1309,7 +1309,7 @@ elseif game.PlaceId == infection then
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
-    Name = "Celeron's GUI (SAKTK: Juggernaut)",
+    Name = "Celeron's GUI (SAKTK: Infection)",
     ThemeColor = Color3.fromRGB(20, 20, 20),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne
