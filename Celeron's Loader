@@ -147,6 +147,12 @@ local function loadScripts()
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/OP%20Battlegrounds%20(OS)",true))()
 		elseif table.find(abilitywars, placeId) then
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Ability%20Wars%20(OS)",true))()
+		else
+			game:GetService("StarterGui"):SetCore("SendNotification", {
+    			Title = "Celeron's Loader";
+    			Text = "Game Not Supported.";
+   				Duration = 3
+			})
 		end
 		if script:IsA("LocalScript") then
 			script:Destroy()
