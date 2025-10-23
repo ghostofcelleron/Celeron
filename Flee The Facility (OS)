@@ -54,7 +54,7 @@ while _G.AutomaticHackingEnabled do
 end
 end)
 
-maintab:Button("Anti-Freezer (USE AS SOON AS ROPED)", function()
+maintab:Button("Anti-Freezer (Use When Roped.)", function()
 local player = game:GetService("Players").LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 
@@ -68,7 +68,7 @@ if character and character.PrimaryPart then
 end
 end)
 
-maintab:Button("Self-Revive (LAST RESORT, USE IN FREEZER)", function()
+maintab:Button("Self-Revive (Last Resort, Use In Freezer.)", function()
 local player = game:GetService("Players").LocalPlayer
 local character = player.Character
 
