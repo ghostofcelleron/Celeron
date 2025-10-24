@@ -236,6 +236,59 @@ player.CharacterAdded:Connect(function(char)
 	end
 end)
 
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local player = Players.LocalPlayer
+
+local fastFarmMain = false
+local fastFarmAlt = false
+
+farmtab:Button("Fast Win Farm (Main Acc, Class S)", function()
+	fastFarmMain = not fastFarmMain
+	fastFarmAlt = false
+	StarterGui:SetCore("SendNotification", {
+		Title = "Fast Win Farm (Main)",
+		Text = fastFarmMain and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+end)
+
+farmtab:Button("Fast Win Farm (Alt Acc, Class S)", function()
+	fastFarmAlt = not fastFarmAlt
+	fastFarmMain = false
+	StarterGui:SetCore("SendNotification", {
+		Title = "Fast Win Farm (Alt)",
+		Text = fastFarmAlt and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+end)
+
+player.CharacterAdded:Connect(function(char)
+	task.wait(3)
+	local hrp = char:WaitForChild("HumanoidRootPart", 5)
+	if hrp then
+		if fastFarmMain then
+			hrp.CFrame = CFrame.new(-99, 10, 86)
+		elseif fastFarmAlt then
+			hrp.CFrame = CFrame.new(-103, 10, 81)
+			task.delay(21, function()
+				VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+				task.wait(0.2)
+				VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+				task.wait(0.3)
+				VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.R, false, game)
+				task.wait(0.2)
+				VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.R, false, game)
+				task.wait(0.3)
+				VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+				task.wait(0.2)
+				VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+			end)
+		end
+	end
+end)
+
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
