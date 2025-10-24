@@ -2171,6 +2171,20 @@ farmtab:Textbox("Kill Farm (Set Username To Main, Use In Arena.)", function(v)
 	end
 end)
 
+farmtab:Label("Candy Corn Farm: Silent.")
+
+farmtab:Button("Candy Corn Farm", function()
+while true do
+for _, part in ipairs(workspace.CandyCorns:GetChildren()) do
+    if part:IsA("BasePart") then
+        firetouchinterest(part, game.Players.LocalPlayer.Character.HumanoidRootPart, 0)
+        firetouchinterest(part, game.Players.LocalPlayer.Character.HumanoidRootPart, 1)
+    end
+end
+wait(0.1)
+end
+end)
+
 farmtab:Label("Rob Farm: Silent, Teleport To Baseplate.")
 
 farmtab:Button("Rob Absorb Farm (Main Account, Rejoin To Disable.)", function()
