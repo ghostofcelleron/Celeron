@@ -265,7 +265,7 @@ farmtab:Button("Fast Win Farm (Alt Acc, Class S)", function()
 end)
 
 player.CharacterAdded:Connect(function(char)
-	task.wait(3)
+	task.wait(1.5)
 	local hrp = char:WaitForChild("HumanoidRootPart", 5)
 	if hrp then
 		if fastFarmMain then
