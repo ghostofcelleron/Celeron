@@ -146,6 +146,38 @@ farmtab:Button("Anti-AFK", function()
     toggleAntiAFK()
 end)
 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+local staffDetectorEnabled = false
+local staffConnection
+
+local function toggleStaffDetector()
+	staffDetectorEnabled = not staffDetectorEnabled
+
+	StarterGui:SetCore("SendNotification", {
+		Title = "Player Detector ",
+		Text = staffDetectorEnabled and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+
+	if staffDetectorEnabled then
+		staffConnection = RunService.Heartbeat:Connect(function()
+			if #Players:GetPlayers() > 2 then
+				game:Shutdown()
+			end
+		end)
+	else
+		if staffConnection then
+			staffConnection:Disconnect()
+			staffConnection = nil
+		end
+	end
+end
+
+farmtab:Button("Player Detector (Kicks If More Than Two Players.)", toggleStaffDetector)
+
 farmtab:Button("Join Class S", function()
 local TeleportService = game:GetService("TeleportService") local Players = game:GetService("Players") local player = Players.LocalPlayer
 TeleportService:Teleport(7230787006, player)
