@@ -29,16 +29,6 @@ if localPlayer and localPlayer.Character and localPlayer.Character:FindFirstChil
 end
 end)
 
-maintab:Slider("Player Jump-Power", 50, 30, 125, function(v)
-if localPlayer and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
-    if v == 30 then
-        localPlayer.Character.Humanoid.Jumppower = 50
-    else
-        localPlayer.Character.Humanoid.Jumppower = v
-    end
-end
-end)
-
 maintab:Button("Daily Rewards (req. Group)", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(40, 24, 113)
     task.wait(0.1)
@@ -112,78 +102,6 @@ end)
 
 _G.alwaysWinClashToggled = _G.alwaysWinClashToggled or false
 
-
-maintab:Button("Auto Kick-Grab", function()
-local players = game:GetService("Players")
-local runService = game:GetService("RunService")
-local virtualInputManager = game:GetService("VirtualInputManager")
-
-local localPlayer = players.LocalPlayer
-local localCharacter = localPlayer.Character or localPlayer.CharacterAdded:Wait()
-
-_G.isMonitoring = _G.isMonitoring or false
-
-local function holdLeftControl()
-    virtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
-    task.wait(0.5)
-    virtualInputManager:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
-end
-
-local function holdGrab()
-    virtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
-    task.wait(0.1)
-    virtualInputManager:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
-end
-
-local function monitorNearbyPlayers()
-    for _, player in pairs(players:GetPlayers()) do
-        if player ~= localPlayer and player.Character then
-            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-            local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
-            local localRootPart = localCharacter:FindFirstChild("HumanoidRootPart")
-
-            if humanoid and rootPart and localRootPart then
-                local distance = (rootPart.Position - localRootPart.Position).Magnitude
-
-                if distance <= 3 then
-				for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
-                        if track.Animation.AnimationId == "rbxassetid://3738476938" then
-                    holdGrab()
-                    return
-                end
-				end
-				end
-
-                if distance <= 5 then
-                    for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
-                        if track.Animation.AnimationId == "rbxassetid://3738476938" then
-                            holdLeftControl()
-                            return
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-local function toggleMonitoring()
-    _G.isMonitoring = not _G.isMonitoring
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Kick Grabber",
-        Text = _G.isMonitoring and "Enabled." or "Disabled.",
-        Duration = 3
-    })
-end
-
-if _G.isMonitoring then
-    runService.Heartbeat:Connect(function()
-        monitorNearbyPlayers()
-    end)
-end
-
-toggleMonitoring()
-end)
 local players = game:GetService("Players")
 local userInputService = game:GetService("UserInputService")
 local tweenService = game:GetService("TweenService")
@@ -195,6 +113,7 @@ local animationIdToDetect = "rbxassetid://3738476938"
 local dashLength = 30
 local lastInput = nil
 
+farmtab:Label("Win Farming Section.")
 local players = game:GetService("Players")
 local virtualUser = game:GetService("VirtualUser")
 local starterGui = game:GetService("StarterGui")
@@ -207,7 +126,7 @@ local function toggleAntiAFK()
     if antiAFKEnabled then
         starterGui:SetCore("SendNotification", {
             Title = "Anti-AFK",
-            Text = "Anti-AFK enabled.",
+            Text = "Enabled.",
             Duration = 5
         })
         localPlayer.Idled:Connect(function()
@@ -217,7 +136,7 @@ local function toggleAntiAFK()
     else
         starterGui:SetCore("SendNotification", {
             Title = "Anti-AFK",
-            Text = "Anti-AFK disabled.",
+            Text = "Disabled.",
             Duration = 5
         })
     end
@@ -227,124 +146,62 @@ farmtab:Button("Anti-AFK", function()
     toggleAntiAFK()
 end)
 
-farmtab:Button('Strength Farm', function()
-local players = game:GetService("Players")
-local localPlayer = players.LocalPlayer
-local virtualInputManager = game:GetService("VirtualInputManager")
-local starterGui = game:GetService("StarterGui")
-
-_G.isToggled = _G.isToggled or false
-
-local function strengthFarm()
-    localPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-107, 35, 129)
-    task.wait(0.5)
-    virtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-    task.wait(0.1)
-    virtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-    
-    while _G.isToggled do
-        task.wait(0.5)
-        virtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        task.wait(0.1)
-        virtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-    end
-end
-
-local function toggleStrengthFarm()
-    _G.isToggled = not _G.isToggled
-    starterGui:SetCore("SendNotification", {
-        Title = "Strength Farm",
-        Text = _G.isToggled and "Enabled." or "Disabled.",
-        Duration = 3
-    })
-
-    if _G.isToggled then
-        strengthFarm()
-    end
-end
-
-toggleStrengthFarm()
+farmtab:Button("Join Class S", function()
+local TeleportService = game:GetService("TeleportService") local Players = game:GetService("Players") local player = Players.LocalPlayer
+TeleportService:Teleport(7230787006, player)
 end)
 
-farmtab:Button("AFK Strength Farm", function()
-local localPlayer = game:GetService("Players").LocalPlayer
-local virtualInputManager = game:GetService("VirtualInputManager")
-local machinery = game:GetService("Workspace").Machinery
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local player = Players.LocalPlayer
 
-local grabParts = {machinery.GRAB1.GridPart, machinery.GRAB2.GridPart, machinery.GRAB3.GridPart}
-local teleportSuccess = false
+local mainFarmEnabled = false
+local altFarmEnabled = false
 
-for _, gridPart in ipairs(grabParts) do
-    if gridPart then
-        local localCharacter = localPlayer.Character
-        if localCharacter and localCharacter:FindFirstChild("HumanoidRootPart") then
-            local localRootPart = localCharacter.HumanoidRootPart
-            local distance = (localRootPart.Position - gridPart.Position).Magnitude
-            if distance > 0.2 then
-                localRootPart.CFrame = gridPart.CFrame
-                task.wait(0.5)
-                virtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-                task.wait(0.1)
-                virtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-                teleportSuccess = true
-                break
-            end
-        end
-    end
-end
-
-if not teleportSuccess then
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Farm Method Failed.",
-        Text = "No available pull-up bars found.",
-        Duration = 3
-    })
-end
+farmtab:Button("Win Farm (Main Acc, Class S Server.)", function()
+	mainFarmEnabled = not mainFarmEnabled
+	altFarmEnabled = false
+	StarterGui:SetCore("SendNotification", {
+		Title = "Main Win Farm",
+		Text = mainFarmEnabled and "Enabled." or "Disabled.",
+		Duration = 3
+	})
 end)
 
-farmtab:Button("AFK Endurance Farm", function()
-local localPlayer = game:GetService("Players").LocalPlayer
-local virtualInputManager = game:GetService("VirtualInputManager")
-local machinery = game:GetService("Workspace").Machinery
+farmtab:Button("Win Farm (Alt Acc, Class S Server.)", function()
+	altFarmEnabled = not altFarmEnabled
+	mainFarmEnabled = false
+	StarterGui:SetCore("SendNotification", {
+		Title = "Alt Win Farm",
+		Text = altFarmEnabled and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+end)
 
-local function teleportToAvailablePush()
-    local character = localPlayer.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-
-    local rootPart = character.HumanoidRootPart
-    local pushParts = {machinery.PUSH1.GridPart, machinery.PUSH2.GridPart, machinery.PUSH3.GridPart}
-
-    for _, gridPart in ipairs(pushParts) do
-        local playersNearby = false
-
-        for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local playerDistance = (player.Character.HumanoidRootPart.Position - gridPart.Position).Magnitude
-                if playerDistance <= 0.2 then
-                    playersNearby = true
-                    break
-                end
-            end
-        end
-
-        if not playersNearby then
-            rootPart.CFrame = gridPart.CFrame
-            task.wait(1)
-            virtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-            task.wait(0.1)
-            virtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-            return
-        end
-    end
-
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Farm Method Failed.",
-        Text = "No available pushup areas.",
-        Duration = 3
-    })
-end
-
-teleportToAvailablePush()
+player.CharacterAdded:Connect(function(char)
+	task.wait(15)
+	local hrp = char:WaitForChild("HumanoidRootPart", 5)
+	if hrp then
+		if mainFarmEnabled then
+			hrp.CFrame = CFrame.new(-99, 10, 86)
+		elseif altFarmEnabled then
+			hrp.CFrame = CFrame.new(-103, 10, 81)
+			task.delay(23, function()
+				VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+				task.wait(0.2)
+				VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+				task.wait(0.3)
+				VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.R, false, game)
+				task.wait(0.2)
+				VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.R, false, game)
+				task.wait(0.3)
+				VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+				task.wait(0.2)
+				VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+			end)
+		end
+	end
 end)
 
 misctab:Button("Infinite Yield", function()
