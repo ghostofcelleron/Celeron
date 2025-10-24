@@ -272,7 +272,7 @@ player.CharacterAdded:Connect(function(char)
 			hrp.CFrame = CFrame.new(-99, 10, 86)
 		elseif fastFarmAlt then
 			hrp.CFrame = CFrame.new(-103, 10, 81)
-			task.delay(21, function()
+			task.delay(19.5, function()
 				VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
 				task.wait(0.2)
 				VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
