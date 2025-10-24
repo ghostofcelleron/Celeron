@@ -212,7 +212,7 @@ farmtab:Button("Win Farm (Alt Acc, Class S Server.)", function()
 end)
 
 player.CharacterAdded:Connect(function(char)
-	task.wait(15)
+	task.wait(10)
 	local hrp = char:WaitForChild("HumanoidRootPart", 5)
 	if hrp then
 		if mainFarmEnabled then
