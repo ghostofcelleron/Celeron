@@ -1435,6 +1435,30 @@ maintab:Textbox("Player Speed", function(v)
 	end)
 end)
 
+maintab:Textbox("Killer Hitbox", function(v)
+	local HeadSize = tonumber(v)
+	if not HeadSize then return end
+
+	local sizeVec = Vector3.new(HeadSize, HeadSize, HeadSize)
+	local RunService = game:GetService("RunService")
+	local killers = workspace:FindFirstChild("Killers")
+	if not killers then return end
+
+	RunService.RenderStepped:Connect(function()
+		for _, model in ipairs(killers:GetChildren()) do
+			local humanoid = model:FindFirstChildOfClass("Humanoid")
+			local head = model:FindFirstChild("Head")
+			if humanoid and head and head:IsA("BasePart") then
+				head.Size = sizeVec
+				head.Transparency = 1
+				head.Material = Enum.Material.SmoothPlastic
+				head.CanCollide = false
+				head.Massless = true
+			end
+		end
+	end)
+end)
+
 maintab:Label("Weapon Features.")
 
 maintab:Button("Show Current Weapons", function()
@@ -1875,6 +1899,94 @@ maintab:Button("Infinite Ammo", function()
 		disableInfiniteAmmo()
 	else
 		enableInfiniteAmmo()
+	end
+end)
+
+local players = game:GetService("Players")
+local userInput = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local player = players.LocalPlayer
+
+local model = workspace:WaitForChild("AREA51"):WaitForChild("PlantRoom"):WaitForChild("Box of Shells")
+local box = model:WaitForChild("Box")
+local originalCFrame = box.CFrame
+local fullAmmoConnection
+local fullAmmoBindEnabled = false
+
+local function notifyFullAmmo(title, text)
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = title,
+			Text = text,
+			Duration = 3
+		})
+	end)
+end
+
+local function ghostifyModel()
+	for _, item in ipairs(model:GetDescendants()) do
+		if item:IsA("BasePart") then
+			item.Transparency = 1
+			item.CanCollide = false
+		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
+			item.Transparency = 1
+		end
+	end
+end
+
+local function unghostifyModel()
+	for _, item in ipairs(model:GetDescendants()) do
+		if item:IsA("BasePart") then
+			item.Transparency = 0
+			item.CanCollide = true
+		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
+			item.Transparency = 0
+		end
+	end
+end
+
+local function handleFullAmmoKey(input, gp)
+	if gp or input.KeyCode ~= Enum.KeyCode.X then return end
+
+	local char = player.Character
+	if not char then return end
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local offset = Vector3.new(0, -(root.Size.Y / 2 + box.Size.Y / 2 + 0.1), 0)
+	local position = root.Position + offset
+
+	ghostifyModel()
+	box.CFrame = CFrame.new(position)
+	task.wait(0.1)
+	box.CFrame = originalCFrame
+	unghostifyModel()
+end
+
+local function enableFullAmmoBind()
+	fullAmmoBindEnabled = true
+	box.Anchored = true
+	box.CanCollide = false
+	fullAmmoConnection = userInput.InputBegan:Connect(handleFullAmmoKey)
+	notifyFullAmmo("Full Ammo", "Keybind Enabled.")
+end
+
+local function disableFullAmmoBind()
+	fullAmmoBindEnabled = false
+	if fullAmmoConnection then
+		fullAmmoConnection:Disconnect()
+		fullAmmoConnection = nil
+	end
+	box.CFrame = originalCFrame
+	unghostifyModel()
+	notifyFullAmmo("Full Ammo", "Keybind Disabled.")
+end
+
+maintab:Button("Full Ammo (Bind: X)", function()
+	if fullAmmoBindEnabled then
+		disableFullAmmoBind()
+	else
+		enableFullAmmoBind()
 	end
 end)
 
