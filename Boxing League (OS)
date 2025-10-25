@@ -178,6 +178,14 @@ end
 
 farmtab:Button("Player Detector (Kicks If More Than Two Players.)", toggleStaffDetector)
 
+farmtab:Button("Leaderboard Wins", function()
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Leaderboard Wins",
+    Text = "Wins: " .. workspace.Detection.LB1.SG.List.MyRank.count.Text,
+    Duration = 5
+})
+end)
+
 farmtab:Button("Join Class S", function()
 local TeleportService = game:GetService("TeleportService") local Players = game:GetService("Players") local player = Players.LocalPlayer
 TeleportService:Teleport(7230787006, player)
