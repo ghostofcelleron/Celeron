@@ -1,0 +1,27 @@
+if getgenv().CeleronLoaderLoaded and not _G.CELERON_DEBUG then return end
+getgenv().CeleronLoaderLoaded = true
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local queuetp = queue_on_teleport or queueonteleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
+
+local loaderURL = "https://raw.githubusercontent.com/ghostofcelleron/Celeron/main/Celeron's%20Loader"
+local loaderCode = string.format([[
+    if getgenv().CeleronLoaderLoaded and not _G.CELERON_DEBUG then return end
+    getgenv().CeleronLoaderLoaded = true
+    if not game:IsLoaded() then game.Loaded:Wait() end
+    loadstring(game:HttpGet(%q, true))()
+]], loaderURL)
+
+if typeof(queuetp) == "function" then
+    LocalPlayer.OnTeleport:Connect(function()
+        queuetp(loaderCode)
+    end)
+end
+
+loadstring(game:HttpGet(loaderURL, true))()
