@@ -1,0 +1,173 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+
+local spiritbombfx = "https://pastebin.com/raw/aZ3kAGQd"
+local plr = Players.LocalPlayer
+local hotbar = plr.PlayerGui.Hotbar
+
+local names = { "Kamehameha!", "Dragon Combo", "Instant Transmission", "Ultra Instinct.", "Spirit Bomb" }
+for i, name in ipairs(names) do
+	hotbar.Backpack.Hotbar["skill" .. i].Base.ToolName.Text = name
+end
+
+local theme = ReplicatedStorage.Resources.kaiser:FindFirstChild("kaiser theme")
+if theme and theme:IsA("Sound") then
+	theme.SoundId = "rbxassetid://113715007665627"
+end
+
+local function ult()
+	local char = plr.Character
+	local flow = char:FindFirstChild("state") and char.state:FindFirstChild("flow")
+	if not flow or flow.Value ~= 100 or not char:GetAttribute("FlowActive") then return end
+end
+
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
+
+	if input.KeyCode == Enum.KeyCode.One then
+	end
+
+	if input.KeyCode == Enum.KeyCode.Two then
+		local char = plr.Character
+		local hum = char and char:FindFirstChild("Humanoid")
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if not char or not hum or not root then return end
+
+		local stun = char:FindFirstChild("state") and char.state:FindFirstChild("stun")
+		if stun and stun.Value == false then
+			stun.Value = true
+			task.wait(0.03)
+			stun.Value = false
+		end
+
+		local leapAnim = Instance.new("Animation")
+		leapAnim.AnimationId = "rbxassetid://120351399679118"
+		local leapTrack = hum:LoadAnimation(leapAnim)
+		leapTrack:Play()
+
+		local forward = (root.CFrame - root.Position).LookVector
+		root.Velocity = forward * 225 + Vector3.new(0, 120, 0)
+
+		task.wait(0.45)
+		leapTrack:Stop()
+		task.wait(0.1)
+
+		local uppercutAnim = Instance.new("Animation")
+		uppercutAnim.AnimationId = "rbxassetid://124313162244889"
+		local uppercutTrack = hum:LoadAnimation(uppercutAnim)
+		uppercutTrack:Play()
+
+		task.wait(0.25)
+
+		local sound = Instance.new("Sound")
+		sound.SoundId = "rbxassetid://140668097319606"
+		sound.Volume = 10
+		sound.Parent = root
+		sound:Play()
+		game.Debris:AddItem(sound, 2)
+
+		ReplicatedStorage.ByteNetReliable:FireServer(
+			buffer.fromstring("\022\001"),
+			{ { "kick", 100, false, vector.create(forward.X, forward.Y -10, forward.Z) } }
+		)
+	end
+
+	if input.KeyCode == Enum.KeyCode.Three then
+		local char = plr.Character
+		local hum = char and char:FindFirstChild("Humanoid")
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if not char or not hum or not root then return end
+
+		local stun = char:FindFirstChild("state") and char.state:FindFirstChild("stun")
+		if stun and stun.Value == false then
+			stun.Value = true
+			task.wait(0.03)
+			stun.Value = false
+		end
+
+		local anim = Instance.new("Animation")
+		anim.AnimationId = "rbxassetid://136837676477730"
+		local track = hum:LoadAnimation(anim)
+		track:Play()
+		task.delay(0.5, function()
+			track:Stop()
+		end)
+
+		local sound = Instance.new("Sound")
+		sound.SoundId = "rbxassetid://4861638982"
+		sound.Volume = 1
+		sound.Parent = root
+		sound:Play()
+		game.Debris:AddItem(sound, 2)
+
+		local forward = (root.CFrame - root.Position).LookVector
+		root.CFrame = root.CFrame + forward * 65
+
+		local flash = Instance.new("ColorCorrectionEffect")
+		flash.Name = "transmissionflash"
+		flash.Enabled = true
+		flash.Saturation = -1
+		flash.Contrast = 0
+		flash.Brightness = 0
+		flash.Parent = Lighting
+
+		local flashIn = TweenService:Create(flash, TweenInfo.new(0.1), {
+			Contrast = 3,
+			Brightness = 0.5
+		})
+
+		local flashOut = TweenService:Create(flash, TweenInfo.new(0.2), {
+			Contrast = 0,
+			Brightness = 0,
+			Saturation = 0
+		})
+
+		flashIn:Play()
+		flashIn.Completed:Connect(function()
+			flashOut:Play()
+			flashOut.Completed:Connect(function()
+				flash:Destroy()
+			end)
+		end)
+	end
+
+	if input.KeyCode == Enum.KeyCode.Five then
+		local char = plr.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if not char or not root then return end
+		if not char:GetAttribute("FlowActive") then return end
+
+		local stun = char:FindFirstChild("state") and char.state:FindFirstChild("stun")
+		if stun and stun.Value == false then
+			stun.Value = true
+			task.wait(0.03)
+			stun.Value = false
+		end
+
+		loadstring(game:HttpGet(spiritbombfx))()
+
+		task.delay(5.5, function()
+			local original = root.CFrame
+			local goal = plr.Team.Name == "A" and CFrame.new(-511, 3, 817) or CFrame.new(-557, 3, 1730)
+			root.Anchored = false
+			root.CFrame = goal
+
+			task.wait(0.2)
+			ReplicatedStorage.ByteNetReliable:FireServer(
+				buffer.fromstring("\022\001"),
+				{ { "kick", 50, false, vector.create(0, 1, 0) } }
+			)
+
+			task.delay(0.2, function()
+				root.CFrame = original
+			end)
+		end)
+	end
+
+	if input.KeyCode == Enum.KeyCode.G then
+		ult()
+	end
+end)
