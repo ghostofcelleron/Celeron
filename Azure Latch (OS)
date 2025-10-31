@@ -1724,12 +1724,16 @@ plr.CharacterAdded:Connect(function(char)
 end)
 end)
 
-funtab:Button("Gojo Moveset", function()
+funtab:Button("Gojo Moveset (Use Isagi.)", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/TH8xDy9X"))()
 end)
 
 funtab:Button("Loki Moveset", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/LbRRX7SK"))()
+end)
+
+funtab:Button("Goku Moveset (Use Kaiser / Isagi.)", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/goku%20moveset%20(azl)",true))()
 end)
 
 funtab:Button("Trolling Moveset", function()
