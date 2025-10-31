@@ -66,6 +66,10 @@ maintab:Button("Metavision", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
 end)
 
+maintab:Button("Metavision V2", function()
+loadstring(game:HttpGet("https://pastebin.com/raw/HfpQBAsF"))()
+end)
+
 maintab:Button("Auto Goal", function()
     _G.AUTO_GOAL = not _G.AUTO_GOAL
     if _G.AUTO_GOAL then
