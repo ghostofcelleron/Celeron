@@ -55,18 +55,12 @@ maintab2:Button("Suppress Notifications", function()
     })
 end)
 
-task.spawn(function()
-	while true do
-		pcall(function()
-			for _, obj in ipairs(workspace:WaitForChild("map"):WaitForChild("gkbarriar"):GetDescendants()) do
-				if obj:IsA("BasePart") and obj.CanCollide then
-					obj.CanCollide = false
-				end
-			end
-		end)
-		task.wait(5)
+local spawns = {}
+for _, obj in ipairs(workspace:GetDescendants()) do
+	if obj:IsA("SpawnLocation") then
+		table.insert(spawns, obj)
 	end
-end)
+end
 
 maintab:Button("Metavision", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
@@ -271,13 +265,6 @@ local player = game:GetService("Players").LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local root = char:WaitForChild("HumanoidRootPart")
 local original = root.CFrame
-
-local spawns = {}
-for _, obj in ipairs(workspace:GetDescendants()) do
-	if obj:IsA("SpawnLocation") then
-		table.insert(spawns, obj)
-	end
-end
 
 if #spawns > 0 then
 	root.CFrame = spawns[math.random(#spawns)].CFrame + Vector3.new(0, 3, 0)
