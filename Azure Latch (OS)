@@ -587,16 +587,6 @@ spawn(function()
 end)
 end)
 
-maintab:Textbox("Give Ball", function(v)
-	local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-	local target = game.Players:FindFirstChild(v)
-	if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-		target.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(0, 1, 0))
-		wait(0.2)
-		remote:FireServer(buffer.fromstring("\023\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
-	end
-end)
-
 maintab:Button("Manual Score", function()
 if game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 	if workspace:WaitForChild("map"):WaitForChild("Agoal") and workspace:WaitForChild("map"):WaitForChild("Bgoal") then
@@ -609,6 +599,35 @@ if game:GetService("Players").LocalPlayer.Character and game:GetService("Players
 		end
 	end
 end
+end)
+
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+local UIS = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local cam = workspace.CurrentCamera
+
+local airDribbleEnabled = false
+
+maintab:Button("Air Dribble (Binds To LeftAlt.)", function()
+    airDribbleEnabled = not airDribbleEnabled
+    StarterGui:SetCore("SendNotification", {
+        Title = "Air Dribble",
+        Text = airDribbleEnabled and "Enabled." or "Disabled.",
+        Duration = 2
+    })
+end)
+
+UIS.InputBegan:Connect(function(input, gp)
+    if gp or input.KeyCode ~= Enum.KeyCode.LeftAlt then return end
+    if not airDribbleEnabled then return end
+
+local dir = cam.CFrame.LookVector
+local kickVec = vector.create(dir.X * 0.7, 1, dir.Z * 0.7)
+remote:FireServer(buffer.fromstring("\023\001"), { { "kick", 30, false, kickVec } })
+    task.wait(0.5)
+    remote:FireServer(buffer.fromstring("\022"))
+	wait(0.05)
+    remote:FireServer(buffer.fromstring("\022"))	
 end)
 
 maintab:Button("Break Ball (Player Method, Req. Ball)", function()
@@ -1124,96 +1143,7 @@ local plr = game.Players.LocalPlayer
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
 			end)
 
-maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
-
-maintab2:Button("Auto Formless (Binds To T.)", function()
-	local UIS = game:GetService("UserInputService")
-	local Players = game:GetService("Players")
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local StarterGui = game:GetService("StarterGui")
-	local Camera = workspace.CurrentCamera
-
-	local LP = Players.LocalPlayer
-	local ByteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
-
-	_G.autoFormlessEnabled = not (_G.autoFormlessEnabled or false)
-	if not _G.suppressNotifs then
-		StarterGui:SetCore("SendNotification", {
-			Title = "Auto Formless",
-			Text = _G.autoFormlessEnabled and "Enabled." or "Disabled.",
-			Duration = 2
-		})
-	end
-
-	if not _G.autoFormlessEnabled then return end
-
-	UIS.InputBegan:Connect(function(input, gp)
-		if not _G.autoFormlessEnabled or gp or input.KeyCode ~= Enum.KeyCode.T or UIS.MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
-
-		local char = LP.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		local hum = char and char:FindFirstChildOfClass("Humanoid")
-		if not hrp or not hum then return end
-
-		hum.AutoRotate = false
-		hrp.CFrame *= CFrame.Angles(0, math.rad(180), 0)
-
-		local camType, camSubject = Camera.CameraType, Camera.CameraSubject
-		Camera.CameraType = Enum.CameraType.Scriptable
-		Camera.CFrame = hrp.CFrame + Vector3.new(0, 2, 0)
-
-		task.delay(0.1, function()
-			if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
-				Camera.CameraSubject = LP.Character:FindFirstChildOfClass("Humanoid")
-				Camera.CameraType = Enum.CameraType.Custom
-			else
-				Camera.CameraSubject = camSubject
-				Camera.CameraType = camType
-			end
-			hum.AutoRotate = true
-		end)
-
-		task.wait(0.1)
-		ByteNetReliable:FireServer(
-			buffer.fromstring("\023\001"),
-			{ { "kick", 24, false, vector.create(0, 1, 0) } }
-		)
-
-		ByteNetReliable:FireServer(
-			buffer.fromstring("\023\001"),
-			{ { "skill1" } }
-		)
-	end)
-end)
-
-local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-local UIS = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
-local cam = workspace.CurrentCamera
-
-local airDribbleEnabled = false
-
-maintab2:Button("Air Dribble (Binds To LeftAlt.)", function()
-    airDribbleEnabled = not airDribbleEnabled
-    StarterGui:SetCore("SendNotification", {
-        Title = "Air Dribble",
-        Text = airDribbleEnabled and "Enabled." or "Disabled.",
-        Duration = 2
-    })
-end)
-
-UIS.InputBegan:Connect(function(input, gp)
-    if gp or input.KeyCode ~= Enum.KeyCode.LeftAlt then return end
-    if not airDribbleEnabled then return end
-
-local dir = cam.CFrame.LookVector
-local kickVec = vector.create(dir.X * 0.7, 1, dir.Z * 0.7)
-remote:FireServer(buffer.fromstring("\023\001"), { { "kick", 30, false, kickVec } })
-    task.wait(0.5)
-    remote:FireServer(buffer.fromstring("\022"))
-	wait(0.05)
-    remote:FireServer(buffer.fromstring("\022"))	
-end)
+maintab2:Label("Auto Position: Instantly Picks Certain Position.")
 
 _G.AutoToggles = _G.AutoToggles or {
 	CF = false,
@@ -1302,6 +1232,196 @@ maintab2:Button("Auto GK", function()
 			_G.AutoToggles.GKConn:Disconnect()
 			_G.AutoToggles.GKConn = nil
 		end
+	end
+end)
+
+maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
+
+maintab2:Button("Auto Formless (Binds To T.)", function()
+	local UIS = game:GetService("UserInputService")
+	local Players = game:GetService("Players")
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local StarterGui = game:GetService("StarterGui")
+	local Camera = workspace.CurrentCamera
+
+	local LP = Players.LocalPlayer
+	local ByteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
+
+	_G.autoFormlessEnabled = not (_G.autoFormlessEnabled or false)
+	if not _G.suppressNotifs then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Auto Formless",
+			Text = _G.autoFormlessEnabled and "Enabled." or "Disabled.",
+			Duration = 2
+		})
+	end
+
+	if not _G.autoFormlessEnabled then return end
+
+	UIS.InputBegan:Connect(function(input, gp)
+		if not _G.autoFormlessEnabled or gp or input.KeyCode ~= Enum.KeyCode.T or UIS.MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
+
+		local char = LP.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if not hrp or not hum then return end
+
+		hum.AutoRotate = false
+		hrp.CFrame *= CFrame.Angles(0, math.rad(180), 0)
+
+		local camType, camSubject = Camera.CameraType, Camera.CameraSubject
+		Camera.CameraType = Enum.CameraType.Scriptable
+		Camera.CFrame = hrp.CFrame + Vector3.new(0, 2, 0)
+
+		task.delay(0.1, function()
+			if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
+				Camera.CameraSubject = LP.Character:FindFirstChildOfClass("Humanoid")
+				Camera.CameraType = Enum.CameraType.Custom
+			else
+				Camera.CameraSubject = camSubject
+				Camera.CameraType = camType
+			end
+			hum.AutoRotate = true
+		end)
+
+		task.wait(0.1)
+		ByteNetReliable:FireServer(
+			buffer.fromstring("\023\001"),
+			{ { "kick", 24, false, vector.create(0, 1, 0) } }
+		)
+
+		ByteNetReliable:FireServer(
+			buffer.fromstring("\023\001"),
+			{ { "skill1" } }
+		)
+	end)
+end)
+
+_G.nocutscene = false
+
+maintab2:Button("No Cutscene", function()
+	_G.nocutscene = not _G.nocutscene
+
+	local StarterGui = game:GetService("StarterGui")
+	local SoundService = game:GetService("SoundService")
+	local tempFolder = SoundService:FindFirstChild("celerontemp") or Instance.new("Folder", SoundService)
+	tempFolder.Name = "celerontemp"
+
+	local crowdSound = SoundService:FindFirstChild("football-crowd-3-69245") or tempFolder:FindFirstChild("football-crowd-3-69245")
+
+	StarterGui:SetCore("SendNotification", {
+		Title = "No Cutscene",
+		Text = _G.nocutscene and "Enabled." or "Disabled.",
+		Duration = 1
+	})
+
+	if _G.nocutscene then
+		if crowdSound and crowdSound:IsDescendantOf(SoundService) then
+			local clone = crowdSound:Clone()
+			clone.Parent = tempFolder
+			crowdSound:Stop()
+			crowdSound:Destroy()
+		end
+	else
+		local stored = tempFolder:FindFirstChild("football-crowd-3-69245")
+		if stored then
+			stored.Parent = SoundService
+			stored:Play()
+		end
+	end
+end)
+
+local iframeIndicatorEnabled = false
+local activeDots = {}
+local dotSize = UDim2.new(0, 6, 0, 6)
+local offset = Vector3.new(0, 3, 0)
+local updateInterval = 0.2
+
+maintab2:Button("IFrame Indicator", function()
+	iframeIndicatorEnabled = not iframeIndicatorEnabled
+
+	local StarterGui = game:GetService("StarterGui")
+	StarterGui:SetCore("SendNotification", {
+		Title = "IFrame Indicator",
+		Text = iframeIndicatorEnabled and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+
+	local charactersFolder = workspace:FindFirstChild("characters")
+	if not charactersFolder then return end
+
+	local function createDot(char)
+		if activeDots[char] then return end
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+
+		local gui = Instance.new("BillboardGui")
+		gui.Name = "IframeDot"
+		gui.Size = UDim2.new(0, 12, 0, 12)
+		gui.StudsOffset = offset
+		gui.AlwaysOnTop = true
+		gui.Adornee = hrp
+		gui.Parent = hrp
+
+		local dot = Instance.new("Frame")
+		dot.Size = dotSize
+		dot.Position = UDim2.new(0.5, -3, 0.5, -3)
+		dot.BackgroundColor3 = Color3.fromRGB(128, 128, 128)
+		dot.BorderSizePixel = 0
+		dot.BackgroundTransparency = 0
+		dot.Parent = gui
+
+		activeDots[char] = dot
+	end
+
+	local function updateDot(char, dot)
+		local state = char:FindFirstChild("state")
+		local iframe = state and state:FindFirstChild("iframe")
+		if iframe and iframe:IsA("BoolValue") then
+			dot.BackgroundColor3 = iframe.Value and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+		else
+			dot.BackgroundColor3 = Color3.fromRGB(128, 128, 128)
+		end
+	end
+
+	local function clearDots()
+		for char, dot in pairs(activeDots) do
+			if dot and dot.Parent then
+				dot.Parent:Destroy()
+			end
+		end
+		activeDots = {}
+	end
+
+	if iframeIndicatorEnabled then
+		for _, char in ipairs(charactersFolder:GetChildren()) do
+			createDot(char)
+		end
+
+		charactersFolder.ChildAdded:Connect(function(char)
+			task.wait(0.5)
+			if iframeIndicatorEnabled then
+				createDot(char)
+			end
+		end)
+
+		task.spawn(function()
+			while iframeIndicatorEnabled do
+				for char, dot in pairs(activeDots) do
+					if char and dot then
+						updateDot(char, dot)
+					end
+				end
+				for _, char in ipairs(charactersFolder:GetChildren()) do
+					if not activeDots[char] then
+						createDot(char)
+					end
+				end
+				task.wait(updateInterval)
+			end
+		end)
+	else
+		clearDots()
 	end
 end)
 
