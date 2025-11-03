@@ -1,0 +1,370 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (Your Bizarre Adventure)",
+    ThemeColor = Color3.fromRGB(14, 14, 14),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local vistab = win:Tab("Visuals")
+local maptab = win:Tab("Teleports")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+vistab:Label("Visual Settings.")
+maptab:Label("Teleport Features.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+local player = game:GetService("Players").LocalPlayer
+local stepSize = 40
+local delayTime = 0.075
+
+local function freeze(hrp)
+	local bv = Instance.new("BodyVelocity")
+	bv.Name = "teleportvelocity"
+	bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+	bv.Velocity = Vector3.zero
+	bv.P = 1e4
+	bv.Parent = hrp
+
+	local bg = Instance.new("BodyGyro")
+	bg.Name = "teleportgyro"
+	bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+	bg.CFrame = hrp.CFrame
+	bg.P = 1e4
+	bg.Parent = hrp
+end
+
+local function unfreeze(hrp)
+	for _, obj in ipairs(hrp:GetChildren()) do
+		if obj:IsA("BodyVelocity") and obj.Name == "teleportvelocity" then
+			obj:Destroy()
+		elseif obj:IsA("BodyGyro") and obj.Name == "teleportgyro" then
+			obj:Destroy()
+		end
+	end
+end
+
+function teleportto(x, y, z)
+	local target = Vector3.new(x, y, z)
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+
+	task.spawn(function()
+		freeze(hrp)
+		while true do
+			local currentPos = hrp.Position
+			local direction = target - currentPos
+			local distance = direction.Magnitude
+
+			if hrp.Velocity.Y < -5 then
+				hrp.CFrame = CFrame.new(currentPos.X, target.Y, currentPos.Z)
+			end
+
+			if distance <= stepSize then
+				hrp.CFrame = CFrame.new(target)
+				break
+			end
+
+			local step = direction.Unit * math.min(stepSize, distance)
+			local newPos = currentPos + step
+			hrp.CFrame = CFrame.new(newPos)
+			task.wait(delayTime)
+		end
+		unfreeze(hrp)
+	end)
+end
+
+getgenv().lastSliderSet = nil
+getgenv().cframeLoopRunning = false
+
+local uis = game:GetService("UserInputService")
+local players = game:GetService("Players")
+local workspace = game:GetService("Workspace")
+local lp = players.LocalPlayer
+
+local function getInputDirection()
+	local dir = Vector3.zero
+	if uis:IsKeyDown(Enum.KeyCode.W) then dir += Vector3.new(0, 0, 1) end
+	if uis:IsKeyDown(Enum.KeyCode.S) then dir += Vector3.new(0, 0, -1) end
+	if uis:IsKeyDown(Enum.KeyCode.A) then dir += Vector3.new(-1, 0, 0) end
+	if uis:IsKeyDown(Enum.KeyCode.D) then dir += Vector3.new(1, 0, 0) end
+	return dir.Magnitude > 0 and dir.Unit or nil
+end
+
+local function createBodyVelocity(hrp)
+	local bv = Instance.new("BodyVelocity")
+	bv.Name = "Velocity"
+	bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+	bv.Velocity = Vector3.zero
+	bv.P = 1e4
+	bv.Parent = hrp
+	return bv
+end
+
+getgenv().applySpeed = function()
+	if getgenv().cframeLoopRunning then return end
+	getgenv().cframeLoopRunning = true
+
+	coroutine.wrap(function()
+		while getgenv().cframeLoopRunning do
+			local char = lp.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+			local hum = char and char:FindFirstChildOfClass("Humanoid")
+			local cam = workspace.CurrentCamera
+			if hrp and hum then
+				local speed = getgenv().lastSliderSet or 16
+				local bv = hrp:FindFirstChild("Velocity")
+
+				if speed < 19 then
+					if bv then bv:Destroy() end
+				else
+					bv = bv or createBodyVelocity(hrp)
+					local inputDir = getInputDirection()
+					if inputDir then
+						local camCF = cam.CFrame
+						local forward = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
+						local right = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
+						local moveVec = (forward * inputDir.Z + right * inputDir.X).Unit
+						local currentY = hrp.Velocity.Y
+
+						bv.Velocity = moveVec * speed + Vector3.new(0, currentY, 0)
+					else
+						bv.Velocity = Vector3.zero
+					end
+				end
+			end
+			task.wait()
+		end
+	end)()
+end
+
+maintab:Slider("Player Speed", 20, 0, 125, function(v)
+	getgenv().lastSliderSet = (v == 8) and 16 or v
+	getgenv().applySpeed()
+end)
+
+players.LocalPlayer.CharacterAdded:Connect(function(char)
+	char:WaitForChild("Humanoid")
+	getgenv().applySpeed()
+end)
+
+local itemESPEnabled = false
+local activeESP = {}
+local lastItemNames = {}
+local currentRoot = nil
+
+vistab:Button("Item ESP", function()
+	itemESPEnabled = not itemESPEnabled
+
+	local StarterGui = game:GetService("StarterGui")
+	StarterGui:SetCore("SendNotification", {
+		Title = "Item ESP",
+		Text = itemESPEnabled and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+
+	local player = game.Players.LocalPlayer
+	local itemsFolder = workspace:FindFirstChild("Item_Spawns") and workspace.Item_Spawns:FindFirstChild("Items")
+	if not itemsFolder then return end
+
+	local function updateRoot()
+		local char = player.Character or player.CharacterAdded:Wait()
+		local root = char:WaitForChild("HumanoidRootPart")
+		currentRoot = root
+
+		local humanoid = char:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.Died:Connect(function()
+				currentRoot = nil
+				player.CharacterAdded:Wait():WaitForChild("HumanoidRootPart")
+				task.wait(0.5)
+				updateRoot()
+				if itemESPEnabled then
+					createESP()
+				end
+			end)
+		end
+
+		root:GetPropertyChangedSignal("Parent"):Connect(function()
+			if not root:IsDescendantOf(workspace) then
+				task.wait(0.5)
+				updateRoot()
+			end
+		end)
+	end
+
+	updateRoot()
+	player.CharacterAdded:Connect(function()
+		task.wait(0.5)
+		updateRoot()
+		if itemESPEnabled then
+			createESP()
+		end
+	end)
+
+	local function clearESP()
+		for _, gui in pairs(activeESP) do
+			if gui and gui.Parent then
+				gui:Destroy()
+			end
+		end
+		activeESP = {}
+	end
+
+	local function getPromptText(model)
+		for _, inst in ipairs(model:GetDescendants()) do
+			if inst:IsA("ProximityPrompt") and inst.ObjectText and inst.ObjectText ~= "" then
+				return inst.ObjectText
+			end
+		end
+		return model.Name
+	end
+
+	local function createESP()
+		clearESP()
+		lastItemNames = {}
+		for _, obj in ipairs(itemsFolder:GetChildren()) do
+			if obj:IsA("Model") or obj:IsA("BasePart") then
+				local itemName = getPromptText(obj)
+				table.insert(lastItemNames, itemName)
+
+				local part = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart")
+				if part then
+					local gui = Instance.new("BillboardGui")
+					gui.Size = UDim2.new(0, 100, 0, 12)
+					gui.StudsOffset = Vector3.new(0, 2.5, 0)
+					gui.AlwaysOnTop = true
+					gui.Adornee = part
+					gui.Parent = part
+
+					local nameLabel = Instance.new("TextLabel")
+					nameLabel.Size = UDim2.new(1, 0, 1, 0)
+					nameLabel.BackgroundTransparency = 1
+					nameLabel.TextColor3 = Color3.new(1, 1, 1)
+					nameLabel.TextScaled = true
+					nameLabel.Font = Enum.Font.Arial
+					nameLabel.Text = itemName
+					nameLabel.TextSize = 8
+					nameLabel.Parent = gui
+
+					table.insert(activeESP, gui)
+				end
+			end
+		end
+	end
+
+	local function itemsChanged()
+		local currentNames = {}
+		for _, obj in ipairs(itemsFolder:GetChildren()) do
+			if obj:IsA("Model") or obj:IsA("BasePart") then
+				table.insert(currentNames, getPromptText(obj))
+			end
+		end
+		if #currentNames ~= #lastItemNames then return true end
+		for i, name in ipairs(currentNames) do
+			if name ~= lastItemNames[i] then return true end
+		end
+		return false
+	end
+
+	task.spawn(function()
+		while true do
+			if itemESPEnabled and itemsChanged() then
+				createESP()
+			end
+			task.wait(3)
+		end
+	end)
+
+	task.spawn(function()
+		while true do
+			if itemESPEnabled then
+				createESP()
+			end
+			task.wait(5)
+		end
+	end)
+
+	if itemESPEnabled then
+		createESP()
+	else
+		clearESP()
+	end
+end)
+
+maptab:Button("Main Area", function()
+teleportto(415, 8, -284)
+end)
+
+maptab:Button("Shop", function()
+teleportto(-695, -25, -332)
+end)
+
+maptab:Button("Arcade", function()
+teleportto(273, 2, -259)
+end)
+
+maptab:Button("Vampire Roomy", function()
+teleportto(388.9296875, -27.841064453125, -143.33447265625)
+end)
+
+maptab:Label("Quest Teleports.")
+
+maptab:Button("Prestige Master Rin (Prestige Area)", function()
+teleportto(-454, 0, 27)
+end)
+
+maptab:Button("Abbachio's Partner (Lvl. 15+ Quest)", function()
+teleportto(-579, -26, -585)
+end)
+
+maptab:Button("Dracula (Lvl. 20+ Quest)", function()
+teleportto(-420, -34, -75)
+end)
+
+maptab:Button("Zeppeli (Lvl. 25+ Quest)", function()
+teleportto(-139, -30, 36)
+end)
+
+maptab:Button("Doppio (Lvl. 30+ Quest)", function()
+teleportto(-40, 0, -990)
+end)
+
+maptab:Label("Other Areas.")
+
+maptab:Button("Heaven Ascension Dio", function()
+teleportto(8490, -469, 8151)
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
