@@ -987,42 +987,6 @@ for _, obj in ipairs(workspace.Terrain:GetDescendants()) do
 end
 end)
 
-maintab:Button("Hide Ace Eater", function()
-local char = game.Players.LocalPlayer.Character
-local ogAnim = char.Animate.idle.Animation1.AnimationId
-
-local UserInputService = game:GetService("UserInputService")
-local starterGui = game:GetService("StarterGui")
-
-_G.HideAce = not _G.HideAce
-
-local function sendNotification(status)
-    starterGui:SetCore("SendNotification", {
-        Title = "Hide Ace Toggle",
-        Text = status,
-        Duration = 1
-    })
-end
-
-function onKeyPress(inputObject, gameProcessedEvent)
-    if not gameProcessedEvent and _G.HideAce then
-        if inputObject.KeyCode == Enum.KeyCode.Five and game.Players.LocalPlayer:GetAttribute("style") == "donlorenzo" then 
-            task.wait(0.1)
-            for _, track in ipairs(char.Humanoid:GetPlayingAnimationTracks()) do
-                if track.Animation.AnimationId == "rbxassetid://108103339994438" then
-                    track:Stop()
-                    break
-                end
-            end
-        end
-    end
-end
-
-UserInputService.InputBegan:Connect(onKeyPress)
-
-sendNotification(_G.HideAce and "Enabled." or "Disabled.")
-end)
-
 maintab:Button("Barou Devour Goal", function()
 local plr = game.Players.LocalPlayer
 
