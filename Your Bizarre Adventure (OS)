@@ -15,13 +15,18 @@ local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
 vistab:Label("Visual Settings.")
-maptab:Label("Teleport Features.")
+maptab:Label("Teleport Features, May Be Buggy.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
 local player = game:GetService("Players").LocalPlayer
 local stepSize = 40
 local delayTime = 0.075
+
+local function getHRP()
+	local char = player.Character or player.CharacterAdded:Wait()
+	return char:WaitForChild("HumanoidRootPart")
+end
 
 local function freeze(hrp)
 	local bv = Instance.new("BodyVelocity")
@@ -49,33 +54,88 @@ local function unfreeze(hrp)
 	end
 end
 
+local function forceNoclip()
+	local char = player.Character
+	if not char then return end
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = false
+		end
+	end
+end
+
+local function restoreCollisions()
+	local char = player.Character
+	if not char then return end
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = true
+		end
+	end
+end
+
+local activeTeleport = false
+
+player.CharacterAdded:Connect(function(char)
+	if activeTeleport then
+		task.wait()
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			unfreeze(hrp)
+		end
+		restoreCollisions()
+		activeTeleport = false
+	end
+end)
+
 function teleportto(x, y, z)
-	local target = Vector3.new(x, y, z)
-	local char = player.Character or player.CharacterAdded:Wait()
-	local hrp = char:WaitForChild("HumanoidRootPart")
+	local targetXZ = Vector3.new(x, -44, z)
+	activeTeleport = true
 
 	task.spawn(function()
+		local hrp = getHRP()
 		freeze(hrp)
-		while true do
-			local currentPos = hrp.Position
-			local direction = target - currentPos
-			local distance = direction.Magnitude
 
-			if hrp.Velocity.Y < -5 then
-				hrp.CFrame = CFrame.new(currentPos.X, target.Y, currentPos.Z)
+		local running = true
+		local noclipLoop = coroutine.create(function()
+			while running and activeTeleport do
+				forceNoclip()
+				task.wait()
 			end
+		end)
+		coroutine.resume(noclipLoop)
 
-			if distance <= stepSize then
-				hrp.CFrame = CFrame.new(target)
-				break
-			end
-
-			local step = direction.Unit * math.min(stepSize, distance)
-			local newPos = currentPos + step
-			hrp.CFrame = CFrame.new(newPos)
+		while getHRP().Position.Y > -44 and activeTeleport do
+			local hrp = getHRP()
+			local current = hrp.Position
+			local nextY = math.max(current.Y - stepSize, -44)
+			hrp.CFrame = CFrame.new(current.X, nextY, current.Z)
 			task.wait(delayTime)
 		end
-		unfreeze(hrp)
+
+		while (Vector3.new(getHRP().Position.X, 0, getHRP().Position.Z) - Vector3.new(x, 0, z)).Magnitude > stepSize and activeTeleport do
+			local hrp = getHRP()
+			local current = hrp.Position
+			local direction = (targetXZ - current).Unit
+			local step = direction * math.min(stepSize, (targetXZ - current).Magnitude)
+			hrp.CFrame = CFrame.new(current + step)
+			task.wait(delayTime)
+		end
+
+		while math.abs(getHRP().Position.Y - y) > 2 and activeTeleport do
+			local hrp = getHRP()
+			local current = hrp.Position
+			local nextY = math.min(current.Y + stepSize, y)
+			hrp.CFrame = CFrame.new(x, nextY, z)
+			task.wait(delayTime)
+		end
+
+		running = false
+		if activeTeleport then
+			unfreeze(getHRP())
+			restoreCollisions()
+			activeTeleport = false
+		end
 	end)
 end
 
@@ -143,7 +203,7 @@ getgenv().applySpeed = function()
 	end)()
 end
 
-maintab:Slider("Player Speed", 20, 0, 125, function(v)
+maintab:Slider("Player Speed", 20, 0, 240, function(v)
 	getgenv().lastSliderSet = (v == 8) and 16 or v
 	getgenv().applySpeed()
 end)
@@ -151,6 +211,48 @@ end)
 players.LocalPlayer.CharacterAdded:Connect(function(char)
 	char:WaitForChild("Humanoid")
 	getgenv().applySpeed()
+end)
+
+getgenv().lastJumpSet = nil
+getgenv().jumpBoostEnabled = true
+
+local players = game:GetService("Players")
+local lp = players.LocalPlayer
+
+local function applyJumpBoost(hum, hrp)
+	hum.StateChanged:Connect(function(_, new)
+		if new == Enum.HumanoidStateType.Jumping and getgenv().jumpBoostEnabled then
+			local boost = Instance.new("BodyVelocity")
+			boost.Name = "jump"
+			boost.MaxForce = Vector3.new(0, 1e5, 0)
+			boost.Velocity = Vector3.new(0, getgenv().lastJumpSet or 50, 0)
+			boost.P = 1e4
+			boost.Parent = hrp
+
+			game:GetService("Debris"):AddItem(boost, 0.2)
+		end
+	end)
+end
+
+getgenv().applyJump = function()
+	local char = lp.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if hum and hrp then
+		hum.JumpPower = 50
+		applyJumpBoost(hum, hrp)
+	end
+end
+
+maintab:Slider("Jump Boost", 50, 0, 350, function(v)
+	getgenv().lastJumpSet = v
+	getgenv().applyJump()
+end)
+
+players.LocalPlayer.CharacterAdded:Connect(function(char)
+	char:WaitForChild("Humanoid")
+	char:WaitForChild("HumanoidRootPart")
+	getgenv().applyJump()
 end)
 
 local itemESPEnabled = false
@@ -297,7 +399,48 @@ vistab:Button("Item ESP", function()
 	end
 end)
 
-maptab:Button("Main Area", function()
+vistab:Button("Always Night", function()
+	getgenv().AlwaysNight = not getgenv().AlwaysNight
+
+	local Lighting = game:GetService("Lighting")
+
+	if getgenv().AlwaysNight then
+		game:GetService("StarterGui"):SetCore("SendNotification", {
+			Title = "Always Night",
+			Text = "Enabled.",
+			Duration = 3
+		})
+
+		Lighting.ClockTime = 24
+		Lighting.TimeOfDay = "00:00:00"
+		Lighting:SetMinutesAfterMidnight(0)
+
+		if not getgenv().AlwaysNightConnection then
+			getgenv().AlwaysNightConnection = Lighting:GetPropertyChangedSignal("ClockTime"):Connect(function()
+				if getgenv().AlwaysNight then
+					Lighting.ClockTime = 24
+				end
+			end)
+		end
+	else
+		game:GetService("StarterGui"):SetCore("SendNotification", {
+			Title = "Always Night",
+			Text = "Disabled.",
+			Duration = 3
+		})
+
+		if getgenv().AlwaysNightConnection then
+			getgenv().AlwaysNightConnection:Disconnect()
+			getgenv().AlwaysNightConnection = nil
+		end
+	end
+end)
+
+maptab:Button("Start Place", function()
+teleportto(2, 0, -712)
+end)
+
+maptab:Button("Town Square", function()
 teleportto(415, 8, -284)
 end)
 
@@ -309,14 +452,18 @@ maptab:Button("Arcade", function()
 teleportto(273, 2, -259)
 end)
 
-maptab:Button("Vampire Roomy", function()
-teleportto(388.9296875, -27.841064453125, -143.33447265625)
+maptab:Button("Rails", function()
+teleportto(-266, -5, -39)
+end)
+
+maptab:Button("High Peak", function()
+teleportto(1017, 118, -15)
 end)
 
 maptab:Label("Quest Teleports.")
 
-maptab:Button("Prestige Master Rin (Prestige Area)", function()
-teleportto(-454, 0, 27)
+maptab:Button("Officer Sam (Lvl. 1+ Quest)", function()
+teleportto(-477, 9, -776)
 end)
 
 maptab:Button("Abbachio's Partner (Lvl. 15+ Quest)", function()
@@ -335,7 +482,23 @@ maptab:Button("Doppio (Lvl. 30+ Quest)", function()
 teleportto(-40, 0, -990)
 end)
 
-maptab:Label("Other Areas.")
+maptab:Button("Dio (Lvl. 35+ Quest)", function()
+teleportto(180, -25, 585)
+end)
+
+maptab:Button("Pucci (Lvl. 40+ Quest)", function()
+teleportto(907, 34, -16)
+end)
+
+maptab:Label("Special NPCs.")
+
+maptab:Button("Prestige NPC", function()
+teleportto(-454, 0, 27)
+end)
+
+maptab:Button("Vampire Roomy", function()
+teleportto(388, -27, -143)
+end)
 
 maptab:Button("Heaven Ascension Dio", function()
 teleportto(8490, -469, 8151)
