@@ -22,6 +22,7 @@ helptab:Label("Show / Hide GUI: Right Alt")
 local player = game:GetService("Players").LocalPlayer
 local stepSize = 40
 local delayTime = 0.075
+local activeTeleport = false
 
 local function getHRP()
 	local char = player.Character or player.CharacterAdded:Wait()
@@ -74,8 +75,6 @@ local function restoreCollisions()
 	end
 end
 
-local activeTeleport = false
-
 player.CharacterAdded:Connect(function(char)
 	if activeTeleport then
 		task.wait()
@@ -97,13 +96,13 @@ function teleportto(x, y, z)
 		freeze(hrp)
 
 		local running = true
-		local noclipLoop = coroutine.create(function()
+		local noclipLoop = coroutine.wrap(function()
 			while running and activeTeleport do
 				forceNoclip()
 				task.wait()
 			end
 		end)
-		coroutine.resume(noclipLoop)
+		noclipLoop()
 
 		while getHRP().Position.Y > -44 and activeTeleport do
 			local hrp = getHRP()
