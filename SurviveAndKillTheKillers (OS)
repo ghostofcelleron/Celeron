@@ -1191,7 +1191,114 @@ end)
 
 maintab:Label("Auto Win Features.")
 
-maintab:Button("Juggernaut Auto-Win (Blatant)", function()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local player = Players.LocalPlayer
+
+local active = false
+local conn
+local clickLoop
+
+local function notify(state)
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = "Survivor Auto-Win",
+			Text = state and "Enabled." or "Disabled.",
+			Duration = 4
+		})
+	end)
+end
+
+local function getFirstRealPlayerInKillers()
+	local killers = workspace:FindFirstChild("Killers")
+	if not killers then return end
+	for _, model in ipairs(killers:GetChildren()) do
+		if Players:GetPlayerFromCharacter(model) then
+			return model
+		end
+	end
+end
+
+local function equipM1911()
+	local backpack = player:FindFirstChildOfClass("Backpack")
+	if not backpack then return end
+	local tool = backpack:FindFirstChild("M1911")
+	if tool then
+		player.Character:FindFirstChildOfClass("Humanoid"):EquipTool(tool)
+	end
+end
+
+local function teleportToStart()
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if root then
+		root.CFrame = CFrame.new(112, 335, 62)
+	end
+end
+
+local function disableAutoWin()
+	active = false
+	if conn then conn:Disconnect() conn = nil end
+	if clickLoop then clickLoop = nil end
+	notify(false)
+end
+
+maintab:Button("Survivor Auto-Win (Bannable.)", function()
+	active = not active
+	if conn then conn:Disconnect() conn = nil end
+	if clickLoop then clickLoop = nil end
+	notify(active)
+
+	if not active then return end
+
+	teleportToStart()
+	equipM1911()
+
+	local target = getFirstRealPlayerInKillers()
+	if not target then return disableAutoWin() end
+
+	local targetHumanoid = target:FindFirstChildOfClass("Humanoid")
+	local targetHead = target:FindFirstChild("Head")
+	local myHumanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	if not targetHumanoid or not targetHead or not myHumanoid then return disableAutoWin() end
+
+	conn = RunService.Heartbeat:Connect(function()
+		if not target or not target.Parent or not targetHumanoid.Parent or not targetHead.Parent then
+			disableAutoWin()
+			return
+		end
+		if targetHumanoid.Health <= 0 or myHumanoid.Health <= 0 then
+			disableAutoWin()
+			return
+		end
+
+		for _, obj in ipairs(workspace:GetChildren()) do
+			if obj:IsA("Part")
+				and obj.Name == "Bullet"
+				and not obj.Anchored
+				and obj.Locked == false
+				and obj:IsDescendantOf(workspace)
+				and obj.Parent == workspace then
+
+				obj.CFrame = targetHead.CFrame
+			end
+		end
+	end)
+
+	clickLoop = task.spawn(function()
+		while active and targetHumanoid and targetHumanoid.Parent and myHumanoid and myHumanoid.Health > 0 do
+			if targetHumanoid.Health <= 0 then break end
+			VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+			VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+			task.wait(0.09)
+		end
+		disableAutoWin()
+	end)
+end)
+
+maintab:Button("Juggernaut Auto-Win (Bannable.)", function()
 	local Players = game:GetService("Players")
 	local Workspace = game:GetService("Workspace")
 	local StarterGui = game:GetService("StarterGui")
@@ -1503,6 +1610,20 @@ maintab:Button("Weapon ESP", function()
 	local weaponsFolder = workspace:FindFirstChild("Weapons")
 	if not weaponsFolder then return end
 
+	local function clearESP()
+		for _, gui in ipairs(activeESP) do
+			if gui and gui:IsA("BillboardGui") then
+				gui:Destroy()
+			end
+		end
+		activeESP = {}
+	end
+
+	if not weaponESPEnabled then
+		clearESP()
+		return
+	end
+
 	local function updateRoot()
 		local char = player.Character or player.CharacterAdded:Wait()
 		local root = char:WaitForChild("HumanoidRootPart")
@@ -1537,15 +1658,6 @@ maintab:Button("Weapon ESP", function()
 			createESP()
 		end
 	end)
-
-	local function clearESP()
-		for _, gui in pairs(activeESP) do
-			if gui and gui.Parent then
-				gui:Destroy()
-			end
-		end
-		activeESP = {}
-	end
 
 	local function createESP()
 		clearESP()
@@ -1621,60 +1733,7 @@ maintab:Button("Weapon ESP", function()
 		end
 	end)
 
-	if weaponESPEnabled then
-		createESP()
-	end
-end)
-
-maintab:Textbox("Obtain Gun", function(v)
-	local Players = game:GetService("Players")
-	local VirtualInputManager = game:GetService("VirtualInputManager")
-	local Workspace = game:GetService("Workspace")
-
-	local player = Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-	local camera = Workspace.CurrentCamera
-
-	local gunOrigin = humanoidRootPart.Position
-
-	local function findGunModel(name)
-		local weapons = Workspace:FindFirstChild("Weapons")
-		if not weapons then return nil end
-		for _, child in ipairs(weapons:GetChildren()) do
-			if child:IsA("Model") and child.Name:lower() == name:lower() then
-				return child
-			end
-		end
-		return nil
-	end
-
-	local function getGunPart(model)
-		if not model then return nil end
-		for _, part in ipairs(model:GetDescendants()) do
-			if part:IsA("BasePart") then
-				return part
-			end
-		end
-		return nil
-	end
-
-	local function runGunSequence(gunPart)
-		if not gunPart then return end
-		local position = gunPart.Position
-		humanoidRootPart.CFrame = CFrame.new(position)
-		camera.CFrame = CFrame.new(camera.CFrame.Position, position)
-		task.wait(0.1)
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-		task.wait(0.05)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-		humanoidRootPart.CFrame = CFrame.new(gunOrigin)
-	end
-
-	local input = v:lower()
-	local gunModel = findGunModel(input)
-	local gunPart = getGunPart(gunModel)
-	runGunSequence(gunPart)
+	createESP()
 end)
 
 maintab:Label("Aimlock Features.")
