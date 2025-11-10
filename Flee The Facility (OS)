@@ -58,7 +58,7 @@ game:GetService("StarterGui"):SetCore("SendNotification", {
 })
 
 while _G.AutomaticHackingEnabled do
-    wait(0.25)
+    wait(0.1)
     local args = {
         "SetPlayerMinigameResult",
         true
