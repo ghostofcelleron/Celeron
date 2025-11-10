@@ -8,31 +8,44 @@ local win = ui:Create({
 })
 
 local maintab = win:Tab("Main")
-local tpstab = win:Tab("Areas")
+local tpstab = win:Tab("Teleports")
+local esptab = win:Tab("Visual")
 local funtab = win:Tab("Misc")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
+tpstab:Label("General Areas.")
+esptab:Label("Visual Features.")
+funtab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
-local player = game:GetService("Players").LocalPlayer
-local humanoid = player and player.Character and player.Character:FindFirstChild("Humanoid")
-local runService = game:GetService("RunService")
-local currentSpeed = 18
-local connection
+getgenv().lastSliderSet = nil
+getgenv().humanoidConnection = nil
 
-if humanoid then
-    if connection then connection:Disconnect() end
-    connection = runService.Heartbeat:Connect(function()
-        if humanoid then
-            humanoid.WalkSpeed = currentSpeed
-        end
-    end)
+getgenv().applySpeed = function()
+	if not getgenv().lastSliderSet then return end
+
+	if (game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):FindFirstChildOfClass("Humanoid") then
+		if (game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):FindFirstChildOfClass("Humanoid").WalkSpeed ~= getgenv().lastSliderSet then
+			(game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):FindFirstChildOfClass("Humanoid").WalkSpeed = getgenv().lastSliderSet
+		end
+
+		if getgenv().humanoidConnection then
+			getgenv().humanoidConnection:Disconnect()
+		end
+
+		getgenv().humanoidConnection = (game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):FindFirstChildOfClass("Humanoid"):GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+			if (game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):FindFirstChildOfClass("Humanoid").WalkSpeed ~= getgenv().lastSliderSet then
+				(game:GetService("Players").LocalPlayer.Character or game:GetService("Players").LocalPlayer.CharacterAdded:Wait()):FindFirstChildOfClass("Humanoid").WalkSpeed = getgenv().lastSliderSet
+			end
+		end)
+	end
 end
 
-maintab:Slider("Walkspeed", 18, 5, 32, function(v)
-    currentSpeed = v
+maintab:Textbox("Player Speed", function(v)
+	getgenv().lastSliderSet = (v == 8) and 16 or v
+	getgenv().applySpeed()
 end)
 
 maintab:Button("Automatic Hacking", function()
@@ -54,20 +67,6 @@ while _G.AutomaticHackingEnabled do
 end
 end)
 
-maintab:Button("Anti-Freezer (Use When Roped.)", function()
-local player = game:GetService("Players").LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-
-local targetCFrame = CFrame.new(111.20410919189453, 8.207777976989746, -413.4593811035156)
-
-if character and character.PrimaryPart then
-    for i = 1, 240 do
-        character:SetPrimaryPartCFrame(targetCFrame)
-        task.wait(0.05)
-    end
-end
-end)
-
 maintab:Button("Self-Revive (Last Resort, Use In Freezer.)", function()
 local player = game:GetService("Players").LocalPlayer
 local character = player.Character
@@ -82,7 +81,7 @@ end
 game:GetService("StarterGui"):SetCore("SendNotification", {
     Title = "Alert";
     Text = "You can no longer hack computers! You can still escape however.";
-    Duration = 3;
+    Duration = 10;
 })
 end)
 
@@ -112,256 +111,235 @@ if targetSpawnPad then
 end
 end)
 
-maintab:Button("Random Computer TP", function()
-local function findAllPartsByName(parent, name)
-    local parts = {}
-    for _, obj in pairs(parent:GetChildren()) do
-        if obj.Name == name and obj:IsA("Model") then
-            table.insert(parts, obj)
-        end
-        if #obj:GetChildren() > 0 then
-            local foundParts = findAllPartsByName(obj, name)
-            for _, found in pairs(foundParts) do
-                table.insert(parts, found)
-            end
-        end
-    end
-    return parts
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+local speaker = Players.LocalPlayer
+local thirdPersonEnabled = false
+local cameraLoop = nil
+
+local function notify(title, text)
+	StarterGui:SetCore("SendNotification", {
+		Title = title,
+		Text = text,
+		Duration = 3
+	})
+end
+
+maintab:Button("Always Allow Third Person", function()
+	thirdPersonEnabled = not thirdPersonEnabled
+
+	if thirdPersonEnabled then
+		notify("Always Allow Third Person", "Enabled.")
+		speaker.CameraMode = Enum.CameraMode.Classic
+		cameraLoop = RunService.RenderStepped:Connect(function()
+			if speaker.CameraMode ~= Enum.CameraMode.Classic then
+				speaker.CameraMode = Enum.CameraMode.Classic
+			end
+		end)
+	else
+		notify("Always Allow Third Person", "Disabled.")
+		if cameraLoop then
+			cameraLoop:Disconnect()
+			cameraLoop = nil
+		end
+	end
+end)
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local StarterGui = game:GetService("StarterGui")
+local CoreGui = game:GetService("CoreGui")
+
+local playerESPEnabled = false
+local computerESPEnabled = false
+local exitESPEnabled = false
+
+local function notify(title, text)
+	StarterGui:SetCore("SendNotification", {
+		Title = title,
+		Text = text,
+		Duration = 3
+	})
+end
+
+local function applyHighlight(player)
+	if player == Players.LocalPlayer then return end
+	local char = player.Character
+	if not char or not char:IsA("Model") then return end
+
+	local existing = CoreGui:FindFirstChild("ESP_" .. player.Name)
+	if playerESPEnabled then
+		if not existing then
+			local highlight = Instance.new("Highlight")
+			highlight.Name = "ESP_" .. player.Name
+			highlight.Adornee = char
+			highlight.FillColor = Color3.new(1, 0, 0)
+			highlight.OutlineColor = Color3.new(1, 1, 1)
+			highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+			highlight.Parent = CoreGui
+		end
+	else
+		if existing then existing:Destroy() end
+	end
+end
+
+esptab:Button("Player ESP", function()
+	playerESPEnabled = not playerESPEnabled
+	notify("Player ESP", playerESPEnabled and "Enabled." or "Disabled.")
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		applyHighlight(player)
+	end
+
+	Players.PlayerAdded:Connect(function(player)
+		player.CharacterAdded:Connect(function()
+			if playerESPEnabled then
+				task.wait(1)
+				applyHighlight(player)
+			end
+		end)
+	end)
+end)
+
+esptab:Button("Computer ESP", function()
+	computerESPEnabled = not computerESPEnabled
+	notify("Computer ESP", computerESPEnabled and "Enabled." or "Disabled.")
+
+	for _, model in ipairs(Workspace:GetDescendants()) do
+		if model:IsA("Model") and model.Name == "ComputerTable" then
+			local highlight = model:FindFirstChild("ComputerESPHighlight")
+			if computerESPEnabled then
+				if not highlight then
+					local screenColor = Color3.fromRGB(255, 255, 255)
+					for _, part in ipairs(model:GetDescendants()) do
+						if part:IsA("BasePart") and part.Name == "Screen" then
+							screenColor = part.Color
+							break
+						end
+					end
+					local newHighlight = Instance.new("Highlight")
+					newHighlight.Name = "ComputerESPHighlight"
+					newHighlight.Adornee = model
+					newHighlight.FillColor = screenColor
+					newHighlight.OutlineColor = Color3.new(1, 1, 1)
+					newHighlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+					newHighlight.Parent = model
+				end
+			elseif highlight then
+				highlight:Destroy()
+			end
+		end
+	end
+end)
+
+esptab:Button("Exit-Door ESP", function()
+	exitESPEnabled = not exitESPEnabled
+	notify("Exit-Door ESP", exitESPEnabled and "Enabled." or "Disabled.")
+
+	for _, model in ipairs(Workspace:GetDescendants()) do
+		if model:IsA("Model") and model.Name == "ExitDoor" then
+			local light = model:FindFirstChild("Light")
+			if light then
+				local highlight = light:FindFirstChild("ExitESPHighlight")
+				if exitESPEnabled then
+					if not highlight then
+						local newHighlight = Instance.new("Highlight")
+						newHighlight.Name = "ExitESPHighlight"
+						newHighlight.Adornee = light
+						newHighlight.FillColor = Color3.new(1, 1, 0)
+						newHighlight.OutlineTransparency = 1
+						newHighlight.FillTransparency = 0.5
+						newHighlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+						newHighlight.Parent = light
+					end
+				elseif highlight then
+					highlight:Destroy()
+				end
+			end
+		end
+	end
+end)
+
+funtab:Button("FE Audio Control", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/3dWP6BW4"))()
+end)
+
+tpstab:Button("Spawn", function()
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(111.20410919189453, 8.207777976989746, -413.4593811035156))
+end)
+
+tpstab:Button("Map Voting", function()
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(147.83396911621094, 5.999999523162842, -349.55047607421875))
+end)
+
+tpstab:Button("Cave", function()
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(279.4504089355469, -11.000000953674316, -366.7091369628906))
+end)
+
+tpstab:Button("Under Spawn", function()
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(107, -6, -423))
+end)
+
+tpstab:Button("Trading Servers (Min. Level 6)", function()
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(64.84588623046875, 3.999999761581421, -306.64068603515625))
+end)
+
+tpstab:Label("In-Game Areas.")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local player = Players.LocalPlayer
+local function getRoot() return player.Character or player.CharacterAdded:Wait(), "HumanoidRootPart" end
+
+local function getRandomModel(name)
+	local models = {}
+	local function scan(parent)
+		for _, obj in ipairs(parent:GetChildren()) do
+			if obj:IsA("Model") and obj.Name == name then table.insert(models, obj) end
+			if #obj:GetChildren() > 0 then scan(obj) end
+		end
+	end
+	scan(Workspace)
+	return #models > 0 and models[math.random(1, #models)] or nil
 end
 
 local recentComputers = {}
 
-local function getRandomComputer()
-    local computerTableModels = findAllPartsByName(game.Workspace, "ComputerTable")
+tpstab:Button("Random Computer TP", function()
+	local model = getRandomModel("ComputerTable")
+	if not model or not model.PrimaryPart then return end
+	if table.find(recentComputers, model) then return end
 
-    if #computerTableModels > 0 then
-        local validComputers = {}
+	local char, rootName = getRoot()
+	local root = char:WaitForChild(rootName)
+	local front = model.PrimaryPart.CFrame.Position + model.PrimaryPart.CFrame.LookVector * 5
+	root.CFrame = CFrame.new(front)
 
-        for _, computer in pairs(computerTableModels) do
-            if not table.find(recentComputers, computer) then
-                table.insert(validComputers, computer)
-            end
-        end
-
-        if #validComputers == 0 then
-            recentComputers = {}
-            validComputers = computerTableModels
-        end
-
-        local randomIndex = math.random(1, #validComputers)
-        return validComputers[randomIndex]
-    end
-    return nil
-end
-
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local rootPart = character:WaitForChild("HumanoidRootPart")
-
-local chosenComputer = getRandomComputer()
-
-if chosenComputer and chosenComputer.PrimaryPart then
-    local targetPosition = chosenComputer.PrimaryPart.Position + Vector3.new(0, 5, 0)
-    rootPart.CFrame = CFrame.new(targetPosition)
-
-    table.insert(recentComputers, chosenComputer)
-    if #recentComputers > 3 then
-        table.remove(recentComputers, 1)
-    end
-end
+	table.insert(recentComputers, model)
+	if #recentComputers > 3 then table.remove(recentComputers, 1) end
 end)
 
-maintab:Button("Random Exit TP", function()
-local function findAllModelsByName(parent, name)
-    local models = {}
-    for _, obj in pairs(parent:GetChildren()) do
-        if obj.Name == name and obj:IsA("Model") then
-            table.insert(models, obj)
-        end
-        if #obj:GetChildren() > 0 then
-            local foundModels = findAllModelsByName(obj, name)
-            for _, found in pairs(foundModels) do
-                table.insert(models, found)
-            end
-        end
-    end
-    return models
-end
+tpstab:Button("Random Exit TP", function()
+	local model = getRandomModel("ExitDoor")
+	if not model or not model.PrimaryPart then return end
 
-local exitDoorModels = findAllModelsByName(game.Workspace, "ExitDoor")
-
-if #exitDoorModels > 0 then
-    local randomIndex = math.random(1, #exitDoorModels)
-    local exitDoor = exitDoorModels[randomIndex]
-
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local rootPart = character:WaitForChild("HumanoidRootPart")
-
-    local pivotCFrame = exitDoor:GetPivot()
-    local behindDoorCFrame = pivotCFrame * CFrame.new(0, 0, -5)
-    rootPart.CFrame = behindDoorCFrame
-end
+	local char, rootName = getRoot()
+	local root = char:WaitForChild(rootName)
+	local front = model.PrimaryPart.CFrame.Position + model.PrimaryPart.CFrame.LookVector * 5
+	root.CFrame = CFrame.new(front)
 end)
 
-maintab:Button("Random Freezer TP", function()
-local function findAllPartsByName(parent, name)
-    local parts = {}
-    for _, obj in pairs(parent:GetChildren()) do
-        if obj.Name == name and obj:IsA("Model") then
-            table.insert(parts, obj)
-        end
-        if #obj:GetChildren() > 0 then
-            local foundParts = findAllPartsByName(obj, name)
-            for _, found in pairs(foundParts) do
-                table.insert(parts, found)
-            end
-        end
-    end
-    return parts
-end
+tpstab:Button("Random Freezer TP", function()
+	local model = getRandomModel("FreezePod")
+	if not model or not model.PrimaryPart then return end
 
-local freezePodModels = findAllPartsByName(game.Workspace, "FreezePod")
-
-if #freezePodModels > 0 then
-    local randomIndex = math.random(1, #freezePodModels)
-    local randomFreezePod = freezePodModels[randomIndex]
-
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local rootPart = character:WaitForChild("HumanoidRootPart")
-
-    if randomFreezePod.PrimaryPart then
-        local targetPosition = randomFreezePod.PrimaryPart.Position + Vector3.new(0, 5, 0)
-        rootPart.CFrame = CFrame.new(targetPosition)
-    end
-end
+	local char, rootName = getRoot()
+	local root = char:WaitForChild(rootName)
+	local front = model.PrimaryPart.CFrame.Position + model.PrimaryPart.CFrame.LookVector * 5
+	root.CFrame = CFrame.new(front)
 end)
 
-maintab:Button("Player ESP", function()
-local function highlightTorso(player)
-    if player ~= game.Players.LocalPlayer then
-        local character = player.Character
-        if character then
-            local torso = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
-            if torso then
-                local highlight = Instance.new("Highlight")
-                highlight.Adornee = torso
-                highlight.FillColor = Color3.new(1, 0, 0) -- Red fill
-                highlight.OutlineColor = Color3.new(1, 1, 1) -- White outline
-                highlight.FillColor = Color3.new(1, 0, 0)
-                highlight.OutlineColor = Color3.new(1, 1, 1)
-                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                highlight.Parent = torso
-            end
-        end
-    end
-end
-
-for _, player in pairs(game.Players:GetPlayers()) do
-    highlightTorso(player)
-end
-
-game.Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        highlightTorso(player)
-    end)
-end)
-end)
-
-maintab:Button("Computer ESP", function()
-local function findModelsByName(parent, name)
-    local models = {}
-    for _, obj in pairs(parent:GetDescendants()) do
-        if obj:IsA("Model") and obj.Name == name then
-            table.insert(models, obj)
-        end
-    end
-    return models
-end
-
-local function findScreenColor(model)
-    for _, obj in pairs(model:GetDescendants()) do
-        if obj:IsA("BasePart") and obj.Name == "Screen" then
-            return obj.Color
-        end
-    end
-    return Color3.fromRGB(255, 255, 255) 
-end
-
-local function createESPEffect(model, color)
-    local highlight = Instance.new("Highlight")
-    highlight.Adornee = model
-    highlight.FillColor = color
-    highlight.OutlineColor = Color3.new(1, 1, 1)
-    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    highlight.Parent = model
-end
-
-local computerTables = findModelsByName(game.Workspace, "ComputerTable")
-
-for _, computerTable in pairs(computerTables) do
-    local screenColor = findScreenColor(computerTable)
-    createESPEffect(computerTable, screenColor)
-end
-end)
-
-maintab:Button("Exit-Door ESP", function()
-local function findAllPartsByName(parent, name)
-    local parts = {}
-    for _, obj in pairs(parent:GetDescendants()) do
-        if obj:IsA("Model") and obj.Name == name then
-            table.insert(parts, obj)
-        end
-    end
-    return parts
-end
-
-local function highlightLight(part)
-    if part then
-        for _, obj in pairs(part:GetChildren()) do
-            if obj:IsA("Highlight") then
-                obj:Destroy()
-            end
-        end
-
-        local highlight = Instance.new("Highlight")
-        highlight.Adornee = part
-        highlight.FillColor = Color3.new(1, 1, 0)
-        highlight.OutlineTransparency = 1
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        highlight.FillTransparency = 0.5
-        highlight.Parent = part
-    end
-end
-
-local exitDoorModels = findAllPartsByName(game.Workspace, "ExitDoor")
-
-for _, exitDoor in pairs(exitDoorModels) do
-    local lightPart = exitDoor:FindFirstChild("Light")
-    if lightPart then
-        highlightLight(lightPart)
-    end
-end
-end)
-funtab:Button("FE Audio Control", function()
-    loadstring(game:HttpGet("https://pastebin.com/raw/3dWP6BW4"))()
-end)
-tpstab:Button("Spawn", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(111.20410919189453, 8.207777976989746, -413.4593811035156))
-end)
-tpstab:Button("Map Voting", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(147.83396911621094, 5.999999523162842, -349.55047607421875))
-end)
-tpstab:Button("Cave", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(279.4504089355469, -11.000000953674316, -366.7091369628906))
-end)
-tpstab:Button("Under Spawn", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(107, -6, -423))
-end)
-tpstab:Button("Trading Servers (Min. Level 6)", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(64.84588623046875, 3.999999761581421, -306.64068603515625))
-end)
 funtab:Button("Infinite Yield", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
