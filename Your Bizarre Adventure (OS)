@@ -88,7 +88,6 @@ player.CharacterAdded:Connect(function(char)
 end)
 
 function teleportto(x, y, z)
-	local targetXZ = Vector3.new(x, -44, z)
 	activeTeleport = true
 
 	task.spawn(function()
@@ -104,28 +103,21 @@ function teleportto(x, y, z)
 		end)
 		noclipLoop()
 
-		while getHRP().Position.Y > -44 and activeTeleport do
+		while math.abs(getHRP().Position.Y - y) > 2 and activeTeleport do
 			local hrp = getHRP()
 			local current = hrp.Position
-			local nextY = math.max(current.Y - stepSize, -44)
+			local nextY = current.Y + math.sign(y - current.Y) * math.min(stepSize, math.abs(y - current.Y))
 			hrp.CFrame = CFrame.new(current.X, nextY, current.Z)
 			task.wait(delayTime)
 		end
 
-		while (Vector3.new(getHRP().Position.X, 0, getHRP().Position.Z) - Vector3.new(x, 0, z)).Magnitude > stepSize and activeTeleport do
+		while (Vector3.new(getHRP().Position.X, 0, getHRP().Position.Z) - Vector3.new(x, 0, z)).Magnitude > 2 and activeTeleport do
 			local hrp = getHRP()
 			local current = hrp.Position
+			local targetXZ = Vector3.new(x, current.Y, z)
 			local direction = (targetXZ - current).Unit
 			local step = direction * math.min(stepSize, (targetXZ - current).Magnitude)
 			hrp.CFrame = CFrame.new(current + step)
-			task.wait(delayTime)
-		end
-
-		while math.abs(getHRP().Position.Y - y) > 2 and activeTeleport do
-			local hrp = getHRP()
-			local current = hrp.Position
-			local nextY = math.min(current.Y + stepSize, y)
-			hrp.CFrame = CFrame.new(x, nextY, z)
 			task.wait(delayTime)
 		end
 
@@ -252,6 +244,28 @@ players.LocalPlayer.CharacterAdded:Connect(function(char)
 	char:WaitForChild("Humanoid")
 	char:WaitForChild("HumanoidRootPart")
 	getgenv().applyJump()
+end)
+
+maintab:Button("Teleport Tool", function()
+Players = game:GetService("Players")
+StarterPack = game:GetService("StarterPack")
+
+Tool = Instance.new("Tool")
+Tool.Name = "Teleport Tool"
+Tool.Tooltip = "lets u teleport anywhere u click"
+Tool.RequiresHandle = false
+Tool.Parent = StarterPack
+
+Tool.Equipped:Connect(function()
+	player = Players:GetPlayerFromCharacter(Tool.Parent)
+	if not player then return end
+
+	mouse = player:GetMouse()
+	mouse.Button1Down:Connect(function()
+		pos = mouse.Hit.Position
+		teleportto(pos.X, pos.Y, pos.Z)
+	end)
+end)
 end)
 
 local itemESPEnabled = false
