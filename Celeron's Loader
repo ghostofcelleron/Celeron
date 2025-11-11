@@ -15,6 +15,7 @@ local arsenal = {286090429}
 local boxingleague = {3738115442,4574912733,5161312636,7230787006,3738091713}
 local abilitywars = {8260276694}
 local opbg = {15467245730}
+local yba = {2809202155,4643697430}
 local example = {}
 
 local loaderGui = Instance.new("ScreenGui")
@@ -147,6 +148,8 @@ local function loadScripts()
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/OP%20Battlegrounds%20(OS)",true))()
 		elseif table.find(abilitywars, placeId) then
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Ability%20Wars%20(OS)",true))()
+		elseif table.find(yba, placeId) then
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Your%20Bizarre%20Adventure%20(OS)",true))()
 		else
 			game:GetService("StarterGui"):SetCore("SendNotification", {
     			Title = "Celeron's Loader";
