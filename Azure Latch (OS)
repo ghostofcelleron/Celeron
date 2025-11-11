@@ -3,9 +3,9 @@ loadstring(game:HttpGet("https://pastebin.com/raw/LEBgs3Ki",true))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
-    ThemeColor = Color3.fromRGB(18, 18, 18),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.GothamBold
 })
 
 local maintab = win:Tab("Blatant")
@@ -286,148 +286,6 @@ task.spawn(function()
 end)
 end)
 
-local userInputService = game:GetService("UserInputService")
-local runService = game:GetService("RunService")
-local starterGui = game:GetService("StarterGui")
-local player = game.Players.LocalPlayer
-
-_G.ForwardRushEnabled = false
-_G.SideDashEnabled = false
-_G._rushing = false
-_G._sideDashing = false
-_G._dashBindsSetup = false
-
-local character, humanoid, rootPart
-
-local function updateCharacter()
-	character = player.Character or player.CharacterAdded:Wait()
-	humanoid = character:WaitForChild("Humanoid")
-	rootPart = character:WaitForChild("HumanoidRootPart")
-end
-
-updateCharacter()
-player.CharacterAdded:Connect(updateCharacter)
-
-local function notify(title, text)
-	starterGui:SetCore("SendNotification", {
-		Title = title,
-		Text = text,
-		Duration = 2
-	})
-end
-
-local function safeUnbind(id, flag)
-	runService:UnbindFromRenderStep(id)
-	_G[flag] = false
-end
-
-local function forwardRush()
-	if _G._rushing or not _G.ForwardRushEnabled or not humanoid or not rootPart then return end
-	_G._rushing = true
-
-	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
-	local animation = Instance.new("Animation")
-	animation.AnimationId = "rbxassetid://79394729551302"
-	local animationTrack = animator:LoadAnimation(animation)
-	animationTrack:Play()
-
-	task.delay(0.05, function()
-		if animationTrack.IsPlaying then
-			local sound = Instance.new("Sound")
-			sound.SoundId = "rbxassetid://105267293181745"
-			sound.Parent = rootPart
-			sound:Play()
-			sound.Ended:Connect(function() sound:Destroy() end)
-		end
-	end)
-
-	local startPos = rootPart.Position
-	local endPos = startPos + rootPart.CFrame.LookVector * 45
-	local duration, elapsed = 0.5, 0
-	local dashId = "ForwardRush_" .. tostring(os.clock())
-
-	runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
-		if not rootPart or not rootPart.Parent then
-			safeUnbind(dashId, "_rushing")
-			return
-		end
-
-		elapsed += dt
-		local alpha = math.clamp(elapsed / duration, 0, 1)
-		local newPos = startPos:Lerp(endPos, alpha)
-		rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
-
-		if alpha >= 1 then
-			safeUnbind(dashId, "_rushing")
-		end
-	end)
-end
-
-local function sideDash(direction)
-	if _G._sideDashing or not _G.SideDashEnabled or not humanoid or not rootPart then return end
-	_G._sideDashing = true
-
-	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
-	local animation = Instance.new("Animation")
-	animation.AnimationId = direction == "right" and "rbxassetid://114016332539655" or "rbxassetid://100207093237932"
-	local animationTrack = animator:LoadAnimation(animation)
-	animationTrack:Play()
-
-	local sound = Instance.new("Sound")
-	sound.SoundId = "rbxassetid://71212694698006"
-	sound.Parent = rootPart
-	sound:Play()
-	sound.Ended:Connect(function() sound:Destroy() end)
-
-	local offset = rootPart.CFrame.RightVector * (direction == "right" and 25 or -25)
-	local startPos = rootPart.Position
-	local endPos = startPos + offset
-	local duration, elapsed = 0.55, 0
-	local dashId = "SideDash_" .. tostring(os.clock())
-
-	runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
-		if not rootPart or not rootPart.Parent then
-			safeUnbind(dashId, "_sideDashing")
-			return
-		end
-
-		elapsed += dt
-		local alpha = math.clamp(elapsed / duration, 0, 1)
-		local newPos = startPos:Lerp(endPos, alpha)
-		rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
-
-		if alpha >= 1 then
-			safeUnbind(dashId, "_sideDashing")
-		end
-	end)
-end
-
-maintab:Button("No Rush Cooldown", function()
-	_G.ForwardRushEnabled = not _G.ForwardRushEnabled
-	notify("No Rush CD", _G.ForwardRushEnabled and "Enabled." or "Disabled.")
-end)
-
-maintab:Button("No Side Dash Cooldown", function()
-	_G.SideDashEnabled = not _G.SideDashEnabled
-	notify("No Side Dash CD", _G.SideDashEnabled and "Enabled." or "Disabled.")
-end)
-
-if not _G._dashBindsSetup then
-	_G._dashBindsSetup = true
-
-	userInputService.InputBegan:Connect(function(input, gameProcessed)
-		if gameProcessed then return end
-
-		if input.KeyCode == Enum.KeyCode.F then
-			forwardRush()
-		elseif input.KeyCode == Enum.KeyCode.Q then
-			local isA = userInputService:IsKeyDown(Enum.KeyCode.A)
-			local isD = userInputService:IsKeyDown(Enum.KeyCode.D)
-			if isD then sideDash("right") elseif isA then sideDash("left") end
-		end
-	end)
-end
-
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -587,49 +445,150 @@ spawn(function()
 end)
 end)
 
-maintab:Button("Manual Score", function()
-if game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-	if workspace:WaitForChild("map"):WaitForChild("Agoal") and workspace:WaitForChild("map"):WaitForChild("Bgoal") then
-		if game:GetService("Players").LocalPlayer.Team then
-			game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame =
-				(game:GetService("Players").LocalPlayer.Team.Name == "A"
-					and workspace.map.Bgoal
-					or workspace.map.Agoal
-				).CFrame
-		end
-	end
+local userInputService = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local starterGui = game:GetService("StarterGui")
+local player = game.Players.LocalPlayer
+
+_G.ForwardRushEnabled = false
+_G.SideDashEnabled = false
+_G._rushing = false
+_G._sideDashing = false
+_G._dashBindsSetup = false
+
+local character, humanoid, rootPart
+
+local function updateCharacter()
+	character = player.Character or player.CharacterAdded:Wait()
+	humanoid = character:WaitForChild("Humanoid")
+	rootPart = character:WaitForChild("HumanoidRootPart")
 end
+
+updateCharacter()
+player.CharacterAdded:Connect(updateCharacter)
+
+local function notify(title, text)
+	starterGui:SetCore("SendNotification", {
+		Title = title,
+		Text = text,
+		Duration = 2
+	})
+end
+
+local function safeUnbind(id, flag)
+	runService:UnbindFromRenderStep(id)
+	_G[flag] = false
+end
+
+local function forwardRush()
+	if _G._rushing or not _G.ForwardRushEnabled or not humanoid or not rootPart then return end
+	_G._rushing = true
+
+	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+	local animation = Instance.new("Animation")
+	animation.AnimationId = "rbxassetid://79394729551302"
+	local animationTrack = animator:LoadAnimation(animation)
+	animationTrack:Play()
+
+	task.delay(0.05, function()
+		if animationTrack.IsPlaying then
+			local sound = Instance.new("Sound")
+			sound.SoundId = "rbxassetid://105267293181745"
+			sound.Parent = rootPart
+			sound:Play()
+			sound.Ended:Connect(function() sound:Destroy() end)
+		end
+	end)
+
+	local startPos = rootPart.Position
+	local endPos = startPos + rootPart.CFrame.LookVector * 45
+	local duration, elapsed = 0.5, 0
+	local dashId = "ForwardRush_" .. tostring(os.clock())
+
+	runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
+		if not rootPart or not rootPart.Parent then
+			safeUnbind(dashId, "_rushing")
+			return
+		end
+
+		elapsed += dt
+		local alpha = math.clamp(elapsed / duration, 0, 1)
+		local newPos = startPos:Lerp(endPos, alpha)
+		rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
+
+		if alpha >= 1 then
+			safeUnbind(dashId, "_rushing")
+		end
+	end)
+end
+
+local function sideDash(direction)
+	if _G._sideDashing or not _G.SideDashEnabled or not humanoid or not rootPart then return end
+	_G._sideDashing = true
+
+	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+	local animation = Instance.new("Animation")
+	animation.AnimationId = direction == "right" and "rbxassetid://114016332539655" or "rbxassetid://100207093237932"
+	local animationTrack = animator:LoadAnimation(animation)
+	animationTrack:Play()
+
+	local sound = Instance.new("Sound")
+	sound.SoundId = "rbxassetid://71212694698006"
+	sound.Parent = rootPart
+	sound:Play()
+	sound.Ended:Connect(function() sound:Destroy() end)
+
+	local offset = rootPart.CFrame.RightVector * (direction == "right" and 25 or -25)
+	local startPos = rootPart.Position
+	local endPos = startPos + offset
+	local duration, elapsed = 0.55, 0
+	local dashId = "SideDash_" .. tostring(os.clock())
+
+	runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
+		if not rootPart or not rootPart.Parent then
+			safeUnbind(dashId, "_sideDashing")
+			return
+		end
+
+		elapsed += dt
+		local alpha = math.clamp(elapsed / duration, 0, 1)
+		local newPos = startPos:Lerp(endPos, alpha)
+		rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
+
+		if alpha >= 1 then
+			safeUnbind(dashId, "_sideDashing")
+		end
+	end)
+end
+
+maintab:Label("No Cooldown Features.")
+maintab:Button("No Rush Cooldown", function()
+	_G.ForwardRushEnabled = not _G.ForwardRushEnabled
+	notify("No Rush CD", _G.ForwardRushEnabled and "Enabled." or "Disabled.")
 end)
 
-local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-local UIS = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
-local cam = workspace.CurrentCamera
-
-local airDribbleEnabled = false
-
-maintab:Button("Air Dribble (Binds To LeftAlt.)", function()
-    airDribbleEnabled = not airDribbleEnabled
-    StarterGui:SetCore("SendNotification", {
-        Title = "Air Dribble",
-        Text = airDribbleEnabled and "Enabled." or "Disabled.",
-        Duration = 2
-    })
+maintab:Button("No Side Dash Cooldown", function()
+	_G.SideDashEnabled = not _G.SideDashEnabled
+	notify("No Side Dash CD", _G.SideDashEnabled and "Enabled." or "Disabled.")
 end)
 
-UIS.InputBegan:Connect(function(input, gp)
-    if gp or input.KeyCode ~= Enum.KeyCode.LeftAlt then return end
-    if not airDribbleEnabled then return end
+if not _G._dashBindsSetup then
+	_G._dashBindsSetup = true
 
-local dir = cam.CFrame.LookVector
-local kickVec = vector.create(dir.X * 0.7, 1, dir.Z * 0.7)
-remote:FireServer(buffer.fromstring("\023\001"), { { "kick", 30, false, kickVec } })
-    task.wait(0.5)
-    remote:FireServer(buffer.fromstring("\022"))
-	wait(0.05)
-    remote:FireServer(buffer.fromstring("\022"))	
-end)
+	userInputService.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed then return end
 
+		if input.KeyCode == Enum.KeyCode.F then
+			forwardRush()
+		elseif input.KeyCode == Enum.KeyCode.Q then
+			local isA = userInputService:IsKeyDown(Enum.KeyCode.A)
+			local isD = userInputService:IsKeyDown(Enum.KeyCode.D)
+			if isD then sideDash("right") elseif isA then sideDash("left") end
+		end
+	end)
+end
+
+maintab:Label("Break Ball Features.")
 maintab:Button("Break Ball (Player Method, Req. Ball)", function()
     local baseplatePosition = Vector3.new(-190, 14864566, 492)
     local partSize = Vector3.new(10, 1, 10)
@@ -708,16 +667,43 @@ else
 end
 end)
 
-maintab2:Button("Bind Magnet (M2 BIND)", function()
 local userInputService = game:GetService("UserInputService")
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+local starterGui = game:GetService("StarterGui")
 
-userInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        remote:FireServer(buffer.fromstring("\022"))
+local magnetEnabled = false
+local connection
+
+maintab2:Button("Bind Magnet (M2 BIND)", function()
+    if not magnetEnabled then
+        magnetEnabled = true
+
+        connection = userInputService.InputBegan:Connect(function(input, gameProcessed)
+            if gameProcessed then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                remote:FireServer(buffer.fromstring("\022"))
+            end
+        end)
+
+        starterGui:SetCore("SendNotification", {
+            Title = "Ball Magnet (M2 Bind)",
+            Text = "Enabled.",
+            Duration = 3
+        })
+    else
+        magnetEnabled = false
+
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+
+        starterGui:SetCore("SendNotification", {
+            Title = "Ball Magnet (M2 Bind)",
+            Text = "Disabled.",
+            Duration = 3
+        })
     end
-end)
 end)
 
 maintab2:Label("Set The Auto-Counter Number To Your Character's Counter Move!")
@@ -858,135 +844,7 @@ if not _G._keybindSetup then
 	end)
 end
 
-maintab:Button("Auto QuickTimeEvent", function()
-    local runService = game:GetService("RunService")
-    local players = game:GetService("Players")
-    local virtualInputManager = game:GetService("VirtualInputManager")
-    local starterGui = game:GetService("StarterGui")
-    local player = players.LocalPlayer
-
-    _G.QuickTimeEvent = not _G.QuickTimeEvent
-
-    local function sendNotification(status)
-        if not _G.suppressNotifs then
-            starterGui:SetCore("SendNotification", {
-                Title = "QuickTimeEvent",
-                Text = status,
-                Duration = 1
-            })
-        end
-    end
-
-    local function getAllTextLabels(parent)
-        local textLabels = {}
-        for _, descendant in ipairs(parent:GetDescendants()) do
-            if descendant:IsA("TextLabel") then
-                table.insert(textLabels, descendant)
-            end
-        end
-        return textLabels
-    end
-
-    local function convertNumberToKeyText(text)
-        local numberMap = {
-            ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
-            ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
-        }
-        return numberMap[text] or text
-    end
-
-    local function checkQTE()
-        if _G.QuickTimeEvent and player and player:FindFirstChild("PlayerGui") then
-            local qteGui = player.PlayerGui:FindFirstChild("Qte")
-            if qteGui and qteGui:FindFirstChild("QTE") and qteGui.QTE:FindFirstChild("Frame") then
-                local qteFrame = qteGui.QTE.Frame
-                if qteFrame.Size.X.Scale <= 0.740000169 and qteFrame.Size.X.Scale >= 0.720000019 and
-                   qteFrame.Size.Y.Scale <= 0.74999999 and qteFrame.Size.Y.Scale >= 0.720000019 then
-
-                    local textLabels = getAllTextLabels(qteGui.QTE)
-
-                    for _, label in ipairs(textLabels) do
-                        local keyText = convertNumberToKeyText(label.Text)
-                        local keyCode = Enum.KeyCode[keyText]
-                        if keyCode then
-                            virtualInputManager:SendKeyEvent(true, keyCode, false, game)
-                            virtualInputManager:SendKeyEvent(false, keyCode, false, game)
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    runService.RenderStepped:Connect(checkQTE)
-    sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
-end)
-
-maintab:Button("Auto GK (Made By Daffy, Reset To Disable.)", function()
-local plr = game.Players.LocalPlayer
-local char = plr.Character
-local cam = game.Workspace.CurrentCamera
-
-local function ball()
-    return game.Workspace.Terrain:FindFirstChild("Ball")
-end
-
-local function getGKgoal()
-    if plr.Team == game.Teams.A then
-        return workspace.map.Agoal
-    elseif plr.Team == game.Teams.B then
-        return workspace.map.Bgoal
-    end
-end
-
-local con = game["Run Service"].RenderStepped:Connect(function()
-    local ball:Part = ball()
-    if ball and plr.Team ~= game.Teams.lobby then
-        cam.CFrame = CFrame.lookAt(cam.CFrame.Position, ball.Position)
-
-        local dist = (plr.Character.HumanoidRootPart.Position - ball.Position).Magnitude
-        if dist <= 50 then
-            if ball.Position.Y >= plr.Character.HumanoidRootPart.Position.Y + 6 then
-                plr.Character.Humanoid.Jump = true
-            else
-                plr.Character.Humanoid.Jump = false
-            end
-
-            local args = {
-                buffer.fromstring("\023\001"),
-                {
-                    { "tackle" }
-                }
-            }
-
-            game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-        end
-    end
-end)
-
-repeat
-    task.wait()
-until char.Humanoid.Health <= 0
-con:Disconnect()
-end)
-
-maintab:Button("Team Goal (YOUR GOAL)", function()
-local plr = game.Players.LocalPlayer
-				if plr.Team == game.Teams:FindFirstChild("A") then
-					plr.Character.HumanoidRootPart.Position = Vector3.new(-538, 3, 1603)
-				elseif plr.Team == game.Teams:FindFirstChild("B") then
-					plr.Character.HumanoidRootPart.Position = Vector3.new(-535, 3, 946)
-				end
-end)
-
-maintab:Button("Fix Duplicate Ball", function()
-for _, obj in ipairs(workspace.Terrain:GetDescendants()) do
-	if obj:IsA("MeshPart") and obj.Name == "Ball" then
-		obj:Destroy()
-	end
-end
-end)
-
+maintab:Label("Auto Goal Features.")
 maintab:Button("Barou Devour Goal", function()
 local plr = game.Players.LocalPlayer
 
@@ -1106,6 +964,50 @@ local plr = game.Players.LocalPlayer
                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
 			end)
+
+maintab:Label("Other Blatant Features.")
+maintab:Button("Manual Score", function()
+if game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+	if workspace:WaitForChild("map"):WaitForChild("Agoal") and workspace:WaitForChild("map"):WaitForChild("Bgoal") then
+		if game:GetService("Players").LocalPlayer.Team then
+			game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame =
+				(game:GetService("Players").LocalPlayer.Team.Name == "A"
+					and workspace.map.Bgoal
+					or workspace.map.Agoal
+				).CFrame
+		end
+	end
+end
+end)
+
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+local UIS = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local cam = workspace.CurrentCamera
+
+local airDribbleEnabled = false
+
+maintab:Button("Air Dribble (Binds To LeftAlt.)", function()
+    airDribbleEnabled = not airDribbleEnabled
+    StarterGui:SetCore("SendNotification", {
+        Title = "Air Dribble",
+        Text = airDribbleEnabled and "Enabled." or "Disabled.",
+        Duration = 2
+    })
+end)
+
+UIS.InputBegan:Connect(function(input, gp)
+    if gp or input.KeyCode ~= Enum.KeyCode.LeftAlt then return end
+    if not airDribbleEnabled then return end
+
+local dir = cam.CFrame.LookVector
+local kickVec = vector.create(dir.X * 0.7, 1, dir.Z * 0.7)
+remote:FireServer(buffer.fromstring("\023\001"), { { "kick", 30, false, kickVec } })
+    task.wait(0.5)
+    remote:FireServer(buffer.fromstring("\022"))
+	wait(0.05)
+    remote:FireServer(buffer.fromstring("\022"))	
+end)
 
 maintab2:Label("Auto Position: Instantly Picks Certain Position.")
 
@@ -1387,6 +1289,127 @@ maintab2:Button("IFrame Indicator", function()
 	else
 		clearDots()
 	end
+end)
+
+maintab2:Label("Other Features: Other Silent Features, Continued.")
+maintab2:Button("Auto QuickTimeEvent", function()
+    local runService = game:GetService("RunService")
+    local players = game:GetService("Players")
+    local virtualInputManager = game:GetService("VirtualInputManager")
+    local starterGui = game:GetService("StarterGui")
+    local player = players.LocalPlayer
+
+    _G.QuickTimeEvent = not _G.QuickTimeEvent
+
+    local function sendNotification(status)
+        if not _G.suppressNotifs then
+            starterGui:SetCore("SendNotification", {
+                Title = "QuickTimeEvent",
+                Text = status,
+                Duration = 1
+            })
+        end
+    end
+
+    local function getAllTextLabels(parent)
+        local textLabels = {}
+        for _, descendant in ipairs(parent:GetDescendants()) do
+            if descendant:IsA("TextLabel") then
+                table.insert(textLabels, descendant)
+            end
+        end
+        return textLabels
+    end
+
+    local function convertNumberToKeyText(text)
+        local numberMap = {
+            ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
+            ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
+        }
+        return numberMap[text] or text
+    end
+
+    local function checkQTE()
+        if _G.QuickTimeEvent and player and player:FindFirstChild("PlayerGui") then
+            local qteGui = player.PlayerGui:FindFirstChild("Qte")
+            if qteGui and qteGui:FindFirstChild("QTE") and qteGui.QTE:FindFirstChild("Frame") then
+                local qteFrame = qteGui.QTE.Frame
+                if qteFrame.Size.X.Scale <= 0.740000169 and qteFrame.Size.X.Scale >= 0.720000019 and
+                   qteFrame.Size.Y.Scale <= 0.74999999 and qteFrame.Size.Y.Scale >= 0.720000019 then
+
+                    local textLabels = getAllTextLabels(qteGui.QTE)
+
+                    for _, label in ipairs(textLabels) do
+                        local keyText = convertNumberToKeyText(label.Text)
+                        local keyCode = Enum.KeyCode[keyText]
+                        if keyCode then
+                            virtualInputManager:SendKeyEvent(true, keyCode, false, game)
+                            virtualInputManager:SendKeyEvent(false, keyCode, false, game)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    runService.RenderStepped:Connect(checkQTE)
+    sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
+end)
+
+maintab2:Button("Auto GK (Made By Daffy, Reset To Disable.)", function()
+local plr = game.Players.LocalPlayer
+local char = plr.Character
+local cam = game.Workspace.CurrentCamera
+
+local function ball()
+    return game.Workspace.Terrain:FindFirstChild("Ball")
+end
+
+local function getGKgoal()
+    if plr.Team == game.Teams.A then
+        return workspace.map.Agoal
+    elseif plr.Team == game.Teams.B then
+        return workspace.map.Bgoal
+    end
+end
+
+local con = game["Run Service"].RenderStepped:Connect(function()
+    local ball:Part = ball()
+    if ball and plr.Team ~= game.Teams.lobby then
+        cam.CFrame = CFrame.lookAt(cam.CFrame.Position, ball.Position)
+
+        local dist = (plr.Character.HumanoidRootPart.Position - ball.Position).Magnitude
+        if dist <= 50 then
+            if ball.Position.Y >= plr.Character.HumanoidRootPart.Position.Y + 6 then
+                plr.Character.Humanoid.Jump = true
+            else
+                plr.Character.Humanoid.Jump = false
+            end
+
+            local args = {
+                buffer.fromstring("\023\001"),
+                {
+                    { "tackle" }
+                }
+            }
+
+            game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+        end
+    end
+end)
+
+repeat
+    task.wait()
+until char.Humanoid.Health <= 0
+con:Disconnect()
+end)
+
+maintab2:Button("Fix Duplicate Ball", function()
+for _, obj in ipairs(workspace.Terrain:GetDescendants()) do
+	if obj:IsA("MeshPart") and obj.Name == "Ball" then
+		obj:Destroy()
+	end
+end
 end)
 
 funtab:Button("Don Lorenzo (Nagi)", function()
@@ -1816,7 +1839,7 @@ funtab:Button("Gojo Moveset (Use Isagi.)", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/TH8xDy9X"))()
 end)
 
-funtab:Button("Loki Moveset", function()
+funtab:Button("Loki Moveset (Use Isagi.)", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/LbRRX7SK"))()
 end)
 
