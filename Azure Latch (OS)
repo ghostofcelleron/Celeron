@@ -1,4 +1,4 @@
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 loadstring(game:HttpGet("https://pastebin.com/raw/LEBgs3Ki",true))()
 
 local win = ui:Create({
