@@ -1,5 +1,4 @@
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
-loadstring(game:HttpGet("https://pastebin.com/raw/LEBgs3Ki",true))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
@@ -455,137 +454,142 @@ _G.SideDashEnabled = false
 _G._rushing = false
 _G._sideDashing = false
 _G._dashBindsSetup = false
+_G._lastForwardRush = 0
+_G._lastSideDash = 0
 
 local character, humanoid, rootPart
 
 local function updateCharacter()
-	character = player.Character or player.CharacterAdded:Wait()
-	humanoid = character:WaitForChild("Humanoid")
-	rootPart = character:WaitForChild("HumanoidRootPart")
+    character = player.Character or player.CharacterAdded:Wait()
+    humanoid = character:WaitForChild("Humanoid")
+    rootPart = character:WaitForChild("HumanoidRootPart")
 end
 
 updateCharacter()
 player.CharacterAdded:Connect(updateCharacter)
 
 local function notify(title, text)
-	starterGui:SetCore("SendNotification", {
-		Title = title,
-		Text = text,
-		Duration = 2
-	})
-end
-
-local function safeUnbind(id, flag)
-	runService:UnbindFromRenderStep(id)
-	_G[flag] = false
+    starterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = 2
+    })
 end
 
 local function forwardRush()
-	if _G._rushing or not _G.ForwardRushEnabled or not humanoid or not rootPart then return end
-	_G._rushing = true
+    if _G._rushing or not _G.ForwardRushEnabled or not humanoid or not rootPart then return end
+    if tick() - _G._lastForwardRush < 0.2 then return end
+    _G._lastForwardRush = tick()
+    _G._rushing = true
 
-	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
-	local animation = Instance.new("Animation")
-	animation.AnimationId = "rbxassetid://79394729551302"
-	local animationTrack = animator:LoadAnimation(animation)
-	animationTrack:Play()
+    local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+    local animation = Instance.new("Animation")
+    animation.AnimationId = "rbxassetid://79394729551302"
+    local animationTrack = animator:LoadAnimation(animation)
+    animationTrack:Play()
 
-	task.delay(0.05, function()
-		if animationTrack.IsPlaying then
-			local sound = Instance.new("Sound")
-			sound.SoundId = "rbxassetid://105267293181745"
-			sound.Parent = rootPart
-			sound:Play()
-			sound.Ended:Connect(function() sound:Destroy() end)
-		end
-	end)
+    task.delay(0.05, function()
+        if animationTrack.IsPlaying then
+            local sound = Instance.new("Sound")
+            sound.SoundId = "rbxassetid://105267293181745"
+            sound.Parent = rootPart
+            sound:Play()
+            sound.Ended:Connect(function() sound:Destroy() end)
+        end
+    end)
 
-	local startPos = rootPart.Position
-	local endPos = startPos + rootPart.CFrame.LookVector * 45
-	local duration, elapsed = 0.5, 0
-	local dashId = "ForwardRush_" .. tostring(os.clock())
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+    bv.Parent = rootPart
 
-	runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
-		if not rootPart or not rootPart.Parent then
-			safeUnbind(dashId, "_rushing")
-			return
-		end
+    local dashId = "ForwardRush_" .. tostring(os.clock())
+    runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function()
+        if not rootPart or not rootPart.Parent then
+            runService:UnbindFromRenderStep(dashId)
+            bv:Destroy()
+            _G._rushing = false
+            return
+        end
+        bv.Velocity = rootPart.CFrame.LookVector * 100
+    end)
 
-		elapsed += dt
-		local alpha = math.clamp(elapsed / duration, 0, 1)
-		local newPos = startPos:Lerp(endPos, alpha)
-		rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
-
-		if alpha >= 1 then
-			safeUnbind(dashId, "_rushing")
-		end
-	end)
+    task.delay(0.5, function()
+        runService:UnbindFromRenderStep(dashId)
+        bv:Destroy()
+        _G._rushing = false
+    end)
 end
 
 local function sideDash(direction)
-	if _G._sideDashing or not _G.SideDashEnabled or not humanoid or not rootPart then return end
-	_G._sideDashing = true
+    if _G._sideDashing or not _G.SideDashEnabled or not humanoid or not rootPart then return end
+    if tick() - _G._lastSideDash < 0.15 then return end
+    _G._lastSideDash = tick()
+    _G._sideDashing = true
 
-	local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
-	local animation = Instance.new("Animation")
-	animation.AnimationId = direction == "right" and "rbxassetid://114016332539655" or "rbxassetid://100207093237932"
-	local animationTrack = animator:LoadAnimation(animation)
-	animationTrack:Play()
+    local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+    local animation = Instance.new("Animation")
+    animation.AnimationId = direction == "right" and "rbxassetid://114016332539655" or "rbxassetid://100207093237932"
+    local animationTrack = animator:LoadAnimation(animation)
+    animationTrack:Play()
 
-	local sound = Instance.new("Sound")
-	sound.SoundId = "rbxassetid://71212694698006"
-	sound.Parent = rootPart
-	sound:Play()
-	sound.Ended:Connect(function() sound:Destroy() end)
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://71212694698006"
+    sound.Parent = rootPart
+    sound:Play()
+    sound.Ended:Connect(function() sound:Destroy() end)
 
-	local offset = rootPart.CFrame.RightVector * (direction == "right" and 25 or -25)
-	local startPos = rootPart.Position
-	local endPos = startPos + offset
-	local duration, elapsed = 0.55, 0
-	local dashId = "SideDash_" .. tostring(os.clock())
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+    bv.Parent = rootPart
 
-	runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function(dt)
-		if not rootPart or not rootPart.Parent then
-			safeUnbind(dashId, "_sideDashing")
-			return
-		end
+    local dashId = "SideDash_" .. tostring(os.clock())
+    runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function()
+        if not rootPart or not rootPart.Parent then
+            runService:UnbindFromRenderStep(dashId)
+            bv:Destroy()
+            _G._sideDashing = false
+            return
+        end
+        local rightVec = rootPart.CFrame.RightVector
+        bv.Velocity = rightVec * (direction == "right" and 75 or -75)
+    end)
 
-		elapsed += dt
-		local alpha = math.clamp(elapsed / duration, 0, 1)
-		local newPos = startPos:Lerp(endPos, alpha)
-		rootPart.CFrame = CFrame.new(newPos, newPos + rootPart.CFrame.LookVector)
-
-		if alpha >= 1 then
-			safeUnbind(dashId, "_sideDashing")
-		end
-	end)
+    task.delay(0.4, function()
+        runService:UnbindFromRenderStep(dashId)
+        bv:Destroy()
+        _G._sideDashing = false
+    end)
 end
 
 maintab:Label("No Cooldown Features.")
 maintab:Button("No Rush Cooldown", function()
-	_G.ForwardRushEnabled = not _G.ForwardRushEnabled
-	notify("No Rush CD", _G.ForwardRushEnabled and "Enabled." or "Disabled.")
+    _G.ForwardRushEnabled = not _G.ForwardRushEnabled
+    notify("No Rush CD", _G.ForwardRushEnabled and "Enabled." or "Disabled.")
 end)
 
 maintab:Button("No Side Dash Cooldown", function()
-	_G.SideDashEnabled = not _G.SideDashEnabled
-	notify("No Side Dash CD", _G.SideDashEnabled and "Enabled." or "Disabled.")
+    _G.SideDashEnabled = not _G.SideDashEnabled
+    notify("No Side Dash CD", _G.SideDashEnabled and "Enabled." or "Disabled.")
 end)
 
 if not _G._dashBindsSetup then
-	_G._dashBindsSetup = true
+    _G._dashBindsSetup = true
 
-	userInputService.InputBegan:Connect(function(input, gameProcessed)
-		if gameProcessed then return end
+    userInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
 
-		if input.KeyCode == Enum.KeyCode.F then
-			forwardRush()
-		elseif input.KeyCode == Enum.KeyCode.Q then
-			local isA = userInputService:IsKeyDown(Enum.KeyCode.A)
-			local isD = userInputService:IsKeyDown(Enum.KeyCode.D)
-			if isD then sideDash("right") elseif isA then sideDash("left") end
-		end
-	end)
+        if input.KeyCode == Enum.KeyCode.F then
+            forwardRush()
+        elseif input.KeyCode == Enum.KeyCode.Q then
+            local isA = userInputService:IsKeyDown(Enum.KeyCode.A)
+            local isD = userInputService:IsKeyDown(Enum.KeyCode.D)
+            if isD then
+                sideDash("right")
+            elseif isA then
+                sideDash("left")
+            end
+        end
+    end)
 end
 
 maintab:Label("Break Ball Features.")
