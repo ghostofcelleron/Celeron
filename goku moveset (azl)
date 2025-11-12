@@ -18,6 +18,33 @@ UserInputService.InputBegan:Connect(function(input, gp)
 	if gp then return end
 
 	if input.KeyCode == Enum.KeyCode.One then
+    local char = plr.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChild("Humanoid")
+    if not char or not root or not hum then return end
+
+    local stun = char:FindFirstChild("state") and char.state:FindFirstChild("stun")
+    if stun and stun.Value == false then
+        stun.Value = true
+        task.wait(0.03)
+        stun.Value = false
+    end
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://101036089852233"
+    local track = hum:LoadAnimation(anim)
+
+    track:Play()
+    track.TimePosition = 0.515
+
+	wait(0.1635)
+
+    local forward = (root.CFrame - root.Position).LookVector
+
+    ReplicatedStorage.ByteNetReliable:FireServer(
+        buffer.fromstring("\023\001"),
+        { { "kick", 100, false, vector.create(forward.X, forward.Y + 0.3, forward.Z) } }
+    	)
 	end
 
 	if input.KeyCode == Enum.KeyCode.Two then
@@ -65,112 +92,189 @@ UserInputService.InputBegan:Connect(function(input, gp)
 		)
 	end
 
-	if input.KeyCode == Enum.KeyCode.Three then
-		local char = plr.Character
-		local hum = char and char:FindFirstChild("Humanoid")
-		local root = char and char:FindFirstChild("HumanoidRootPart")
-		if not char or not hum or not root then return end
+if input.KeyCode == Enum.KeyCode.Three then
+    local char = plr.Character
+    local hum = char and char:FindFirstChild("Humanoid")
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not char or not hum or not root then return end
 
-		local stun = char:FindFirstChild("state") and char.state:FindFirstChild("stun")
-		if stun and stun.Value == false then
-			stun.Value = true
-			task.wait(0.03)
-			stun.Value = false
-		end
+    local stun = char:FindFirstChild("state") and char.state:FindFirstChild("stun")
+    if stun and stun.Value == false then
+        stun.Value = true
+        task.wait(0.03)
+        stun.Value = false
+    end
 
-		local anim = Instance.new("Animation")
-		anim.AnimationId = "rbxassetid://136837676477730"
-		local track = hum:LoadAnimation(anim)
-		track:Play()
-		task.delay(0.5, function()
-			track:Stop()
-		end)
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://136837676477730"
+    local track = hum:LoadAnimation(anim)
+    track:Play()
+    task.delay(0.5, function()
+        track:Stop()
+    end)
 
-		local sound = Instance.new("Sound")
-		sound.SoundId = "rbxassetid://4861638982"
-		sound.Volume = 1
-		sound.Parent = root
-		sound:Play()
-		game.Debris:AddItem(sound, 2)
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://4861638982"
+    sound.Volume = 1
+    sound.Parent = root
+    sound:Play()
+    game.Debris:AddItem(sound, 2)
 
-		local forward = (root.CFrame - root.Position).LookVector
-		root.CFrame = root.CFrame + forward * 65
+    local forward = (root.CFrame - root.Position).LookVector
+    local distance = 65
 
-		local flash = Instance.new("ColorCorrectionEffect")
-		flash.Name = "transmissionflash"
-		flash.Enabled = true
-		flash.Saturation = -1
-		flash.Contrast = 0
-		flash.Brightness = 0
-		flash.Parent = Lighting
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {char}
+    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
 
-		local flashIn = TweenService:Create(flash, TweenInfo.new(0.1), {
-			Contrast = 3,
-			Brightness = 0.5
-		})
+    local result = workspace:Raycast(root.Position, forward * distance, rayParams)
 
-		local flashOut = TweenService:Create(flash, TweenInfo.new(0.2), {
-			Contrast = 0,
-			Brightness = 0,
-			Saturation = 0
-		})
+    if result then
+        local hitPos = result.Position
+        local safeOffset = forward * 2
+        root.CFrame = CFrame.new(hitPos - safeOffset, hitPos - safeOffset + root.CFrame.LookVector)
+    else
+        root.CFrame = root.CFrame + forward * distance
+    end
 
-		flashIn:Play()
-		flashIn.Completed:Connect(function()
-			flashOut:Play()
-			flashOut.Completed:Connect(function()
-				flash:Destroy()
-			end)
-		end)
-	end
+    local flash = Instance.new("ColorCorrectionEffect")
+    flash.Name = "transmissionflash"
+    flash.Enabled = true
+    flash.Saturation = -1
+    flash.Contrast = 0
+    flash.Brightness = 0
+    flash.Parent = Lighting
 
-		if input.KeyCode == Enum.KeyCode.Four then
-		local char = plr.Character
-		local root = char and char:FindFirstChild("HumanoidRootPart")
-		if not char or not root then return end
+    local flashIn = TweenService:Create(flash, TweenInfo.new(0.1), {
+        Contrast = 3,
+        Brightness = 0.5
+    })
 
-		local stun = char:FindFirstChild("state") and char.state:FindFirstChild("stun")
-		if stun and not stun.Value then
-			stun.Value = true
-			task.wait(0.03)
-			stun.Value = false
-		end
+    local flashOut = TweenService:Create(flash, TweenInfo.new(0.2), {
+        Contrast = 0,
+        Brightness = 0,
+        Saturation = 0
+    })
 
-		local ff = Instance.new("ForceField")
-		ff.Visible = true
-		ff.Parent = char
-		game.Debris:AddItem(ff, 10)
+    flashIn:Play()
+    flashIn.Completed:Connect(function()
+        flashOut:Play()
+        flashOut.Completed:Connect(function()
+            flash:Destroy()
+        end)
+    end)
+end
 
-		local active = true
-		task.delay(10, function() active = false end)
+if input.KeyCode == Enum.KeyCode.Four then
+    local char = plr.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not char or not root then return end
 
-		local animId = "rbxassetid://109744655458082"
-		local buffer = buffer or { fromstring = function(str) return str end }
+    local stun = char:FindFirstChild("state") and char.state:FindFirstChild("stun")
+    if stun and not stun.Value then
+        stun.Value = true
+        task.wait(0.03)
+        stun.Value = false
+    end
 
-		game:GetService("RunService").Stepped:Connect(function()
-			if not active then return end
-			local root = char:FindFirstChild("HumanoidRootPart")
-			if not root then return end
+    local SoundService = game:GetService("SoundService")
+    local TweenService = game:GetService("TweenService")
 
-			for _, target in ipairs(Players:GetPlayers()) do
-				if target ~= plr and target.Character and target.Team ~= plr.Team then
-					local hrp = target.Character:FindFirstChild("HumanoidRootPart")
-					local anims = target.Character:FindFirstChildOfClass("Humanoid") and target.Character:FindFirstChildOfClass("Humanoid"):FindFirstChildOfClass("Animator")
-					if hrp and anims and (root.Position - hrp.Position).Magnitude <= 35 then
-						for _, track in ipairs(anims:GetPlayingAnimationTracks()) do
-							if track.Animation.AnimationId == animId then
-								ReplicatedStorage.ByteNetReliable:FireServer(
-									buffer.fromstring("\023\001"),
-									{ { "dribble", false } }
-								)
-								break
-							end
-						end
-					end
-				end
-			end
-		end)
-	end
+    local intro = Instance.new("Sound")
+    intro.SoundId = "rbxassetid://106068332784548"
+    intro.Volume = 1
+    intro.Looped = false
+    intro.Parent = SoundService
+
+    local looped = Instance.new("Sound")
+    looped.SoundId = "rbxassetid://8627570021"
+    looped.Volume = 1
+    looped.Looped = true
+    looped.Parent = SoundService
+
+    local emitterTemplate = workspace.DawnWalker.DawnwalkerAura.Attachment.Aura3
+    emitterTemplate.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.new(0, 0.333333, 1)),
+        ColorSequenceKeypoint.new(0.25, Color3.new(1, 0.0623117, 0.910085)),
+        ColorSequenceKeypoint.new(0.5, Color3.new(1, 0, 0)),
+        ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
+    })
+    emitterTemplate.LightEmission = 3
+
+    local clones = {}
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://126933926912872"
+    local track = char:FindFirstChildOfClass("Humanoid"):LoadAnimation(anim)
+    track:Play(0, 1, 1.55)
+
+    intro:Play()
+    task.delay(1.2, function()
+        intro:Stop()
+        looped:Play()
+    end)
+
+    task.delay(1.2, function()
+        for i = 1, 5 do
+            local clone = emitterTemplate:Clone()
+            clone.Parent = root
+            table.insert(clones, clone)
+        end
+    end)
+
+    task.delay(1.3, function()
+        track:Stop()
+    end)
+
+    local active = true
+    task.delay(15, function() active = false end)
+
+    task.delay(13, function()
+        TweenService:Create(intro, TweenInfo.new(2), {Volume = 0}):Play()
+        TweenService:Create(looped, TweenInfo.new(2), {Volume = 0}):Play()
+        for _, clone in ipairs(clones) do
+            if clone and clone:IsA("ParticleEmitter") then
+                TweenService:Create(clone, TweenInfo.new(2), {Rate = 0}):Play()
+                clone.Lifetime = NumberRange.new(0.5)
+            end
+        end
+        task.delay(2.5, function()
+            for _, clone in ipairs(clones) do
+                if clone then
+                    clone:Destroy()
+                end
+            end
+            intro:Stop()
+            looped:Stop()
+        end)
+    end)
+
+    local animId = "rbxassetid://109744655458082"
+    local buffer = buffer or { fromstring = function(str) return str end }
+
+    game:GetService("RunService").Stepped:Connect(function()
+        if not active then return end
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        for _, target in ipairs(Players:GetPlayers()) do
+            if target ~= plr and target.Character and target.Team ~= plr.Team then
+                local hrp = target.Character:FindFirstChild("HumanoidRootPart")
+                local anims = target.Character:FindFirstChildOfClass("Humanoid") and target.Character:FindFirstChildOfClass("Humanoid"):FindFirstChildOfClass("Animator")
+                if hrp and anims and (root.Position - hrp.Position).Magnitude <= 35 then
+                    for _, track in ipairs(anims:GetPlayingAnimationTracks()) do
+                        if track.Animation.AnimationId == animId then
+                            ReplicatedStorage.ByteNetReliable:FireServer(
+                                buffer.fromstring("\023\001"),
+                                { { "dribble", false } }
+                            )
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
 
 	if input.KeyCode == Enum.KeyCode.Five then
 		local char = plr.Character
