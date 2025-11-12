@@ -2020,6 +2020,60 @@ end
 toggleState()
 end)
 
+emotetab:Button("Assumptions", function()
+_G.Assumptions = _G.Assumptions or false
+
+local animationId = "rbxassetid://108778663919542"
+local soundId = "rbxassetid://137023124734348"
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local animator = humanoid:FindFirstChildOfClass("Animator")
+
+local animation = Instance.new("Animation")
+animation.AnimationId = animationId
+
+local animationTrack = animator:LoadAnimation(animation)
+
+local sound
+
+function Assumptions()
+    _G.Assumptions = not _G.Assumptions
+    
+    if _G.Assumptions then
+        animationTrack:Play()
+        sound = Instance.new("Sound")
+        sound.Name = "Assumptions"
+        sound.SoundId = soundId
+        sound.PlaybackSpeed = 0.17
+        sound.Volume = 0.6
+        sound.Looped = true
+        sound.Parent = game.SoundService
+
+        local eq = Instance.new("EqualizerSoundEffect")
+        eq.LowGain = 10
+        eq.MidGain = 0
+        eq.HighGain = 4
+        eq.Parent = sound
+
+        sound:Play()
+    else
+        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+            track:Stop()
+        end
+
+        local existingSound = game.SoundService:FindFirstChild("Assumptions")
+        if existingSound then
+            existingSound:Stop()
+            existingSound:Destroy()
+        end
+    end
+end
+
+Assumptions()
+end)
+
 emotetab:Button("Akuma Taunt", function()
 local animationId = "rbxassetid://111005363990501"
 local soundId = "rbxassetid://133370927301258"
