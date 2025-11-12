@@ -970,6 +970,35 @@ local plr = game.Players.LocalPlayer
 			end)
 
 maintab:Label("Other Blatant Features.")
+local blatantEnabled, loopConnection = false, nil
+local rs = game:GetService("RunService")
+local sg = game:GetService("StarterGui")
+local ws = game:GetService("Workspace")
+
+local function setCollide(state)
+    local a = ws.map.gkbarriar.Abarriar
+    local b = ws.map.gkbarriar.Bbarriar
+    local ag = ws.map.Agoal
+    local bg = ws.map.Bgoal
+
+    if a then a.CanCollide = state end
+    if b then b.CanCollide = state end
+    if ag then ag.CanCollide = state end
+    if bg then bg.CanCollide = state end
+end
+
+maintab:Button("Toggle Blatant Mode", function()
+    blatantEnabled = not blatantEnabled
+    if blatantEnabled then
+        loopConnection = rs.Heartbeat:Connect(function() setCollide(false) end)
+        sg:SetCore("SendNotification",{Title="Blatant Mode",Text="Enabled.",Duration=3})
+    else
+        if loopConnection then loopConnection:Disconnect() loopConnection = nil end
+        setCollide(true)
+        sg:SetCore("SendNotification",{Title="Blatant Mode",Text="Disabled.",Duration=3})
+    end
+end)
+
 maintab:Button("Manual Score", function()
 if game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 	if workspace:WaitForChild("map"):WaitForChild("Agoal") and workspace:WaitForChild("map"):WaitForChild("Bgoal") then
@@ -2177,43 +2206,23 @@ end)
 end)
 
 teleporttab:Button("Spawn Area", function()
-if game.PlaceId == 94647229517154 then
 	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-269, 4, -1599)
-elseif game.PlaceId == 85946466968831 then
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(857, 9, -3263)
-end
 end)
 
 teleporttab:Button("Middle Field", function()
-if game.PlaceId == 94647229517154 then
 	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-540, 3, 1274)
-elseif game.PlaceId == 85946466968831 then
-	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(543, 3, -378)
-end
 end)
 
 teleporttab:Button("Gallery Area", function()
-if game.PlaceId == 94647229517154 then
 	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(109, 66, 3337)
-elseif game.PlaceId == 85946466968831 then
-	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(1176, 71, 1568)
-end
 end)
 
 teleporttab:Button("Goal Box (A)", function()
-if game.PlaceId == 94647229517154 then
 	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-537, 3, 1575)
-elseif game.PlaceId == 85946466968831 then
-	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(543, 3, 206)
-end
 end)
 
 teleporttab:Button("Goal Box (B)", function()
-if game.PlaceId == 94647229517154 then
 	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-534, 3, 974)
-elseif game.PlaceId == 85946466968831 then
-	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(542, 3, -962)
-end
 end)
 
 misctab:Button("Upgrade UI (very cool actually)", function()
