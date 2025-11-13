@@ -8,63 +8,120 @@ local win = ui:Create({
 })
 
 local maintab = win:Tab("Main")
-local misctab = win:Tab("Others")
 local tpstab = win:Tab("Teleports")
+local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
+tpstab:Label("Teleport Bypass Originally Made By Celeron.")
+misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
-local Player = game.Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character and Character:FindFirstChild("Humanoid")
-local RunService = game:GetService("RunService")
+getgenv().lastSliderSet = nil
+getgenv().cframeLoopRunning = false
 
-local targetSpeed = 18
+local uis = game:GetService("UserInputService")
+local players = game:GetService("Players")
+local workspace = game:GetService("Workspace")
+local debris = game:GetService("Debris")
+local lp = players.LocalPlayer
 
-if Humanoid then
-    maintab:Slider("Player Speed", 22, 22, 45, function(v)
-        targetSpeed = v
-    end)
-
-    RunService.Heartbeat:Connect(function()
-        local rootPart = Character:FindFirstChild("HumanoidRootPart")
-        if rootPart then
-            local moveDirection = Humanoid.MoveDirection
-            local currentVelocity = rootPart.Velocity
-            local desiredVelocity = moveDirection * targetSpeed
-
-            rootPart.Velocity = Vector3.new(
-                desiredVelocity.X,
-                currentVelocity.Y,
-                desiredVelocity.Z
-            )
-        end
-    end)
+local function getInputDirection()
+    local dir = Vector3.zero
+    if uis:IsKeyDown(Enum.KeyCode.W) then dir += Vector3.new(0, 0, 1) end
+    if uis:IsKeyDown(Enum.KeyCode.S) then dir += Vector3.new(0, 0, -1) end
+    if uis:IsKeyDown(Enum.KeyCode.A) then dir += Vector3.new(-1, 0, 0) end
+    if uis:IsKeyDown(Enum.KeyCode.D) then dir += Vector3.new(1, 0, 0) end
+    return dir.Magnitude > 0 and dir.Unit or nil
 end
 
-local Player = game.Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character and Character:FindFirstChild("Humanoid")
-local targetJumpPower = 50
+local function ensureXZVelocity(hrp)
+    local bv = hrp:FindFirstChild("VelocityXZ")
+    if not bv then
+        bv = Instance.new("BodyVelocity")
+        bv.Name = "VelocityXZ"
+        bv.MaxForce = Vector3.new(1e6, 0, 1e6)
+        bv.P = 1e4
+        bv.Velocity = Vector3.new()
+        bv.Parent = hrp
+    end
+    return bv
+end
 
-if Humanoid then
-    maintab:Slider("Player Jump Height", 30, 15, 200, function(v)
-        targetJumpPower = v
-    end)
-
-    Humanoid.StateChanged:Connect(function(_, newState)
-        if newState == Enum.HumanoidStateType.Jumping then
-            local rootPart = Character:FindFirstChild("HumanoidRootPart")
-            if rootPart then
-                local baseBoost = 30
-                local scaleFactor = targetJumpPower / 50
-                rootPart.Velocity = rootPart.Velocity + Vector3.new(0, baseBoost * scaleFactor, 0)
+getgenv().applySpeed = function()
+    if getgenv().cframeLoopRunning then return end
+    getgenv().cframeLoopRunning = true
+    task.spawn(function()
+        while getgenv().cframeLoopRunning do
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local cam = workspace.CurrentCamera
+            if hrp then
+                local speed = getgenv().lastSliderSet or 16
+                local bv = ensureXZVelocity(hrp)
+                local inputDir = getInputDirection()
+                if inputDir then
+                    local camCF = cam.CFrame
+                    local forward = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
+                    local right = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
+                    local moveVec = (forward * inputDir.Z + right * inputDir.X).Unit * speed
+                    bv.Velocity = Vector3.new(moveVec.X, 0, moveVec.Z)
+                else
+                    bv.Velocity = Vector3.new()
+                end
             end
+            task.wait()
         end
     end)
 end
+
+maintab:Slider("Player Speed", 20, 0, 45, function(v)
+    getgenv().lastSliderSet = (v == 8) and 16 or v
+    getgenv().applySpeed()
+end)
+
+getgenv().lastJumpSet = nil
+getgenv().jumpBoostEnabled = true
+
+local players = game:GetService("Players")
+local lp = players.LocalPlayer
+
+local function applyJumpBoost(hum, hrp)
+	hum.StateChanged:Connect(function(_, new)
+		if new == Enum.HumanoidStateType.Jumping and getgenv().jumpBoostEnabled then
+			local boost = Instance.new("BodyVelocity")
+			boost.Name = "jump"
+			boost.MaxForce = Vector3.new(0, 1e5, 0)
+			boost.Velocity = Vector3.new(0, getgenv().lastJumpSet or 50, 0)
+			boost.P = 1e4
+			boost.Parent = hrp
+
+			game:GetService("Debris"):AddItem(boost, 0.2)
+		end
+	end)
+end
+
+getgenv().applyJump = function()
+	local char = lp.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if hum and hrp then
+		hum.JumpPower = 50
+		applyJumpBoost(hum, hrp)
+	end
+end
+
+maintab:Slider("Jump Boost", 50, 0, 350, function(v)
+	getgenv().lastJumpSet = v
+	getgenv().applyJump()
+end)
+
+players.LocalPlayer.CharacterAdded:Connect(function(char)
+	char:WaitForChild("Humanoid")
+	char:WaitForChild("HumanoidRootPart")
+	getgenv().applyJump()
+end)
 
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
@@ -116,113 +173,6 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
-maintab:Textbox("Kill Player", function(v)
-    stopFollow = false
-    followPlayer(v)
-end)
-
-misctab:Button("Food GUI", function()
-    local Player = game.Players.LocalPlayer
-    local Character = Player.Character or Player.CharacterAdded:Wait()
-    local UIS = game:GetService("UserInputService")
-    local StarterGui = game:GetService("StarterGui")
-
-    local function sendNotification()
-        StarterGui:SetCore("SendNotification", {
-            Title = "GUI Hidden.",
-            Text = "Click Z To Unhide.",
-            Duration = 5,
-        })
-    end
-
-    local function createNotification()
-        local screenGui = Instance.new("ScreenGui")
-        screenGui.Parent = Player:WaitForChild("PlayerGui")
-
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(0, 300, 0, 260)
-        frame.Position = UDim2.new(1, -320, 1, -280)
-        frame.AnchorPoint = Vector2.new(1, 1)
-        frame.BackgroundTransparency = 0.64
-        frame.BackgroundColor3 = Color3.new(0, 0, 0)
-        frame.BorderSizePixel = 0
-        frame.Parent = screenGui
-        frame.Visible = true
-
-        local titleLabel = Instance.new("TextLabel")
-        titleLabel.Size = UDim2.new(0.8, 0, 0.2, 0)
-        titleLabel.Position = UDim2.new(0.05, 0, 0.05, 0)
-        titleLabel.Text = "GRG Food GUI"
-        titleLabel.TextSize = 24
-        titleLabel.Font = Enum.Font.SourceSansBold
-        titleLabel.TextColor3 = Color3.new(0.75, 0.75, 0.75)
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.TextStrokeTransparency = 0
-        titleLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-        titleLabel.Parent = frame
-
-        local options = {"Ramen", "NormalFood", "Bloxy", "Peanuts"}
-        local positions = {
-            Ramen = Vector3.new(-159, 4, 32),
-            NormalFood = Vector3.new(-6, 23, 352),
-            Bloxy = Vector3.new(-34, 24, 426),
-            Peanuts = Vector3.new(-316, 31, 301),
-        }
-        for i, option in ipairs(options) do
-            local button = Instance.new("TextButton")
-            button.Size = UDim2.new(0.4, 0, 0.2, 0)
-            button.Position = UDim2.new(0.05 + ((i - 1) % 2) * 0.5 - 0.006, 0, 0.3 + math.floor((i - 1) / 2) * 0.25, 0)
-            button.Text = option
-            button.TextSize = 20
-            button.Font = Enum.Font.SourceSans
-            button.TextColor3 = Color3.new(1, 1, 1)
-            button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-            button.BorderSizePixel = 0
-            button.Parent = frame
-
-            button.MouseButton1Click:Connect(function()
-                Character.HumanoidRootPart.CFrame = CFrame.new(positions[option])
-            end)
-        end
-
-        local minimizeButton = Instance.new("TextButton")
-        minimizeButton.Size = UDim2.new(0.1, 0, 0.2, 0)
-        minimizeButton.Position = UDim2.new(0.75, -10, 0.05, 0)
-        minimizeButton.Text = "X"
-        minimizeButton.TextSize = 20
-        minimizeButton.Font = Enum.Font.SourceSansBold
-        minimizeButton.TextColor3 = Color3.new(0.5, 0.5, 0.5)
-        minimizeButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-        minimizeButton.BorderSizePixel = 0
-        minimizeButton.Parent = frame
-
-        minimizeButton.MouseButton1Click:Connect(function()
-            frame.Visible = false
-            sendNotification()
-        end)
-
-        UIS.InputBegan:Connect(function(input)
-            if input.KeyCode == Enum.KeyCode.Z then
-                frame.Visible = not frame.Visible
-            end
-        end)
-    end
-
-    createNotification()
-end)
-
-misctab:Button("Remote Spy", function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/SimpleSpyV3/main.lua"))()
-end)
-
-misctab:Button("Audio Logger", function()
-loadstring(game:HttpGet(('https://raw.githubusercontent.com/infyiff/backup/main/audiologger.lua'),true))()
-end)
-
-misctab:Button("F3X Building Tools", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/refs/heads/main/f3x.lua"))()
-end)
-
 local InfiniteJumpEnabled = false
 
 maintab:Button("Infinite Jump", function(v)
@@ -268,21 +218,26 @@ teleportTool.Activated:Connect(function()
 end)
 end)
 
+maintab:Textbox("Kill Player", function(v)
+    stopFollow = false
+    followPlayer(v)
+end)
+
 local ESPEnabled = false
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
 
 maintab:Button("ESP", function(v)
     ESPEnabled = not ESPEnabled
 
     if ESPEnabled then
-        for _, TargetPlayer in ipairs(game.Players:GetPlayers()) do
-            if TargetPlayer ~= game.Players.LocalPlayer and TargetPlayer.Character then
-                local TargetTorso = TargetPlayer.Character:FindFirstChild("Torso") or TargetPlayer.Character:FindFirstChild("UpperTorso")
-
-                if TargetTorso then
+        for _, TargetPlayer in ipairs(Players:GetPlayers()) do
+            if TargetPlayer ~= Players.LocalPlayer and TargetPlayer.Character then
+                if not TargetPlayer.Character:FindFirstChild("ESPHighlight") then
                     local Highlight = Instance.new("Highlight")
                     Highlight.Name = "ESPHighlight"
                     Highlight.Parent = TargetPlayer.Character
-                    Highlight.Adornee = TargetTorso
+                    Highlight.Adornee = TargetPlayer.Character
                     Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 
                     local TeamColor = TargetPlayer.Team and TargetPlayer.Team.TeamColor.Color or Color3.new(1, 1, 1)
@@ -292,34 +247,30 @@ maintab:Button("ESP", function(v)
             end
         end
 
-
         StarterGui:SetCore("SendNotification", {
-            Title = "ESP Enabled",
-            Text = "ESP Enabled. Click again to disable.",
+            Title = "ESP",
+            Text = "Enabled.",
             Duration = 3,
         })
     else
-
-        for _, TargetPlayer in ipairs(game.Players:GetPlayers()) do
+        for _, TargetPlayer in ipairs(Players:GetPlayers()) do
             if TargetPlayer.Character then
-                for _, child in ipairs(TargetPlayer.Character:GetChildren()) do
-                    if child:IsA("Highlight") and child.Name == "ESPHighlight" then
-                        child:Destroy()
-                    end
+                local highlight = TargetPlayer.Character:FindFirstChild("ESPHighlight")
+                if highlight then
+                    highlight:Destroy()
                 end
             end
         end
 
-
         StarterGui:SetCore("SendNotification", {
-            Title = "ESP Disabled",
-            Text = "ESP Disabled.",
+            Title = "ESP",
+            Text = "Disabled.",
             Duration = 3,
         })
     end
 end)
 
-maintab:Button("Escape Jail", function(v)
+maintab:Button("Escape Jail (Once Per Server, Instant.)", function(v)
 local args = { [1] = "Peasant" }
 game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 9e9):WaitForChild("FriendSpawn", 9e9):FireServer(unpack(args))
 end)
@@ -342,15 +293,6 @@ tpstab:Button("Leader Tower", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-0, 45, 460)
 end)
 
-tpstab:Button("Barbarian Doctor", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
-    WorkingTp()
-    task.wait(0.25)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-63, -1, -1267)
-end)
-
 tpstab:Button("Arena", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
@@ -358,15 +300,6 @@ tpstab:Button("Arena", function()
     WorkingTp()
     task.wait(0.25)
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-312, 41, 338)
-end)
-
-tpstab:Button("Cafe", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
-    WorkingTp()
-    task.wait(0.25)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-92, 27, 302)
 end)
 
 tpstab:Button("Karl's Karts", function()
@@ -396,31 +329,19 @@ tpstab:Button("Barbarian Town", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 7, -1299)
 end)
 
+tpstab:Button("Barbarian Doctor", function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-63, -1, -1267)
+end)
+
+tpstab:Button("Food Store", function()
+	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(80, 23, 308)
+end)
+
 tpstab:Button("Doctor Store", function()
     local function WorkingTp()
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
     end
     WorkingTp()
-    task.wait(0.25)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-19, 29, 240)
-end)
-
-tpstab:Button("Civillian Food", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
-    WorkingTp()
-    task.wait(0.25)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(73, 23, 312)
-end)
-
-tpstab:Button("Jester Stage", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
-    WorkingTp()
-    task.wait(0.25)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(74, 25, 242)
 end)
 
 tpstab:Button("Mountains", function()
@@ -432,13 +353,16 @@ tpstab:Button("Mountains", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-407, 159, 181)
 end)
 
-tpstab:Button("Town Ramp", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
-    WorkingTp()
-    task.wait(0.25)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(99, 72, -57)
+misctab:Button("Infinite Yield", function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/SimpleSpyV3/main.lua"))()
+end)
+
+misctab:Button("Audio Logger", function()
+loadstring(game:HttpGet(('https://raw.githubusercontent.com/infyiff/backup/main/audiologger.lua'),true))()
+end)
+
+misctab:Button("F3X Building Tools", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/refs/heads/main/f3x.lua"))()
 end)
 
 helptab:Button("Copy Owner Discord Username", function()
@@ -464,3 +388,30 @@ StarterGui:SetCore("SendNotification", {
 })
 setclipboard("https://discord.gg/xSDwMhae")
 end)
+
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local player = Players.LocalPlayer
+
+local function startCheck()
+    local function checkSuspicious()
+        local val = player:GetAttribute("IsSuspicious")
+        if val == true then
+            StarterGui:SetCore("SendNotification", {
+                Title = "Alert",
+                Text = "You are currently marked as suspicious. Please switch servers to fix.",
+                Duration = 5
+            })
+        end
+        task.delay(5, checkSuspicious)
+    end
+    checkSuspicious()
+end
+
+player.CharacterAdded:Connect(function()
+    startCheck()
+end)
+
+if player.Character then
+    startCheck()
+end
