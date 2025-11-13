@@ -148,60 +148,69 @@ maintab:Button("Always Allow Third Person", function()
 end)
 
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
 local StarterGui = game:GetService("StarterGui")
 local CoreGui = game:GetService("CoreGui")
 
 local playerESPEnabled = false
-local computerESPEnabled = false
-local exitESPEnabled = false
 
 local function notify(title, text)
-	StarterGui:SetCore("SendNotification", {
-		Title = title,
-		Text = text,
-		Duration = 3
-	})
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = 3
+    })
 end
 
 local function applyHighlight(player)
-	if player == Players.LocalPlayer then return end
-	local char = player.Character
-	if not char or not char:IsA("Model") then return end
+    if player == Players.LocalPlayer then return end
+    local char = player.Character
+    if not char or not char:IsA("Model") then return end
 
-	local existing = CoreGui:FindFirstChild("ESP_" .. player.Name)
-	if playerESPEnabled then
-		if not existing then
-			local highlight = Instance.new("Highlight")
-			highlight.Name = "ESP_" .. player.Name
-			highlight.Adornee = char
-			highlight.FillColor = Color3.new(1, 0, 0)
-			highlight.OutlineColor = Color3.new(1, 1, 1)
-			highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-			highlight.Parent = CoreGui
-		end
-	else
-		if existing then existing:Destroy() end
-	end
+    local existingHighlight = CoreGui:FindFirstChild("ESP_" .. player.Name)
+
+    if playerESPEnabled then
+        if not existingHighlight then
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "ESP_" .. player.Name
+            highlight.Adornee = char
+            highlight.FillColor = Color3.fromRGB(0, 255, 255)
+            highlight.OutlineColor = Color3.new(1, 1, 1)
+            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            highlight.Parent = CoreGui
+        end
+        local humanoid = char:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+            humanoid.NameDisplayDistance = math.huge
+        end
+    else
+        if existingHighlight then existingHighlight:Destroy() end
+        local humanoid = char:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
+            humanoid.NameDisplayDistance = 100 -- default
+        end
+    end
 end
 
 esptab:Button("Player ESP", function()
-	playerESPEnabled = not playerESPEnabled
-	notify("Player ESP", playerESPEnabled and "Enabled." or "Disabled.")
+    playerESPEnabled = not playerESPEnabled
+    notify("Player ESP", playerESPEnabled and "Enabled." or "Disabled.")
 
-	for _, player in ipairs(Players:GetPlayers()) do
-		applyHighlight(player)
-	end
+    for _, player in ipairs(Players:GetPlayers()) do
+        applyHighlight(player)
+    end
 
-	Players.PlayerAdded:Connect(function(player)
-		player.CharacterAdded:Connect(function()
-			if playerESPEnabled then
-				task.wait(1)
-				applyHighlight(player)
-			end
-		end)
-	end)
+    Players.PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(function()
+            if playerESPEnabled then
+                task.wait(1)
+                applyHighlight(player)
+            end
+        end)
+    end)
 end)
+
 
 esptab:Button("Computer ESP", function()
 	computerESPEnabled = not computerESPEnabled
@@ -290,54 +299,71 @@ tpstab:Label("In-Game Areas.")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local player = Players.LocalPlayer
-local function getRoot() return player.Character or player.CharacterAdded:Wait(), "HumanoidRootPart" end
 
-local function getRandomModel(name)
-	local models = {}
-	local function scan(parent)
-		for _, obj in ipairs(parent:GetChildren()) do
-			if obj:IsA("Model") and obj.Name == name then table.insert(models, obj) end
-			if #obj:GetChildren() > 0 then scan(obj) end
-		end
-	end
-	scan(Workspace)
-	return #models > 0 and models[math.random(1, #models)] or nil
+local function getRoot()
+    return player.Character or player.CharacterAdded:Wait(), "HumanoidRootPart"
 end
 
-local recentComputers = {}
+local function getOrderedModels(name)
+    local models = {}
+    local function scan(parent)
+        for _, obj in ipairs(parent:GetChildren()) do
+            if obj:IsA("Model") and obj.Name == name then
+                table.insert(models, obj)
+            end
+            if #obj:GetChildren() > 0 then
+                scan(obj)
+            end
+        end
+    end
+    scan(Workspace)
 
-tpstab:Button("Random Computer TP", function()
-	local model = getRandomModel("ComputerTable")
-	if not model or not model.PrimaryPart then return end
-	if table.find(recentComputers, model) then return end
+    table.sort(models, function(a, b)
+        local ao = a:GetAttribute("Order") or 0
+        local bo = b:GetAttribute("Order") or 0
+        return ao < bo
+    end)
 
-	local char, rootName = getRoot()
-	local root = char:WaitForChild(rootName)
-	local front = model.PrimaryPart.CFrame.Position + model.PrimaryPart.CFrame.LookVector * 5
-	root.CFrame = CFrame.new(front)
+    return models
+end
 
-	table.insert(recentComputers, model)
-	if #recentComputers > 3 then table.remove(recentComputers, 1) end
+local function Teleport(model)
+    if not model or not model.PrimaryPart then return end
+    local char, rootName = getRoot()
+    local root = char:WaitForChild(rootName)
+    local front = model.PrimaryPart.CFrame.Position + model.PrimaryPart.CFrame.LookVector * 5
+    root.CFrame = CFrame.new(front)
+end
+
+local computerIndex = 1
+local exitIndex = 1
+local freezerIndex = 1
+
+tpstab:Button("Computer TP", function()
+    local models = getOrderedModels("ComputerTable")
+    if #models == 0 then return end
+    local model = models[computerIndex]
+    Teleport(model)
+    computerIndex = computerIndex + 1
+    if computerIndex > #models then computerIndex = 1 end
 end)
 
-tpstab:Button("Random Exit TP", function()
-	local model = getRandomModel("ExitDoor")
-	if not model or not model.PrimaryPart then return end
-
-	local char, rootName = getRoot()
-	local root = char:WaitForChild(rootName)
-	local front = model.PrimaryPart.CFrame.Position + model.PrimaryPart.CFrame.LookVector * 5
-	root.CFrame = CFrame.new(front)
+tpstab:Button("Exit TP", function()
+    local models = getOrderedModels("ExitDoor")
+    if #models == 0 then return end
+    local model = models[exitIndex]
+    Teleport(model)
+    exitIndex = exitIndex + 1
+    if exitIndex > #models then exitIndex = 1 end
 end)
 
-tpstab:Button("Random Freezer TP", function()
-	local model = getRandomModel("FreezePod")
-	if not model or not model.PrimaryPart then return end
-
-	local char, rootName = getRoot()
-	local root = char:WaitForChild(rootName)
-	local front = model.PrimaryPart.CFrame.Position + model.PrimaryPart.CFrame.LookVector * 5
-	root.CFrame = CFrame.new(front)
+tpstab:Button("Freezer TP", function()
+    local models = getOrderedModels("FreezePod")
+    if #models == 0 then return end
+    local model = models[freezerIndex]
+    Teleport(model)
+    freezerIndex = freezerIndex + 1
+    if freezerIndex > #models then freezerIndex = 1 end
 end)
 
 funtab:Button("Infinite Yield", function()
