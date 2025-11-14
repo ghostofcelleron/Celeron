@@ -2,24 +2,33 @@ local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Generic RP)",
-    ThemeColor = Color3.fromRGB(18, 18, 18),
+    ThemeColor = Color3.fromRGB(155, 155, 155),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.GothamBold
 })
 
 local maintab = win:Tab("Main")
+local esptab = win:Tab("Visual")
 local tpstab = win:Tab("Teleports")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
+esptab:Label("Visual Features.")
 tpstab:Label("Teleport Bypass Originally Made By Celeron.")
 misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
+local function WorkingTp()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+end
+
 getgenv().lastSliderSet = nil
 getgenv().cframeLoopRunning = false
+getgenv().lastJumpSet = nil
+getgenv().jumpBoostEnabled = true
+getgenv().jumpConn = nil
 
 local uis = game:GetService("UserInputService")
 local players = game:GetService("Players")
@@ -36,44 +45,48 @@ local function getInputDirection()
     return dir.Magnitude > 0 and dir.Unit or nil
 end
 
-local function ensureXZVelocity(hrp)
-    local bv = hrp:FindFirstChild("VelocityXZ")
-    if not bv then
-        bv = Instance.new("BodyVelocity")
-        bv.Name = "VelocityXZ"
-        bv.MaxForce = Vector3.new(1e6, 0, 1e6)
-        bv.P = 1e4
-        bv.Velocity = Vector3.new()
-        bv.Parent = hrp
-    end
+local function createBodyVelocity(hrp)
+    local bv = Instance.new("BodyVelocity")
+    bv.Name = "Velocity"
+    bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+    bv.Velocity = Vector3.zero
+    bv.P = 1e4
+    bv.Parent = hrp
     return bv
 end
 
 getgenv().applySpeed = function()
     if getgenv().cframeLoopRunning then return end
     getgenv().cframeLoopRunning = true
-    task.spawn(function()
+    coroutine.wrap(function()
         while getgenv().cframeLoopRunning do
             local char = lp.Character
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
             local cam = workspace.CurrentCamera
-            if hrp then
+            if hrp and hum then
                 local speed = getgenv().lastSliderSet or 16
-                local bv = ensureXZVelocity(hrp)
-                local inputDir = getInputDirection()
-                if inputDir then
-                    local camCF = cam.CFrame
-                    local forward = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
-                    local right = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
-                    local moveVec = (forward * inputDir.Z + right * inputDir.X).Unit * speed
-                    bv.Velocity = Vector3.new(moveVec.X, 0, moveVec.Z)
+                local bv = hrp:FindFirstChild("Velocity")
+                if speed < 19 then
+                    if bv then bv:Destroy() end
                 else
-                    bv.Velocity = Vector3.new()
+                    bv = bv or createBodyVelocity(hrp)
+                    local inputDir = getInputDirection()
+                    if inputDir then
+                        local camCF = cam.CFrame
+                        local forward = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z).Unit
+                        local right = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z).Unit
+                        local moveVec = (forward * inputDir.Z + right * inputDir.X).Unit
+                        local currentY = hrp.Velocity.Y
+                        bv.Velocity = moveVec * speed + Vector3.new(0, currentY, 0)
+                    else
+                        bv.Velocity = Vector3.zero
+                    end
                 end
             end
             task.wait()
         end
-    end)
+    end)()
 end
 
 maintab:Slider("Player Speed", 20, 0, 45, function(v)
@@ -83,38 +96,49 @@ end)
 
 getgenv().lastJumpSet = nil
 getgenv().jumpBoostEnabled = true
+getgenv().jumpConn = nil
 
 local players = game:GetService("Players")
+local debris = game:GetService("Debris")
 local lp = players.LocalPlayer
 
 local function applyJumpBoost(hum, hrp)
-	hum.StateChanged:Connect(function(_, new)
-		if new == Enum.HumanoidStateType.Jumping and getgenv().jumpBoostEnabled then
-			local boost = Instance.new("BodyVelocity")
-			boost.Name = "jump"
-			boost.MaxForce = Vector3.new(0, 1e5, 0)
-			boost.Velocity = Vector3.new(0, getgenv().lastJumpSet or 50, 0)
-			boost.P = 1e4
-			boost.Parent = hrp
-
-			game:GetService("Debris"):AddItem(boost, 0.2)
-		end
-	end)
+    if getgenv().jumpConn then
+        getgenv().jumpConn:Disconnect()
+        getgenv().jumpConn = nil
+    end
+    getgenv().jumpConn = hum.StateChanged:Connect(function(_, new)
+        if new == Enum.HumanoidStateType.Jumping and getgenv().jumpBoostEnabled then
+            local boost = Instance.new("BodyVelocity")
+            boost.MaxForce = Vector3.new(0, 1e5, 0)
+            boost.Velocity = Vector3.new(0, getgenv().lastJumpSet or hum.JumpPower, 0)
+            boost.P = 1e4
+            boost.Parent = hrp
+            debris:AddItem(boost, 0.2)
+        end
+    end)
 end
 
 getgenv().applyJump = function()
-	local char = lp.Character
-	local hum = char and char:FindFirstChildOfClass("Humanoid")
-	local hrp = char and char:FindFirstChild("HumanoidRootPart")
-	if hum and hrp then
-		hum.JumpPower = 50
-		applyJumpBoost(hum, hrp)
-	end
+    local char = lp.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hum and hrp then
+        hum.UseJumpPower = false
+        hum.JumpHeight = 50
+        applyJumpBoost(hum, hrp)
+    end
 end
 
-maintab:Slider("Jump Boost", 50, 0, 350, function(v)
-	getgenv().lastJumpSet = v
-	getgenv().applyJump()
+maintab:Slider("Jump Boost", 50, 0, 200, function(v)
+    getgenv().lastJumpSet = v
+    getgenv().applyJump()
+end)
+
+players.LocalPlayer.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid")
+    char:WaitForChild("HumanoidRootPart")
+    getgenv().applyJump()
 end)
 
 players.LocalPlayer.CharacterAdded:Connect(function(char)
@@ -126,52 +150,6 @@ end)
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
 local UIS = game:GetService("UserInputService")
-
-local stopFollow = false
-
-local function followPlayer(playerName)
-    local Player = game.Players.LocalPlayer
-    local Target = Players:FindFirstChild(playerName)
-
-    if Target and Target.Character and Target.Character:FindFirstChild("HumanoidRootPart") then
-        stopFollow = false
-        while Target and Target.Character:FindFirstChild("HumanoidRootPart") and not stopFollow do
-            local TargetHumanoid = Target.Character:FindFirstChild("Humanoid")
-            if TargetHumanoid and TargetHumanoid.Health <= 0 then
-                StarterGui:SetCore("SendNotification", {
-                    Title = "Kill Player",
-                    Text = "Target has died.",
-                    Duration = 3,
-                })
-                break
-            end
-
-            local TargetPosition = Target.Character.HumanoidRootPart.Position
-            local HumanoidRootPart = Player.Character:FindFirstChild("HumanoidRootPart")
-            if HumanoidRootPart then
-                HumanoidRootPart.CFrame = CFrame.new(TargetPosition)
-            end
-            task.wait(0.1)
-        end
-    else
-        StarterGui:SetCore("SendNotification", {
-            Title = "Kill Player",
-            Text = "Player unavailable.",
-            Duration = 3,
-        })
-    end
-end
-
-UIS.InputBegan:Connect(function(input, gameProcessed)
-    if input.KeyCode == Enum.KeyCode.Z and not gameProcessed then
-        stopFollow = true
-        StarterGui:SetCore("SendNotification", {
-            Title = "Kill Player",
-            Text = "Targeting stopped.",
-            Duration = 3,
-        })
-    end
-end)
 
 local InfiniteJumpEnabled = false
 
@@ -196,7 +174,7 @@ UIS.JumpRequest:Connect(function()
     end
 end)
 
-maintab:Button("GRG Teleport Tool", function(v)
+maintab:Button("GRG Teleport Tool", function()
 local Player = game.Players.LocalPlayer
 local Backpack = Player:WaitForChild("Backpack")
 
@@ -218,16 +196,11 @@ teleportTool.Activated:Connect(function()
 end)
 end)
 
-maintab:Textbox("Kill Player", function(v)
-    stopFollow = false
-    followPlayer(v)
-end)
-
 local ESPEnabled = false
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
 
-maintab:Button("ESP", function(v)
+esptab:Button("Player ESP", function()
     ESPEnabled = not ESPEnabled
 
     if ESPEnabled then
@@ -248,7 +221,7 @@ maintab:Button("ESP", function(v)
         end
 
         StarterGui:SetCore("SendNotification", {
-            Title = "ESP",
+            Title = "Player ESP",
             Text = "Enabled.",
             Duration = 3,
         })
@@ -263,67 +236,55 @@ maintab:Button("ESP", function(v)
         end
 
         StarterGui:SetCore("SendNotification", {
-            Title = "ESP",
+            Title = "Player ESP",
             Text = "Disabled.",
             Duration = 3,
         })
     end
 end)
 
-maintab:Button("Escape Jail (Once Per Server, Instant.)", function(v)
+maintab:Button("Escape Jail (Once Per Server, Instant.)", function()
 local args = { [1] = "Peasant" }
 game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 9e9):WaitForChild("FriendSpawn", 9e9):FireServer(unpack(args))
 end)
 
+maintab:Button("Suspicion Points", function(v)
+game:GetService("StarterGui"):SetCore("SendNotification",{
+ Title="Suspicion Points",
+ Text=string.format("%.2f",game.Players.LocalPlayer:GetAttribute("SuspicionPoints")),
+ Duration=3
+})
+end)
+
 tpstab:Button("Spawn", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
     WorkingTp()
     task.wait(0.25)
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1, 23, 399)
 end)
 
 tpstab:Button("Leader Tower", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
     WorkingTp()
     task.wait(0.25)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-0, 45, 460)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 44, 428)
 end)
 
 tpstab:Button("Arena", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
-    WorkingTp()
-    task.wait(0.25)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-312, 41, 338)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-227, 35, 309)
 end)
 
 tpstab:Button("Karl's Karts", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
     WorkingTp()
     task.wait(0.25)
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-258, 26, 462)
 end)
 
 tpstab:Button("Council Area", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
     WorkingTp()
     task.wait(0.25)
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1, 46, 625)
 end)
 
 tpstab:Button("Barbarian Town", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
     WorkingTp()
     task.wait(0.25)
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0, 7, -1299)
@@ -334,13 +295,10 @@ tpstab:Button("Barbarian Doctor", function()
 end)
 
 tpstab:Button("Food Store", function()
-	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(80, 23, 308)
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(72, 24, 301)
 end)
 
 tpstab:Button("Doctor Store", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
     WorkingTp()
 end)
 
@@ -354,7 +312,7 @@ tpstab:Button("Mountains", function()
 end)
 
 misctab:Button("Infinite Yield", function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/SimpleSpyV3/main.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
 
 misctab:Button("Audio Logger", function()
