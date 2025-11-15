@@ -43,7 +43,7 @@ end)
 
 maintab2:Label("Notification Suppression: Useful When Streaming.")
 
-maintab2:Button("Suppress Notifications", function()
+maintab2:Toggle("Suppress Notifications", function()
     _G.suppressNotifs = not (_G.suppressNotifs or false)
     local StarterGui = game:GetService("StarterGui")
 
@@ -69,7 +69,8 @@ maintab:Button("Metavision V2", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/HfpQBAsF"))()
 end)
 
-maintab:Button("Auto Goal", function()
+maintab:Label("Ball Features.")
+maintab:Toggle("Auto Goal", function()
     _G.AUTO_GOAL = not _G.AUTO_GOAL
     if _G.AUTO_GOAL then
         game.StarterGui:SetCore("SendNotification", {
@@ -204,7 +205,7 @@ end))
     end
 end)
 
-maintab:Button("Always Ball", function()
+maintab:Toggle("Always Ball", function()
 _G.ALWAYS_BALL_ACTIVE = not _G.ALWAYS_BALL_ACTIVE
 if _G.ALWAYS_BALL_ACTIVE then
     game.StarterGui:SetCore("SendNotification", {
@@ -562,12 +563,12 @@ local function sideDash(direction)
 end
 
 maintab:Label("No Cooldown Features.")
-maintab:Button("No Rush Cooldown", function()
+maintab:Toggle("No Rush Cooldown", function()
     _G.ForwardRushEnabled = not _G.ForwardRushEnabled
     notify("No Rush CD", _G.ForwardRushEnabled and "Enabled." or "Disabled.")
 end)
 
-maintab:Button("No Side Dash Cooldown", function()
+maintab:Toggle("No Side Dash Cooldown", function()
     _G.SideDashEnabled = not _G.SideDashEnabled
     notify("No Side Dash CD", _G.SideDashEnabled and "Enabled." or "Disabled.")
 end)
@@ -640,7 +641,7 @@ end)
 
 maintab2:Label("Ball Magnet: Allows You To Grab The Ball From Further Away.")
 
-maintab2:Button("Ball Magnet", function()
+maintab2:Toggle("Ball Magnet", function()
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
 
 getgenv().ballMagnetActive = not getgenv().ballMagnetActive
@@ -678,7 +679,7 @@ local starterGui = game:GetService("StarterGui")
 local magnetEnabled = false
 local connection
 
-maintab2:Button("Bind Magnet (M2 BIND)", function()
+maintab2:Toggle("Bind Magnet (M2 BIND)", function()
     if not magnetEnabled then
         magnetEnabled = true
 
@@ -806,13 +807,13 @@ RunService.Stepped:Connect(function()
 end)
 
 function createAutoCounter(label, toggleKey)
-	maintab2:Button(label, function()
+	maintab2:Toggle(label, function()
 		_G[toggleKey] = not (_G[toggleKey] or false)
 		notify(label, _G[toggleKey] and "Enabled." or "Disabled.", 3)
 	end)
 end
 
-maintab2:Button("Toggle Keybinds", function()
+maintab2:Toggle("Toggle Keybinds", function()
 	_G.keybindsEnabled = not (_G.keybindsEnabled or false)
 	notify("Keybinds", _G.keybindsEnabled and "Enabled." or "Disabled.", 3)
 end)
@@ -987,7 +988,7 @@ local function setCollide(state)
     if bg then bg.CanCollide = state end
 end
 
-maintab:Button("Toggle Blatant Mode", function()
+maintab:Toggle("Toggle Blatant Mode", function()
     blatantEnabled = not blatantEnabled
     if blatantEnabled then
         loopConnection = rs.Heartbeat:Connect(function() setCollide(false) end)
@@ -999,20 +1000,6 @@ maintab:Button("Toggle Blatant Mode", function()
     end
 end)
 
-maintab:Button("Manual Score", function()
-if game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-	if workspace:WaitForChild("map"):WaitForChild("Agoal") and workspace:WaitForChild("map"):WaitForChild("Bgoal") then
-		if game:GetService("Players").LocalPlayer.Team then
-			game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame =
-				(game:GetService("Players").LocalPlayer.Team.Name == "A"
-					and workspace.map.Bgoal
-					or workspace.map.Agoal
-				).CFrame
-		end
-	end
-end
-end)
-
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
 local UIS = game:GetService("UserInputService")
 local StarterGui = game:GetService("StarterGui")
@@ -1020,7 +1007,7 @@ local cam = workspace.CurrentCamera
 
 local airDribbleEnabled = false
 
-maintab:Button("Air Dribble (Binds To LeftAlt.)", function()
+maintab:Toggle("Air Dribble (Binds To LeftAlt.)", function()
     airDribbleEnabled = not airDribbleEnabled
     StarterGui:SetCore("SendNotification", {
         Title = "Air Dribble",
@@ -1042,6 +1029,19 @@ remote:FireServer(buffer.fromstring("\023\001"), { { "kick", 30, false, kickVec 
     remote:FireServer(buffer.fromstring("\022"))	
 end)
 
+maintab:Button("Manual Score", function()
+if game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+	if workspace:WaitForChild("map"):WaitForChild("Agoal") and workspace:WaitForChild("map"):WaitForChild("Bgoal") then
+		if game:GetService("Players").LocalPlayer.Team then
+			game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame =
+				(game:GetService("Players").LocalPlayer.Team.Name == "A"
+					and workspace.map.Bgoal
+					or workspace.map.Agoal
+				).CFrame
+		end
+	end
+end
+end)
 maintab2:Label("Auto Position: Instantly Picks Certain Position.")
 
 _G.AutoToggles = _G.AutoToggles or {
@@ -1080,7 +1080,7 @@ function _G.fireGKPackets()
 	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\004\005\001\000A"))
 end
 
-maintab2:Button("Auto CF", function()
+maintab2:Toggle("Auto CF", function()
 	_G.AutoToggles.CF = not _G.AutoToggles.CF
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -1107,7 +1107,7 @@ maintab2:Button("Auto CF", function()
 	end
 end)
 
-maintab2:Button("Auto GK", function()
+maintab2:Toggle("Auto GK", function()
 	_G.AutoToggles.GK = not _G.AutoToggles.GK
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -1136,7 +1136,7 @@ end)
 
 maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
 
-maintab2:Button("Auto Formless (Binds To T.)", function()
+maintab2:Toggle("Auto Formless (Binds To T.)", function()
 	local UIS = game:GetService("UserInputService")
 	local Players = game:GetService("Players")
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1198,7 +1198,7 @@ end)
 
 _G.nocutscene = false
 
-maintab2:Button("No Cutscene", function()
+maintab2:Toggle("No Cutscene", function()
 	_G.nocutscene = not _G.nocutscene
 
 	local StarterGui = game:GetService("StarterGui")
@@ -1236,7 +1236,7 @@ local dotSize = UDim2.new(0, 6, 0, 6)
 local offset = Vector3.new(0, 3, 0)
 local updateInterval = 0.2
 
-maintab2:Button("IFrame Indicator", function()
+maintab2:Toggle("IFrame Indicator", function()
 	iframeIndicatorEnabled = not iframeIndicatorEnabled
 
 	local StarterGui = game:GetService("StarterGui")
@@ -1325,7 +1325,7 @@ maintab2:Button("IFrame Indicator", function()
 end)
 
 maintab2:Label("Other Features: Other Silent Features, Continued.")
-maintab2:Button("Auto QuickTimeEvent", function()
+maintab2:Toggle("Auto QuickTimeEvent", function()
     local runService = game:GetService("RunService")
     local players = game:GetService("Players")
     local virtualInputManager = game:GetService("VirtualInputManager")
@@ -1935,7 +1935,7 @@ end)
 
 _G.mutecrowd = false
 
-misctab:Button("Toggle Crowd", function()
+misctab:Toggle("Toggle Crowd", function()
 	_G.mutecrowd = not _G.mutecrowd
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -1957,7 +1957,11 @@ misctab:Button("Toggle Crowd", function()
 	end)
 end)
 
-emotetab:Button("Toosie Slide", function()
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+emotetab:Toggle("Toosie Slide", function()
 _G.isEnabled = _G.isEnabled or false
 
 local animationId = "rbxassetid://95959941666543"
@@ -2002,7 +2006,7 @@ end
 toggleState()
 end)
 
-emotetab:Button("Sae Pose", function()
+emotetab:Toggle("Sae Pose", function()
 
 _G.SaePose = _G.SaePose or false
 
@@ -2049,7 +2053,7 @@ end
 toggleState()
 end)
 
-emotetab:Button("Assumptions", function()
+emotetab:Toggle("Assumptions", function()
 _G.Assumptions = _G.Assumptions or false
 
 local animationId = "rbxassetid://108778663919542"
@@ -2361,10 +2365,6 @@ misctab:Button("Background Music", function()
             sfx:Destroy()
         end)
     end
-end)
-
-misctab:Button("Infinite Yield", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
 
 helptab:Button("Copy Owner Discord Username", function()
