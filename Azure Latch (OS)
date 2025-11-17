@@ -16,7 +16,6 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
-funtab:Label("Custom Movesets, Not Actual Unlocks!")
 emotetab:Label("The Sounds Are Client Sided, The Emotes Are Visible!")
 teleporttab:Label("Map Teleports, No Prerequisites To Use!")
 misctab:Label("Miscellaneous Features, They Give No Advantages In-Game!")
@@ -1029,6 +1028,63 @@ remote:FireServer(buffer.fromstring("\025\001"), { { "kick", 30, false, kickVec 
     remote:FireServer(buffer.fromstring("\024"))	
 end)
 
+local running = false
+local sg = game:GetService("StarterGui")
+
+maintab:Toggle("Spam Brick Sound (GK Only.)", function(state)
+    running = state
+
+    if running then
+        sg:SetCore("SendNotification", {
+            Title = "Brick Spam";
+            Text = "Enabled.";
+            Duration = 3
+        })
+
+        task.spawn(function()
+            local char = game.Players.LocalPlayer.Character
+            local root = char:WaitForChild("HumanoidRootPart")
+
+            local team = game.Players.LocalPlayer.Team and game.Players.LocalPlayer.Team.Name
+            local targetPos
+
+            if team == "A" then
+                targetPos = Vector3.new(-510, 3, 1706)
+            elseif team == "B" then
+                targetPos = Vector3.new(-559, 3, 843)
+            end
+
+            if targetPos then
+                while running do
+                    root.CFrame = CFrame.new(targetPos)
+                    wait(0.1)
+
+                    local args = {
+                        buffer.fromstring("\025\001"),
+                        {
+                            {
+                                "kick",
+                                27,
+                                false,
+                                vector.create(0, 1, 0)
+                            }
+                        }
+                    }
+                    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+
+                    task.wait(0.05)
+                end
+            end
+        end)
+    else
+        sg:SetCore("SendNotification", {
+            Title = "Brick Spam";
+            Text = "Disabled.";
+            Duration = 3
+        })
+    end
+end)
+
 maintab:Button("Manual Score", function()
 if game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 	if workspace:WaitForChild("map"):WaitForChild("Agoal") and workspace:WaitForChild("map"):WaitForChild("Bgoal") then
@@ -1042,6 +1098,7 @@ if game:GetService("Players").LocalPlayer.Character and game:GetService("Players
 	end
 end
 end)
+
 maintab2:Label("Auto Position: Instantly Picks Certain Position.")
 
 _G.AutoToggles = _G.AutoToggles or {
@@ -1445,6 +1502,7 @@ for _, obj in ipairs(workspace.Terrain:GetDescendants()) do
 end
 end)
 
+funtab:Label("Celeron's Movesets.")
 funtab:Button("Don Lorenzo (Nagi)", function()
 local StarterGui = game:GetService("StarterGui")
 
@@ -1640,6 +1698,59 @@ print("loaded don lorenzo script")
 UserInputService.InputBegan:connect(onKeyPress)
 end)
 
+funtab:Button("Goku Moveset (Use Kaiser / Isagi.)", function()
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Credits",
+    Text = "brought to you by celeron!",
+    Duration = 5,
+    Button1 = "OK",
+})
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/goku%20moveset%20(azl)",true))()
+end)
+
+funtab:Button("Admin Moveset", function()
+local char = game.Players.LocalPlayer.Character
+local humanoid = char:FindFirstChildOfClass("Humanoid")
+local animator = humanoid:FindFirstChildOfClass("Animator")
+
+local runAnimation = Instance.new("Animation")
+runAnimation.AnimationId = "rbxassetid://117921992582675"
+
+local walkAnimation = Instance.new("Animation")
+walkAnimation.AnimationId = "rbxassetid://117921992582675"
+
+local runTrack = animator:LoadAnimation(runAnimation)
+local walkTrack = animator:LoadAnimation(walkAnimation)
+
+-- Track current state to avoid spamming Play/Stop
+local currentState = "Idle"
+
+humanoid.Running:Connect(function(speed)
+    if speed <= 0 then
+        if currentState ~= "Idle" then
+            walkTrack:Stop()
+            runTrack:Stop()
+            currentState = "Idle"
+        end
+    elseif speed > 0 and speed <= 8 then
+        if currentState ~= "Walking" then
+            runTrack:Stop()
+            walkTrack:Play()
+            currentState = "Walking"
+        end
+    elseif speed > 8 then
+        if currentState ~= "Running" then
+            walkTrack:Stop()
+            runTrack:Play()
+            currentState = "Running"
+        end
+    end
+end)
+
+end)
+
+funtab:Label("Daffy's Movesets.")
 funtab:Button("Ronaldo V2 (Shidou)", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
@@ -1869,68 +1980,25 @@ end)
 end)
 
 funtab:Button("Gojo Moveset (Use Isagi.)", function()
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Credits",
+    Text = "brought to you by daffy!",
+    Duration = 5,
+    Button1 = "OK",
+})
 loadstring(game:HttpGet("https://pastebin.com/raw/TH8xDy9X"))()
 end)
 
 funtab:Button("Loki Moveset (Use Isagi.)", function()
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Credits",
+    Text = "brought to you by daffy!",
+    Duration = 5,
+    Button1 = "OK",
+})
 loadstring(game:HttpGet("https://pastebin.com/raw/LbRRX7SK"))()
-end)
-
-funtab:Button("Goku Moveset (Use Kaiser / Isagi.)", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/goku%20moveset%20(azl)",true))()
-end)
-
-funtab:Button("Trolling Moveset", function()
-    local char = game.Players.LocalPlayer.Character
-    local plr = game.Players.LocalPlayer
-    local hotbar = plr.PlayerGui.Hotbar
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    local animator = humanoid:FindFirstChildOfClass("Animator")
-
-    local runAnimation = Instance.new("Animation")
-    runAnimation.AnimationId = "rbxassetid://117921992582675"
-
-    local walkAnimation = Instance.new("Animation")
-    walkAnimation.AnimationId = "rbxassetid://117921992582675"
-
-    local runTrack = animator:LoadAnimation(runAnimation)
-    local walkTrack = animator:LoadAnimation(walkAnimation)
-
-    humanoid.Running:Connect(function(speed)
-        if speed > 8 then
-            walkTrack:Stop()
-            runTrack:Play()
-        elseif speed > 0 then
-            runTrack:Stop()
-            walkTrack:Play()
-        else
-            walkTrack:Stop()
-            runTrack:Stop()
-        end
-    end)
-
-    local flowTexts = {
-        ["nagi"] = "mcdonalds application",
-        ["isagi"] = "2 loving parents",
-        ["sae"] = "aura farm",
-        ["rin"] = "luke warm",
-        ["donlorenzo"] = "homeless person",
-        ["kaiser"] = "clown of isagi's story",
-        ["shidou"] = "saes #1 fan",
-        ["aiku"] = "dih snake",
-        ["barou"] = "barou barou kun",
-        ["bachira"] = "ball hog",
-        ["gagamaru"] = "team carrying goat"
-    }
-
-    if flowTexts[plr:GetAttribute("style")] then
-        hotbar.MagicHealth.TextLabel.Text = flowTexts[plr:GetAttribute("style")]
-    else
-        hotbar.MagicHealth.TextLabel.Text = "you dont exist"
-    end
-
-    hotbar.MagicHealth.ModeText.Text = ""
-    hotbar.MagicHealth.Health.Frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 end)
 
 _G.mutecrowd = false
