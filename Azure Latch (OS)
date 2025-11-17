@@ -141,7 +141,7 @@ local function StealBall()
                 LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\023\001"),
+						buffer.fromstring("\025\001"),
 						{
 							{
 								"tackle"
@@ -178,7 +178,7 @@ coroutine.resume(coroutine.create(function()
 					wait(0.185)
 
 					local args = {
-						buffer.fromstring("\023\001"),
+						buffer.fromstring("\025\001"),
 						{
 							{
 								"kick",
@@ -237,7 +237,7 @@ if _G.ALWAYS_BALL_ACTIVE then
                         LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 						local args = {
-							buffer.fromstring("\023\001"),
+							buffer.fromstring("\025\001"),
 							{
 								{
 									"tackle"
@@ -278,7 +278,7 @@ task.spawn(function()
 	local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
 	local flow = workspace:WaitForChild("characters"):WaitForChild(player.Name):WaitForChild("state"):WaitForChild("flow")
 	while flow.Value < 100 do
-		remote:FireServer(buffer.fromstring("\023\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
+		remote:FireServer(buffer.fromstring("\025\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
 		task.wait(0.01)
 	end
 	wait(0.9)
@@ -363,7 +363,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\023\001"),
+						buffer.fromstring("\025\001"),
 							{
 								{
 								"tackle"
@@ -414,7 +414,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\023\001"),
+						buffer.fromstring("\025\001"),
 						{
 							{
 								"tackle"
@@ -660,7 +660,7 @@ if getgenv().ballMagnetActive then
 	getgenv().ballMagnetConnection = task.spawn(function()
 		while getgenv().ballMagnetActive do
 			pcall(function()
-				remote:FireServer(buffer.fromstring("\022"))
+				remote:FireServer(buffer.fromstring("\024"))
 			end)
 			task.wait()
 		end
@@ -686,7 +686,7 @@ maintab2:Toggle("Bind Magnet (M2 BIND)", function()
         connection = userInputService.InputBegan:Connect(function(input, gameProcessed)
             if gameProcessed then return end
             if input.UserInputType == Enum.UserInputType.MouseButton2 then
-                remote:FireServer(buffer.fromstring("\022"))
+                remote:FireServer(buffer.fromstring("\024"))
             end
         end)
 
@@ -784,12 +784,12 @@ RunService.Stepped:Connect(function()
 										local args
 										if skillName == "dribble" then
 											args = {
-												buffer.fromstring("\023\001"),
+												buffer.fromstring("\025\001"),
 												{ { skillName, false } }
 											}
 										else
 											args = {
-												buffer.fromstring("\023\001"),
+												buffer.fromstring("\025\001"),
 												{ { skillName } }
 											}
 										end
@@ -1022,11 +1022,11 @@ UIS.InputBegan:Connect(function(input, gp)
 
 local dir = cam.CFrame.LookVector
 local kickVec = vector.create(dir.X * 0.7, 1, dir.Z * 0.7)
-remote:FireServer(buffer.fromstring("\023\001"), { { "kick", 30, false, kickVec } })
+remote:FireServer(buffer.fromstring("\025\001"), { { "kick", 30, false, kickVec } })
     task.wait(0.5)
-    remote:FireServer(buffer.fromstring("\022"))
+    remote:FireServer(buffer.fromstring("\024"))
 	wait(0.05)
-    remote:FireServer(buffer.fromstring("\022"))	
+    remote:FireServer(buffer.fromstring("\024"))	
 end)
 
 maintab:Button("Manual Score", function()
@@ -1185,12 +1185,12 @@ maintab2:Toggle("Auto Formless (Binds To T.)", function()
 
 		task.wait(0.1)
 		ByteNetReliable:FireServer(
-			buffer.fromstring("\023\001"),
+			buffer.fromstring("\025\001"),
 			{ { "kick", 24, false, vector.create(0, 1, 0) } }
 		)
 
 		ByteNetReliable:FireServer(
-			buffer.fromstring("\023\001"),
+			buffer.fromstring("\025\001"),
 			{ { "skill1" } }
 		)
 	end)
@@ -1420,7 +1420,7 @@ local con = game["Run Service"].RenderStepped:Connect(function()
             end
 
             local args = {
-                buffer.fromstring("\023\001"),
+                buffer.fromstring("\025\001"),
                 {
                     { "tackle" }
                 }
