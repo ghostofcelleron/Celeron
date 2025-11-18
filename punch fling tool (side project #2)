@@ -1,0 +1,91 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local tool = Instance.new("Tool")
+tool.Name = "Punch"
+tool.ToolTip = "Falcon... PUNCHHH!"
+tool.RequiresHandle = false
+tool.Parent = LocalPlayer.Backpack
+
+local canUse = true
+local cooldown = 1
+
+local function playAnimation(animId)
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+    if not animator then
+        animator = Instance.new("Animator")
+        animator.Parent = humanoid
+    end
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://" .. animId
+    local track = animator:LoadAnimation(anim)
+    track.Priority = Enum.AnimationPriority.Action
+    track:Play()
+end
+
+local function setOthersCollision(enabled)
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            for _, part in pairs(p.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = enabled
+                end
+            end
+        end
+    end
+end
+
+local function doWalkfling(duration)
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local vel, movel = root.Velocity, 0.1
+    local startTime = tick()
+
+    while tick() - startTime < duration do
+        RunService.Heartbeat:Wait()
+        if not (character and character.Parent and root and root.Parent) then
+            character = LocalPlayer.Character
+            root = character and character:FindFirstChild("HumanoidRootPart")
+        end
+        if root then
+            vel = root.Velocity
+            root.Velocity = vel * 1e+23 + Vector3.new(0, 100, 0)
+
+            RunService.RenderStepped:Wait()
+            if character and character.Parent and root and root.Parent then
+                root.Velocity = vel
+            end
+
+            RunService.Stepped:Wait()
+            if character and character.Parent and root and root.Parent then
+                root.Velocity = vel + Vector3.new(0, movel, 0)
+                movel = -movel
+            end
+        end
+    end
+end
+
+tool.Activated:Connect(function()
+    if not canUse then return end
+    canUse = false
+
+    playAnimation(204062532)
+
+    setOthersCollision(false)
+
+    doWalkfling(0.75)
+
+    setOthersCollision(true)
+
+    task.delay(cooldown, function()
+        canUse = true
+    end)
+end)
