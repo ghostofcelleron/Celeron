@@ -6,6 +6,7 @@ local win = ui:Create({
     ThemeColor = Color3.fromRGB(111, 111, 111),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.GothamBold
+	ToggledSideBar = true
 })
 
 local maintab = win:Tab("Blatant")
