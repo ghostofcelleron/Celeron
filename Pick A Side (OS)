@@ -1,0 +1,139 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (Pick A Side)",
+    ThemeColor = Color3.fromRGB(20, 20, 20),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local farmtab = win:Tab("Farm")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+farmtab:Label("Farming Section.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function playerBoosts(character, propName, value)
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    local running = true
+    task.spawn(function()
+        while running and humanoid.Parent do
+            humanoid[propName] = value
+            task.wait(0.1)
+        end
+    end)
+    return function() running = false end
+end
+
+do
+    local stopLoop
+    maintab:Textbox("Player Speed", function(v)
+        if stopLoop then stopLoop() end
+        local function apply(char)
+            if stopLoop then stopLoop() end
+            stopLoop = playerBoosts(char, "WalkSpeed", tonumber(v) or 16)
+        end
+        if LocalPlayer.Character then apply(LocalPlayer.Character) end
+        LocalPlayer.CharacterAdded:Connect(apply)
+    end)
+end
+
+do
+    local stopLoop
+    maintab:Textbox("Player Jump", function(v)
+        if stopLoop then stopLoop() end
+        local function apply(char)
+            if stopLoop then stopLoop() end
+            stopLoop = playerBoosts(char, "JumpPower", tonumber(v) or 50)
+        end
+        if LocalPlayer.Character then apply(LocalPlayer.Character) end
+        LocalPlayer.CharacterAdded:Connect(apply)
+    end)
+end
+
+maintab:Textbox("Weapon Reach", function(v)
+    local char = LocalPlayer.Character
+    if not char then return end
+    local tool = char:FindFirstChildOfClass("Tool")
+    if tool then
+        local handle = tool:FindFirstChild("Handle")
+        if handle and handle:IsA("BasePart") then
+            local size = tonumber(v)
+            if size then
+                handle.Size = Vector3.new(size, size, size)
+                handle.Massless = true
+                handle.CanCollide = false
+                pcall(function()
+                    game:GetService("PhysicsService"):SetPartCollisionGroup(handle, "Default")
+                end)
+                local box = Instance.new("SelectionBox")
+                box.Adornee = handle
+                box.LineThickness = 0.05
+                box.Color3 = Color3.fromRGB(11, 11, 11)
+                box.Parent = handle
+            end
+        end
+    end
+end)
+
+local moneyFarmActive = false
+local moneyFarmLoop = nil
+
+farmtab:Toggle("Money Farm", function(v)
+    moneyFarmActive = v
+    local guiService = game:GetService("StarterGui")
+    guiService:SetCore("SendNotification", {
+        Title = "Money Farm",
+        Text = moneyFarmActive and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+
+    if moneyFarmLoop then
+        moneyFarmLoop:Disconnect()
+        moneyFarmLoop = nil
+    end
+
+    if moneyFarmActive then
+        moneyFarmLoop = game:GetService("RunService").Heartbeat:Connect(function()
+            local character = LocalPlayer.Character
+            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+            if rootPart then
+                rootPart.CFrame = CFrame.new(50, 4, 7)
+            end
+        end)
+    end
+end)
+
+misctab:Button("Infinite Yield", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Username",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Invite",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("https://discord.gg/8stFYxJv4R")
+end)
