@@ -84,6 +84,145 @@ maintab:Textbox("Weapon Reach", function(v)
     end
 end)
 
+maintab:Label("Specific Weapon Features.")
+
+maintab:Toggle("Camlock (Configured For Hex Spitter.)", function(v)
+    local Players = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+    local UserInputService = game:GetService("UserInputService")
+    local StarterGui = game:GetService("StarterGui")
+    local LocalPlayer = Players.LocalPlayer
+    local Camera = workspace.CurrentCamera
+
+    local rightClickHeld = false
+    local lockedTarget = nil
+
+    if getgenv()._camlockConnections then
+        for _, conn in ipairs(getgenv()._camlockConnections) do
+            conn:Disconnect()
+        end
+    end
+    getgenv()._camlockConnections = {}
+
+    local function getClosestEnemy()
+        local closest, shortest = nil, math.huge
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Team ~= LocalPlayer.Team then
+                local char = player.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if root and hrp then
+                    local dist = (hrp.Position - root.Position).Magnitude
+                    if dist < shortest then
+                        closest = root
+                        shortest = dist
+                    end
+                end
+            end
+        end
+        return closest
+    end
+
+    if v then
+        StarterGui:SetCore("SendNotification", {Title = "Camlock", Text = "Enabled.", Duration = 3})
+        table.insert(getgenv()._camlockConnections, UserInputService.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                rightClickHeld = true
+                lockedTarget = getClosestEnemy()
+            end
+        end))
+        table.insert(getgenv()._camlockConnections, UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                rightClickHeld = false
+                lockedTarget = nil
+            end
+        end))
+        table.insert(getgenv()._camlockConnections, RunService.RenderStepped:Connect(function()
+            if rightClickHeld and lockedTarget then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, lockedTarget.Position)
+            end
+        end))
+    else
+        StarterGui:SetCore("SendNotification", {Title = "Camlock", Text = "Disabled.", Duration = 3})
+        for _, conn in ipairs(getgenv()._camlockConnections) do
+            conn:Disconnect()
+        end
+        getgenv()._camlockConnections = {}
+        rightClickHeld = false
+        lockedTarget = nil
+    end
+end)
+
+maintab:Toggle("Camlock (Configured For Golden Bow.)", function(v)
+    local Players = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+    local UserInputService = game:GetService("UserInputService")
+    local StarterGui = game:GetService("StarterGui")
+    local LocalPlayer = Players.LocalPlayer
+    local Camera = workspace.CurrentCamera
+
+    local predictionOffset = 2.225
+    local rightClickHeld = false
+    local lockedTarget = nil
+
+    if getgenv()._camlockConnections then
+        for _, conn in ipairs(getgenv()._camlockConnections) do
+            conn:Disconnect()
+        end
+    end
+    getgenv()._camlockConnections = {}
+
+    local function getClosestEnemy()
+        local closest, shortest = nil, math.huge
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Team ~= LocalPlayer.Team then
+                local char = player.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if root and hrp then
+                    local dist = (hrp.Position - root.Position).Magnitude
+                    if dist < shortest then
+                        closest = root
+                        shortest = dist
+                    end
+                end
+            end
+        end
+        return closest
+    end
+
+    if v then
+        StarterGui:SetCore("SendNotification", {Title = "Camlock", Text = "Enabled.", Duration = 3})
+        table.insert(getgenv()._camlockConnections, UserInputService.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                rightClickHeld = true
+                lockedTarget = getClosestEnemy()
+            end
+        end))
+        table.insert(getgenv()._camlockConnections, UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                rightClickHeld = false
+                lockedTarget = nil
+            end
+        end))
+        table.insert(getgenv()._camlockConnections, RunService.RenderStepped:Connect(function()
+            if rightClickHeld and lockedTarget then
+                local velocity = lockedTarget.Velocity
+                local predictedPos = velocity.Magnitude > 0 and (lockedTarget.Position + velocity.Unit * predictionOffset) or lockedTarget.Position
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, predictedPos)
+            end
+        end))
+    else
+        StarterGui:SetCore("SendNotification", {Title = "Camlock", Text = "Disabled.", Duration = 3})
+        for _, conn in ipairs(getgenv()._camlockConnections) do
+            conn:Disconnect()
+        end
+        getgenv()._camlockConnections = {}
+        rightClickHeld = false
+        lockedTarget = nil
+    end
+end)
+
 local moneyFarmActive = false
 local moneyFarmLoop = nil
 
