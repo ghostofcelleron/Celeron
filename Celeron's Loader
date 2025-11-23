@@ -17,7 +17,7 @@ local abilitywars = {8260276694}
 local opbg = {15467245730}
 local yba = {2809202155,4643697430,5290908008}
 local guops = {5610197459}
-local guops = {663655429}
+local pas = {663655429}
 local example = {}
 
 local loaderGui = Instance.new("ScreenGui")
