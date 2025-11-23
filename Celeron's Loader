@@ -152,7 +152,7 @@ local function loadScripts()
 		elseif table.find(yba, placeId) then
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Your%20Bizarre%20Adventure%20(OS)",true))()
 		elseif table.find(guops, placeId) then
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Your%20Bizarre%20Adventure%20(OS)",true))()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Gang%20Up%20On%20People%20(OS)",true))()
 		else
 			game:GetService("StarterGui"):SetCore("SendNotification", {
     			Title = "Celeron's Loader";
