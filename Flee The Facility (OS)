@@ -4,7 +4,7 @@ local win = ui:Create({
     Name = "Celeron's GUI (Flee The Facility)",
     ThemeColor = Color3.fromRGB(18, 18, 18),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.GothamBold
 })
 
 local maintab = win:Tab("Main")
