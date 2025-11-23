@@ -1,10 +1,10 @@
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
-    Name = "Celeron's GUI (Gang Up On People)",
-    ThemeColor = Color3.fromRGB(20, 20, 20),
+    Name = "Celeron's GUI (Gang Up Simulator)",
+    ThemeColor = Color3.fromRGB(166, 100, 0),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.GothamBold
 })
 
 local maintab = win:Tab("Main")
@@ -14,42 +14,53 @@ local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
 moneytab:Label("Money Tab.")
+misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local function boostLoop(propName, getValue)
-    local running = true
-    task.spawn(function()
-        while running do
-            local char = LocalPlayer.Character
-            local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid[propName] = getValue()
-            end
-            task.wait(0.1)
+local speedValue = 16
+local jumpValue = 50
+local hrp
+local humanoid
+
+local function bindCharacter(char)
+    hrp = char:WaitForChild("HumanoidRootPart")
+    humanoid = char:WaitForChild("Humanoid")
+
+    humanoid.StateChanged:Connect(function(_, newState)
+        if newState == Enum.HumanoidStateType.Jumping and hrp and hrp.Parent then
+            hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpValue, hrp.Velocity.Z)
         end
     end)
-    return function() running = false end
 end
 
-do
-    local lastSpeed = 16
-    local stopSpeedLoop = boostLoop("WalkSpeed", function() return lastSpeed end)
-    maintab:Textbox("Player Speed", function(v)
-        lastSpeed = tonumber(v) or 16
-    end)
+if LocalPlayer.Character then
+    bindCharacter(LocalPlayer.Character)
 end
 
-do
-    local lastJump = 50
-    local stopJumpLoop = boostLoop("JumpPower", function() return lastJump end)
-    maintab:Textbox("Player Jump", function(v)
-        lastJump = tonumber(v) or 50
-    end)
-end
+LocalPlayer.CharacterAdded:Connect(bindCharacter)
+
+-- continuous velocity loop for movement
+task.spawn(function()
+    while true do
+        if hrp and hrp.Parent and humanoid then
+            local moveDir = humanoid.MoveDirection
+            hrp.Velocity = Vector3.new(moveDir.X * speedValue, hrp.Velocity.Y, moveDir.Z * speedValue)
+        end
+        task.wait(0.05)
+    end
+end)
+
+maintab:Textbox("Player Speed", function(v)
+    speedValue = tonumber(v) or 16
+end)
+
+maintab:Textbox("Player Jump", function(v)
+    jumpValue = tonumber(v) or 50
+end)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -117,6 +128,31 @@ maintab:Textbox("Kill Player", function(v)
     end
 end)
 
+maintab:Textbox("Kill Player (Slap Remote)", function(v)
+    if connection then connection:Disconnect() end
+    kill = v
+    local hrp = getHRP()
+    local target = findPlayer(kill)
+    if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+        connection = RunService.RenderStepped:Connect(function()
+            local humanoid = target.Character:FindFirstChild("Humanoid")
+            if not humanoid or humanoid.Health <= 0 then
+                if connection then connection:Disconnect() end
+                connection, kill = nil, nil
+                return
+            end
+            teleportAboveHead(hrp, target)
+            local event, tool = getFightEvent()
+            if event then
+                if tool.Parent ~= LocalPlayer.Character then
+                    tool.Parent = LocalPlayer.Character
+                end
+                event:FireServer("Slap")
+            end
+        end)
+    end
+end)
+
 getgenv().lol = false
 
 moneytab:Toggle("Money Farm", function(state)
@@ -149,7 +185,7 @@ moneytab:Toggle("Money Farm", function(state)
                 end
 
                 if not found then
-                    hrp.CFrame = CFrame.new(55, 3, 8)
+                    hrp.CFrame = CFrame.new(-421, 3, -337)
                 end
             end
         end)
