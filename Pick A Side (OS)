@@ -2,9 +2,9 @@ local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Pick A Side)",
-    ThemeColor = Color3.fromRGB(20, 20, 20),
+    ThemeColor = Color3.fromRGB(155, 45, 45),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.GothamBold
 })
 
 local maintab = win:Tab("Main")
