@@ -2,7 +2,7 @@ local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Flee The Facility)",
-    ThemeColor = Color3.fromRGB(36, 11, 11),
+    ThemeColor = Color3.fromRGB(45, 11, 11),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.GothamBold
 })
@@ -276,23 +276,19 @@ funtab:Button("FE Audio Control", function()
 end)
 
 tpstab:Button("Spawn", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(111.20410919189453, 8.207777976989746, -413.4593811035156))
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(110, 23, -433))
 end)
 
 tpstab:Button("Map Voting", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(147.83396911621094, 5.999999523162842, -349.55047607421875))
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(20, 13, -498))
 end)
 
 tpstab:Button("Cave", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(279.4504089355469, -11.000000953674316, -366.7091369628906))
-end)
-
-tpstab:Button("Under Spawn", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(107, -6, -423))
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(279, -11, -366))
 end)
 
 tpstab:Button("Trading Servers (Min. Level 6)", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(64.84588623046875, 3.999999761581421, -306.64068603515625))
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(52, 9, -562))
 end)
 
 tpstab:Label("In-Game Areas.")
