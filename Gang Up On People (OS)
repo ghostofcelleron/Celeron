@@ -1,0 +1,223 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (Gang Up On People)",
+    ThemeColor = Color3.fromRGB(20, 20, 20),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local moneytab = win:Tab("Money")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+moneytab:Label("Money Tab.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function boostLoop(propName, getValue)
+    local running = true
+    task.spawn(function()
+        while running do
+            local char = LocalPlayer.Character
+            local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid[propName] = getValue()
+            end
+            task.wait(0.1)
+        end
+    end)
+    return function() running = false end
+end
+
+do
+    local lastSpeed = 16
+    local stopSpeedLoop = boostLoop("WalkSpeed", function() return lastSpeed end)
+    maintab:Textbox("Player Speed", function(v)
+        lastSpeed = tonumber(v) or 16
+    end)
+end
+
+do
+    local lastJump = 50
+    local stopJumpLoop = boostLoop("JumpPower", function() return lastJump end)
+    maintab:Textbox("Player Jump", function(v)
+        lastJump = tonumber(v) or 50
+    end)
+end
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local kill = nil
+local connection = nil
+
+local function getHRP()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    return char:WaitForChild("HumanoidRootPart")
+end
+
+local function findPlayer(partial)
+    if not partial or partial == "" then return nil end
+    partial = string.lower(partial)
+    for _, plr in pairs(Players:GetPlayers()) do
+        local uname = string.lower(plr.Name)
+        local dname = string.lower(plr.DisplayName)
+        if string.find(uname, partial, 1, true) or string.find(dname, partial, 1, true) then
+            return plr
+        end
+    end
+end
+
+local function teleportAboveHead(hrp, plr)
+    if plr and plr.Character and plr.Character:FindFirstChild("Head") then
+        hrp.CFrame = plr.Character.Head.CFrame + Vector3.new(0, 1, 0)
+        hrp.Velocity = Vector3.new(0,0,0)
+    end
+end
+
+local function getFightEvent()
+    local char = LocalPlayer.Character
+    if char then
+        local tool = char:FindFirstChild("Fight") or LocalPlayer.Backpack:FindFirstChild("Fight")
+        if tool and tool:FindFirstChild("FightScript") then
+            return tool.FightScript:FindFirstChild("FightEvent"), tool
+        end
+    end
+end
+
+maintab:Textbox("Kill Player", function(v)
+    if connection then connection:Disconnect() end
+    kill = v
+    local hrp = getHRP()
+    local target = findPlayer(kill)
+    if target and target.Character and target.Character:FindFirstChild("Humanoid") then
+        connection = RunService.RenderStepped:Connect(function()
+            local humanoid = target.Character:FindFirstChild("Humanoid")
+            if not humanoid or humanoid.Health <= 0 then
+                if connection then connection:Disconnect() end
+                connection, kill = nil, nil
+                return
+            end
+            teleportAboveHead(hrp, target)
+            local event, tool = getFightEvent()
+            if event then
+                if tool.Parent ~= LocalPlayer.Character then
+                    tool.Parent = LocalPlayer.Character
+                end
+                event:FireServer("Stomp")
+            end
+        end)
+    end
+end)
+
+getgenv().lol = false
+
+moneytab:Toggle("Money Farm", function(state)
+    getgenv().lol = state
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Money Farm",
+        Text = state and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+
+    if state then
+        task.spawn(function()
+            local plr = game:GetService("Players").LocalPlayer
+            local hrp = plr.Character:WaitForChild("HumanoidRootPart")
+
+            while getgenv().lol do
+                task.wait()
+                local moneyFolder = workspace:FindFirstChild("Particles") and workspace.Particles:FindFirstChild("Money")
+                local found = false
+
+                if moneyFolder then
+                    for _, v in pairs(moneyFolder:GetChildren()) do
+                        if v.Name == "Bundle" then
+                            found = true
+                            hrp.CFrame = v.CFrame
+                            task.wait(0.15)
+                        end
+                    end
+                end
+
+                if not found then
+                    hrp.CFrame = CFrame.new(55, 3, 8)
+                end
+            end
+        end)
+
+        task.spawn(function()
+            local args = {
+                [1] = {
+                    ["Mode"] = "D",
+                    ["Amount"] = 1
+                }
+            }
+            local atmRemote = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent"):WaitForChild("ATM")
+
+            while getgenv().lol do
+                atmRemote:FireServer(unpack(args))
+                task.wait(0.05)
+            end
+        end)
+    end
+end)
+
+moneytab:Button("Bank Amount", function(state)
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Bank",
+    Text = "Amount: " .. tostring(game:GetService("Players").LocalPlayer:WaitForChild("Stats"):WaitForChild("Bank").Value),
+    Duration = 5
+})
+end)
+
+local rs = game:GetService("ReplicatedStorage")
+local atm = rs:WaitForChild("RemoteEvent"):WaitForChild("ATM")
+
+local function handleATM(mode, v)
+    local n = tonumber(v)
+    if not n or n <= 0 then return end
+    atm:FireServer({Mode = mode, Amount = n})
+end
+
+moneytab:Textbox("Withdraw Money", function(v)
+    handleATM("W", v)
+end)
+
+moneytab:Textbox("Deposit Money", function(v)
+    handleATM("D", v)
+end)
+
+misctab:Button("Infinite Yield", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Username",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Invite",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("https://discord.gg/8stFYxJv4R")
+end)
