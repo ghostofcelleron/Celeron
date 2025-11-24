@@ -1385,67 +1385,62 @@ end)
 
 maintab2:Label("Other Features: Other Silent Features, Continued.")
 maintab2:Toggle("Auto QuickTimeEvent", function()
-    local runService = game:GetService("RunService")
-    local players = game:GetService("Players")
-    local virtualInputManager = game:GetService("VirtualInputManager")
-    local starterGui = game:GetService("StarterGui")
-    local player = players.LocalPlayer
+local runService = game:GetService("RunService")
+local players = game:GetService("Players")
+local virtualInputManager = game:GetService("VirtualInputManager")
+local starterGui = game:GetService("StarterGui")
+local player = players.LocalPlayer
 
-    _G.QuickTimeEvent = not _G.QuickTimeEvent
+_G.QuickTimeEvent = not _G.QuickTimeEvent
 
-    local function sendNotification(status)
-        if not _G.suppressNotifs then
-            starterGui:SetCore("SendNotification", {
-                Title = "QuickTimeEvent",
-                Text = status,
-                Duration = 1
-            })
-        end
+local function sendNotification(status)
+    if not _G.suppressNotifs then
+        starterGui:SetCore("SendNotification", {
+            Title = "QuickTimeEvent",
+            Text = status,
+            Duration = 1
+        })
     end
+end
 
-    local function getAllTextLabels(parent)
-        local textLabels = {}
-        for _, descendant in ipairs(parent:GetDescendants()) do
-            if descendant:IsA("TextLabel") then
-                table.insert(textLabels, descendant)
-            end
-        end
-        return textLabels
-    end
+local function convertNumberToKeyText(text)
+    local numberMap = {
+        ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
+        ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
+    }
+    return numberMap[text] or text
+end
 
-    local function convertNumberToKeyText(text)
-        local numberMap = {
-            ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
-            ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
-        }
-        return numberMap[text] or text
-    end
+local function isShadeOfGreen(color)
+    return color.G > color.R and color.G > color.B
+end
 
-    local function checkQTE()
-        if _G.QuickTimeEvent and player and player:FindFirstChild("PlayerGui") then
-            local qteGui = player.PlayerGui:FindFirstChild("Qte")
-            if qteGui and qteGui:FindFirstChild("QTE") and qteGui.QTE:FindFirstChild("Frame") then
-                local qteFrame = qteGui.QTE.Frame
-                if qteFrame.Size.X.Scale <= 0.740000169 and qteFrame.Size.X.Scale >= 0.720000019 and
-                   qteFrame.Size.Y.Scale <= 0.74999999 and qteFrame.Size.Y.Scale >= 0.720000019 then
-
-                    local textLabels = getAllTextLabels(qteGui.QTE)
-
-                    for _, label in ipairs(textLabels) do
-                        local keyText = convertNumberToKeyText(label.Text)
-                        local keyCode = Enum.KeyCode[keyText]
-                        if keyCode then
-                            virtualInputManager:SendKeyEvent(true, keyCode, false, game)
-                            virtualInputManager:SendKeyEvent(false, keyCode, false, game)
+local function checkQTE()
+    if _G.QuickTimeEvent and player and player:FindFirstChild("PlayerGui") then
+        local qteGui = player.PlayerGui:FindFirstChild("Qte")
+        if qteGui and qteGui:FindFirstChild("QTE") then
+            for _, descendant in ipairs(qteGui.QTE:GetDescendants()) do
+                if descendant:IsA("Frame") or descendant:IsA("TextLabel") then
+                    if isShadeOfGreen(descendant.BackgroundColor3) then
+                        local textLabel = qteGui.QTE:FindFirstChild("TextLabel")
+                        if textLabel then
+                            local keyText = convertNumberToKeyText(textLabel.Text)
+                            local keyCode = Enum.KeyCode[keyText]
+                            if keyCode then
+                                virtualInputManager:SendKeyEvent(true, keyCode, false, game)
+                                virtualInputManager:SendKeyEvent(false, keyCode, false, game)
+                            end
                         end
+                        break
                     end
                 end
             end
         end
     end
+end
 
-    runService.RenderStepped:Connect(checkQTE)
-    sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
+runService.RenderStepped:Connect(checkQTE)
+sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
 maintab2:Button("Auto GK (Made By Daffy, Reset To Disable.)", function()
