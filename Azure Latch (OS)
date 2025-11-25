@@ -988,7 +988,7 @@ local function setCollide(state)
     if bg then bg.CanCollide = state end
 end
 
-maintab:Toggle("Toggle Blatant Mode", function()
+maintab:Toggle("Blatant Mode", function()
     blatantEnabled = not blatantEnabled
     if blatantEnabled then
         loopConnection = rs.Heartbeat:Connect(function() setCollide(false) end)
