@@ -1,6 +1,18 @@
 --[[ anticheat bypass rewritten by celeron, originally by cazan :3 ]]--
 print("ac bypassed by cazan, rewritten by celeron :3")
 
+local sg = game:GetService("StarterGui")
+local function notify(t) sg:SetCore("SendNotification",{Title="Check",Text=t,Duration=5}) end
+
+for _,fn in ipairs({"getgc","hookmetamethod","getconnections","checkcaller","getcallingscript","debug.getupvalue"}) do
+    local parts = string.split(fn,".")
+    local ok = (#parts==1 and getfenv()[fn]) or (#parts==2 and getfenv()[parts[1]] and getfenv()[parts[1]][parts[2]])
+    if not ok then
+        notify("executor not supported.")
+        return
+    end
+end
+
 for _, v in pairs(getgc(true)) do
     if typeof(v) == "table" then
         if rawget(v, "ACTrigger") then
