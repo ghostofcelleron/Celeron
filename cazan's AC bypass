@@ -1,4 +1,5 @@
 --[[ anticheat bypass rewritten by celeron, originally by cazan :3 ]]--
+print("ac bypassed by cazan, rewritten by celeron :3")
 
 for _, v in pairs(getgc(true)) do
     if typeof(v) == "table" then
