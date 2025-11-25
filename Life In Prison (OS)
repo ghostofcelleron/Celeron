@@ -1,7 +1,6 @@
 if not _G.HasScriptRun then
     _G.HasScriptRun = true
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/anticheat%20bypass%20(BY%20CAZAN)", true))()
-    print("Anti-Cheat has been bypassed!")
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/cazan's%20AC%20bypass", true))()
 end
 
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
@@ -30,9 +29,7 @@ local function withTeleportBack(callback)
     end
 end
 
-local chartab = win:Tab("Character")
 local maintab = win:Tab("Main")
-local admintab = win:Tab("Admin")
 local itemsTab = win:Tab("Items")
 local teleportTab = win:Tab("Teleports")
 local misctab = win:Tab("Others")
@@ -40,682 +37,524 @@ local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
 itemsTab:Label("Manually Grab The Gun, And You Will Be Teleported Back!")
+teleportTab:Label("Teleport Features.")
+misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
 local players = game:GetService("Players")
 local localPlayer = players.LocalPlayer
 
-if localPlayer and localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
-    local humanoid = localPlayer.Character.Humanoid
+local targetSpeed = 18
+local targetJump = 50
+local humanoid
 
-    humanoid.WalkSpeed = 18
-    humanoid.JumpPower = 50
-
-    local function updateStats()
+local function applyStats()
+    if humanoid then
         humanoid.WalkSpeed = targetSpeed
-        humanoid.JumpPower = jumpVelocity
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = targetJump
     end
-
-    chartab:Slider("Player Speed", 18, 5, 250, function(v)
-        targetSpeed = v
-        updateStats()
-    end)
-
-    chartab:Slider("Player Jump-Power", 50, 25, 250, function(v)
-        jumpVelocity = v
-        updateStats()
-    end)
 end
 
-chartab:Button("CFrame Flight", function()
-local workspace = game:GetService("Workspace")
-local players = game:GetService("Players")
-local runService = game:GetService("RunService")
-local userInputService = game:GetService("UserInputService")
-local localPlayer = players.LocalPlayer
-local starterGui = game:GetService("StarterGui")
-local camera = workspace.CurrentCamera
-
-local flyingSpeed = 175
-_G.isFlying = not _G.isFlying
-
-starterGui:SetCore("SendNotification", {
-    Title = "CFrame Flight",
-    Text = _G.isFlying and "Enabled." or "Disabled.",
-    Duration = 3
-})
-
-workspace.Gravity = _G.isFlying and 0 or 196.2
-
-if _G.isFlying and localPlayer and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-    local humanoidRootPart = localPlayer.Character.HumanoidRootPart
-    local humanoid = localPlayer.Character:FindFirstChild("Humanoid")
-
-    humanoid.PlatformStand = true
-
-    local connection
-    connection = runService.RenderStepped:Connect(function(deltaTime)
-        if not _G.isFlying then
-            connection:Disconnect()
-            workspace.Gravity = 196.2
-            humanoid.PlatformStand = false
-            return
-        end
-
-        humanoidRootPart.Velocity = Vector3.zero
-        humanoidRootPart.RotVelocity = Vector3.zero
-
-        local flyDirection = camera.CFrame.LookVector
-        local strafeDirection = camera.CFrame.RightVector
-        local movement = Vector3.zero
-
-        if userInputService:IsKeyDown(Enum.KeyCode.W) then
-            movement += flyDirection * flyingSpeed * deltaTime
-        elseif userInputService:IsKeyDown(Enum.KeyCode.S) then
-            movement -= flyDirection * flyingSpeed * deltaTime
-        end
-
-        if userInputService:IsKeyDown(Enum.KeyCode.A) then
-            movement -= strafeDirection * flyingSpeed * deltaTime
-        elseif userInputService:IsKeyDown(Enum.KeyCode.D) then
-            movement += strafeDirection * flyingSpeed * deltaTime
-        end
-
-        humanoidRootPart.CFrame = CFrame.lookAt(humanoidRootPart.Position, humanoidRootPart.Position + flyDirection)
-        humanoidRootPart.CFrame += movement
-    end)
+local function setupCharacter(char)
+    humanoid = char:WaitForChild("Humanoid")
+    applyStats()
 end
 
+if localPlayer.Character then
+    setupCharacter(localPlayer.Character)
+end
+
+localPlayer.CharacterAdded:Connect(setupCharacter)
+
+maintab:Slider("Player Speed", targetSpeed, 5, 250, function(v)
+    targetSpeed = v
+    applyStats()
 end)
 
-admintab:Textbox("Ban Player (Hold Bat!)", function(v)
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
-
-local targetPlayer = Players:FindFirstChild(v)
-if not targetPlayer or not targetPlayer.Character then return end
-
-task.spawn(function()
-    while targetPlayer and targetPlayer.Character do
-        local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
-        local head = targetPlayer.Character:FindFirstChild("Head")
-        if not humanoid or humanoid.Health <= -1000 or not head then break end
-
-        local character = Players.LocalPlayer.Character
-        local hrp = character and character:FindFirstChild("HumanoidRootPart")
-        if character and hrp then
-            for _, weaponName in ipairs({"Bat", "Knife", "Baton", "Scissors"}) do
-                local weapon = character:FindFirstChild(weaponName)
-                if weapon then
-                    RemoteEvent:FireServer(11, weapon, head, hrp.Position)
-                end
-            end
-        end
-
-        task.wait(0.01)
-    end
-end)
+maintab:Slider("Player Jump-Power", targetJump, 25, 250, function(v)
+    targetJump = v
+    applyStats()
 end)
 
-admintab:Button("Ban Everyone (Hold Bat!)", function()
-    getgenv().G_banserver = not getgenv().G_banserver
+local flightEnabled = false
+local flightLoop = nil
+local animTrack = nil
+local idleTrack = nil
+local flightSound = nil
+local bv = nil
+local bg = nil
 
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Ban Everyone (Bat)",
-        Text = getgenv().G_banserver and "Enabled." or "Disabled.",
+maintab:Toggle("Flight", function()
+    flightEnabled = not flightEnabled
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Flight",
+        Text = flightEnabled and "Enabled." or "Disabled.",
         Duration = 2
     })
 
-    if not getgenv().G_banserver then return end
+    if flightLoop then
+        flightLoop:Disconnect()
+        flightLoop = nil
+    end
 
-    task.spawn(function()
-        local Players = game:GetService("Players")
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
-        local localPlayer = Players.LocalPlayer
-        local weapons = {"Bat"}
+    local player = game:GetService("Players").LocalPlayer
+    local uis = game:GetService("UserInputService")
+    local cam = workspace.CurrentCamera
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local hum = char:WaitForChild("Humanoid")
 
-        while getgenv().G_banserver do
-            local character = localPlayer.Character
-            local hrp = character and character:FindFirstChild("HumanoidRootPart")
-            if not character or not hrp then
-                task.wait(0.01)
-                continue
-            end
+    if animTrack then animTrack:Stop() animTrack = nil end
+    if idleTrack then idleTrack:Stop() idleTrack = nil end
+    if flightSound then flightSound:Destroy() flightSound = nil end
+    if bv then bv:Destroy() bv = nil end
+    if bg then bg:Destroy() bg = nil end
 
-            for _, targetPlayer in pairs(Players:GetPlayers()) do
-                if targetPlayer ~= localPlayer then
-                    local targetChar = targetPlayer.Character
-                    local humanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
-                    local head = targetChar and targetChar:FindFirstChild("Head")
+    if flightEnabled then
+        hum.AutoRotate = false
+        hum.PlatformStand = true
 
-                    if humanoid and humanoid.Health > 0 and head then
-                        for _, weaponName in ipairs(weapons) do
-                            local weapon = character:FindFirstChild(weaponName)
-                            if weapon then
-                                RemoteEvent:FireServer(11, weapon, head, hrp.Position)
-                            end
-                        end
-                    end
+        local flightAnim = Instance.new("Animation")
+        flightAnim.AnimationId = "rbxassetid://204292303"
+        animTrack = hum:LoadAnimation(flightAnim)
+        animTrack.Looped = true
+        animTrack:Play()
+        animTrack.TimePosition = 0.1
+        animTrack:AdjustSpeed(0)
+
+        local idleAnim = Instance.new("Animation")
+        idleAnim.AnimationId = "rbxassetid://87928591739619"
+        idleTrack = hum:LoadAnimation(idleAnim)
+        idleTrack.Looped = true
+
+        flightSound = Instance.new("Sound")
+        flightSound.SoundId = "rbxassetid://3308152153"
+        flightSound.Looped = true
+        flightSound.Volume = 1
+        flightSound.Parent = hrp
+        flightSound:Play()
+
+        bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+        bv.Velocity = Vector3.zero
+        bv.Parent = hrp
+
+        bg = Instance.new("BodyGyro")
+        bg.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+        bg.P = 1e5
+        bg.CFrame = hrp.CFrame
+        bg.Parent = hrp
+
+        local currentVel = Vector3.zero
+        local currentSpeed = 145
+
+        flightLoop = game:GetService("RunService").RenderStepped:Connect(function()
+            local direction = Vector3.zero
+            if uis:IsKeyDown(Enum.KeyCode.W) then direction += cam.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.S) then direction -= cam.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.A) then direction -= cam.CFrame.RightVector end
+            if uis:IsKeyDown(Enum.KeyCode.D) then direction += cam.CFrame.RightVector end
+
+            local targetVel = direction.Magnitude > 0 and direction.Unit * currentSpeed or Vector3.zero
+            currentVel = currentVel:Lerp(targetVel, 0.25)
+            bv.Velocity = currentVel
+
+            local look = cam.CFrame.LookVector
+            local up = cam.CFrame.UpVector
+            local target = CFrame.lookAt(hrp.Position, hrp.Position + look, up)
+            bg.CFrame = bg.CFrame:Lerp(target, 0.35)
+
+            if currentVel.Magnitude < 1 then
+                if animTrack and animTrack.IsPlaying then animTrack:Stop() end
+                if idleTrack and not idleTrack.IsPlaying then idleTrack:Play() end
+                flightSound.Volume = 1
+            else
+                if idleTrack and idleTrack.IsPlaying then idleTrack:Stop() end
+                if animTrack and not animTrack.IsPlaying then
+                    animTrack:Play()
+                    animTrack.TimePosition = 1
+                    animTrack:AdjustSpeed(0)
                 end
-            end
-
-            task.wait(0.01)
-        end
-    end)
-end)
-
-maintab:Textbox("Kill Player (Fists)", function(v)
-    local targetPlayer = game:GetService("Players"):FindFirstChild(v)
-    local RemoteEvent = game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("RemoteEvent")
-
-    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
-        task.spawn(function()
-            while true do
-                local character = targetPlayer.Character
-                if not character then break end
-
-                local head = character:FindFirstChild("Head")
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                if not head or not humanoid or humanoid.Health <= 0 then break end
-
-                RemoteEvent:FireServer(28, head)
-                RemoteEvent:FireServer(28, head)
-                task.wait(0.03)
+                flightSound.Volume = 2
             end
         end)
+    else
+        hum.PlatformStand = false
+        hum.AutoRotate = true
+        if animTrack then animTrack:Stop() animTrack = nil end
+        if idleTrack then idleTrack:Stop() idleTrack = nil end
+        if flightSound then flightSound:Destroy() flightSound = nil end
+        if bv then bv:Destroy() bv = nil end
+        if bg then bg:Destroy() bg = nil end
     end
 end)
 
-maintab:Textbox("Kill Player (Melee)", function(v)
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
+local aimlockEnabled = false
+local aimlockTarget = nil
+local fovCircle = nil
+local uis = game:GetService("UserInputService")
+local rs = game:GetService("RunService")
+local plr = game:GetService("Players").LocalPlayer
+local cam = workspace.CurrentCamera
+local bindConnection = nil
+local renderConnection = nil
 
-local targetPlayer = Players:FindFirstChild(v)
-if not targetPlayer or not targetPlayer.Character then return end
+maintab:Toggle("Aimlock (Bind: M2)", function()
+    aimlockEnabled = not aimlockEnabled
+    if aimlockEnabled then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Aimlock",
+            Text = "Enabled.",
+            Duration = 2
+        })
+        fovCircle = Drawing.new("Circle")
+        fovCircle.Visible = true
+        fovCircle.Color = Color3.fromRGB(255,255,255)
+        fovCircle.Thickness = 1
+        fovCircle.NumSides = 64
+        fovCircle.Radius = 128
+        fovCircle.Filled = false
+        fovCircle.Position = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
 
-task.spawn(function()
-    while targetPlayer and targetPlayer.Character do
-        local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
-        local head = targetPlayer.Character:FindFirstChild("Head")
-        if not humanoid or humanoid.Health <= 0 or not head then break end
-
-        local character = Players.LocalPlayer.Character
-        local hrp = character and character:FindFirstChild("HumanoidRootPart")
-        if character and hrp then
-            for _, weaponName in ipairs({"Bat", "Knife", "Baton", "Scissors"}) do
-                local weapon = character:FindFirstChild(weaponName)
-                if weapon then
-                    RemoteEvent:FireServer(11, weapon, head, hrp.Position)
-                end
-            end
-        end
-
-        task.wait(0.1)
-    end
-end)
-end)
-
-getgenv().G_fistaura = false
-
-maintab:Button("Kill Aura (Fists)", function()
-    getgenv().G_fistaura = not getgenv().G_fistaura
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Kill Aura (Fists)",
-        Text = getgenv().G_fistaura and "Enabled." or "Disabled.",
-        Duration = 2
-    })
-
-    if not getgenv().G_fistaura then return end
-
-    task.spawn(function()
-        local Players = game:GetService("Players")
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
-        local localPlayer = Players.LocalPlayer
-
-        while getgenv().G_fistaura do
-            local character = localPlayer.Character
-            if not character then task.wait(0.1) continue end
-
-            local hrp = character:FindFirstChild("HumanoidRootPart")
-            if not hrp then task.wait(0.1) continue end
-
-            local closestPlayer = nil
-            local closestDistance = math.huge
-
-            for _, targetPlayer in pairs(Players:GetPlayers()) do
-                if targetPlayer ~= localPlayer then
-                    local targetChar = targetPlayer.Character
-                    local humanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
-                    local head = targetChar and targetChar:FindFirstChild("Head")
-                    if humanoid and humanoid.Health > 0 and head then
-                        local dist = (hrp.Position - head.Position).Magnitude
-                        if dist <= 50 and dist < closestDistance then
-                            closestDistance = dist
-                            closestPlayer = targetPlayer
-                        end
-                    end
-                end
-            end
-
-            if closestPlayer then
-                local targetChar = closestPlayer.Character
-                local humanoid = targetChar:FindFirstChildOfClass("Humanoid")
-                local head = targetChar:WaitForChild("Head")
-
-                while humanoid and humanoid.Health > 0 and getgenv().G_fistaura do
-                    local distance = (hrp.Position - head.Position).Magnitude
-                    if distance > 50 then break end
-
-                    RemoteEvent:FireServer(28, head)
-                    RemoteEvent:FireServer(28, head)
-                    task.wait(0.03)
-                end
-            else
-                task.wait(0.1)
-            end
-        end
-    end)
-end)
-
-getgenv().G_killaura = false
-
-maintab:Button("Kill Aura (Melee)", function()
-    getgenv().G_killaura = not getgenv().G_killaura
-
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Kill Aura (Melee)",
-        Text = getgenv().G_killaura and "Enabled." or "Disabled.",
-        Duration = 2
-    })
-
-    if not getgenv().G_killaura then return end
-
-    task.spawn(function()
-        local Players = game:GetService("Players")
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
-        local localPlayer = Players.LocalPlayer
-        local weapons = {"Bat", "Knife", "Baton", "Scissors"}
-
-        while getgenv().G_killaura do
-            local character = localPlayer.Character
-            local hrp = character and character:FindFirstChild("HumanoidRootPart")
-            if not character or not hrp then
-                task.wait(0.01)
-                continue
-            end
-
-            for _, targetPlayer in pairs(Players:GetPlayers()) do
-                if targetPlayer ~= localPlayer then
-                    local targetChar = targetPlayer.Character
-                    local humanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
-                    local head = targetChar and targetChar:FindFirstChild("Head")
-
-                    if humanoid and humanoid.Health > 0 and head then
-                        local distance = (hrp.Position - head.Position).Magnitude
-                        if distance <= 50 then
-                            for _, weaponName in ipairs(weapons) do
-                                local weapon = character:FindFirstChild(weaponName)
-                                if weapon then
-                                    RemoteEvent:FireServer(11, weapon, head, hrp.Position)
+        bindConnection = uis.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                if aimlockTarget then
+                    aimlockTarget = nil
+                else
+                    local closest, closestDist = nil, math.huge
+                    local screenCenter = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
+                    for _,v in pairs(game:GetService("Players"):GetPlayers()) do
+                        if v ~= plr and v.Team ~= plr.Team and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                            local pos, onScreen = cam:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+                            if onScreen then
+                                local dist = (Vector2.new(pos.X,pos.Y) - screenCenter).Magnitude
+                                if dist <= fovCircle.Radius and dist < closestDist then
+                                    closestDist = dist
+                                    closest = v
                                 end
                             end
                         end
                     end
+                    aimlockTarget = closest
                 end
             end
+        end)
 
-            task.wait(0.01)
+        renderConnection = rs.RenderStepped:Connect(function()
+            if aimlockEnabled and fovCircle then
+                fovCircle.Position = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
+                if aimlockTarget and aimlockTarget.Character and aimlockTarget.Character:FindFirstChild("HumanoidRootPart") then
+                    cam.CFrame = CFrame.new(cam.CFrame.Position, aimlockTarget.Character.HumanoidRootPart.Position)
+                end
+            end
+        end)
+    else
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Aimlock",
+            Text = "Disabled.",
+            Duration = 2
+        })
+        if fovCircle then
+            fovCircle:Remove()
+            fovCircle = nil
         end
-    end)
+        if bindConnection then
+            bindConnection:Disconnect()
+            bindConnection = nil
+        end
+        if renderConnection then
+            renderConnection:Disconnect()
+            renderConnection = nil
+        end
+        aimlockTarget = nil
+    end
 end)
 
-getgenv().G_fistkill = false
+local espEnabled = false
+local espObjects = {}
+local rs = game:GetService("RunService")
+local plr = game:GetService("Players").LocalPlayer
+local cam = workspace.CurrentCamera
+local renderConnection = nil
 
-maintab:Button("Server Killer (Fists)", function()
-    getgenv().G_fistkill = not getgenv().G_fistkill
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Server Killer (Fists)",
-        Text = getgenv().G_fistkill and "Enabled." or "Disabled.",
-        Duration = 2
-    })
+local function createESP(v)
+    local box = Drawing.new("Square")
+    box.Thickness = 1
+    box.Filled = false
 
-    if not getgenv().G_fistkill then return end
+    local healthBG = Drawing.new("Square")
+    healthBG.Filled = true
+    healthBG.Color = Color3.fromRGB(0,0,0)
 
-    task.spawn(function()
-        local Players = game:GetService("Players")
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
-        local localPlayer = Players.LocalPlayer
+    local healthBar = Drawing.new("Square")
+    healthBar.Filled = true
 
-        while getgenv().G_fistkill do
-            local character = localPlayer.Character
-            if not character then task.wait(0.1) continue end
+    local nameTag = Drawing.new("Text")
+    nameTag.Size = 16
+    nameTag.Center = true
 
-            local hrp = character:FindFirstChild("HumanoidRootPart")
-            if not hrp then task.wait(0.1) continue end
+    espObjects[v] = {box=box,healthBG=healthBG,healthBar=healthBar,nameTag=nameTag}
+end
 
-            local closestPlayer = nil
-            local closestDistance = math.huge
+local function removeESP(v)
+    if espObjects[v] then
+        for _,obj in pairs(espObjects[v]) do
+            obj:Remove()
+        end
+        espObjects[v] = nil
+    end
+end
 
-            for _, targetPlayer in pairs(Players:GetPlayers()) do
-                if targetPlayer ~= localPlayer then
-                    local targetChar = targetPlayer.Character
-                    local humanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
-                    local head = targetChar and targetChar:FindFirstChild("Head")
-                    if humanoid and humanoid.Health > 0 and head then
-                        local dist = (hrp.Position - head.Position).Magnitude
-                        if dist < closestDistance then
-                            closestDistance = dist
-                            closestPlayer = targetPlayer
-                        end
-                    end
-                end
-            end
+maintab:Toggle("Player ESP", function()
+    espEnabled = not espEnabled
+    if espEnabled then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Player ESP",
+            Text = "Enabled.",
+            Duration = 2
+        })
 
-            if closestPlayer then
-                local targetChar = closestPlayer.Character
-                local humanoid = targetChar:FindFirstChildOfClass("Humanoid")
-                local head = targetChar:WaitForChild("Head")
-
-                while humanoid and humanoid.Health > 0 and getgenv().G_fistaura do
-                    local args = {
-                        28,
-                        head
-                    }
-                    RemoteEvent:FireServer(unpack(args))
-                    RemoteEvent:FireServer(unpack(args))
-                    task.wait(0.03)
-                end
-            else
-                task.wait(0.1)
+        for _,v in pairs(game:GetService("Players"):GetPlayers()) do
+            if v ~= plr then
+                createESP(v)
+                v.CharacterAdded:Connect(function()
+                    removeESP(v)
+                    createESP(v)
+                end)
             end
         end
-    end)
-end)
 
-getgenv().G_killserver = false
+        renderConnection = rs.RenderStepped:Connect(function()
+            for v,objs in pairs(espObjects) do
+                local char = v.Character
+                if espEnabled and char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
+                    local hrp = char.HumanoidRootPart
+                    local hum = char.Humanoid
+                    local pos,onScreen = cam:WorldToViewportPoint(hrp.Position)
+                    if onScreen then
+                        local boxSize = Vector2.new(50,75)
+                        local boxPos = Vector2.new(pos.X - boxSize.X/2, pos.Y - boxSize.Y/2)
 
-maintab:Button("Server Killer (Melee)", function()
-    getgenv().G_killserver = not getgenv().G_killserver
+                        objs.box.Visible = true
+                        objs.box.Color = v.Team and v.Team.TeamColor.Color or Color3.fromRGB(255,255,255)
+                        objs.box.Size = boxSize
+                        objs.box.Position = boxPos
 
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Server Killer (Melee)",
-        Text = getgenv().G_killserver and "Enabled." or "Disabled.",
-        Duration = 2
-    })
+                        objs.healthBG.Visible = true
+                        objs.healthBG.Size = Vector2.new(4, boxSize.Y)
+                        objs.healthBG.Position = Vector2.new(boxPos.X - 6, boxPos.Y)
 
-    if not getgenv().G_killserver then return end
+                        local hpPercent = math.clamp(hum.Health/hum.MaxHealth,0,1)
+                        objs.healthBar.Visible = true
+                        objs.healthBar.Color = Color3.fromRGB(0,255,0)
+                        objs.healthBar.Size = Vector2.new(4, boxSize.Y*hpPercent)
+                        objs.healthBar.Position = Vector2.new(boxPos.X - 6, boxPos.Y + (boxSize.Y - boxSize.Y*hpPercent))
 
-    task.spawn(function()
-        local Players = game:GetService("Players")
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local RemoteEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("RemoteEvent")
-        local localPlayer = Players.LocalPlayer
-        local weapons = {"Bat", "Knife", "Baton", "Scissors"}
-
-        while getgenv().G_killserver do
-            local character = localPlayer.Character
-            local hrp = character and character:FindFirstChild("HumanoidRootPart")
-            if not character or not hrp then
-                task.wait(0.1)
-                continue
-            end
-
-            for _, targetPlayer in pairs(Players:GetPlayers()) do
-                if targetPlayer ~= localPlayer then
-                    local targetChar = targetPlayer.Character
-                    local humanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
-                    local head = targetChar and targetChar:FindFirstChild("Head")
-
-                    if humanoid and humanoid.Health > 0 and head then
-                        for _, weaponName in ipairs(weapons) do
-                            local weapon = character:FindFirstChild(weaponName)
-                            if weapon then
-                                RemoteEvent:FireServer(11, weapon, head, hrp.Position)
-                            end
-                        end
+                        objs.nameTag.Visible = true
+                        objs.nameTag.Text = v.Name
+                        objs.nameTag.Color = Color3.fromRGB(255,255,255)
+                        objs.nameTag.Position = Vector2.new(pos.X, boxPos.Y - 16)
+                    else
+                        objs.box.Visible = false
+                        objs.healthBG.Visible = false
+                        objs.healthBar.Visible = false
+                        objs.nameTag.Visible = false
                     end
+                else
+                    objs.box.Visible = false
+                    objs.healthBG.Visible = false
+                    objs.healthBar.Visible = false
+                    objs.nameTag.Visible = false
                 end
             end
-
-            task.wait(0.25)
+        end)
+    else
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Player ESP",
+            Text = "Disabled.",
+            Duration = 2
+        })
+        if renderConnection then
+            renderConnection:Disconnect()
+            renderConnection = nil
         end
-    end)
+        for v,objs in pairs(espObjects) do
+            for _,obj in pairs(objs) do
+                obj:Remove()
+            end
+        end
+        espObjects = {}
+    end
 end)
 
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
 
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local function stepTeleport(hrp, targetCFrame)
+    local startPos = hrp.Position
+    local targetPos = targetCFrame.Position
+    local direction = (targetPos - startPos).Unit
+    local distance = (targetPos - startPos).Magnitude
+    local steps = math.ceil(distance / 20)
+    for i = 1, steps do
+        local newPos = startPos + direction * math.min(i * 20, distance)
+        hrp.CFrame = CFrame.new(newPos, targetPos)
+        task.wait()
+    end
+end
+
 itemsTab:Button("Bat (Melee)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
-    hrp.CFrame = CFrame.new(824, 103, -676)
-    task.wait(0.1)
-
-    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Bat")
-
-    hrp.CFrame = originalCFrame
+    local targetCFrame = CFrame.new(824, 103, -676)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("Bat")
+    stepTeleport(hrp, originalCFrame)
 end)
 
 itemsTab:Button("Knife (Melee)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
-    hrp.CFrame = CFrame.new(-663, 103, -96)
-    task.wait(0.1)
-
-    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Knife")
-
-    hrp.CFrame = originalCFrame
+    local targetCFrame = CFrame.new(-663, 103, -96)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("Knife")
+    stepTeleport(hrp, originalCFrame)
 end)
 
 itemsTab:Button("Hammer (Melee)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
-    hrp.CFrame = CFrame.new(-693, 103, -153)
-    task.wait(0.1)
-
-    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Knife")
-
-    hrp.CFrame = originalCFrame
+    local targetCFrame = CFrame.new(-693, 103, -153)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("Hammer")
+    stepTeleport(hrp, originalCFrame)
 end)
 
 itemsTab:Button("M9 (Pistol)", function()
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-
-local originalCFrame = hrp.CFrame
-local targetCFrame = CFrame.new(-729, 105, -5)
-
-hrp.CFrame = targetCFrame
-
-task.spawn(function()
-    repeat
-        task.wait(0.1)
-    until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("M9")
-
-    if hrp then
-        hrp.CFrame = originalCFrame
-    end
-end)
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    local originalCFrame = hrp.CFrame
+    local targetCFrame = CFrame.new(-729, 105, -5)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("M9")
+    stepTeleport(hrp, originalCFrame)
 end)
 
 itemsTab:Button("SPAS (Shotgun)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
     local targetCFrame = CFrame.new(-729, 105, -5)
-
-    hrp.CFrame = targetCFrame
-
-    task.spawn(function()
-        repeat
-            task.wait(0.1)
-        until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("SPAS")
-
-        if hrp then
-            hrp.CFrame = originalCFrame
-        end
-    end)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("SPAS")
+    stepTeleport(hrp, originalCFrame)
 end)
 
 itemsTab:Button("FAL (Assault Rifle)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
     local targetCFrame = CFrame.new(-729, 105, -5)
-
-    hrp.CFrame = targetCFrame
-
-    task.spawn(function()
-        repeat
-            task.wait(0.1)
-        until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("FAL")
-
-        if hrp then
-            hrp.CFrame = originalCFrame
-        end
-    end)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("FAL")
+    stepTeleport(hrp, originalCFrame)
 end)
 
-
 itemsTab:Button("TEC-9 (Pistol)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
-    hrp.CFrame = CFrame.new(-722, 105, 34)
-    task.wait(0.1)
-
-    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("TEC-9")
-
-    hrp.CFrame = originalCFrame
+    local targetCFrame = CFrame.new(-722, 105, 34)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("TEC-9")
+    stepTeleport(hrp, originalCFrame)
 end)
 
 itemsTab:Button("AK-74 (Assault Rifle)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
-    hrp.CFrame = CFrame.new(822, 103, -687)
-    task.wait(0.1)
-
-    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("AK-74")
-
-    hrp.CFrame = originalCFrame
+    local targetCFrame = CFrame.new(822, 103, -687)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("AK-74")
+    stepTeleport(hrp, originalCFrame)
 end)
 
 itemsTab:Button("M1 Carabine (Rifle)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
-    hrp.CFrame = CFrame.new(319, 33, 712)
-    task.wait(0.1)
-
-    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("M1 Carabine")
-
-    hrp.CFrame = originalCFrame
+    local targetCFrame = CFrame.new(319, 33, 712)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("M1 Carabine")
+    stepTeleport(hrp, originalCFrame)
 end)
 
 itemsTab:Button("Uzi (SMG)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
-    hrp.CFrame = CFrame.new(845, 103, -716)
-    task.wait(0.1)
-
-    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("UZI")
-
-    hrp.CFrame = originalCFrame
+    local targetCFrame = CFrame.new(845, 103, -716)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("UZI")
+    stepTeleport(hrp, originalCFrame)
 end)
 
 itemsTab:Button("M79 (Grenade Launcher)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
-    hrp.CFrame = CFrame.new(441, 200, -231)
-    task.wait(0.1)
-
-    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("M79")
-
-    hrp.CFrame = originalCFrame
+    local targetCFrame = CFrame.new(441, 200, -231)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("M79")
+    stepTeleport(hrp, originalCFrame)
 end)
 
 itemsTab:Button("Mini Gun (SPECIAL)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
-    hrp.CFrame = CFrame.new(686, 32, 643)
-    task.wait(0.1)
-
-    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Minigun")
-
-    hrp.CFrame = originalCFrame
+    local targetCFrame = CFrame.new(686, 32, 643)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("Minigun")
+    stepTeleport(hrp, originalCFrame)
 end)
 
 itemsTab:Button("Multi-Rocket Launcher (SPECIAL)", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     local originalCFrame = hrp.CFrame
-    hrp.CFrame = CFrame.new(-641, 49, 773)
-    task.wait(0.1)
-
-    repeat task.wait(0.1) until player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Quad Launcher")
-
-    hrp.CFrame = originalCFrame
+    local targetCFrame = CFrame.new(-641, 49, 773)
+    stepTeleport(hrp, targetCFrame)
+    repeat task.wait(0.1) until player.Backpack:FindFirstChild("Quad Launcher")
+    stepTeleport(hrp, originalCFrame)
 end)
 
+local Players = game:GetService("Players")
+
 function teleportPlayer(targetPosition)
-    local player = game:GetService("Players").LocalPlayer
+    local player = Players.LocalPlayer
     if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
+        local hrp = player.Character.HumanoidRootPart
+        local startPos = hrp.Position
+        local direction = (targetPosition - startPos).Unit
+        local distance = (targetPosition - startPos).Magnitude
+        local steps = math.ceil(distance / 20)
+
+        for i = 1, steps do
+            local newPos = startPos + direction * math.min(i * 20, distance)
+            hrp.CFrame = CFrame.new(newPos, targetPosition)
+            task.wait()
+        end
     end
 end
 
