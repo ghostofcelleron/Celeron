@@ -1,0 +1,34 @@
+--[[ anticheat bypass rewritten by celeron, originally by cazan :3 ]]--
+
+for _, v in pairs(getgc(true)) do
+    if typeof(v) == "table" then
+        if rawget(v, "ACTrigger") then
+            rawset(v, "ACTrigger", {FireServer = function() end})
+        end
+        if rawget(v, "ACCFrameChanged") then
+            rawset(v, "ACCFrameChanged", {FireServer = function() end})
+        end
+        if rawget(v, "ACKickTrigger") then
+            rawset(v, "ACKickTrigger", {FireServer = function() end})
+        end
+        if rawget(v, "ACF") then
+            rawset(v, "ACF", {FireServer = function() end})
+        end
+    end
+end
+
+local get_uv = debug.getupvalue or getupvalue
+local is_l = islclosure or function(f) return not iscclosure(f) end
+local is_x = is_synapse_function or issentinelclosure or is_protosmasher_closure or is_sirhurt_closure or istempleclosure or checkclosure
+
+for _, fn in ipairs(getgc()) do
+    if typeof(fn) == "function" and is_l(fn) and not is_x(fn) then
+        for i = 1, debug.getinfo(fn).nups do
+            local ok, uv = pcall(get_uv, fn, i)
+            if ok and typeof(uv) == "table" and uv.ACTrigger and uv.ACKickTrigger then
+                uv.ACTrigger = function(...) end
+                uv.ACKickTrigger = function(...) end
+            end
+        end
+    end
+end
