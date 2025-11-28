@@ -1358,7 +1358,7 @@ local function disableAutoWin()
 	notify(false)
 end
 
-maintab:Button("Survivor Auto-Win (Bannable.)", function()
+maintab:Toggle("Survivor Auto-Win (Bannable.)", function()
 	active = not active
 	if conn then conn:Disconnect() conn = nil end
 	if clickLoop then clickLoop = nil end
@@ -1411,7 +1411,7 @@ maintab:Button("Survivor Auto-Win (Bannable.)", function()
 	end)
 end)
 
-maintab:Button("Juggernaut Auto-Win (Bannable.)", function()
+maintab:Toggle("Juggernaut Auto-Win (Bannable.)", function()
 	local Players = game:GetService("Players")
 	local Workspace = game:GetService("Workspace")
 	local StarterGui = game:GetService("StarterGui")
