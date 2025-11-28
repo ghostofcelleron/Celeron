@@ -1,0 +1,348 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+
+local returnPosition = Vector3.new(1, 30, 26)
+local baseplatePosition = Vector3.new(2246, 20, 2)
+local baseplateSize = Vector3.new(50, 1, 50)
+local fireInterval = 0.05
+local tweenToBaseTime = 2.85
+local tweenBackTime = 2.85
+local aboveBuffer = 5
+
+local running = false
+local busy = false
+local pick = nil
+local baseplate = nil
+local spinConn = nil
+local fireTimer = 0
+
+local attacksFolder = ReplicatedStorage:WaitForChild("AttacksFolder")
+local eventsFolder = ReplicatedStorage:WaitForChild("EventsFolder")
+local gen = eventsFolder and eventsFolder:FindFirstChild("GenerateAttack")
+
+local gui = Instance.new("ScreenGui")
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local box = Instance.new("Frame")
+box.Size = UDim2.new(0, 220, 0, 150)
+box.Position = UDim2.new(0.4, 0, 0.3, 0)
+box.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
+box.Active = true
+box.Draggable = true
+box.Parent = gui
+
+local boxCorner = Instance.new("UICorner")
+boxCorner.CornerRadius = UDim.new(0, 12)
+boxCorner.Parent = box
+
+local boxStroke = Instance.new("UIStroke")
+boxStroke.Color = Color3.fromRGB(50, 50, 50)
+boxStroke.Transparency = 0.85
+boxStroke.Parent = box
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+title.TextColor3 = Color3.fromRGB(240, 240, 240)
+title.Text = "auto spin"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.Parent = box
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 10)
+titleCorner.Parent = title
+
+local titleStroke = Instance.new("UIStroke")
+titleStroke.Color = Color3.fromRGB(60, 60, 60)
+titleStroke.Transparency = 0.9
+titleStroke.Parent = title
+
+local dropBtn = Instance.new("TextButton")
+dropBtn.Size = UDim2.new(0, 200, 0, 50)
+dropBtn.Position = UDim2.new(0.5, -100, 0.24, 0)
+dropBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+dropBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+dropBtn.Text = "pick ▼"
+dropBtn.Font = Enum.Font.Gotham
+dropBtn.TextSize = 16
+dropBtn.Parent = box
+
+local dropBtnCorner = Instance.new("UICorner")
+dropBtnCorner.CornerRadius = UDim.new(0, 10)
+dropBtnCorner.Parent = dropBtn
+
+local dropBtnStroke = Instance.new("UIStroke")
+dropBtnStroke.Color = Color3.fromRGB(70, 70, 70)
+dropBtnStroke.Transparency = 0.9
+dropBtnStroke.Parent = dropBtn
+
+local goBtn = Instance.new("TextButton")
+goBtn.Size = UDim2.new(0, 200, 0, 50)
+goBtn.Position = UDim2.new(0.5, -100, 0.62, 0)
+goBtn.Text = "start"
+goBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+goBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+goBtn.Font = Enum.Font.GothamSemibold
+goBtn.TextSize = 16
+goBtn.Parent = box
+
+local goBtnCorner = Instance.new("UICorner")
+goBtnCorner.CornerRadius = UDim.new(0, 10)
+goBtnCorner.Parent = goBtn
+
+local goBtnStroke = Instance.new("UIStroke")
+goBtnStroke.Color = Color3.fromRGB(80, 80, 80)
+goBtnStroke.Transparency = 0.9
+goBtnStroke.Parent = goBtn
+
+local dropContainer = Instance.new("Frame")
+dropContainer.Name = "dropContainer"
+dropContainer.Size = UDim2.new(0, 180, 0, 0)
+dropContainer.Position = UDim2.new(1, 8, 0, -23)
+dropContainer.BackgroundTransparency = 1
+dropContainer.Parent = box
+dropContainer.ClipsDescendants = true
+
+local dropBg = Instance.new("Frame")
+dropBg.Size = UDim2.new(1, 0, 1, 0)
+dropBg.Position = UDim2.new(0, 0, 0, 0)
+dropBg.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
+dropBg.BorderSizePixel = 0
+dropBg.Parent = dropContainer
+
+local dropBgCorner = Instance.new("UICorner")
+dropBgCorner.CornerRadius = UDim.new(0, 10)
+dropBgCorner.Parent = dropBg
+
+local dropBgStroke = Instance.new("UIStroke")
+dropBgStroke.Color = Color3.fromRGB(60, 60, 60)
+dropBgStroke.Transparency = 0.9
+dropBgStroke.Parent = dropBg
+
+local dropScroll = Instance.new("ScrollingFrame")
+dropScroll.Size = UDim2.new(1, -12, 1, -12)
+dropScroll.Position = UDim2.new(0, 6, 0, 6)
+dropScroll.BackgroundTransparency = 1
+dropScroll.ScrollBarThickness = 6
+dropScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+dropScroll.CanvasPosition = Vector2.new(0, 0)
+dropScroll.Parent = dropBg
+dropScroll.BorderSizePixel = 0
+dropScroll.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 90)
+dropScroll.ClipsDescendants = true
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = dropScroll
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 6)
+
+local maxVisibleHeight = 220
+local dropdownOpen = false
+
+local openTweenInfo = TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local function setDropdownOpen(open)
+    if dropdownOpen == open then return end
+    dropdownOpen = open
+
+    local contentHeight = UIListLayout.AbsoluteContentSize.Y + 12
+    local desiredHeight = math.clamp(contentHeight, 0, maxVisibleHeight)
+    local targetSize = open and UDim2.new(0, 180, 0, desiredHeight) or UDim2.new(0, 180, 0, 0)
+
+    TweenService:Create(dropContainer, openTweenInfo, {Size = targetSize}):Play()
+    if open then
+        dropBtn.Text = (pick and ("pick: " .. string.lower(pick) .. " ▲") or "pick ▲")
+    else
+        dropBtn.Text = (pick and ("pick: " .. string.lower(pick) .. " ▼") or "pick ▼")
+    end
+end
+
+if attacksFolder then
+    for _, atk in ipairs(attacksFolder:GetChildren()) do
+        if atk.Name ~= "AdminAttacks" then
+            local opt = Instance.new("TextButton")
+            opt.Size = UDim2.new(1, 0, 0, 28)
+            opt.BackgroundColor3 = Color3.fromRGB(48, 48, 48)
+            opt.TextColor3 = Color3.fromRGB(230, 230, 230)
+            opt.Text = string.lower(atk.Name)
+            opt.Font = Enum.Font.Gotham
+            opt.TextSize = 14
+            opt.AutoButtonColor = false
+            opt.Parent = dropScroll
+            opt.LayoutOrder = #dropScroll:GetChildren()
+
+            local optCorner = Instance.new("UICorner")
+            optCorner.CornerRadius = UDim.new(0, 6)
+            optCorner.Parent = opt
+
+            local optStroke = Instance.new("UIStroke")
+            optStroke.Color = Color3.fromRGB(60, 60, 60)
+            optStroke.Transparency = 0.9
+            optStroke.Parent = opt
+
+            local hover = Instance.new("Frame")
+            hover.Size = UDim2.new(1, 0, 1, 0)
+            hover.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+            hover.BackgroundTransparency = 1
+            hover.BorderSizePixel = 0
+            hover.Parent = opt
+            hover.ZIndex = opt.ZIndex - 1
+
+            opt.MouseEnter:Connect(function()
+                hover.BackgroundTransparency = 0.6
+            end)
+            opt.MouseLeave:Connect(function()
+                hover.BackgroundTransparency = 1
+            end)
+
+            opt.MouseButton1Click:Connect(function()
+                pick = atk.Name
+                dropBtn.Text = "pick: " .. string.lower(pick) .. " ▼"
+                for _, child in ipairs(dropScroll:GetChildren()) do
+                    if child:IsA("TextButton") then
+                        child.BackgroundColor3 = Color3.fromRGB(48, 48, 48)
+                    end
+                end
+                opt.BackgroundColor3 = Color3.fromRGB(68, 68, 68)
+                setDropdownOpen(false)
+            end)
+        end
+    end
+end
+
+dropBtn.MouseButton1Click:Connect(function()
+    if busy then return end
+    setDropdownOpen(not dropdownOpen)
+end)
+
+local function isPointInsideGui(point, guiObject)
+    local pos = guiObject.AbsolutePosition
+    local size = guiObject.AbsoluteSize
+    return point.X >= pos.X and point.X <= pos.X + size.X and point.Y >= pos.Y and point.Y <= pos.Y + size.Y
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 and dropdownOpen then
+        local mousePos = UserInputService:GetMouseLocation()
+        local p = Vector2.new(mousePos.X, mousePos.Y)
+        if not isPointInsideGui(p, box) and not isPointInsideGui(p, dropContainer) then
+            setDropdownOpen(false)
+        end
+    end
+end)
+
+local function ensureBaseplate()
+    if baseplate and baseplate.Parent then return end
+    baseplate = Instance.new("Part")
+    baseplate.Name = "spin_baseplate"
+    baseplate.Size = baseplateSize
+    baseplate.Position = baseplatePosition
+    baseplate.Anchored = true
+    baseplate.Transparency = 0.3
+    baseplate.Color = Color3.fromRGB(100, 150, 255)
+    baseplate.CanCollide = true
+    baseplate.Material = Enum.Material.SmoothPlastic
+    baseplate.Parent = workspace
+end
+
+local function cframeAtPosPreserveOrientation(root, pos)
+    if not root then return CFrame.new(pos) end
+    local ori = root.Orientation
+    return CFrame.new(pos) * CFrame.Angles(math.rad(ori.X), math.rad(ori.Y), math.rad(ori.Z))
+end
+
+local function tweenRootToPositionPreserveOrientation(root, targetPosition, time)
+    if not root or not root.Parent then return nil end
+    local targetCFrame = cframeAtPosPreserveOrientation(root, targetPosition)
+    local tween = TweenService:Create(root, TweenInfo.new(time or 1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {CFrame = targetCFrame})
+    tween:Play()
+    return tween
+end
+
+local function stopFiring()
+    if spinConn then
+        spinConn:Disconnect()
+        spinConn = nil
+    end
+    running = false
+    if goBtn and goBtn.Parent then
+        goBtn.Text = "start"
+    end
+end
+
+ensureBaseplate()
+
+player.CharacterAdded:Connect(function()
+    stopFiring()
+    busy = false
+end)
+
+goBtn.MouseButton1Click:Connect(function()
+    if busy then return end
+    if not gen then return end
+    if not pick then return end
+
+    busy = true
+    local char = player.Character or player.CharacterAdded:Wait()
+    local root = char:WaitForChild("HumanoidRootPart", 5)
+    if not root then
+        busy = false
+        return
+    end
+
+    if not running then
+        ensureBaseplate()
+        running = true
+        goBtn.Text = "stop"
+
+        local halfY = (baseplate.Size.Y / 2)
+        local safeHeight = halfY + aboveBuffer
+        local targetPos = baseplate.Position + Vector3.new(0, safeHeight, 0)
+
+        local toBaseTween = tweenRootToPositionPreserveOrientation(root, targetPos, tweenToBaseTime)
+        if toBaseTween then toBaseTween.Completed:Wait() end
+
+        fireTimer = 0
+        if spinConn then
+            spinConn:Disconnect()
+            spinConn = nil
+        end
+
+        spinConn = RunService.Heartbeat:Connect(function(dt)
+            if not running or not root or not root.Parent or not char or char ~= player.Character then
+                stopFiring()
+                return
+            end
+
+            fireTimer = fireTimer + dt
+            if fireTimer >= fireInterval then
+                fireTimer = fireTimer - fireInterval
+                pcall(function()
+                    gen:FireServer("Random")
+                end)
+            end
+
+            local cur = char:FindFirstChild("CurrentAttack")
+            if cur and cur.Value == pick then
+                stopFiring()
+                local backTween = tweenRootToPositionPreserveOrientation(root, returnPosition, tweenBackTime)
+                if backTween then backTween.Completed:Wait() end
+                busy = false
+            end
+        end)
+
+        busy = false
+    else
+        stopFiring()
+        local backTween = tweenRootToPositionPreserveOrientation(root, returnPosition, tweenBackTime)
+        if backTween then backTween.Completed:Wait() end
+        busy = false
+    end
+end)
