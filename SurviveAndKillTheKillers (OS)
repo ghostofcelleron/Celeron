@@ -23,6 +23,7 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
+misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
@@ -244,7 +245,7 @@ local function disableInfiniteAmmo()
 	box.CFrame = originalCFrame
 end
 
-maintab:Button("Infinite Ammo", function()
+maintab:Toggle("Infinite Ammo", function()
 	if infiniteAmmoEnabled then
 		disableInfiniteAmmo()
 	else
@@ -536,6 +537,7 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
+misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
@@ -584,31 +586,51 @@ maintab:Textbox("Player Speed", function(v)
 	end)
 end)
 
-maintab:Textbox("Juggernaut Hitbox", function(v)
-	local HeadSize = tonumber(v)
-	if not HeadSize then return end
+guntab:Label("Weapon Features.")
 
-	local sizeVec = Vector3.new(HeadSize, HeadSize, HeadSize)
-	local RunService = game:GetService("RunService")
-	local killers = workspace:FindFirstChild("Killers")
-	if not killers then return end
+guntab:Textbox("Obtain Gun", function(v)
+	local Players = game:GetService("Players")
+	local Workspace = game:GetService("Workspace")
 
-	RunService.RenderStepped:Connect(function()
-		for _, model in ipairs(killers:GetChildren()) do
-			local humanoid = model:FindFirstChildOfClass("Humanoid")
-			local head = model:FindFirstChild("Head")
-			if humanoid and head and head:IsA("BasePart") then
-				head.Size = sizeVec
-				head.Transparency = 1
-				head.Material = Enum.Material.SmoothPlastic
-				head.CanCollide = false
-				head.Massless = true
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+	local function findGunModel(name)
+		local weapons = Workspace:FindFirstChild("Weapons")
+		if not weapons then return nil end
+		for _, child in ipairs(weapons:GetChildren()) do
+			if child:IsA("Model") and child.Name:lower() == name:lower() then
+				return child
 			end
 		end
-	end)
-end)
+		return nil
+	end
 
-guntab:Label("Weapon Features.")
+	local function setModelTransparency(model, value)
+		for _, part in ipairs(model:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Transparency = value
+			end
+		end
+	end
+
+	local function runGunSequence(gunModel)
+		if not gunModel or not gunModel.PrimaryPart then return end
+
+		local originalCFrame = gunModel.PrimaryPart.CFrame
+		local targetCFrame = CFrame.new(humanoidRootPart.Position + Vector3.new(0, 2, 0))
+
+		setModelTransparency(gunModel, 1)
+		gunModel:SetPrimaryPartCFrame(targetCFrame)
+		task.wait(0.15)
+		gunModel:SetPrimaryPartCFrame(originalCFrame)
+		setModelTransparency(gunModel, 0)
+	end
+
+	local gunModel = findGunModel(v)
+	runGunSequence(gunModel)
+end)
 
 guntab:Button("Show Current Weapons", function()
 local StarterGui = game:GetService("StarterGui")
@@ -638,7 +660,7 @@ local activeESP = {}
 local lastWeaponNames = {}
 local currentRoot = nil
 
-guntab:Button("Weapon ESP", function()
+guntab:Toggle("Weapon ESP", function()
 	weaponESPEnabled = not weaponESPEnabled
 
 	local StarterGui = game:GetService("StarterGui")
@@ -651,6 +673,20 @@ guntab:Button("Weapon ESP", function()
 	local player = game.Players.LocalPlayer
 	local weaponsFolder = workspace:FindFirstChild("Weapons")
 	if not weaponsFolder then return end
+
+	local function clearESP()
+		for _, gui in ipairs(activeESP) do
+			if gui and gui:IsA("BillboardGui") then
+				gui:Destroy()
+			end
+		end
+		activeESP = {}
+	end
+
+	if not weaponESPEnabled then
+		clearESP()
+		return
+	end
 
 	local function updateRoot()
 		local char = player.Character or player.CharacterAdded:Wait()
@@ -686,15 +722,6 @@ guntab:Button("Weapon ESP", function()
 			createESP()
 		end
 	end)
-
-	local function clearESP()
-		for _, gui in pairs(activeESP) do
-			if gui and gui.Parent then
-				gui:Destroy()
-			end
-		end
-		activeESP = {}
-	end
 
 	local function createESP()
 		clearESP()
@@ -770,56 +797,151 @@ guntab:Button("Weapon ESP", function()
 		end
 	end)
 
-	if weaponESPEnabled then
-		createESP()
-	end
+	createESP()
 end)
 
-guntab:Textbox("Obtain Gun", function(v)
-	local Players = game:GetService("Players")
-	local Workspace = game:GetService("Workspace")
+maintab:Label("Aimlock Features.")
 
-	local player = Players.LocalPlayer
-	local character = player.Character or player.CharacterAdded:Wait()
-	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local player = Players.LocalPlayer
+local cam = workspace.CurrentCamera
 
-	local function findGunModel(name)
-		local weapons = Workspace:FindFirstChild("Weapons")
-		if not weapons then return nil end
-		for _, child in ipairs(weapons:GetChildren()) do
-			if child:IsA("Model") and child.Name:lower() == name:lower() then
-				return child
-			end
-		end
-		return nil
-	end
+local silentAimEnabled = false
+local fovCircle
+local conn
+local addConn
+local removeConn
+local killersFolder = workspace:FindFirstChild("Killers")
+local killersList = {}
 
-	local function setModelTransparency(model, value)
-		for _, part in ipairs(model:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.Transparency = value
-			end
-		end
-	end
+local function notify(state)
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "Silent Aim",
+            Text = state and "Enabled." or "Disabled.",
+            Duration = 3
+        })
+    end)
+end
 
-	local function runGunSequence(gunModel)
-		if not gunModel or not gunModel.PrimaryPart then return end
+local function isOnScreenAndInFOV(pos)
+    local screenPos, onScreen = cam:WorldToViewportPoint(pos)
+    if not onScreen then return false end
+    local center = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
+    local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+    return dist <= fovCircle.Radius
+end
 
-		local originalCFrame = gunModel.PrimaryPart.CFrame
-		local targetCFrame = CFrame.new(humanoidRootPart.Position + Vector3.new(0, 2, 0))
+local function isVisible(model)
+    local origin = cam.CFrame.Position
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {player.Character, model}
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    for _, part in ipairs(model:GetChildren()) do
+        if part:IsA("BasePart") then
+            local direction = (part.Position - origin)
+            local result = workspace:Raycast(origin, direction, raycastParams)
+            if not result then
+                return true
+            end
+        end
+    end
+    return false
+end
 
-		setModelTransparency(gunModel, 1)
-		gunModel:SetPrimaryPartCFrame(targetCFrame)
-		task.wait(0.15)
-		gunModel:SetPrimaryPartCFrame(originalCFrame)
-		setModelTransparency(gunModel, 0)
-	end
+local function hasWelds(part)
+    for _, child in ipairs(part:GetDescendants()) do
+        if child:IsA("Weld") or child:IsA("WeldConstraint") then
+            return true
+        end
+    end
+    return false
+end
 
-	local gunModel = findGunModel(v)
-	runGunSequence(gunModel)
+local function refreshKillers()
+    killersList = {}
+    if killersFolder then
+        for _, model in ipairs(killersFolder:GetChildren()) do
+            if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
+                table.insert(killersList, model)
+            end
+        end
+    end
+end
+
+local function toggleSilentAim()
+    silentAimEnabled = not silentAimEnabled
+    notify(silentAimEnabled)
+
+    if silentAimEnabled then
+        if not fovCircle then
+            fovCircle = Drawing.new("Circle")
+            fovCircle.Radius = 145
+            fovCircle.Position = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
+            fovCircle.Color = Color3.fromRGB(175,0,175)
+            fovCircle.Thickness = 2
+            fovCircle.Filled = false
+            fovCircle.Visible = true
+        else
+            fovCircle.Visible = true
+        end
+
+        refreshKillers()
+
+        if killersFolder then
+            addConn = killersFolder.ChildAdded:Connect(function(child)
+                if child:IsA("Model") and child:FindFirstChildOfClass("Humanoid") then
+                    table.insert(killersList, child)
+                end
+            end)
+            removeConn = killersFolder.ChildRemoved:Connect(function(child)
+                for i, model in ipairs(killersList) do
+                    if model == child then
+                        table.remove(killersList, i)
+                        break
+                    end
+                end
+            end)
+        end
+
+        conn = workspace.ChildAdded:Connect(function(obj)
+            if not silentAimEnabled then return end
+            if obj:IsA("Part") and obj.Name == "Bullet" then
+                -- skip if bullet has welds
+                if hasWelds(obj) then return end
+                for _, model in ipairs(killersList) do
+                    local head = model:FindFirstChild("Head")
+                    local torso = model:FindFirstChild("HumanoidRootPart")
+                    local hum = model:FindFirstChildOfClass("Humanoid")
+                    if hum and hum.Health > 0 and (head or torso) then
+                        local targetPart = head
+                        if math.random(1,2) == 1 and torso then
+                            targetPart = torso
+                        end
+                        if isOnScreenAndInFOV(targetPart.Position) and isVisible(model) then
+                            obj.CFrame = targetPart.CFrame
+                            break
+                        end
+                    end
+                end
+            end
+        end)
+    else
+        if fovCircle then fovCircle.Visible = false end
+        if conn then conn:Disconnect() conn = nil end
+        if addConn then addConn:Disconnect() addConn = nil end
+        if removeConn then removeConn:Disconnect() removeConn = nil end
+        killersList = {}
+    end
+end
+
+maintab:Toggle("Silent Aim", function()
+    toggleSilentAim()
 end)
 
-guntab:Label("Juggernaut Aimlock.")
 players = game:GetService("Players")
 runService = game:GetService("RunService")
 input = game:GetService("UserInputService")
@@ -908,11 +1030,11 @@ function toggleAimlock()
 	end
 end
 
-guntab:Button("Aimlock", function()
+maintab:Toggle("Aimlock", function()
 	toggleAimlock()
 end)
 
-guntab:Button("Aimlock (Bind: M2)", function()
+maintab:Toggle("Aimlock (Bind: M2)", function()
 	getgenv().bindEnabled = not getgenv().bindEnabled
 	if getgenv().bindEnabled then
 		if not bindConnection then
@@ -933,264 +1055,255 @@ guntab:Button("Aimlock (Bind: M2)", function()
 	end
 end)
 
-guntab:Label("Gun Modifiers.")
-
-local runService = game:GetService("RunService")
-local players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-local player = players.LocalPlayer
-
-local model = workspace:WaitForChild("AREA51"):WaitForChild("PlantRoom"):WaitForChild("Box of Shells")
-local box = model:WaitForChild("Box")
-local originalCFrame = box.CFrame
-local loopConnection
-local infiniteAmmoEnabled = false
-
-local function notifyy(title, text)
-	pcall(function()
-		StarterGui:SetCore("SendNotification", {
-			Title = title,
-			Text = text,
-			Duration = 3
-		})
-	end)
-end
-
-local function ghostifyModel()
-	for _, item in ipairs(model:GetDescendants()) do
-		if item:IsA("BasePart") then
-			item.Transparency = 1
-			item.CanCollide = false
-		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
-			item.Transparency = 1
-		end
-	end
-end
-
-local function enableInfiniteAmmo()
-	infiniteAmmoEnabled = true
-	notifyy("Infinite Ammo", "Enabled.")
-	ghostifyModel()
-	box.Anchored = true
-	box.CanCollide = false
-
-	local toggle = false
-	local lastToggle = 0
-
-	loopConnection = runService.RenderStepped:Connect(function(dt)
-		local char = player.Character
-		if not char then return end
-
-		local root = char:FindFirstChild("HumanoidRootPart")
-		if not root then return end
-
-		lastToggle += dt
-		if lastToggle >= 0.1 then
-			lastToggle = 0
-			toggle = not toggle
-
-			if toggle then
-				local offset = Vector3.new(0, -(root.Size.Y / 2 + box.Size.Y / 2 + 0.1), 0)
-				local position = root.Position + offset
-				box.CFrame = CFrame.new(position)
-			else
-				box.CFrame = originalCFrame
-			end
-		end
-	end)
-end
-
-local function disableInfiniteAmmo()
-	infiniteAmmoEnabled = false
-	notifyy("Infinite Ammo", "Disabled.")
-	if loopConnection then
-		loopConnection:Disconnect()
-		loopConnection = nil
-	end
-	box.CFrame = originalCFrame
-end
-
-guntab:Button("Infinite Ammo", function()
-	if infiniteAmmoEnabled then
-		disableInfiniteAmmo()
-	else
-		enableInfiniteAmmo()
-	end
-end)
-
-local players = game:GetService("Players")
-local userInput = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
-local player = players.LocalPlayer
-
-local model = workspace:WaitForChild("AREA51"):WaitForChild("PlantRoom"):WaitForChild("Box of Shells")
-local box = model:WaitForChild("Box")
-local originalCFrame = box.CFrame
-local fullAmmoConnection
-local fullAmmoBindEnabled = false
-
-local function notifyFullAmmo(title, text)
-	pcall(function()
-		StarterGui:SetCore("SendNotification", {
-			Title = title,
-			Text = text,
-			Duration = 3
-		})
-	end)
-end
-
-local function ghostifyModel()
-	for _, item in ipairs(model:GetDescendants()) do
-		if item:IsA("BasePart") then
-			item.Transparency = 1
-			item.CanCollide = false
-		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
-			item.Transparency = 1
-		end
-	end
-end
-
-local function unghostifyModel()
-	for _, item in ipairs(model:GetDescendants()) do
-		if item:IsA("BasePart") then
-			item.Transparency = 0
-			item.CanCollide = true
-		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
-			item.Transparency = 0
-		end
-	end
-end
-
-local function handleFullAmmoKey(input, gp)
-	if gp or input.KeyCode ~= Enum.KeyCode.X then return end
-
-	local char = player.Character
-	if not char then return end
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	local offset = Vector3.new(0, -(root.Size.Y / 2 + box.Size.Y / 2 + 0.1), 0)
-	local position = root.Position + offset
-
-	ghostifyModel()
-	box.CFrame = CFrame.new(position)
-	task.wait(0.1)
-	box.CFrame = originalCFrame
-	unghostifyModel()
-end
-
-local function enableFullAmmoBind()
-	fullAmmoBindEnabled = true
-	box.Anchored = true
-	box.CanCollide = false
-	fullAmmoConnection = userInput.InputBegan:Connect(handleFullAmmoKey)
-	notifyFullAmmo("Full Ammo", "Keybind Enabled.")
-end
-
-local function disableFullAmmoBind()
-	fullAmmoBindEnabled = false
-	if fullAmmoConnection then
-		fullAmmoConnection:Disconnect()
-		fullAmmoConnection = nil
-	end
-	box.CFrame = originalCFrame
-	unghostifyModel()
-	notifyFullAmmo("Full Ammo", "Keybind Disabled.")
-end
-
-guntab:Button("Full Ammo (Bind: X)", function()
-	if fullAmmoBindEnabled then
-		disableFullAmmoBind()
-	else
-		enableFullAmmoBind()
-	end
-end)
-
 esptab:Label("Visual Features.")
 
-esptab:Button("Juggernaut Health Bar", function()
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-screenGui.Name = "BossHealthBars"
-screenGui.ResetOnSpawn = false
+local juggernautESPEnabled = false
+local juggernautESPObjects = {}
+local rs = game:GetService("RunService")
+local cam = workspace.CurrentCamera
+local renderConnection = nil
 
-local function createHealthBar(model)
-	local humanoid = model:FindFirstChildOfClass("Humanoid")
-	if not humanoid then return end
-	if screenGui:FindFirstChild(model.Name .. "_Bar") then return end
+local killersFolder = workspace:FindFirstChild("Killers")
 
-	local displayName = model.Name
-	for _, p in ipairs(Players:GetPlayers()) do
-		if p.Character == model then
-			displayName = p.DisplayName
-			break
-		end
-	end
+local function createHeadESP(model)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "JuggernautHighlightESP"
+    highlight.FillTransparency = 0.7
+    highlight.OutlineColor = Color3.fromRGB(255, 50, 50)
+    highlight.OutlineTransparency = 0
+    highlight.Adornee = model
+    highlight.Parent = model
 
-	local frame = Instance.new("Frame")
-	frame.Name = model.Name .. "_Bar"
-	frame.Size = UDim2.new(0.4, 0, 0, 30)
-	frame.Position = UDim2.new(0.3, 0, 0.05, 0)
-	frame.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-	frame.BorderSizePixel = 0
-	frame.Parent = screenGui
+    local healthBG = Drawing.new("Square")
+    healthBG.Filled = true
+    healthBG.Color = Color3.fromRGB(0,0,0)
+    healthBG.Transparency = 0.6
 
-	local fill = Instance.new("Frame")
-	fill.Name = "HealthFill"
-	fill.Size = UDim2.new(1, 0, 1, 0)
-	fill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-	fill.BorderSizePixel = 0
-	fill.Parent = frame
+    local healthBar = Drawing.new("Square")
+    healthBar.Filled = true
+    healthBar.Color = Color3.fromRGB(0,255,0)
+    healthBar.Transparency = 0.9
 
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, 0, 1, 0)
-	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.new(1, 1, 1)
-	label.TextScaled = true
-	label.Font = Enum.Font.Fantasy
-	label.Text = displayName .. " - " .. math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
-	label.Parent = frame
+    local nameTag = Drawing.new("Text")
+    nameTag.Size = 16
+    nameTag.Center = true
+    nameTag.Color = Color3.fromRGB(255,255,255)
+    nameTag.Outline = true
 
-	task.spawn(function()
-		while humanoid and humanoid.Parent and humanoid.Health > 0 do
-			local ratio = humanoid.Health / humanoid.MaxHealth
-			fill.Size = UDim2.new(ratio, 0, 1, 0)
-			label.Text = displayName .. " - " .. math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
-			task.wait(0.2)
-		end
-		frame:Destroy()
-	end)
+    juggernautESPObjects[model] = {
+        highlight=highlight,
+        healthBG=healthBG,
+        healthBar=healthBar,
+        nameTag=nameTag
+    }
 end
 
-task.spawn(function()
-	while true do
-		local killersFolder = workspace:FindFirstChild("Killers")
-		if killersFolder then
-			local models = {}
-			for _, model in ipairs(killersFolder:GetChildren()) do
-				if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
-					table.insert(models, model)
-				end
-			end
+local function removeHeadESP(model)
+    if juggernautESPObjects[model] then
+        juggernautESPObjects[model].highlight:Destroy()
+        juggernautESPObjects[model].healthBG:Remove()
+        juggernautESPObjects[model].healthBar:Remove()
+        juggernautESPObjects[model].nameTag:Remove()
+        juggernautESPObjects[model] = nil
+    end
+end
 
-			if #models == 1 and models[1].Name == "Zombie" then
-				createHealthBar(models[1])
-			else
-				for _, model in ipairs(models) do
-					if model.Name ~= "Zombie" then
-						createHealthBar(model)
-					end
-				end
-			end
-		end
-		task.wait(1)
-	end
+esptab:Toggle("Juggernaut ESP", function()
+    juggernautESPEnabled = not juggernautESPEnabled
+    if juggernautESPEnabled then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Juggernaut ESP",
+            Text = "Enabled.",
+            Duration = 2
+        })
+
+        if killersFolder then
+            for _,model in pairs(killersFolder:GetChildren()) do
+                if model:IsA("Model") then
+                    createHeadESP(model)
+                end
+            end
+
+            killersFolder.ChildAdded:Connect(function(child)
+                if juggernautESPEnabled and child:IsA("Model") then
+                    createHeadESP(child)
+                end
+            end)
+
+            killersFolder.ChildRemoved:Connect(function(child)
+                removeHeadESP(child)
+            end)
+        end
+
+        renderConnection = rs.RenderStepped:Connect(function()
+            for model,objs in pairs(juggernautESPObjects) do
+                local head = model:FindFirstChild("Head")
+                local hum = model:FindFirstChildOfClass("Humanoid")
+                if juggernautESPEnabled and head and hum then
+                    local headPos,onScreen = cam:WorldToViewportPoint(head.Position)
+                    local topPos = cam:WorldToViewportPoint(head.Position + Vector3.new(0, head.Size.Y/2 + 0.5, 0))
+                    if onScreen then
+                        local barWidth = 60
+                        local barHeight = 6
+                        local hpPercent = math.clamp(hum.Health/hum.MaxHealth,0,1)
+                        local barY = topPos.Y - 10
+
+                        objs.healthBG.Visible = true
+                        objs.healthBG.Size = Vector2.new(barWidth, barHeight)
+                        objs.healthBG.Position = Vector2.new(headPos.X - barWidth/2, barY)
+
+                        objs.healthBar.Visible = true
+                        objs.healthBar.Size = Vector2.new(barWidth*hpPercent, barHeight)
+                        objs.healthBar.Position = Vector2.new(headPos.X - barWidth/2, barY)
+
+                        objs.nameTag.Visible = true
+                        objs.nameTag.Text = model.Name
+                        objs.nameTag.Position = Vector2.new(headPos.X, barY - 18)
+                    else
+                        objs.healthBG.Visible = false
+                        objs.healthBar.Visible = false
+                        objs.nameTag.Visible = false
+                    end
+                else
+                    objs.healthBG.Visible = false
+                    objs.healthBar.Visible = false
+                    objs.nameTag.Visible = false
+                end
+            end
+        end)
+    else
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Juggernaut ESP",
+            Text = "Disabled.",
+            Duration = 2
+        })
+        if renderConnection then
+            renderConnection:Disconnect()
+            renderConnection = nil
+        end
+        for model,objs in pairs(juggernautESPObjects) do
+            objs.highlight:Destroy()
+            objs.healthBG:Remove()
+            objs.healthBar:Remove()
+            objs.nameTag:Remove()
+        end
+        juggernautESPObjects = {}
+    end
 end)
+
+local healthBarsEnabled = false
+local healthBarConnection = nil
+
+esptab:Toggle("Juggernaut Health Bar", function()
+    healthBarsEnabled = not healthBarsEnabled
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local screenGui = player:WaitForChild("PlayerGui"):FindFirstChild("jugghealthbars")
+    if not screenGui then
+        screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "jugghealthbars"
+        screenGui.ResetOnSpawn = false
+        screenGui.Parent = player:WaitForChild("PlayerGui")
+    end
+
+    local function clearBars()
+        for _,child in ipairs(screenGui:GetChildren()) do
+            if child:IsA("Frame") then
+                child:Destroy()
+            end
+        end
+    end
+
+    if healthBarsEnabled then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Juggernaut Health Bar",
+            Text = "Enabled.",
+            Duration = 2
+        })
+
+        local function createHealthBar(plr, model)
+            local humanoid = model:FindFirstChildOfClass("Humanoid")
+            if not humanoid then return end
+            if screenGui:FindFirstChild(plr.Name .. "_Bar") then return end
+
+            local frame = Instance.new("Frame")
+            frame.Name = plr.Name .. "_Bar"
+            frame.Size = UDim2.new(0.4, 0, 0, 28)
+            frame.Position = UDim2.new(0.3, 0, 0.08, 0)
+            frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+            frame.BorderSizePixel = 2
+            frame.Parent = screenGui
+
+            local fillHolder = Instance.new("Frame")
+            fillHolder.Size = UDim2.new(1, -4, 1, -4)
+            fillHolder.Position = UDim2.new(0, 2, 0, 2)
+            fillHolder.BackgroundColor3 = Color3.fromRGB(40,40,40)
+            fillHolder.BorderSizePixel = 0
+            fillHolder.Parent = frame
+
+            local fill = Instance.new("Frame")
+            fill.Name = "health"
+            fill.Size = UDim2.new(1, 0, 1, 0)
+            fill.BackgroundColor3 = Color3.fromRGB(255,0,0)
+            fill.BorderSizePixel = 0
+            fill.Parent = fillHolder
+
+            local gradient = Instance.new("UIGradient")
+            gradient.Color = ColorSequence.new{
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,0))
+            }
+            gradient.Rotation = 0
+            gradient.Parent = fill
+
+            local label = Instance.new("TextLabel")
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.BackgroundTransparency = 1
+            label.TextColor3 = Color3.fromRGB(255,255,255)
+            label.TextScaled = true
+            label.Font = Enum.Font.GothamBold
+            label.Text = plr.DisplayName .. " - " .. math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
+            label.Parent = frame
+
+            task.spawn(function()
+                while healthBarsEnabled and humanoid and humanoid.Parent and humanoid.Health > 0 do
+                    local ratio = humanoid.Health / humanoid.MaxHealth
+                    fill.Size = UDim2.new(ratio, 0, 1, 0)
+                    label.Text = plr.DisplayName .. " - " .. math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
+                    task.wait(0.2)
+                end
+                frame:Destroy()
+            end)
+        end
+
+        healthBarConnection = task.spawn(function()
+            while healthBarsEnabled do
+                local killersFolder = workspace:FindFirstChild("Killers")
+                if killersFolder then
+                    for _, model in ipairs(killersFolder:GetChildren()) do
+                        if model:IsA("Model") then
+                            for _,plr in ipairs(Players:GetPlayers()) do
+                                if plr.Character == model then
+                                    createHealthBar(plr, model)
+                                end
+                            end
+                        end
+                    end
+                end
+                task.wait(1)
+            end
+        end)
+    else
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Juggernaut Health Bar",
+            Text = "Disabled.",
+            Duration = 2
+        })
+        clearBars()
+    end
 end)
 
 maintab:Label("Auto Win Features.")
-
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -1383,56 +1496,6 @@ maintab:Button("Juggernaut Auto-Win (Bannable.)", function()
 	end
 end)
 
-esptab:Button("Juggernaut ESP", function()
-	local RunService = game:GetService("RunService")
-	local killersFolder = workspace:FindFirstChild("Killers")
-
-	RunService.RenderStepped:Connect(function()
-		if not killersFolder then return end
-
-		for _, model in ipairs(killersFolder:GetChildren()) do
-			if model:IsA("Model") then
-				local root = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChildWhichIsA("BasePart")
-				if root then
-					local tagName = "JuggernautESP"
-
-					if not model:FindFirstChild(tagName) then
-						local highlight = Instance.new("Highlight")
-						highlight.Name = tagName
-						highlight.Adornee = model
-						highlight.FillTransparency = 1
-						highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
-						highlight.OutlineTransparency = 0
-						highlight.Parent = model
-					end
-
-					if not root:FindFirstChild("JuggernautTag") then
-						local billboard = Instance.new("BillboardGui")
-						billboard.Name = "JuggernautTag"
-						billboard.Adornee = root
-						billboard.Size = UDim2.new(0, 100, 0, 20)
-						billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-						billboard.AlwaysOnTop = true
-						billboard.LightInfluence = 0
-						billboard.Parent = root
-
-						local nameLabel = Instance.new("TextLabel")
-						nameLabel.Size = UDim2.new(1, 0, 1, 0)
-						nameLabel.BackgroundTransparency = 1
-						nameLabel.Text = model.Name
-						nameLabel.TextColor3 = Color3.new(1, 1, 1)
-						nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-						nameLabel.TextStrokeTransparency = 0
-						nameLabel.TextScaled = true
-						nameLabel.Font = Enum.Font.Arial
-						nameLabel.Parent = billboard
-					end
-				end
-			end
-		end
-	end)
-end)
-
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
@@ -1453,6 +1516,178 @@ misctab:Button("Switch Servers", function()
     if #servers > 0 then
         TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], Players.LocalPlayer)
 end
+end)
+
+guntab:Label("Gun Mods.")
+local runService = game:GetService("RunService")
+local players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local player = players.LocalPlayer
+
+local model = workspace:WaitForChild("AREA51"):WaitForChild("PlantRoom"):WaitForChild("Box of Shells")
+local box = model:WaitForChild("Box")
+local originalCFrame = box.CFrame
+local loopConnection
+local infiniteAmmoEnabled = false
+
+local function notifyy(title, text)
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = title,
+			Text = text,
+			Duration = 3
+		})
+	end)
+end
+
+local function ghostifyModel()
+	for _, item in ipairs(model:GetDescendants()) do
+		if item:IsA("BasePart") then
+			item.Transparency = 1
+			item.CanCollide = false
+		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
+			item.Transparency = 1
+		end
+	end
+end
+
+local function enableInfiniteAmmo()
+	infiniteAmmoEnabled = true
+	notifyy("Infinite Ammo", "Enabled.")
+	ghostifyModel()
+	box.Anchored = true
+	box.CanCollide = false
+
+	local toggle = false
+	local lastToggle = 0
+
+	loopConnection = runService.RenderStepped:Connect(function(dt)
+		local char = player.Character
+		if not char then return end
+
+		local root = char:FindFirstChild("HumanoidRootPart")
+		if not root then return end
+
+		lastToggle += dt
+		if lastToggle >= 0.5 then
+			lastToggle = 0
+			toggle = not toggle
+
+			if toggle then
+				local offset = Vector3.new(0, -(root.Size.Y / 2 + box.Size.Y / 2 + 0.1), 0)
+				local position = root.Position + offset
+				box.CFrame = CFrame.new(position)
+			else
+				box.CFrame = originalCFrame
+			end
+		end
+	end)
+end
+
+local function disableInfiniteAmmo()
+	infiniteAmmoEnabled = false
+	notifyy("Infinite Ammo", "Disabled.")
+	if loopConnection then
+		loopConnection:Disconnect()
+		loopConnection = nil
+	end
+	box.CFrame = originalCFrame
+end
+
+guntab:Toggle("Infinite Ammo", function()
+	if infiniteAmmoEnabled then
+		disableInfiniteAmmo()
+	else
+		enableInfiniteAmmo()
+	end
+end)
+
+local players = game:GetService("Players")
+local userInput = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local player = players.LocalPlayer
+
+local model = workspace:WaitForChild("AREA51"):WaitForChild("PlantRoom"):WaitForChild("Box of Shells")
+local box = model:WaitForChild("Box")
+local originalCFrame = box.CFrame
+local fullAmmoConnection
+local fullAmmoBindEnabled = false
+
+local function notifyFullAmmo(title, text)
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = title,
+			Text = text,
+			Duration = 3
+		})
+	end)
+end
+
+local function ghostifyModel()
+	for _, item in ipairs(model:GetDescendants()) do
+		if item:IsA("BasePart") then
+			item.Transparency = 1
+			item.CanCollide = false
+		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
+			item.Transparency = 1
+		end
+	end
+end
+
+local function unghostifyModel()
+	for _, item in ipairs(model:GetDescendants()) do
+		if item:IsA("BasePart") then
+			item.Transparency = 0
+			item.CanCollide = true
+		elseif item:IsA("Decal") or item:IsA("SurfaceGui") then
+			item.Transparency = 0
+		end
+	end
+end
+
+local function handleFullAmmoKey(input, gp)
+	if gp or input.KeyCode ~= Enum.KeyCode.X then return end
+
+	local char = player.Character
+	if not char then return end
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local offset = Vector3.new(0, -(root.Size.Y / 2 + box.Size.Y / 2 + 0.1), 0)
+	local position = root.Position + offset
+
+	ghostifyModel()
+	box.CFrame = CFrame.new(position)
+	task.wait(0.1)
+	box.CFrame = originalCFrame
+	unghostifyModel()
+end
+
+local function enableFullAmmoBind()
+	fullAmmoBindEnabled = true
+	box.Anchored = true
+	box.CanCollide = false
+	fullAmmoConnection = userInput.InputBegan:Connect(handleFullAmmoKey)
+	notifyFullAmmo("Full Ammo", "Keybind Enabled.")
+end
+
+local function disableFullAmmoBind()
+	fullAmmoBindEnabled = false
+	if fullAmmoConnection then
+		fullAmmoConnection:Disconnect()
+		fullAmmoConnection = nil
+	end
+	box.CFrame = originalCFrame
+	unghostifyModel()
+	notifyFullAmmo("Full Ammo", "Keybind Disabled.")
+end
+
+guntab:Button("Full Ammo (Bind: X)", function()
+	if fullAmmoBindEnabled then
+		disableFullAmmoBind()
+	else
+		enableFullAmmoBind()
+	end
 end)
 
 helptab:Button("Copy Owner Discord Username", function()
@@ -1490,10 +1725,14 @@ local win = ui:Create({
 })
 
 local maintab = win:Tab("Main")
+local esptab = win:Tab("Visual")
+local guntab = win:Tab("Weapon")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
+maintab:Label("THIS MODE CARRYS A HIGHER BAN RISK, USE WITH DISCRETION.")
+misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
@@ -1542,33 +1781,53 @@ maintab:Textbox("Player Speed", function(v)
 	end)
 end)
 
-maintab:Textbox("Killer Hitbox", function(v)
-	local HeadSize = tonumber(v)
-	if not HeadSize then return end
+guntab:Label("Weapon Features.")
 
-	local sizeVec = Vector3.new(HeadSize, HeadSize, HeadSize)
-	local RunService = game:GetService("RunService")
-	local killers = workspace:FindFirstChild("Killers")
-	if not killers then return end
+guntab:Textbox("Obtain Gun", function(v)
+	local Players = game:GetService("Players")
+	local Workspace = game:GetService("Workspace")
 
-	RunService.RenderStepped:Connect(function()
-		for _, model in ipairs(killers:GetChildren()) do
-			local humanoid = model:FindFirstChildOfClass("Humanoid")
-			local head = model:FindFirstChild("Head")
-			if humanoid and head and head:IsA("BasePart") then
-				head.Size = sizeVec
-				head.Transparency = 1
-				head.Material = Enum.Material.SmoothPlastic
-				head.CanCollide = false
-				head.Massless = true
+	local player = Players.LocalPlayer
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+	local function findGunModel(name)
+		local weapons = Workspace:FindFirstChild("Weapons")
+		if not weapons then return nil end
+		for _, child in ipairs(weapons:GetChildren()) do
+			if child:IsA("Model") and child.Name:lower() == name:lower() then
+				return child
 			end
 		end
-	end)
+		return nil
+	end
+
+	local function setModelTransparency(model, value)
+		for _, part in ipairs(model:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Transparency = value
+			end
+		end
+	end
+
+	local function runGunSequence(gunModel)
+		if not gunModel or not gunModel.PrimaryPart then return end
+
+		local originalCFrame = gunModel.PrimaryPart.CFrame
+		local targetCFrame = CFrame.new(humanoidRootPart.Position + Vector3.new(0, 2, 0))
+
+		setModelTransparency(gunModel, 1)
+		gunModel:SetPrimaryPartCFrame(targetCFrame)
+		task.wait(0.15)
+		gunModel:SetPrimaryPartCFrame(originalCFrame)
+		setModelTransparency(gunModel, 0)
+	end
+
+	local gunModel = findGunModel(v)
+	runGunSequence(gunModel)
 end)
 
-maintab:Label("Weapon Features.")
-
-maintab:Button("Show Current Weapons", function()
+guntab:Button("Show Current Weapons", function()
 local StarterGui = game:GetService("StarterGui")
 local Workspace = game:GetService("Workspace")
 
@@ -1596,7 +1855,7 @@ local activeESP = {}
 local lastWeaponNames = {}
 local currentRoot = nil
 
-maintab:Button("Weapon ESP", function()
+guntab:Toggle("Weapon ESP", function()
 	weaponESPEnabled = not weaponESPEnabled
 
 	local StarterGui = game:GetService("StarterGui")
@@ -1737,6 +1996,147 @@ maintab:Button("Weapon ESP", function()
 end)
 
 maintab:Label("Aimlock Features.")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local player = Players.LocalPlayer
+local cam = workspace.CurrentCamera
+
+local silentAimEnabled = false
+local fovCircle
+local conn
+local addConn
+local removeConn
+local killersFolder = workspace:FindFirstChild("Killers")
+local killersList = {}
+
+local function notify(state)
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "Silent Aim",
+            Text = state and "Enabled." or "Disabled.",
+            Duration = 3
+        })
+    end)
+end
+
+local function isOnScreenAndInFOV(pos)
+    local screenPos, onScreen = cam:WorldToViewportPoint(pos)
+    if not onScreen then return false end
+    local center = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
+    local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+    return dist <= fovCircle.Radius
+end
+
+local function isVisible(model)
+    local origin = cam.CFrame.Position
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {player.Character, model}
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    for _, part in ipairs(model:GetChildren()) do
+        if part:IsA("BasePart") then
+            local direction = (part.Position - origin)
+            local result = workspace:Raycast(origin, direction, raycastParams)
+            if not result then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function hasWelds(part)
+    for _, child in ipairs(part:GetDescendants()) do
+        if child:IsA("Weld") or child:IsA("WeldConstraint") then
+            return true
+        end
+    end
+    return false
+end
+
+local function refreshKillers()
+    killersList = {}
+    if killersFolder then
+        for _, model in ipairs(killersFolder:GetChildren()) do
+            if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
+                table.insert(killersList, model)
+            end
+        end
+    end
+end
+
+local function toggleSilentAim()
+    silentAimEnabled = not silentAimEnabled
+    notify(silentAimEnabled)
+
+    if silentAimEnabled then
+        if not fovCircle then
+            fovCircle = Drawing.new("Circle")
+            fovCircle.Radius = 145
+            fovCircle.Position = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
+            fovCircle.Color = Color3.fromRGB(175,0,175)
+            fovCircle.Thickness = 2
+            fovCircle.Filled = false
+            fovCircle.Visible = true
+        else
+            fovCircle.Visible = true
+        end
+
+        refreshKillers()
+
+        if killersFolder then
+            addConn = killersFolder.ChildAdded:Connect(function(child)
+                if child:IsA("Model") and child:FindFirstChildOfClass("Humanoid") then
+                    table.insert(killersList, child)
+                end
+            end)
+            removeConn = killersFolder.ChildRemoved:Connect(function(child)
+                for i, model in ipairs(killersList) do
+                    if model == child then
+                        table.remove(killersList, i)
+                        break
+                    end
+                end
+            end)
+        end
+
+        conn = workspace.ChildAdded:Connect(function(obj)
+            if not silentAimEnabled then return end
+            if obj:IsA("Part") and obj.Name == "Bullet" then
+                -- skip if bullet has welds
+                if hasWelds(obj) then return end
+                for _, model in ipairs(killersList) do
+                    local head = model:FindFirstChild("Head")
+                    local torso = model:FindFirstChild("HumanoidRootPart")
+                    local hum = model:FindFirstChildOfClass("Humanoid")
+                    if hum and hum.Health > 0 and (head or torso) then
+                        local targetPart = head
+                        if math.random(1,2) == 1 and torso then
+                            targetPart = torso
+                        end
+                        if isOnScreenAndInFOV(targetPart.Position) and isVisible(model) then
+                            obj.CFrame = targetPart.CFrame
+                            break
+                        end
+                    end
+                end
+            end
+        end)
+    else
+        if fovCircle then fovCircle.Visible = false end
+        if conn then conn:Disconnect() conn = nil end
+        if addConn then addConn:Disconnect() addConn = nil end
+        if removeConn then removeConn:Disconnect() removeConn = nil end
+        killersList = {}
+    end
+end
+
+maintab:Toggle("Silent Aim", function()
+    toggleSilentAim()
+end)
+
 local players = game:GetService("Players")
 local runService = game:GetService("RunService")
 local input = game:GetService("UserInputService")
@@ -1820,11 +2220,11 @@ local function toggleAimlock()
 	end
 end
 
-maintab:Button("Aimlock", function()
+maintab:Toggle("Aimlock", function()
 	toggleAimlock()
 end)
 
-maintab:Button("Aimlock (Bind: M2)", function()
+maintab:Toggle("Aimlock (Bind: M2)", function()
 	getgenv().bindEnabled = not getgenv().bindEnabled
 	if getgenv().bindEnabled then
 		if not bindConnection then
@@ -1845,36 +2245,287 @@ maintab:Button("Aimlock (Bind: M2)", function()
 	end
 end)
 
-maintab:Label("Visual Features.")
-maintab:Button("Killer ESP", function()
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
+esptab:Label("Visual Features.")
 
-local function highlightKillers()
-	local killersFolder = Workspace:FindFirstChild("Killers")
-	if not killersFolder then return end
+esptab:Toggle("Survivor ESP", function()
+    local Workspace = game:GetService("Workspace")
+    local RunService = game:GetService("RunService")
+    local StarterGui = game:GetService("StarterGui")
+    local cam = Workspace.CurrentCamera
 
-	for _, obj in ipairs(killersFolder:GetDescendants()) do
-		if obj:IsA("Humanoid") and obj.Health > 0 then
-			local model = obj.Parent
-			if model and not model:FindFirstChildOfClass("Highlight") then
-				local hl = Instance.new("Highlight")
-				hl.FillTransparency = 1
-				hl.OutlineTransparency = 0
-				hl.OutlineColor = Color3.fromRGB(255, 0, 0)
-				hl.Adornee = model
-				hl.Parent = model
-			end
-		end
-	end
-end
+    survivorESPEnabled = not survivorESPEnabled
+    survivorESPObjects = survivorESPObjects or {}
+    local renderConn, addConn, removeConn
 
-task.spawn(function()
-	while true do
-		highlightKillers()
-		task.wait(1)
-	end
+    local function notify(state)
+        pcall(function()
+            StarterGui:SetCore("SendNotification", {
+                Title = "Survivor ESP",
+                Text = state and "Enabled." or "Disabled.",
+                Duration = 3
+            })
+        end)
+    end
+
+    local function createESP(model)
+        local oldHl = model:FindFirstChildOfClass("Highlight")
+        if oldHl then oldHl:Destroy() end
+        local hl = Instance.new("Highlight")
+        hl.FillTransparency = 1
+        hl.OutlineTransparency = 0
+        hl.OutlineColor = Color3.fromRGB(0,255,0)
+        hl.Adornee = model
+        hl.Parent = model
+
+        local healthBG = Drawing.new("Square")
+        healthBG.Filled = true
+        healthBG.Color = Color3.fromRGB(0,0,0)
+        healthBG.Transparency = 0.6
+
+        local healthBar = Drawing.new("Square")
+        healthBar.Filled = true
+        healthBar.Color = Color3.fromRGB(0,255,0)
+        healthBar.Transparency = 0.9
+
+        survivorESPObjects[model] = {
+            highlight = hl,
+            healthBG = healthBG,
+            healthBar = healthBar
+        }
+    end
+
+    local function removeESP(model)
+        local objs = survivorESPObjects[model]
+        if objs then
+            if objs.highlight and objs.highlight.Parent then objs.highlight:Destroy() end
+            if objs.healthBG then objs.healthBG:Remove() end
+            if objs.healthBar then objs.healthBar:Remove() end
+            survivorESPObjects[model] = nil
+        end
+        local stray = model:FindFirstChildOfClass("Highlight")
+        if stray then stray:Destroy() end
+    end
+
+    local function removeAllESP()
+        for model, objs in pairs(survivorESPObjects) do
+            if objs.highlight and objs.highlight.Parent then objs.highlight:Destroy() end
+            if objs.healthBG then objs.healthBG:Remove() end
+            if objs.healthBar then objs.healthBar:Remove() end
+        end
+        survivorESPObjects = {}
+        local folder = Workspace:FindFirstChild("Characters to kill")
+        if folder then
+            for _, child in ipairs(folder:GetChildren()) do
+                local stray = child:FindFirstChildOfClass("Highlight")
+                if stray then stray:Destroy() end
+            end
+        end
+    end
+
+    local function enableESP()
+        notify(true)
+        local folder = Workspace:FindFirstChild("Characters to kill")
+        if not folder then return end
+        for _, model in ipairs(folder:GetChildren()) do
+            if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
+                createESP(model)
+            end
+        end
+        addConn = folder.ChildAdded:Connect(function(child)
+            if survivorESPEnabled and child:IsA("Model") then
+                local hum = child:FindFirstChildOfClass("Humanoid")
+                if hum then createESP(child) end
+                child.DescendantAdded:Connect(function(desc)
+                    if survivorESPEnabled and desc:IsA("Humanoid") then
+                        createESP(child)
+                    end
+                end)
+            end
+        end)
+        removeConn = folder.ChildRemoved:Connect(function(child)
+            removeESP(child)
+        end)
+        renderConn = RunService.RenderStepped:Connect(function()
+            for model, objs in pairs(survivorESPObjects) do
+                local head = model:FindFirstChild("Head")
+                local hum = model:FindFirstChildOfClass("Humanoid")
+                if survivorESPEnabled and head and hum then
+                    local pos,onScreen = cam:WorldToViewportPoint(head.Position)
+                    if onScreen then
+                        local barWidth = 40
+                        local barHeight = 4
+                        local hpPercent = math.clamp(hum.Health/hum.MaxHealth,0,1)
+                        local barY = pos.Y - 20
+                        objs.healthBG.Visible = true
+                        objs.healthBG.Size = Vector2.new(barWidth, barHeight)
+                        objs.healthBG.Position = Vector2.new(pos.X - barWidth/2, barY)
+                        objs.healthBar.Visible = true
+                        objs.healthBar.Size = Vector2.new(barWidth*hpPercent, barHeight)
+                        objs.healthBar.Position = Vector2.new(pos.X - barWidth/2, barY)
+                    else
+                        objs.healthBG.Visible = false
+                        objs.healthBar.Visible = false
+                    end
+                else
+                    objs.healthBG.Visible = false
+                    objs.healthBar.Visible = false
+                end
+            end
+        end)
+    end
+
+    local function disableESP()
+        notify(false)
+        if renderConn then renderConn:Disconnect() renderConn = nil end
+        if addConn then addConn:Disconnect() addConn = nil end
+        if removeConn then removeConn:Disconnect() removeConn = nil end
+        removeAllESP()
+    end
+
+    if survivorESPEnabled then
+        enableESP()
+    else
+        disableESP()
+    end
 end)
+
+esptab:Toggle("Killer ESP", function()
+    local Workspace = game:GetService("Workspace")
+    local RunService = game:GetService("RunService")
+    local StarterGui = game:GetService("StarterGui")
+    local cam = Workspace.CurrentCamera
+
+    killerESPEnabled = not killerESPEnabled
+    killerESPObjects = killerESPObjects or {}
+    local renderConn, addConn, removeConn
+
+    local function notify(state)
+        pcall(function()
+            StarterGui:SetCore("SendNotification", {
+                Title = "Killer ESP",
+                Text = state and "Enabled." or "Disabled.",
+                Duration = 3
+            })
+        end)
+    end
+
+    local function createESP(model)
+        local oldHl = model:FindFirstChildOfClass("Highlight")
+        if oldHl then oldHl:Destroy() end
+        local hl = Instance.new("Highlight")
+        hl.FillTransparency = 1
+        hl.OutlineTransparency = 0
+        hl.OutlineColor = Color3.fromRGB(255,0,0)
+        hl.Adornee = model
+        hl.Parent = model
+        local healthBG = Drawing.new("Square")
+        healthBG.Filled = true
+        healthBG.Color = Color3.fromRGB(0,0,0)
+        healthBG.Transparency = 0.6
+        local healthBar = Drawing.new("Square")
+        healthBar.Filled = true
+        healthBar.Color = Color3.fromRGB(255,0,0)
+        healthBar.Transparency = 0.9
+        killerESPObjects[model] = {
+            highlight = hl,
+            healthBG = healthBG,
+            healthBar = healthBar
+        }
+    end
+
+    local function removeESP(model)
+        local objs = killerESPObjects[model]
+        if objs then
+            if objs.highlight and objs.highlight.Parent then objs.highlight:Destroy() end
+            if objs.healthBG then objs.healthBG:Remove() end
+            if objs.healthBar then objs.healthBar:Remove() end
+            killerESPObjects[model] = nil
+        end
+        local stray = model:FindFirstChildOfClass("Highlight")
+        if stray then stray:Destroy() end
+    end
+
+    local function removeAllESP()
+        for model, objs in pairs(killerESPObjects) do
+            if objs.highlight and objs.highlight.Parent then objs.highlight:Destroy() end
+            if objs.healthBG then objs.healthBG:Remove() end
+            if objs.healthBar then objs.healthBar:Remove() end
+        end
+        killerESPObjects = {}
+        local killersFolder = Workspace:FindFirstChild("Killers")
+        if killersFolder then
+            for _, child in ipairs(killersFolder:GetChildren()) do
+                local stray = child:FindFirstChildOfClass("Highlight")
+                if stray then stray:Destroy() end
+            end
+        end
+    end
+
+    local function enableESP()
+        notify(true)
+        local killersFolder = Workspace:FindFirstChild("Killers")
+        if not killersFolder then return end
+        for _, model in ipairs(killersFolder:GetChildren()) do
+            if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") then
+                createESP(model)
+            end
+        end
+        addConn = killersFolder.ChildAdded:Connect(function(child)
+            if killerESPEnabled and child:IsA("Model") then
+                local hum = child:FindFirstChildOfClass("Humanoid")
+                if hum then createESP(child) end
+                child.DescendantAdded:Connect(function(desc)
+                    if killerESPEnabled and desc:IsA("Humanoid") then
+                        createESP(child)
+                    end
+                end)
+            end
+        end)
+        removeConn = killersFolder.ChildRemoved:Connect(function(child)
+            removeESP(child)
+        end)
+        renderConn = RunService.RenderStepped:Connect(function()
+            for model, objs in pairs(killerESPObjects) do
+                local head = model:FindFirstChild("Head")
+                local hum = model:FindFirstChildOfClass("Humanoid")
+                if killerESPEnabled and head and hum then
+                    local pos,onScreen = cam:WorldToViewportPoint(head.Position)
+                    if onScreen then
+                        local barWidth = 40
+                        local barHeight = 4
+                        local hpPercent = math.clamp(hum.Health/hum.MaxHealth,0,1)
+                        local barY = pos.Y - 20
+                        objs.healthBG.Visible = true
+                        objs.healthBG.Size = Vector2.new(barWidth, barHeight)
+                        objs.healthBG.Position = Vector2.new(pos.X - barWidth/2, barY)
+                        objs.healthBar.Visible = true
+                        objs.healthBar.Size = Vector2.new(barWidth*hpPercent, barHeight)
+                        objs.healthBar.Position = Vector2.new(pos.X - barWidth/2, barY)
+                    else
+                        objs.healthBG.Visible = false
+                        objs.healthBar.Visible = false
+                    end
+                else
+                    objs.healthBG.Visible = false
+                    objs.healthBar.Visible = false
+                end
+            end
+        end)
+    end
+
+    local function disableESP()
+        notify(false)
+        if renderConn then renderConn:Disconnect() renderConn = nil end
+        if addConn then addConn:Disconnect() addConn = nil end
+        if removeConn then removeConn:Disconnect() removeConn = nil end
+        removeAllESP()
+    end
+
+    if killerESPEnabled then
+        enableESP()
+    else
+        disableESP()
+    end
 end)
 
 maintab:Label("Gun Mods.")
@@ -1953,7 +2604,7 @@ local function disableInfiniteAmmo()
 	box.CFrame = originalCFrame
 end
 
-maintab:Button("Infinite Ammo", function()
+maintab:Toggle("Infinite Ammo", function()
 	if infiniteAmmoEnabled then
 		disableInfiniteAmmo()
 	else
