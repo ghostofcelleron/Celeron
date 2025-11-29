@@ -6,12 +6,12 @@ local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 
-local returnPosition = Vector3.new(1, 30, 26)
+local returnPosition = Vector3.new(149, 3, -125)
 local baseplatePosition = Vector3.new(2246, 20, 2)
 local baseplateSize = Vector3.new(50, 1, 50)
 local fireInterval = 0.05
-local tweenToBaseTime = 2.85
-local tweenBackTime = 2.85
+local tweenToBaseTime = 3.5
+local tweenBackTime = 3.5
 local aboveBuffer = 5
 
 local running = false
@@ -27,7 +27,8 @@ local gen = eventsFolder and eventsFolder:FindFirstChild("GenerateAttack")
 
 local gui = Instance.new("ScreenGui")
 gui.ResetOnSpawn = false
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.DisplayOrder = 999
+gui.Parent = player.PlayerGui
 
 local box = Instance.new("Frame")
 box.Size = UDim2.new(0, 220, 0, 150)
@@ -69,7 +70,7 @@ dropBtn.Size = UDim2.new(0, 200, 0, 50)
 dropBtn.Position = UDim2.new(0.5, -100, 0.24, 0)
 dropBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 dropBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-dropBtn.Text = "pick ▼"
+dropBtn.Text = "pick a power"
 dropBtn.Font = Enum.Font.Gotham
 dropBtn.TextSize = 16
 dropBtn.Parent = box
@@ -86,7 +87,7 @@ dropBtnStroke.Parent = dropBtn
 local goBtn = Instance.new("TextButton")
 goBtn.Size = UDim2.new(0, 200, 0, 50)
 goBtn.Position = UDim2.new(0.5, -100, 0.62, 0)
-goBtn.Text = "start"
+goBtn.Text = "start spinning"
 goBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 goBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 goBtn.Font = Enum.Font.GothamSemibold
@@ -157,9 +158,9 @@ local function setDropdownOpen(open)
 
     TweenService:Create(dropContainer, openTweenInfo, {Size = targetSize}):Play()
     if open then
-        dropBtn.Text = (pick and ("pick: " .. string.lower(pick) .. " ▲") or "pick ▲")
+        dropBtn.Text = (pick and ("power selected: " .. string.lower(pick)) or "pick a power")
     else
-        dropBtn.Text = (pick and ("pick: " .. string.lower(pick) .. " ▼") or "pick ▼")
+        dropBtn.Text = (pick and ("power selected: " .. string.lower(pick)) or "pick a power")
     end
 end
 
@@ -203,7 +204,7 @@ if attacksFolder then
 
             opt.MouseButton1Click:Connect(function()
                 pick = atk.Name
-                dropBtn.Text = "pick: " .. string.lower(pick) .. " ▼"
+                dropBtn.Text = "chosen: " .. string.lower(pick)
                 for _, child in ipairs(dropScroll:GetChildren()) do
                     if child:IsA("TextButton") then
                         child.BackgroundColor3 = Color3.fromRGB(48, 48, 48)
