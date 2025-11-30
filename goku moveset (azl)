@@ -7,6 +7,7 @@ local plr = Players.LocalPlayer
 
 loadstring(game:HttpGet("https://pastebin.com/raw/GGzZnvcD",true))()
 local spiritbombfx = "https://pastebin.com/raw/aZ3kAGQd"
+print("hello goku")
 
 local function ult()
 	local char = plr.Character
@@ -42,7 +43,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
     local forward = (root.CFrame - root.Position).LookVector
 
     ReplicatedStorage.ByteNetReliable:FireServer(
-        buffer.fromstring("\025\001"),
+        buffer.fromstring("\030\001"),
         { { "kick", 100, false, vector.create(forward.X, forward.Y + 0.3, forward.Z) } }
     	)
 	end
@@ -87,7 +88,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
 		game.Debris:AddItem(sound, 2)
 
 		ReplicatedStorage.ByteNetReliable:FireServer(
-			buffer.fromstring("\025\001"),
+			buffer.fromstring("\030\001"),
 			{ { "kick", 100, false, vector.create(forward.X, forward.Y -10, forward.Z) } }
 		)
 	end
@@ -264,7 +265,7 @@ if input.KeyCode == Enum.KeyCode.Four then
                     for _, track in ipairs(anims:GetPlayingAnimationTracks()) do
                         if track.Animation.AnimationId == animId then
                             ReplicatedStorage.ByteNetReliable:FireServer(
-                                buffer.fromstring("\025\001"),
+                                buffer.fromstring("\030\001"),
                                 { { "dribble", false } }
                             )
                             break
@@ -300,7 +301,7 @@ end
 
 				task.wait(0.2)
 				ReplicatedStorage.ByteNetReliable:FireServer(
-					buffer.fromstring("\025\001"),
+					buffer.fromstring("\030\001"),
 					{ { "kick", 30, true, vector.create(0, 1, 0) } }
 				)
 
