@@ -106,198 +106,195 @@ UserInputService.InputBegan:Connect(function(input, gp)
 	end
 
 if input.KeyCode == Enum.KeyCode.Two then
-    local char = plr.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    local humanoid = char and char:FindFirstChild("Humanoid")
-    if not char or not root or not humanoid then return end
+local char = plr.Character
+local root = char and char:FindFirstChild("HumanoidRootPart")
+local humanoid = char and char:FindFirstChild("Humanoid")
+if not char or not root or not humanoid then return end
 
-    local state = char:FindFirstChild("state")
-    local stun = state and state:FindFirstChild("stun")
-    if stun then
-        stun.Value = true
-        task.wait(0.03)
-        stun.Value = false
-    end
+local state = char:FindFirstChild("state")
+local stun = state and state:FindFirstChild("stun")
+if stun then
+    stun.Value = true
+    task.wait(0.03)
+    stun.Value = false
+end
 
-    if tick() - lastCast2 < cd2 then return end
-    lastCast2 = tick()
+if tick() - lastCast2 < cd2 then return end
+lastCast2 = tick()
 
-    local anim = Instance.new("Animation")
-    anim.AnimationId = "rbxassetid://84063609284472"
-    local track = humanoid:LoadAnimation(anim)
-    track.Priority = Enum.AnimationPriority.Action4
-    track:Play(0, 1, 1)
-    track.TimePosition = 1.2
+-- Play animation
+local anim = Instance.new("Animation")
+anim.AnimationId = "rbxassetid://84063609284472"
+local track = humanoid:LoadAnimation(anim)
+track.Priority = Enum.AnimationPriority.Action4
+track:Play(0, 1, 1)
+track.TimePosition = 1.2
 
-    local forward = root.CFrame.LookVector
-    local targetPos = root.Position + forward * 75
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {char}
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-    local result = Workspace:Raycast(root.Position, forward * 75, raycastParams)
-    if result then targetPos = result.Position - forward * 1 end
-    root.CFrame = CFrame.new(targetPos, targetPos + forward)
+-- Teleport forward
+local forward = root.CFrame.LookVector
+local targetPos = root.Position + forward * 75
+local raycastParams = RaycastParams.new()
+raycastParams.FilterDescendantsInstances = {char}
+raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+local result = Workspace:Raycast(root.Position, forward * 75, raycastParams)
+if result then targetPos = result.Position - forward * 1 end
+root.CFrame = CFrame.new(targetPos, targetPos + forward)
 
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://108156899947106"
-    sound.Volume = 10
-    sound.Parent = root
-    sound:Play()
-    game:GetService("Debris"):AddItem(sound, 2)
+local sound = Instance.new("Sound")
+sound.SoundId = "rbxassetid://108156899947106"
+sound.Volume = 10
+sound.Parent = root
+sound:Play()
+game:GetService("Debris"):AddItem(sound, 2)
 
-    local originalBrightness = Lighting.Brightness
-    local originalAmbient = Lighting.Ambient
-    local originalOutdoor = Lighting.OutdoorAmbient
-    local darkTween = TweenService:Create(Lighting, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Brightness = 0,
-        Ambient = Color3.fromRGB(0,0,0),
-        OutdoorAmbient = Color3.fromRGB(0,0,0)
-    })
-    local restoreTween = TweenService:Create(Lighting, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Brightness = originalBrightness,
-        Ambient = originalAmbient,
-        OutdoorAmbient = originalOutdoor
-    })
-    darkTween:Play()
-    darkTween.Completed:Connect(function() restoreTween:Play() end)
+local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
 
-    local cam = Workspace.CurrentCamera
-    local originalFOV = cam.FieldOfView
-    local zoomIn = TweenService:Create(cam, TweenInfo.new(0.175, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = originalFOV - 25})
-    local zoomOut = TweenService:Create(cam, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = originalFOV})
-    zoomIn:Play()
-    zoomIn.Completed:Connect(function() zoomOut:Play() end)
+local cc = Lighting:FindFirstChild("DarkCC") or Instance.new("ColorCorrectionEffect")
+cc.Name = "DarkCC"
+cc.Parent = Lighting
+
+local originalBrightness = cc.Brightness
+local originalContrast = cc.Contrast
+local originalSaturation = cc.Saturation
+local originalTint = cc.TintColor
+
+local darkTween = TweenService:Create(cc, TweenInfo.new(0.225, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    Brightness = 0.2,
+    Contrast = 0.2,
+    Saturation = -0.3,
+    TintColor = Color3.fromRGB(0,0,0)
+})
+
+local restoreTween = TweenService:Create(cc, TweenInfo.new(0.325, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+    Brightness = originalBrightness,
+    Contrast = originalContrast,
+    Saturation = originalSaturation,
+    TintColor = originalTint
+})
+
+darkTween:Play()
+darkTween.Completed:Connect(function() restoreTween:Play() end)
+
+local cam = Workspace.CurrentCamera
+local originalFOV = cam.FieldOfView
+local zoomIn = TweenService:Create(cam, TweenInfo.new(0.175, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = originalFOV - 25})
+local zoomOut = TweenService:Create(cam, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {FieldOfView = originalFOV})
+zoomIn:Play()
+zoomIn.Completed:Connect(function() zoomOut:Play() end)
 end
 
 if input.KeyCode == Enum.KeyCode.Three then
-    local char = plr.Character
-    local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-    if not char or not humanoid then return end
-    local state = char:FindFirstChild("state")
-    local stun = state and state:FindFirstChild("stun")
-    if stun then
-        stun.Value = true
-        task.wait(0.03)
-        stun.Value = false
-    end
-    if tick() - lastCast3 < cd3 then return end
-    lastCast3 = tick()
-    cd3 = 35
+local char = plr.Character
+local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+if not char or not humanoid then return end
+local state = char:FindFirstChild("state")
+local stun = state and state:FindFirstChild("stun")
+if stun then
+    stun.Value = true
+    task.wait(0.03)
+    stun.Value = false
+end
+if tick() - lastCast3 < cd3 then return end
+lastCast3 = tick()
+cd3 = 35
 
-    local boostSpeed = 90
-    local originalSpeed = humanoid.WalkSpeed
+local boostSpeed = 90
+local originalSpeed = humanoid.WalkSpeed
 
-    local function WalkSpeedChange()
-        if char and humanoid then humanoid.WalkSpeed = boostSpeed end
-    end
-    WalkSpeedChange()
-    HumanModCons = HumanModCons or {}
-    HumanModCons.wsLoop = (HumanModCons.wsLoop and HumanModCons.wsLoop:Disconnect() and false)
-        or humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(WalkSpeedChange)
-    HumanModCons.wsCA = (HumanModCons.wsCA and HumanModCons.wsCA:Disconnect() and false)
-        or plr.CharacterAdded:Connect(function(nChar)
-            char, humanoid = nChar, nChar:WaitForChild("Humanoid")
-            WalkSpeedChange()
-            HumanModCons.wsLoop = (HumanModCons.wsLoop and HumanModCons.wsLoop:Disconnect() and false)
-                or humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(WalkSpeedChange)
-        end)
+local function WalkSpeedChange()
+    if char and humanoid then humanoid.WalkSpeed = boostSpeed end
+end
+WalkSpeedChange()
+HumanModCons = HumanModCons or {}
+HumanModCons.wsLoop = (HumanModCons.wsLoop and HumanModCons.wsLoop:Disconnect() and false)
+    or humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(WalkSpeedChange)
+HumanModCons.wsCA = (HumanModCons.wsCA and HumanModCons.wsCA:Disconnect() and false)
+    or plr.CharacterAdded:Connect(function(nChar)
+        char, humanoid = nChar, nChar:WaitForChild("Humanoid")
+        WalkSpeedChange()
+        HumanModCons.wsLoop = (HumanModCons.wsLoop and HumanModCons.wsLoop:Disconnect() and false)
+            or humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(WalkSpeedChange)
+    end)
 
-    local parts = humanoid.RigType == Enum.HumanoidRigType.R6 and {
-        "Head","Torso","HumanoidRootPart","Left Arm","Right Arm","Left Leg","Right Leg"
-    } or {
-        "Head","UpperTorso","LowerTorso","HumanoidRootPart",
-        "LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand",
-        "LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"
-    }
+local parts = humanoid.RigType == Enum.HumanoidRigType.R6 and {
+    "Head","Torso","HumanoidRootPart","Left Arm","Right Arm","Left Leg","Right Leg"
+} or {
+    "Head","UpperTorso","LowerTorso","HumanoidRootPart",
+    "LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand",
+    "LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"
+}
 
-    local effectSource = game:GetService("ReplicatedStorage").Resources.barou.allEffectBAROUAWKSTEAL.BigLightningThing:GetChildren()[3]:GetChildren()[13]
-    local clones = {}
+local effectSource = game:GetService("ReplicatedStorage").Resources.barou.allEffectBAROUAWKSTEAL.BigLightningThing:GetChildren()[3]:GetChildren()[13]
+local clones = {}
 
-    for _, partName in ipairs(parts) do
-        local limb = char:FindFirstChild(partName)
-        if limb and limb:IsA("BasePart") then
-            local clone = effectSource:Clone()
-            if clone:IsA("ParticleEmitter") then
-                local att = Instance.new("Attachment")
-                att.Name = "LightningAttach"
-                att.Parent = limb
-                clone.Parent = att
-            else
-                clone.Parent = limb
-                if clone:IsA("BasePart") then
-                    local weld = Instance.new("WeldConstraint")
-                    weld.Part0 = limb
-                    weld.Part1 = clone
-                    weld.Parent = limb
-                elseif clone:IsA("Model") then
-                    local primary = clone.PrimaryPart or clone:FindFirstChildWhichIsA("BasePart")
-                    if primary then
-                        local weld = Instance.new("WeldConstraint")
-                        weld.Part0 = limb
-                        weld.Part1 = primary
-                        weld.Parent = limb
-                        clone:PivotTo(limb.CFrame)
-                    end
-                end
+for _, partName in ipairs(parts) do
+    local limb = char:FindFirstChild(partName)
+    if limb and limb:IsA("BasePart") then
+        local clone = effectSource:Clone()
+        local att = Instance.new("Attachment")
+        att.Name = "LightningAttach"
+        att.Parent = limb
+        clone.Parent = att
+        for _, d in ipairs(clone:GetDescendants()) do
+            if d:IsA("ParticleEmitter") or d:IsA("Beam") or d:IsA("Trail") then
+                d.Color = ColorSequence.new(Color3.fromRGB(255,255,0)) -- yellow
+                d.Enabled = true
+            elseif d:IsA("PointLight") or d:IsA("SpotLight") then
+                d.Color = Color3.fromRGB(255,255,0)
+                d.Brightness = 2
+            elseif d:IsA("Highlight") then
+                d.FillColor = Color3.fromRGB(255,255,0)
+                d.OutlineColor = Color3.fromRGB(255,255,0)
             end
-            for _, d in ipairs(clone:GetDescendants()) do
-                if d:IsA("ParticleEmitter") or d:IsA("Beam") or d:IsA("Trail") then
-                    d.Color = ColorSequence.new(Color3.new(0,0,0))
-                elseif d:IsA("PointLight") or d:IsA("SpotLight") then
-                    d.Color = Color3.new(0,0,0)
-                    d.Brightness = 0
-                elseif d:IsA("Highlight") then
-                    d.FillColor = Color3.new(0,0,0)
-                    d.OutlineColor = Color3.new(0,0,0)
-                end
-            end
-            table.insert(clones, clone)
         end
+        table.insert(clones, clone)
     end
+end
 
-    local Lighting = game:GetService("Lighting")
-    local TweenService = game:GetService("TweenService")
-    local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
-    if not atmosphere then
-        atmosphere = Instance.new("Atmosphere")
-        atmosphere.Parent = Lighting
-    end
-    local originalDensity = atmosphere.Density
-    local originalColor = atmosphere.Color
-    local originalOffset = atmosphere.Offset
+local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
+local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+if not atmosphere then
+    atmosphere = Instance.new("Atmosphere")
+    atmosphere.Parent = Lighting
+end
+local originalDensity = atmosphere.Density
+local originalColor = atmosphere.Color
+local originalOffset = atmosphere.Offset
 
-    atmosphere.Density = 0
-    atmosphere.Color = originalColor
-    atmosphere.Offset = 0
+atmosphere.Density = 0
+atmosphere.Color = originalColor
+atmosphere.Offset = 0
 
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://97586610555842"
-    sound.TimePosition = 4
-    sound.Volume = 5
-    sound.Parent = char:FindFirstChild("HumanoidRootPart") or char
-    game:GetService("ContentProvider"):PreloadAsync({sound})
-    sound:Play()
-    game:GetService("Debris"):AddItem(sound, 6)
+local sound = Instance.new("Sound")
+sound.SoundId = "rbxassetid://97586610555842"
+sound.TimePosition = 4
+sound.Volume = 5
+sound.Parent = char:FindFirstChild("HumanoidRootPart") or char
+game:GetService("ContentProvider"):PreloadAsync({sound})
+sound:Play()
+game:GetService("Debris"):AddItem(sound, 6)
 
-    local tweenIn = TweenService:Create(
+local tweenIn = TweenService:Create(
+    atmosphere,
+    TweenInfo.new(0.75, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    { Density = 0.5, Color = Color3.new(0,0,0), Offset = 0 }
+)
+tweenIn:Play()
+
+task.delay(20, function()
+    if humanoid and humanoid.Parent then humanoid.WalkSpeed = originalSpeed end
+    if HumanModCons.wsLoop then HumanModCons.wsLoop:Disconnect() HumanModCons.wsLoop = nil end
+    if HumanModCons.wsCA then HumanModCons.wsCA:Disconnect() HumanModCons.wsCA = nil end
+    for _, c in ipairs(clones) do if c and c.Parent then c:Destroy() end end
+
+    local tweenOut = TweenService:Create(
         atmosphere,
         TweenInfo.new(0.75, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-        { Density = 0.5, Color = Color3.new(0,0,0), Offset = 0 }
+        { Density = originalDensity, Color = originalColor, Offset = originalOffset }
     )
-    tweenIn:Play()
-
-    task.delay(20, function()
-        if humanoid and humanoid.Parent then humanoid.WalkSpeed = originalSpeed end
-        if HumanModCons.wsLoop then HumanModCons.wsLoop:Disconnect() HumanModCons.wsLoop = nil end
-        if HumanModCons.wsCA then HumanModCons.wsCA:Disconnect() HumanModCons.wsCA = nil end
-        for _, c in ipairs(clones) do if c and c.Parent then c:Destroy() end end
-
-        local tweenOut = TweenService:Create(
-            atmosphere,
-            TweenInfo.new(0.75, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            { Density = originalDensity, Color = originalColor, Offset = originalOffset }
-        )
-        tweenOut:Play()
-    end)
+    tweenOut:Play()
+end)
 end
 end)
