@@ -677,34 +677,48 @@ local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliabl
 local starterGui = game:GetService("StarterGui")
 
 local magnetEnabled = false
-local connection
+local beganConnection
+local endedConnection
+local holding = false
 
-maintab2:Toggle("Bind Magnet (M2 BIND)", function()
+maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", function()
     if not magnetEnabled then
         magnetEnabled = true
 
-        connection = userInputService.InputBegan:Connect(function(input, gameProcessed)
+        beganConnection = userInputService.InputBegan:Connect(function(input, gameProcessed)
             if gameProcessed then return end
             if input.UserInputType == Enum.UserInputType.MouseButton2 then
-                remote:FireServer(buffer.fromstring("\029"))
+                holding = true
+                task.spawn(function()
+                    while holding do
+                        remote:FireServer(buffer.fromstring("\029"))
+                        task.wait(0.05)
+                    end
+                end)
+            end
+        end)
+
+        endedConnection = userInputService.InputEnded:Connect(function(input, gameProcessed)
+            if gameProcessed then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                holding = false
             end
         end)
 
         starterGui:SetCore("SendNotification", {
-            Title = "Ball Magnet (M2 Bind)",
+            Title = "Ball Magnet (M2 Hold)",
             Text = "Enabled.",
             Duration = 3
         })
     else
         magnetEnabled = false
+        holding = false
 
-        if connection then
-            connection:Disconnect()
-            connection = nil
-        end
+        if beganConnection then beganConnection:Disconnect() beganConnection = nil end
+        if endedConnection then endedConnection:Disconnect() endedConnection = nil end
 
         starterGui:SetCore("SendNotification", {
-            Title = "Ball Magnet (M2 Bind)",
+            Title = "Ball Magnet (M2 Hold)",
             Text = "Disabled.",
             Duration = 3
         })
@@ -1500,7 +1514,7 @@ end)
 
 funtab:Label("Celeron's Movesets.")
 
-funtab:Button("Goku Moveset (Use Kaiser / Isagi.)", function()
+funtab:Button("Goku Moveset", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
@@ -1511,14 +1525,15 @@ StarterGui:SetCore("SendNotification", {
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/goku%20moveset%20(azl)",true))()
 end)
 
-funtab:Button("Aizen Moveset", function()
+funtab:Button("Aizen Moveset (Early Access)", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
-    Text = "coming soon.",
+    Text = "brought to you by celeron!",
     Duration = 5,
-    Button1 = "i hate you celeron",
+    Button1 = "OK",
 })
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/aizen%20moveset",true))()
 end)
 
 funtab:Label("Daffy's Movesets.")
