@@ -4132,6 +4132,7 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
+antitab:Label("Protection Settings May Be Blatant.")
 itemtab:Label("Always Disable OR Unlock The Bunker Before Grabbing Items!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
