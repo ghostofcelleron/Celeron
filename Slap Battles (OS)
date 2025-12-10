@@ -4245,7 +4245,7 @@ local function applyVelocityControl(humanoid)
 	end)
 end
 
-maintab:Slider("Velocity Speed", 19.5, 5, 85, function(v)
+maintab:Slider("Player Speed", 19.5, 5, 85, function(v)
 	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then return end
