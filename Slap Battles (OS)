@@ -5385,6 +5385,8 @@ local antiLavaEnabled = false
 local baseplates = {}
 
 antitab:Button("Anti Lava/Acid", function()
+    local StarterGui = game:GetService("StarterGui")
+
     if not antiLavaEnabled then
         local function createBaseplate(name, size, position)
             local part = Instance.new("Part")
@@ -5404,6 +5406,12 @@ antitab:Button("Anti Lava/Acid", function()
         createBaseplate("Baseplate_512x512", Vector3.new(512, 1, 512), Vector3.new(-289, -29, 439))
         createBaseplate("Baseplate_100x100", Vector3.new(256, 1, 256), Vector3.new(-55, 3, -719))
         antiLavaEnabled = true
+
+        StarterGui:SetCore("SendNotification", {
+            Title = "Anti Lava/Acid",
+            Text = "Enabled.",
+            Duration = 3
+        })
     else
         for _, part in ipairs(baseplates) do
             if part and part.Parent then
@@ -5412,9 +5420,14 @@ antitab:Button("Anti Lava/Acid", function()
         end
         baseplates = {}
         antiLavaEnabled = false
+
+        StarterGui:SetCore("SendNotification", {
+            Title = "Anti Lava/Acid",
+            Text = "Disabled.",
+            Duration = 3
+        })
     end
 end)
-
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
