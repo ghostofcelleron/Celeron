@@ -5477,23 +5477,38 @@ RunService.RenderStepped:Connect(function()
 end)
 end)
 
-antitab:Button("Anti Lava/Acid", function()
-local function createBaseplate(name, size, position)
-	local part = Instance.new("Part")
-	part.Name = name
-	part.Size = size
-	part.Position = position
-	part.Anchored = true
-	part.Material = Enum.Material.SmoothPlastic
-	part.Color = Color3.fromRGB(163, 162, 165)
-	part.Transparency = 0.7
-	part.TopSurface = Enum.SurfaceType.Smooth
-	part.BottomSurface = Enum.SurfaceType.Smooth
-	part.Parent = workspace
-end
+local antiLavaEnabled = false
+local baseplates = {}
 
-createBaseplate("Baseplate_512x512", Vector3.new(512, 1, 512), Vector3.new(-289, -29, 439))
-createBaseplate("Baseplate_100x100", Vector3.new(256, 1, 256), Vector3.new(-55, 3, -719))
+antitab:Button("Anti Lava/Acid", function()
+    if not antiLavaEnabled then
+        local function createBaseplate(name, size, position)
+            local part = Instance.new("Part")
+            part.Name = name
+            part.Size = size
+            part.Position = position
+            part.Anchored = true
+            part.Material = Enum.Material.SmoothPlastic
+            part.Color = Color3.fromRGB(163, 162, 165)
+            part.Transparency = 0.7
+            part.TopSurface = Enum.SurfaceType.Smooth
+            part.BottomSurface = Enum.SurfaceType.Smooth
+            part.Parent = workspace
+            table.insert(baseplates, part)
+        end
+
+        createBaseplate("Baseplate_512x512", Vector3.new(512, 1, 512), Vector3.new(-289, -29, 439))
+        createBaseplate("Baseplate_100x100", Vector3.new(256, 1, 256), Vector3.new(-55, 3, -719))
+        antiLavaEnabled = true
+    else
+        for _, part in ipairs(baseplates) do
+            if part and part.Parent then
+                part:Destroy()
+            end
+        end
+        baseplates = {}
+        antiLavaEnabled = false
+    end
 end)
 
 misctab:Button("Infinite Yield", function()
