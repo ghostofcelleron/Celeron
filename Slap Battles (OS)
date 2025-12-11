@@ -46,7 +46,8 @@ local win = ui:Create({
     Name = "Celeron's GUI (Slap Battles)",
     ThemeColor = Color3.fromRGB(14, 14, 14),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+	ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -3496,7 +3497,8 @@ local win = ui:Create({
     Name = "Celeron's GUI (SB: Evil Barzil)",
     ThemeColor = Color3.fromRGB(14, 14, 14),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+	ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -4121,7 +4123,8 @@ local win = ui:Create({
     Name = "Celeron's GUI (SB: Slap Royale)",
     ThemeColor = Color3.fromRGB(14, 14, 14),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+	ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -5684,7 +5687,8 @@ local win = ui:Create({
     Name = "Celeron's GUI (SB: Eternal Bob)",
     ThemeColor = Color3.fromRGB(14, 14, 14),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+	ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -6351,7 +6355,8 @@ local win = ui:Create({
     Name = "Celeron's GUI (SB: Killstreak Only)",
     ThemeColor = Color3.fromRGB(14, 14, 14),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+	ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -7460,7 +7465,8 @@ local win = ui:Create({
     Name = "Celeron's GUI (SB: Null Zone)",
     ThemeColor = Color3.fromRGB(14, 14, 14),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+	ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
