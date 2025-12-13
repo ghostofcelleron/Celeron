@@ -1001,41 +1001,6 @@ maintab:Toggle("Blatant Mode", function()
     end
 end)
 
-local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-local UIS = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
-
-local airDribbleEnabled = false
-
-maintab:Toggle("Air Dribble (Bind: LeftAlt)", function()
-    airDribbleEnabled = not airDribbleEnabled
-    StarterGui:SetCore("SendNotification", {
-        Title = "Air Dribble",
-        Text = airDribbleEnabled and "Enabled." or "Disabled.",
-        Duration = 2
-    })
-end)
-
-UIS.InputBegan:Connect(function(input, gp)
-    if gp or input.KeyCode ~= Enum.KeyCode.LeftAlt then return end
-    if not airDribbleEnabled then return end
-
-    local char = game.Players.LocalPlayer.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not (hum and root) then return end
-
-    local anim = Instance.new("Animation")
-    anim.AnimationId = "rbxassetid://76587445975710"
-    local track = hum:LoadAnimation(anim)
-    track:Play()
-
-    local dir = root.CFrame.LookVector
-    local kickVec = vector.create(dir.X * 0.65, 0.65, dir.Z * 0.65)
-
-    remote:FireServer(buffer.fromstring("\031\001"), { { "kick", 28, false, kickVec } })
-end)
-
 local running = false
 local sg = game:GetService("StarterGui")
 
@@ -1200,6 +1165,41 @@ maintab2:Toggle("Auto GK", function()
 end)
 
 maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
+
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+local UIS = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+
+local airDribbleEnabled = false
+
+maintab2:Toggle("Air Dribble (Bind: LeftAlt)", function()
+    airDribbleEnabled = not airDribbleEnabled
+    StarterGui:SetCore("SendNotification", {
+        Title = "Air Dribble",
+        Text = airDribbleEnabled and "Enabled." or "Disabled.",
+        Duration = 2
+    })
+end)
+
+UIS.InputBegan:Connect(function(input, gp)
+    if gp or input.KeyCode ~= Enum.KeyCode.LeftAlt then return end
+    if not airDribbleEnabled then return end
+
+    local char = game.Players.LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not (hum and root) then return end
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://76587445975710"
+    local track = hum:LoadAnimation(anim)
+    track:Play()
+
+    local dir = root.CFrame.LookVector
+    local kickVec = vector.create(dir.X * 0.65, 0.65, dir.Z * 0.65)
+
+    remote:FireServer(buffer.fromstring("\031\001"), { { "kick", 28, false, kickVec } })
+end)
 
 maintab2:Toggle("Auto Formless (Binds To T.)", function()
 	local UIS = game:GetService("UserInputService")
