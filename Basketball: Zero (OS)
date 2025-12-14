@@ -1,8 +1,6 @@
 local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
-
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local StarterGui = game:GetService("StarterGui")
 local TeleportService = game:GetService("TeleportService")
@@ -15,14 +13,14 @@ local JobId = game.JobId
 
 local darkUI = CoreGui:FindFirstChild("dark_UI")
 if darkUI and typeof(syn) == "table" and syn.protect_gui then
-	syn.protect_gui(darkUI)
+    syn.protect_gui(darkUI)
 end
 
 local win = ui:Create({
-	Name = "Celeron's GUI (Basketball: Zero)",
-	ThemeColor = Color3.fromRGB(18, 18, 18),
-	StartupSound = "rbxassetid://6958727243",
-	ThemeFont = Enum.Font.FredokaOne
+    Name = "Celeron's GUI (Basketball: Zero)",
+    ThemeColor = Color3.fromRGB(18, 18, 18),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne
 })
 
 local maintab = win:Tab("Main")
@@ -33,110 +31,120 @@ maintab:Label("Script Made By Celeron + Daffy!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
-maintab:Button("Always In (Public / Ranked 3v3)", function()
-	local ARC_HEIGHT = 52.5
-	local ARC_DURATION = 1.5
-	local CLICK_DELAY = 1.25
-	local HOME_POS = Vector3.new(147, 28, -298)
-	local AWAY_POS = Vector3.new(-147, 28, -297)
+local function arcShot(ball, target, arcHeight, arcDuration)
+    local start = ball.Position
+    local startTime = tick()
+    ball.AssemblyLinearVelocity = Vector3.zero
+    ball.AssemblyAngularVelocity = Vector3.zero
+    task.spawn(function()
+        while tick() - startTime < arcDuration do
+            local t = (tick() - startTime) / arcDuration
+            local pos = start:Lerp(target, t)
+            local height = math.sin(math.pi * t) * arcHeight
+            ball.Position = Vector3.new(pos.X, pos.Y + height, pos.Z)
+            task.wait()
+        end
+        ball.Position = target
+    end)
+end
 
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if processed then return end
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			task.delay(CLICK_DELAY, function()
-				local ball = Workspace:FindFirstChild("Basketball")
-				if not ball or not player.Team then return end
-				local target = (player.Team.Name == "Home") and AWAY_POS or HOME_POS
-				local start = ball.Position
-				local peak = (start + target) / 2 + Vector3.new(0, ARC_HEIGHT, 0)
-				ball.AssemblyLinearVelocity = Vector3.zero
-				ball.AssemblyAngularVelocity = Vector3.zero
-				local rise = TweenService:Create(ball, TweenInfo.new(ARC_DURATION / 2), {Position = peak})
-				rise.Completed:Once(function()
-					local fall = TweenService:Create(ball, TweenInfo.new(ARC_DURATION / 2), {Position = target})
-					fall:Play()
-				end)
-				rise:Play()
-			end)
-		end
-	end)
+local ranked3v3Enabled = false
+local ranked1v1Enabled = false
+
+maintab:Toggle("Always In (Ranked 1v1 / 2v2)", function()
+    ranked1v1Enabled = not ranked1v1Enabled
+    StarterGui:SetCore("SendNotification", {
+        Title = "Ranked 1v1/2v2",
+        Text = ranked1v1Enabled and "Enabled." or "Disabled.",
+        Duration = 2
+    })
 end)
 
-maintab:Button("Always In (Ranked 1v1 / 2v2)", function()
-	local ARC_HEIGHT = 52.5
-	local ARC_DURATION = 1.5
-	local CLICK_DELAY = 1.25
-	local FIXED_POS = Vector3.new(-146, 28, -298)
+maintab:Toggle("Always In (Public / Ranked 3v3)", function()
+    ranked3v3Enabled = not ranked3v3Enabled
+    StarterGui:SetCore("SendNotification", {
+        Title = "Ranked 3v3",
+        Text = ranked3v3Enabled and "Enabled." or "Disabled.",
+        Duration = 2
+    })
+end)
 
-	UserInputService.InputBegan:Connect(function(input, processed)
-		if processed then return end
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			task.delay(CLICK_DELAY, function()
-				local ball = Workspace:FindFirstChild("Basketball")
-				if not ball then return end
-				local start = ball.Position
-				local peak = (start + FIXED_POS) / 2 + Vector3.new(0, ARC_HEIGHT, 0)
-				ball.AssemblyLinearVelocity = Vector3.zero
-				ball.AssemblyAngularVelocity = Vector3.zero
-				local rise = TweenService:Create(ball, TweenInfo.new(ARC_DURATION / 2), {Position = peak})
-				rise.Completed:Once(function()
-					local fall = TweenService:Create(ball, TweenInfo.new(ARC_DURATION / 2), {Position = FIXED_POS})
-					fall:Play()
-				end)
-				rise:Play()
-			end)
-		end
-	end)
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local ball = Workspace:FindFirstChild("Basketball")
+        if not ball then return end
+
+        if ranked3v3Enabled and player.Team then
+            task.delay(1.1, function()
+                while ball:IsDescendantOf(player.Character) do
+                    task.wait(0.05)
+                end
+                local ranked3v3HomePos = Vector3.new(147, 28, -298)
+                local ranked3v3AwayPos = Vector3.new(-147, 28, -297)
+                local target = (player.Team.Name == "Home") and ranked3v3AwayPos or ranked3v3HomePos
+                arcShot(ball, target, 50, 0.65)
+            end)
+        elseif ranked1v1Enabled then
+            task.delay(1.1, function()
+                while ball:IsDescendantOf(player.Character) do
+                    task.wait(0.05)
+                end
+                local ranked1v1Pos = Vector3.new(-146, 28, -298)
+                arcShot(ball, ranked1v1Pos, 40, 0.85)
+            end)
+        end
+    end
 end)
 
 misctab:Button("Infinite Yield", function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
 
 misctab:Button("Shutdown Game", function()
-	game:Shutdown()
+    game:Shutdown()
 end)
 
 misctab:Button("Rejoin Server", function()
-	TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
+    TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
 end)
 
 misctab:Button("Switch Servers", function()
-	local servers = {}
-	local success, req = pcall(function()
-		return game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
-	end)
-	if success then
-		local body = HttpService:JSONDecode(req)
-		if body and body.data then
-			for _, v in next, body.data do
-				if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
-					table.insert(servers, 1, v.id)
-				end
-			end
-		end
-	end
-	if #servers > 0 then
-		TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], player)
-	end
+    local servers = {}
+    local success, req = pcall(function()
+        return game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+    end)
+    if success then
+        local body = HttpService:JSONDecode(req)
+        if body and body.data then
+            for _, v in next, body.data do
+                if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
+                    table.insert(servers, 1, v.id)
+                end
+            end
+        end
+    end
+    if #servers > 0 then
+        TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], player)
+    end
 end)
 
 helptab:Button("Copy Owner Discord Username", function()
-	StarterGui:SetCore("SendNotification", {
-		Title = "Discord Username",
-		Text = "Copied to your clipboard!",
-		Duration = 3,
-		Button1 = "alright fella",
-	})
-	setclipboard("ghostofcelleron")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Username",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("ghostofcelleron")
 end)
 
 helptab:Button("Copy Discord Server Invite", function()
-	StarterGui:SetCore("SendNotification", {
-		Title = "Discord Invite",
-		Text = "Copied to your clipboard!",
-		Duration = 3,
-		Button1 = "alright fella",
-	})
-	setclipboard("https://discord.gg/8stFYxJv4R")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Invite",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("https://discord.gg/8stFYxJv4R")
 end)
