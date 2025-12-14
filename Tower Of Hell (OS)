@@ -8,14 +8,14 @@ if darkUI and syn and syn.protect_gui then
 end
 
 local win = ui:Create({
-	Name = "Celeron's GUI (TOH)",
+	Name = "Celeron's GUI (Tower Of Hell)",
 	ThemeColor = Color3.fromRGB(20, 20, 20),
 	StartupSound = "rbxassetid://6958727243",
 	ThemeFont = Enum.Font.FredokaOne
 })
 
 local maintab = win:Tab("Main")
-local modtab = win:Tab("Tool Mods")
+local modtab = win:Tab("Modding")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
@@ -72,7 +72,7 @@ if localPlayer then
 end
 end)
 
-maintab:Button("Instant Finish Tower (Blatant)", function()
+maintab:Button("Instant Finish Tower", function()
 local Players = game:GetService("Players")
 local destination = game:GetService("Workspace")
 	:WaitForChild("tower")
@@ -99,67 +99,7 @@ if localPlayer then
 end
 end)
 
-maintab:Button("Instant Max Points (Blatant)", function()
-local Players = game:GetService("Players")
-local workspace = game:GetService("Workspace")
-local carpet = workspace:WaitForChild("tower"):WaitForChild("sections"):WaitForChild("finish"):WaitForChild("exit"):WaitForChild("carpet")
-
-local targetSize = Vector3.new(1, 25, 46.22054672241211)
-local savedPosition = nil
-
-local function findExactMatchNearby(referencePart)
-	local regionSize = Vector3.new(50, 20, 50)
-	local region = Region3.new(referencePart.Position - regionSize / 2, referencePart.Position + regionSize / 2)
-	local candidates = workspace:FindPartsInRegion3(region, referencePart, math.huge)
-
-	for _, part in ipairs(candidates) do
-		if part:IsA("BasePart") and part.Size == targetSize then
-			return CFrame.new(part.Position + Vector3.new(0, 4, 0))
-		end
-	end
-
-	return referencePart.CFrame + Vector3.new(0, 5, 0)
-end
-
-local function teleportTo(player, targetCFrame)
-	local character = player.Character
-	local hrp = character and character:FindFirstChild("HumanoidRootPart")
-	if hrp then
-		hrp.CFrame = targetCFrame
-		local humanoid = character:FindFirstChildOfClass("Humanoid")
-		if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Physics then
-			humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-		end
-	end
-end
-
-local function performTeleportCycle(player)
-	local character = player.Character
-	local hrp = character and character:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
-
-	savedPosition = hrp.CFrame
-
-	local matchCFrame = findExactMatchNearby(carpet)
-	teleportTo(player, matchCFrame)
-
-	task.wait(0.1)
-	local carpetCFrame = CFrame.new(carpet.Position + Vector3.new(0, 4, 0))
-	teleportTo(player, carpetCFrame)
-
-	task.wait(0.05)
-	if savedPosition then
-		teleportTo(player, savedPosition)
-	end
-end
-
-local localPlayer = Players.LocalPlayer
-if localPlayer then
-	performTeleportCycle(localPlayer)
-end
-end)
-
-maintab:Button("Delete Kill Bricks (Blatant)", function()
+maintab:Button("Disable Kill Bricks", function()
 local Workspace = game:GetService("Workspace")
 local CollectionService = game:GetService("CollectionService")
 
@@ -169,7 +109,7 @@ local deadlyColors = {
 	Color3.fromRGB(0, 0, 0),
 	Color3.fromRGB(255, 255, 0)
 }
-local tagKeywords = { "Kill", "Danger", "InstantDeath" }
+local tagKeywords = { "kill", "danger", "instantdeath" }
 
 local function isKillBrick(part)
 	if not part:IsA("BasePart") then return false end
@@ -201,6 +141,18 @@ local function isKillBrick(part)
 	return false
 end
 
+local function createMarker(originalPart)
+	local marker = Instance.new("Part")
+	marker.Size = originalPart.Size
+	marker.CFrame = originalPart.CFrame
+	marker.Anchored = true
+	marker.CanCollide = false
+	marker.Color = Color3.fromRGB(255, 0, 0)
+	marker.Material = Enum.Material.Neon
+	marker.Name = "DisabledKillPart"
+	marker.Parent = Workspace
+end
+
 local function sweepKillBricks()
 	local containers = {
 		Workspace,
@@ -217,6 +169,9 @@ local function sweepKillBricks()
 	for _, service in ipairs(containers) do
 		for _, obj in ipairs(service:GetDescendants()) do
 			if isKillBrick(obj) then
+				if obj:IsA("BasePart") then
+					createMarker(obj)
+				end
 				obj:Destroy()
 			end
 		end
