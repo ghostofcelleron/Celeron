@@ -657,7 +657,7 @@ maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", function()
                 holding = true
                 task.spawn(function()
                     while holding do
-                        remote:FireServer(buffer.fromstring("\029"))
+                        remote:FireServer(buffer.fromstring("\030"))
                         task.wait(0.05)
                     end
                 end)
