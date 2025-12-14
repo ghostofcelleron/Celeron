@@ -678,6 +678,9 @@ local beganConnection
 local endedConnection
 local holding = false
 
+local userInputService = game:GetService("UserInputService")
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+
 maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", function()
     if not magnetEnabled then
         magnetEnabled = true
@@ -951,24 +954,6 @@ if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
     VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
 end
-end)
-
-maintab:Button("Isagi U-20 Goal", function()
-local plr = game.Players.LocalPlayer
-local character = plr.Character or plr.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local teams = game:GetService("Teams")
-
-if plr.Team == teams:FindFirstChild("A") then
-    hrp.Position = Vector3.new(-539, 3, 996)
-elseif plr.Team == teams:FindFirstChild("B") then
-    hrp.Position = Vector3.new(-537, 3, 1557)
-end
-
-task.wait(0.5)
-
-local skillRemote = game.ReplicatedStorage:WaitForChild("SkillRemote")
-skillRemote:FireServer("Skill3")
 end)
 
 maintab:Button("Shidou Back-Heel Goal (Must Be Overtime.)", function()
