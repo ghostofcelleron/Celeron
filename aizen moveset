@@ -100,7 +100,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
 		task.wait(0.35)
 		local forward = (root.CFrame - root.Position).LookVector
 		ReplicatedStorage.ByteNetReliable:FireServer(
-			buffer.fromstring("\030\001"),
+			buffer.fromstring("\031\001"),
 			{ { "kick", 100, false, vector.create(forward.X, forward.Y + 0.3, forward.Z) } }
 		)
 	end
@@ -122,7 +122,6 @@ end
 if tick() - lastCast2 < cd2 then return end
 lastCast2 = tick()
 
--- Play animation
 local anim = Instance.new("Animation")
 anim.AnimationId = "rbxassetid://84063609284472"
 local track = humanoid:LoadAnimation(anim)
@@ -130,7 +129,6 @@ track.Priority = Enum.AnimationPriority.Action4
 track:Play(0, 1, 1)
 track.TimePosition = 1.2
 
--- Teleport forward
 local forward = root.CFrame.LookVector
 local targetPos = root.Position + forward * 75
 local raycastParams = RaycastParams.new()
@@ -238,7 +236,7 @@ for _, partName in ipairs(parts) do
         clone.Parent = att
         for _, d in ipairs(clone:GetDescendants()) do
             if d:IsA("ParticleEmitter") or d:IsA("Beam") or d:IsA("Trail") then
-                d.Color = ColorSequence.new(Color3.fromRGB(255,255,0)) -- yellow
+                d.Color = ColorSequence.new(Color3.fromRGB(255,255,0))
                 d.Enabled = true
             elseif d:IsA("PointLight") or d:IsA("SpotLight") then
                 d.Color = Color3.fromRGB(255,255,0)
