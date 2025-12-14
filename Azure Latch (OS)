@@ -1511,203 +1511,9 @@ for _, obj in ipairs(workspace.Terrain:GetDescendants()) do
 end
 end)
 
-funtab:Label("Celeron's Movesets.")
-funtab:Button("Don Lorenzo (Nagi)", function()
-local StarterGui = game:GetService("StarterGui")
+funtab:Label("Celeron's Movesets, Recommend Using In Normal Servers.")
 
-StarterGui:SetCore("SendNotification", {
-    Title = "Credits",
-    Text = "brought to you by celeron!",
-    Duration = 5,
-    Button1 = "OK",
-})
-local plr = game.Players.LocalPlayer
-local char = plr.Character
-local hum = char.Humanoid
-local root = char.HumanoidRootPart
-local UserInputService = game:GetService("UserInputService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
-
-local skill1Anim = Instance.new("Animation")
-skill1Anim.AnimationId = "rbxassetid://102294508090597"
-local s1db = false
-local dribble = hum:LoadAnimation(skill1Anim)
-dribble.Priority = Enum.AnimationPriority.Action2
-
-
-local skill2Anim = Instance.new("Animation")
-skill2Anim.AnimationId = "rbxassetid://90734196141468"
-local s2db = false
-local controlJump = hum:LoadAnimation(skill2Anim)
-controlJump.Priority = Enum.AnimationPriority.Action2
-
-local skill2AnimVAR = Instance.new("Animation")
-skill2AnimVAR.AnimationId = "rbxassetid://82371642989185"
-local s2dbVar = false
-local controlLand = hum:LoadAnimation(skill2AnimVAR)
-controlLand.Priority = Enum.AnimationPriority.Action3
-
-local skill3Anim = Instance.new("Animation")
-skill3Anim.AnimationId = "rbxassetid://85862104307480"
-local s3db = false
-local pass = hum:LoadAnimation(skill3Anim)
-pass.Priority = Enum.AnimationPriority.Action2
-
-
-local function haveBall()
-	local Football = char and char:FindFirstChild("Ball")
-	return Football ~= nil
-end
-
-function onKeyPress(inputObject, gameProcessedEvent)
-	if not gameProcessedEvent then
-		if inputObject.KeyCode == Enum.KeyCode.One then
-			
-			if not haveBall() then return end
-			if s1db == false then
-				s1db = true
-				
-				dribble:Play()
-				local vel = Instance.new("BodyVelocity")
-				vel.MaxForce = Vector3.new(1,0,1) * 30000
-				vel.Name = "BodyVelocity" .. math.random(1,99999)
-				vel.Velocity = root.CFrame.LookVector * 40
-				vel.Parent = root
-				game.Debris:AddItem(vel, 2.4)
-				local sfx = game.ReplicatedStorage.Resources.donlorenzo.dribbletest:Clone()
-				sfx.Parent = root
-				sfx:Play()
-				game.Debris:AddItem(sfx, 2.5)
-				for _, v in pairs (game.ReplicatedStorage.Resources.donlorenzo.skill1movingpart:GetDescendants()) do
-					if v.Name == "b" or v.Name == "p" then
-						local new = v:Clone()
-						new.Parent = root
-						new.Enabled = true
-						game.Debris:AddItem(new, 2.5)
-					end
-				end
-				for _, v in pairs (char:GetChildren()) do
-					if v.Name == "Torso" or v.Name == "Right Leg" or v.Name == "Right Arm" or v.Name == "Left Leg" or v.Name == "Left Arm" or v.Name == "Head" then
-						for _, g in pairs (game.ReplicatedStorage.Resources.donlorenzo.ult4aura:GetChildren()) do
-							if g.Name == "Fire" or g.Name == "Fog" or g.Name == "R. C. Fire" or g.Name == "mainfire" then
-								local new = g:Clone()
-								new.Parent = v
-								new.Enabled = true
-								new.LockedToPart = true
-								game.Debris:AddItem(new, 2.5)
-							end
-						end
-					end
-				end
-				
-				repeat
-					task.wait()
-					VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-					vel.Velocity = root.CFrame.LookVector * 40
-				until not root:FindFirstChild(vel.Name)
-				
-				task.wait(21.6)
-				for _, v in pairs (root:GetDescendants()) do
-					if v.Name == "b" or v.Name == "p" then
-						v:Destroy()
-					end
-				end
-				s1db = false
-			end
-			
-			
-		elseif inputObject.KeyCode == Enum.KeyCode.Two then
-			
-			if haveBall() then return end
-			if s2db == false then
-				s2db = true
-				controlJump:Play()
-				
-				local did = false
-				
-				for i = 1, 2, 0.1 do
-					if game.Workspace.CurrentCamera.CameraType == Enum.CameraType.Scriptable then
-						did = true
-						break
-					end
-					task.wait(0.1)
-				end
-				
-				if did then
-					controlJump:Stop()
-					controlLand:Play()
-					
-					local sfx = game.ReplicatedStorage.Resources.donlorenzo.ult4:Clone()
-					sfx.Parent = root
-					sfx:Play()
-					
-					for _, v in pairs (game.ReplicatedStorage.Resources.donlorenzo.ult4vfx.rootlocation.skill4ballpartflashsteps:GetChildren()) do
-						local new = v:Clone()
-						new.Parent = char:FindFirstChild("Ball")
-						new.Enabled = true
-						new.LockedToPart = true
-						game.Debris:AddItem(new, 0.85)
-					end
-					
-					for _, v in pairs (char:GetChildren()) do
-						if v.Name == "Torso" or v.Name == "Right Leg" or v.Name == "Right Arm" or v.Name == "Left Leg" or v.Name == "Left Arm" or v.Name == "Head" then
-							for _, g in pairs (game.ReplicatedStorage.Resources.donlorenzo.ult4aura:GetChildren()) do
-								if g.Name == "Fire" or g.Name == "Fog" or g.Name == "R. C. Fire" or g.Name == "mainfire" then
-									local new = g:Clone()
-									new.Parent = v
-									new.Enabled = true
-									new.LockedToPart = true
-									game.Debris:AddItem(new, 1)
-								end
-							end
-						end
-					end
-					task.wait(0.85)
-					controlLand:Stop()
-				end
-				
-				task.wait(20)
-				s2db = false
-			end
-			
-		elseif inputObject.KeyCode == Enum.KeyCode.Three then
-			
-			if not haveBall() then return end
-			if s3db == false then
-				s3db = true
-				pass:Play()
-				local sfx = game.ReplicatedStorage.Resources.donlorenzo.skill2:Clone()
-				sfx.Parent = root
-				sfx:Play()
-				
-				for _, v in pairs (char:GetChildren()) do
-					if v.Name == "Torso" or v.Name == "Right Leg" or v.Name == "Right Arm" or v.Name == "Left Leg" or v.Name == "Left Arm" or v.Name == "Head" then
-						for _, g in pairs (game.ReplicatedStorage.Resources.donlorenzo.ult4aura:GetChildren()) do
-							if g.Name == "Fire" or g.Name == "Fog" or g.Name == "R. C. Fire" or g.Name == "mainfire" then
-								local new = g:Clone()
-								new.Parent = v
-								new.Enabled = true
-								new.LockedToPart = true
-								game.Debris:AddItem(new, 1)
-							end
-						end
-					end
-				end
-				
-				task.wait(25)
-				s3db = false
-			end
-		
-		end
-	end
-end
-task.wait(1)
-print("loaded don lorenzo script")
-UserInputService.InputBegan:connect(onKeyPress)
-end)
-
-funtab:Button("Goku Moveset (Use Kaiser / Isagi.)", function()
+funtab:Button("Goku Moveset (Req. Isagi)", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
@@ -1718,49 +1524,19 @@ StarterGui:SetCore("SendNotification", {
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/goku%20moveset%20(azl)",true))()
 end)
 
-funtab:Button("Admin Moveset", function()
-local char = game.Players.LocalPlayer.Character
-local humanoid = char:FindFirstChildOfClass("Humanoid")
-local animator = humanoid:FindFirstChildOfClass("Animator")
-
-local runAnimation = Instance.new("Animation")
-runAnimation.AnimationId = "rbxassetid://117921992582675"
-
-local walkAnimation = Instance.new("Animation")
-walkAnimation.AnimationId = "rbxassetid://117921992582675"
-
-local runTrack = animator:LoadAnimation(runAnimation)
-local walkTrack = animator:LoadAnimation(walkAnimation)
-
--- Track current state to avoid spamming Play/Stop
-local currentState = "Idle"
-
-humanoid.Running:Connect(function(speed)
-    if speed <= 0 then
-        if currentState ~= "Idle" then
-            walkTrack:Stop()
-            runTrack:Stop()
-            currentState = "Idle"
-        end
-    elseif speed > 0 and speed <= 8 then
-        if currentState ~= "Walking" then
-            runTrack:Stop()
-            walkTrack:Play()
-            currentState = "Walking"
-        end
-    elseif speed > 8 then
-        if currentState ~= "Running" then
-            walkTrack:Stop()
-            runTrack:Play()
-            currentState = "Running"
-        end
-    end
-end)
-
+funtab:Button("Aizen Moveset (Req. Isagi, Early Access.)", function()
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Credits",
+    Text = "brought to you by celeron!",
+    Duration = 5,
+    Button1 = "OK",
+})
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/aizen%20moveset",true))()
 end)
 
 funtab:Label("Daffy's Movesets.")
-funtab:Button("Ronaldo V2 (Shidou)", function()
+funtab:Button("Ronaldo V2 (Req. Shidou)", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
@@ -1988,7 +1764,7 @@ plr.CharacterAdded:Connect(function(char)
 end)
 end)
 
-funtab:Button("Gojo Moveset (Use Isagi.)", function()
+funtab:Button("Gojo Moveset (Req. Isagi.)", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
@@ -1999,7 +1775,7 @@ StarterGui:SetCore("SendNotification", {
 loadstring(game:HttpGet("https://pastebin.com/raw/TH8xDy9X"))()
 end)
 
-funtab:Button("Loki Moveset (Use Isagi.)", function()
+funtab:Button("Loki Moveset (Req. Isagi.)", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
