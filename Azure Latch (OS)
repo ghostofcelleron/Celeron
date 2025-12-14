@@ -642,35 +642,55 @@ end)
 
 maintab2:Label("Ball Magnet: Allows You To Grab The Ball From Further Away.")
 
-maintab2:Toggle("Ball Magnet", function()
-local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+local magnetEnabled = false
+local beganConnection
+local endedConnection
+local holding = false
 
-getgenv().ballMagnetActive = not getgenv().ballMagnetActive
+maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", function()
+    if not magnetEnabled then
+        magnetEnabled = true
 
-game.StarterGui:SetCore("SendNotification", {
-	Title = "Ball Magnet",
-	Text = getgenv().ballMagnetActive and "Enabled." or "Disabled.",
-	Duration = 1
-})
+        beganConnection = userInputService.InputBegan:Connect(function(input, gameProcessed)
+            if gameProcessed then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                holding = true
+                task.spawn(function()
+                    while holding do
+                        remote:FireServer(buffer.fromstring("\029"))
+                        task.wait(0.05)
+                    end
+                end)
+            end
+        end)
 
-if getgenv().ballMagnetActive then
-	if getgenv().ballMagnetConnection then
-		getgenv().ballMagnetConnection:Disconnect()
-	end
+        endedConnection = userInputService.InputEnded:Connect(function(input, gameProcessed)
+            if gameProcessed then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                holding = false
+            end
+        end)
 
-	getgenv().ballMagnetConnection = task.spawn(function()
-		while getgenv().ballMagnetActive do
-			pcall(function()
-				remote:FireServer(buffer.fromstring("\030"))
-			end)
-			task.wait()
-		end
-	end)
-else
-	if getgenv().ballMagnetConnection then
-		getgenv().ballMagnetConnection = nil
-	end
-end
+        starterGui:SetCore("SendNotification", {
+            Title = "Ball Magnet (M2 Hold)",
+            Text = "Enabled.",
+            Duration = 3
+        })
+    else
+        magnetEnabled = false
+        holding = false
+
+        if beganConnection then beganConnection:Disconnect() beganConnection = nil end
+        if endedConnection then endedConnection:Disconnect() endedConnection = nil end
+
+
+
+        starterGui:SetCore("SendNotification", {
+            Title = "Ball Magnet (M2 Hold)",
+            Text = "Disabled.",
+            Duration = 3
+        })
+    end
 end)
 
 local userInputService = game:GetService("UserInputService")
