@@ -727,6 +727,47 @@ maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", function()
     end
 end)
 
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
+local localPlayer = Players.LocalPlayer
+local playerName = localPlayer.Name
+local character = Workspace:WaitForChild("characters"):WaitForChild(playerName)
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+getgenv().ballMagnetRadius = 1
+
+maintab2:Slider("Ball Magnet Radius", 1, 1, 50, function(v)
+    getgenv().ballMagnetRadius = v
+end)
+
+if getgenv().ballMagnetConnection then
+    getgenv().ballMagnetConnection:Disconnect()
+end
+
+local lastFire = 0
+local FIRE_INTERVAL = 0.1
+
+getgenv().ballMagnetConnection = RunService.Heartbeat:Connect(function()
+    local radius = getgenv().ballMagnetRadius or 1
+    if radius < 5 then return end
+
+    local ball = Workspace.Terrain:FindFirstChild("Ball")
+    if not ball then return end
+
+    if hrp then
+        local dist = (hrp.Position - ball.Position).Magnitude
+        if dist <= radius and (time() - lastFire) >= FIRE_INTERVAL then
+            lastFire = time()
+            pcall(function()
+                remote:FireServer(buffer.fromstring("\030"))
+            end)
+        end
+    end
+end)
+
 maintab2:Label("Set The Auto-Counter Number To Your Character's Counter Move!")
 
 _G.suppressNotifs = false
