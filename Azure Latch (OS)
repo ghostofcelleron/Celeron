@@ -733,9 +733,6 @@ local RunService = game:GetService("RunService")
 
 local remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
 local localPlayer = Players.LocalPlayer
-local playerName = localPlayer.Name
-local character = Workspace:WaitForChild("characters"):WaitForChild(playerName)
-local hrp = character:WaitForChild("HumanoidRootPart")
 
 getgenv().ballMagnetRadius = 1
 
@@ -749,6 +746,19 @@ end
 
 local lastFire = 0
 local FIRE_INTERVAL = 0.1
+local hrp
+
+local function setupCharacter(char)
+    hrp = char:WaitForChild("HumanoidRootPart", 10)
+end
+
+if localPlayer.Character then
+    setupCharacter(localPlayer.Character)
+end
+
+localPlayer.CharacterAdded:Connect(function(char)
+    setupCharacter(char)
+end)
 
 getgenv().ballMagnetConnection = RunService.Heartbeat:Connect(function()
     local radius = getgenv().ballMagnetRadius or 1
@@ -1494,7 +1504,51 @@ sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
 maintab2:Button("Auto GK (Made By Daffy, Reset To Disable.)", function()
-loadstring(game:HttpGet("https://pastebin.com/raw/ew2Zqhy0"))()
+local plr = game.Players.LocalPlayer
+local char = plr.Character
+local cam = game.Workspace.CurrentCamera
+
+local function ball()
+    return game.Workspace.Terrain:FindFirstChild("Ball")
+end
+
+local function getGKgoal()
+    if plr.Team == game.Teams.A then
+        return workspace.map.Agoal
+    elseif plr.Team == game.Teams.B then
+        return workspace.map.Bgoal
+    end
+end
+
+local con = game["Run Service"].RenderStepped:Connect(function()
+    local ball:Part = ball()
+    if ball and plr.Team ~= game.Teams.lobby then
+        cam.CFrame = CFrame.lookAt(cam.CFrame.Position, ball.Position)
+
+        local dist = (plr.Character.HumanoidRootPart.Position - ball.Position).Magnitude
+        if dist <= 50 then
+            if ball.Position.Y >= plr.Character.HumanoidRootPart.Position.Y + 6 then
+                plr.Character.Humanoid.Jump = true
+            else
+                plr.Character.Humanoid.Jump = false
+            end
+
+            local args = {
+                buffer.fromstring("\031\001"),
+                {
+                    { "tackle" }
+                }
+            }
+
+            game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+        end
+    end
+end)
+
+repeat
+    task.wait()
+until char.Humanoid.Health <= 0
+con:Disconnect()
 end)
 
 maintab2:Button("Fix Duplicate Ball", function()
