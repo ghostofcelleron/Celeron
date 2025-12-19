@@ -1507,6 +1507,14 @@ maintab2:Button("Auto GK (Made By Daffy, Reset To Disable.)", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/ew2Zqhy0"))()
 end)
 
+maintab2:Button("Fix Duplicate Ball", function()
+for _, obj in ipairs(workspace.Terrain:GetDescendants()) do
+	if obj:IsA("MeshPart") and obj.Name == "Ball" then
+		obj:Destroy()
+	end
+end
+end)
+
 funtab:Label("Celeron's Movesets, Recommend Using In Normal Servers.")
 
 funtab:Button("Goku Moveset (Req. Isagi)", function()
