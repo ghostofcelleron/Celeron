@@ -1504,59 +1504,7 @@ sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
 maintab2:Button("Auto GK (Made By Daffy, Reset To Disable.)", function()
-local plr = game.Players.LocalPlayer
-local char = plr.Character
-local cam = game.Workspace.CurrentCamera
-
-local function ball()
-    return game.Workspace.Terrain:FindFirstChild("Ball")
-end
-
-local function getGKgoal()
-    if plr.Team == game.Teams.A then
-        return workspace.map.Agoal
-    elseif plr.Team == game.Teams.B then
-        return workspace.map.Bgoal
-    end
-end
-
-local con = game["Run Service"].RenderStepped:Connect(function()
-    local ball:Part = ball()
-    if ball and plr.Team ~= game.Teams.lobby then
-        cam.CFrame = CFrame.lookAt(cam.CFrame.Position, ball.Position)
-
-        local dist = (plr.Character.HumanoidRootPart.Position - ball.Position).Magnitude
-        if dist <= 50 then
-            if ball.Position.Y >= plr.Character.HumanoidRootPart.Position.Y + 6 then
-                plr.Character.Humanoid.Jump = true
-            else
-                plr.Character.Humanoid.Jump = false
-            end
-
-            local args = {
-                buffer.fromstring("\031\001"),
-                {
-                    { "tackle" }
-                }
-            }
-
-            game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-        end
-    end
-end)
-
-repeat
-    task.wait()
-until char.Humanoid.Health <= 0
-con:Disconnect()
-end)
-
-maintab2:Button("Fix Duplicate Ball", function()
-for _, obj in ipairs(workspace.Terrain:GetDescendants()) do
-	if obj:IsA("MeshPart") and obj.Name == "Ball" then
-		obj:Destroy()
-	end
-end
+loadstring(game:HttpGet("https://pastebin.com/raw/ew2Zqhy0"))()
 end)
 
 funtab:Label("Celeron's Movesets, Recommend Using In Normal Servers.")
