@@ -741,7 +741,7 @@ local localPlayer = Players.LocalPlayer
 
 getgenv().ballMagnetRadius = 1
 
-maintab2:Slider("Ball Magnet Radius", 1, 1, 25, function(v)
+maintab2:Slider("Ball Magnet Radius", 1, 1, 50, function(v)
     getgenv().ballMagnetRadius = v
 end)
 
@@ -1148,8 +1148,8 @@ function _G.firePacketsIfNear()
 
 	if (root.Position - Vector3.new(-260, 4, -1474)).Magnitude <= 15 or
 	   (root.Position - Vector3.new(-262, 4, -1722)).Magnitude <= 15 then
-		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\004\001\001\000A"))
-		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\004\001\001\000B"))
+		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\005\001\001\000A"))
+		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\005\001\001\000B"))
 	end
 end
 
@@ -1159,8 +1159,8 @@ function _G.fireGKPackets()
 	local root = char:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 
-	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\004\005\001\000B"))
-	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\004\005\001\000A"))
+	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\005\005\001\000B"))
+	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\005\005\001\000A"))
 end
 
 maintab2:Toggle("Auto CF", function()
