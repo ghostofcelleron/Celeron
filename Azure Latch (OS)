@@ -142,7 +142,7 @@ local function StealBall()
                 LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\031\001"),
+						buffer.fromstring("\034\001"),
 						{
 							{
 								"tackle"
@@ -179,7 +179,7 @@ coroutine.resume(coroutine.create(function()
 					wait(0.185)
 
 					local args = {
-						buffer.fromstring("\031\001"),
+						buffer.fromstring("\034\001"),
 						{
 							{
 								"kick",
@@ -238,7 +238,7 @@ if _G.ALWAYS_BALL_ACTIVE then
                         LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 						local args = {
-							buffer.fromstring("\031\001"),
+							buffer.fromstring("\034\001"),
 							{
 								{
 									"tackle"
@@ -266,25 +266,30 @@ end
 end)
 
 maintab:Button("Get Flow (Req. Ball)", function()
-local player = game:GetService("Players").LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local root = char:WaitForChild("HumanoidRootPart")
-local original = root.CFrame
+	local player = game:GetService("Players").LocalPlayer
+	local char = player.Character or player.CharacterAdded:Wait()
+	local root = char:WaitForChild("HumanoidRootPart")
+	local original = root.CFrame
 
-if #spawns > 0 then
-	root.CFrame = spawns[math.random(#spawns)].CFrame + Vector3.new(0, 3, 0)
-end
-wait(0.67)
-task.spawn(function()
-	local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-	local flow = workspace:WaitForChild("characters"):WaitForChild(player.Name):WaitForChild("state"):WaitForChild("flow")
-	while flow.Value < 100 do
-		remote:FireServer(buffer.fromstring("\031\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
-		task.wait(0.01)
+	local sword = game:GetService("Workspace").map.Lobby_Museum.Prop["Classic Roblox Sword"]
+	if sword then
+		root.CFrame = sword.CFrame + Vector3.new(0, 33, 0)
 	end
-	wait(0.9)
-	root.CFrame = original
-end)
+
+	wait(0.67)
+
+	task.spawn(function()
+		local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+		local flow = workspace:WaitForChild("characters"):WaitForChild(player.Name):WaitForChild("state"):WaitForChild("flow")
+
+		while flow.Value < 100 do
+			remote:FireServer(buffer.fromstring("\034\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
+			task.wait(0.01)
+		end
+
+		wait(0.9)
+		root.CFrame = original
+	end)
 end)
 
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -364,7 +369,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\031\001"),
+						buffer.fromstring("\034\001"),
 							{
 								{
 								"tackle"
@@ -415,7 +420,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\031\001"),
+						buffer.fromstring("\034\001"),
 						{
 							{
 								"tackle"
@@ -661,7 +666,7 @@ if getgenv().ballMagnetActive then
 	getgenv().ballMagnetConnection = task.spawn(function()
 		while getgenv().ballMagnetActive do
 			pcall(function()
-				remote:FireServer(buffer.fromstring("\030"))
+				remote:FireServer(buffer.fromstring("\033"))
 			end)
 			task.wait()
 		end
@@ -691,7 +696,7 @@ maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", function()
                 holding = true
                 task.spawn(function()
                     while holding do
-                        remote:FireServer(buffer.fromstring("\030"))
+                        remote:FireServer(buffer.fromstring("\033"))
                         task.wait(0.05)
                     end
                 end)
@@ -736,7 +741,7 @@ local localPlayer = Players.LocalPlayer
 
 getgenv().ballMagnetRadius = 1
 
-maintab2:Slider("Ball Magnet Radius", 1, 1, 50, function(v)
+maintab2:Slider("Ball Magnet Radius", 1, 1, 25, function(v)
     getgenv().ballMagnetRadius = v
 end)
 
@@ -772,7 +777,7 @@ getgenv().ballMagnetConnection = RunService.Heartbeat:Connect(function()
         if dist <= radius and (time() - lastFire) >= FIRE_INTERVAL then
             lastFire = time()
             pcall(function()
-                remote:FireServer(buffer.fromstring("\030"))
+                remote:FireServer(buffer.fromstring("\033"))
             end)
         end
     end
@@ -851,12 +856,12 @@ RunService.Stepped:Connect(function()
 										local args
 										if skillName == "dribble" then
 											args = {
-												buffer.fromstring("\031\001"),
+												buffer.fromstring("\034\001"),
 												{ { skillName, false } }
 											}
 										else
 											args = {
-												buffer.fromstring("\031\001"),
+												buffer.fromstring("\034\001"),
 												{ { skillName } }
 											}
 										end
@@ -1081,7 +1086,7 @@ maintab:Toggle("Spam Brick Sound (6V6 + GK Only.)", function(state)
                     wait(0.1)
 
                     local args = {
-                        buffer.fromstring("\031\001"),
+                        buffer.fromstring("\034\001"),
                         {
                             {
                                 "kick",
@@ -1244,9 +1249,9 @@ UIS.InputBegan:Connect(function(input, gp)
     track:Play()
 
     local dir = root.CFrame.LookVector
-    local kickVec = vector.create(dir.X * 0.65, 0.65, dir.Z * 0.65)
+    local kickVec = vector.create(dir.X * 0.75, 0.65, dir.Z * 0.75)
 
-    remote:FireServer(buffer.fromstring("\031\001"), { { "kick", 28, false, kickVec } })
+    remote:FireServer(buffer.fromstring("\034\001"), { { "kick", 28, false, kickVec } })
 end)
 
 maintab2:Toggle("Auto Formless (Binds To T.)", function()
@@ -1279,11 +1284,15 @@ maintab2:Toggle("Auto Formless (Binds To T.)", function()
 		if not hrp or not hum then return end
 
 		hum.AutoRotate = false
-		hrp.CFrame *= CFrame.Angles(0, math.rad(180), 0)
 
-		local camType, camSubject = Camera.CameraType, Camera.CameraSubject
+		local camType = Camera.CameraType
+		local camSubject = Camera.CameraSubject
+
+		local camCF = Camera.CFrame
+		local flipped = camCF * CFrame.Angles(0, math.rad(180), 0)
+
 		Camera.CameraType = Enum.CameraType.Scriptable
-		Camera.CFrame = hrp.CFrame + Vector3.new(0, 2, 0)
+		Camera.CFrame = flipped
 
 		task.delay(0.1, function()
 			if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
@@ -1296,20 +1305,20 @@ maintab2:Toggle("Auto Formless (Binds To T.)", function()
 			hum.AutoRotate = true
 		end)
 
-		task.wait(0.1)
+		task.wait(0.15)
 
 		local anim = Instance.new("Animation")
 		anim.AnimationId = "rbxassetid://76587445975710"
 		local track = hum:LoadAnimation(anim)
 		track:Play()
 
-		ByteNetReliable:FireServer(
-			buffer.fromstring("\031\001"),
-			{ { "kick", 24, false, vector.create(0, 1, 0) } }
-		)
+		local dir = hrp.CFrame.LookVector
+		local kickVec = vector.create(dir.X * 0.5, 1, dir.Z * 0.5)
+
+		remote:FireServer(buffer.fromstring("\034\001"), { { "kick", 25, false, kickVec } })
 
 		ByteNetReliable:FireServer(
-			buffer.fromstring("\031\001"),
+			buffer.fromstring("\034\001"),
 			{ { "skill1" } }
 		)
 	end)
