@@ -7,7 +7,7 @@ local plr = Players.LocalPlayer
 
 loadstring(game:HttpGet("https://pastebin.com/raw/GGzZnvcD",true))()
 local spiritbombfx = "https://pastebin.com/raw/aZ3kAGQd"
-print("hello goku (v1.1)
+print("hello goku (v1.1)")
 
 local function ult()
 	local char = plr.Character
