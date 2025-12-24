@@ -741,7 +741,7 @@ local localPlayer = Players.LocalPlayer
 
 getgenv().ballMagnetRadius = 1
 
-maintab2:Slider("Ball Magnet Radius", 1, 1, 50, function(v)
+maintab2:Textbox("Ball Magnet Radius (Max: 50)", function(v)
     getgenv().ballMagnetRadius = v
 end)
 
