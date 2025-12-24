@@ -277,11 +277,11 @@ funtab:Button("FE Audio Control", function()
 end)
 
 tpstab:Button("Spawn", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(110, 23, -433))
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(111, 8, -414))
 end)
 
 tpstab:Button("Map Voting", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(20, 13, -498))
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(156, 4, -341))
 end)
 
 tpstab:Button("Cave", function()
@@ -289,7 +289,7 @@ tpstab:Button("Cave", function()
 end)
 
 tpstab:Button("Trading Servers (Min. Level 6)", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(52, 9, -562))
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(63, 4, -3082))
 end)
 
 tpstab:Label("In-Game Areas.")
