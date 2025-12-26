@@ -735,15 +735,22 @@ end)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
 local localPlayer = Players.LocalPlayer
 
 getgenv().ballMagnetRadius = 1
 
-maintab2:Textbox("Ball Magnet Radius (Max: 50)", function(v)
-    getgenv().ballMagnetRadius = v
-end)
+if UserInputService.TouchEnabled then
+    maintab2:Textbox("Ball Magnet Radius (Max: 50)", function(v)
+        getgenv().ballMagnetRadius = tonumber(v) or 1
+    end)
+else
+    maintab2:Slider("Ball Magnet Radius", 1, 1, 50, function(v)
+        getgenv().ballMagnetRadius = v
+    end)
+end
 
 if getgenv().ballMagnetConnection then
     getgenv().ballMagnetConnection:Disconnect()
