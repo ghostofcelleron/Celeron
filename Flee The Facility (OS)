@@ -289,7 +289,7 @@ tpstab:Button("Cave", function()
 end)
 
 tpstab:Button("Trading Servers (Min. Level 6)", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(65, 4, -307))
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(206, -7, -577))
 end)
 
 tpstab:Label("In-Game Areas.")
