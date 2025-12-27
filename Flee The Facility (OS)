@@ -281,7 +281,7 @@ tpstab:Button("Spawn", function()
 end)
 
 tpstab:Button("Map Voting", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(156, 4, -341))
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(119, -10, -425))
 end)
 
 tpstab:Button("Cave", function()
