@@ -680,6 +680,60 @@ else
 end
 end)
 
+local magnetEnabled = false
+local beganConnection
+local endedConnection
+local holding = false
+
+local userInputService = game:GetService("UserInputService")
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+
+maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", function()
+    if not magnetEnabled then
+        magnetEnabled = true
+
+        beganConnection = userInputService.InputBegan:Connect(function(input, gameProcessed)
+            if gameProcessed then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                holding = true
+                task.spawn(function()
+                    while holding do
+                        remote:FireServer(buffer.fromstring("\033"))
+                        task.wait(0.05)
+                    end
+                end)
+            end
+        end)
+
+        endedConnection = userInputService.InputEnded:Connect(function(input, gameProcessed)
+            if gameProcessed then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                holding = false
+            end
+        end)
+
+        starterGui:SetCore("SendNotification", {
+            Title = "Ball Magnet (M2 Hold)",
+            Text = "Enabled.",
+            Duration = 3
+        })
+    else
+        magnetEnabled = false
+        holding = false
+
+        if beganConnection then beganConnection:Disconnect() beganConnection = nil end
+        if endedConnection then endedConnection:Disconnect() endedConnection = nil end
+
+
+
+        starterGui:SetCore("SendNotification", {
+            Title = "Ball Magnet (M2 Hold)",
+            Text = "Disabled.",
+            Duration = 3
+        })
+    end
+end)
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
