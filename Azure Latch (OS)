@@ -680,79 +680,18 @@ else
 end
 end)
 
-local magnetEnabled = false
-local beganConnection
-local endedConnection
-local holding = false
-
-local userInputService = game:GetService("UserInputService")
-local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-
-maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", function()
-    if not magnetEnabled then
-        magnetEnabled = true
-
-        beganConnection = userInputService.InputBegan:Connect(function(input, gameProcessed)
-            if gameProcessed then return end
-            if input.UserInputType == Enum.UserInputType.MouseButton2 then
-                holding = true
-                task.spawn(function()
-                    while holding do
-                        remote:FireServer(buffer.fromstring("\033"))
-                        task.wait(0.05)
-                    end
-                end)
-            end
-        end)
-
-        endedConnection = userInputService.InputEnded:Connect(function(input, gameProcessed)
-            if gameProcessed then return end
-            if input.UserInputType == Enum.UserInputType.MouseButton2 then
-                holding = false
-            end
-        end)
-
-        starterGui:SetCore("SendNotification", {
-            Title = "Ball Magnet (M2 Hold)",
-            Text = "Enabled.",
-            Duration = 3
-        })
-    else
-        magnetEnabled = false
-        holding = false
-
-        if beganConnection then beganConnection:Disconnect() beganConnection = nil end
-        if endedConnection then endedConnection:Disconnect() endedConnection = nil end
-
-
-
-        starterGui:SetCore("SendNotification", {
-            Title = "Ball Magnet (M2 Hold)",
-            Text = "Disabled.",
-            Duration = 3
-        })
-    end
-end)
-
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
 local remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
 local localPlayer = Players.LocalPlayer
 
 getgenv().ballMagnetRadius = 1
 
-if UserInputService.TouchEnabled then
-    maintab2:Textbox("Ball Magnet Radius (Max: 50)", function(v)
-        getgenv().ballMagnetRadius = tonumber(v) or 1
-    end)
-else
-    maintab2:Slider("Ball Magnet Radius", 1, 1, 50, function(v)
-        getgenv().ballMagnetRadius = v
-    end)
-end
+maintab2:Slider("Ball Magnet Radius", 1, 1, 50, function(v)
+    getgenv().ballMagnetRadius = v
+end)
 
 if getgenv().ballMagnetConnection then
     getgenv().ballMagnetConnection:Disconnect()
@@ -899,12 +838,12 @@ maintab2:Toggle("Toggle Keybinds", function()
 	notify("Keybinds", _G.keybindsEnabled and "Enabled." or "Disabled.", 3)
 end)
 
-createAutoCounter("Auto-Dribble", "toggleDetection")
-createAutoCounter("Auto-Counter (Move One)", "toggleCounter1")
-createAutoCounter("Auto-Counter (Move Two)", "toggleCounter2")
-createAutoCounter("Auto-Counter (Move Three)", "toggleCounter3")
-createAutoCounter("Auto-Counter (Move Four)", "toggleCounter4")
-createAutoCounter("Auto-Counter (Move Five)", "toggleCounter5")
+createAutoCounter("Auto Dribble", "toggleDetection")
+createAutoCounter("Auto Counter (Move One)", "toggleCounter1")
+createAutoCounter("Auto Counter (Move Two)", "toggleCounter2")
+createAutoCounter("Auto Counter (Move Three)", "toggleCounter3")
+createAutoCounter("Auto Counter (Move Four)", "toggleCounter4")
+createAutoCounter("Auto Counter (Move Five)", "toggleCounter5")
 
 if not _G._keybindSetup then
 	_G._keybindSetup = true
