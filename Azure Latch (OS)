@@ -769,7 +769,7 @@ end)
 
 getgenv().ballMagnetConnection = RunService.Heartbeat:Connect(function()
     local radius = getgenv().ballMagnetRadius or 1
-    if radius < 5 then return end
+    if radius < 2 then return end
 
     local ball = Workspace.Terrain:FindFirstChild("Ball")
     if not ball then return end
