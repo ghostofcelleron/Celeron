@@ -21,6 +21,7 @@ local names = {
 	"Kurohitsugi",
 	"Shunpō (Flashstep)",
 	"Hogyoku Shinka"
+	"Reiatsu.
 }
 
 task.spawn(function()
