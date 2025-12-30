@@ -29,7 +29,6 @@ local win = ui:Create({
 local maintab = win:Tab("Main")
 local antitab = win:Tab("Protection")
 local funtab = win:Tab("Fun")
-local autotab = win:Tab("Auto")
 local qoltab = win:Tab("QOL")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
@@ -38,7 +37,6 @@ maintab:Label("Script Made By Celeron + Daffy!")
 antitab:Label("Protection Features.")
 funtab:Label("Fun Features.")
 qoltab:Label("Quality Of Life Features, No Advantages.")
-autotab:Label("Ping Must Be Around 80, Non-Adaptive.")
 misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
@@ -202,7 +200,7 @@ local flightSound = nil
 local bv = nil
 local bg = nil
 
-maintab:Button("Flight", function()
+maintab:Toggle("Flight", function()
 	flightEnabled = not flightEnabled
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -317,7 +315,7 @@ local player = game:GetService("Players").LocalPlayer
 local inputConnection = nil
 local renderConnection = nil
 
-maintab:Button("Lock On", function()
+maintab:Toggle("Lock On", function()
 	lockOnEnabled = not lockOnEnabled
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -375,73 +373,187 @@ maintab:Button("Lock On", function()
 	end
 end)
 
-local inputService = game:GetService("UserInputService")
-local vim = game:GetService("VirtualInputManager")
-local starterGui = game:GetService("StarterGui")
+funtab:Button("Invade Domain (Look At Domain.)", function()
+game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame+=workspace.CurrentCamera.CFrame.LookVector*10
+end)
 
-autoBlackFlashEnabled = false
-currentConnection = nil
-pendingTask = nil
+funtab:Button("Call Train", function()
+local player = game:GetService("Players").LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
 
-function cancelPending()
-	if pendingTask and typeof(pendingTask) == "RBXScriptConnection" then
-		pcall(function() pendingTask:Disconnect() end)
-	end
-	pendingTask = nil
+hrp:SetAttribute("ReturnPosition", hrp.Position)
+
+local button = workspace:WaitForChild("Map"):WaitForChild("Destructible"):WaitForChild("Model")
+	:WaitForChild("StationControl"):WaitForChild("ButtonTrain"):WaitForChild("Button")
+
+hrp.CFrame = button.CFrame + Vector3.new(0, 3, 0)
+
+task.wait(0.1)
+
+local prompt = button:FindFirstChildWhichIsA("ProximityPrompt")
+if prompt then
+	prompt.HoldDuration = 0
+	fireproximityprompt(prompt)
 end
 
-function createNewConnection()
-	if currentConnection then
-		currentConnection:Disconnect()
-		currentConnection = nil
-	end
+task.wait(1)
 
-	currentConnection = inputService.InputBegan:Connect(function(input, gp)
-		if gp or not autoBlackFlashEnabled then return end
-		if input.KeyCode == Enum.KeyCode.X then
-			currentConnection:Disconnect()
-			currentConnection = nil
-
-			vim:SendKeyEvent(true, Enum.KeyCode.Three, false, game)
-			vim:SendKeyEvent(false, Enum.KeyCode.Three, false, game)
-
-			pendingTask = task.delay(0.27, function()
-				if autoBlackFlashEnabled then
-					vim:SendKeyEvent(true, Enum.KeyCode.Three, false, game)
-					vim:SendKeyEvent(false, Enum.KeyCode.Three, false, game)
-				end
-			end)
-
-			task.delay(0.3, function()
-				if autoBlackFlashEnabled then
-					createNewConnection()
-				end
-			end)
-		end
-	end)
+local returnPos = hrp:GetAttribute("ReturnPosition")
+if returnPos then
+	hrp.CFrame = CFrame.new(returnPos)
 end
+end)
 
-autotab:Button("Black Flash", function()
-	autoBlackFlashEnabled = not autoBlackFlashEnabled
+escapeEnabled = false
+escapeConnection = nil
 
-	starterGui:SetCore("SendNotification", {
-		Title = "Auto Black Flash",
-		Text = autoBlackFlashEnabled and "Enabled." or "Disabled.",
+antitab:Toggle("Anti Damage", function()
+	escapeEnabled = not escapeEnabled
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Anti Damage",
+		Text = escapeEnabled and "Enabled." or "Disabled.",
 		Duration = 2
 	})
 
-	if autoBlackFlashEnabled then
-		createNewConnection()
+	if escapeEnabled then
+		if escapeConnection then escapeConnection:Disconnect() end
+
+		lastHealth = game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health
+
+		escapeConnection = game:GetService("RunService").Heartbeat:Connect(function()
+			char = game:GetService("Players").LocalPlayer.Character
+			hum = char and char:FindFirstChildOfClass("Humanoid")
+			hrp = char and char:FindFirstChild("HumanoidRootPart")
+			if not hum or not hrp then return end
+
+			if hum.Health < lastHealth then
+				closest = nil
+				shortest = math.huge
+				for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+					if p ~= game:GetService("Players").LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+						d = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
+						if d < shortest then
+							shortest = d
+							closest = p
+						end
+					end
+				end
+				if closest and closest.Character and closest.Character:FindFirstChild("HumanoidRootPart") then
+					dir = (hrp.Position - closest.Character.HumanoidRootPart.Position).Unit
+					hrp.CFrame = CFrame.new(hrp.Position + dir * 20)
+				end
+			end
+
+			lastHealth = hum.Health
+		end)
 	else
-		cancelPending()
-		if currentConnection then
-			currentConnection:Disconnect()
-			currentConnection = nil
+		if escapeConnection then
+			escapeConnection:Disconnect()
+			escapeConnection = nil
 		end
 	end
 end)
 
-funtab:Button("Climb Walls", function()
+local antiDomainEnabled = false
+local activeTarget = nil
+local lerpStart = nil
+local lerpEnd = nil
+local lerpTime = 0.8
+local lerpProgress = 0
+
+local animationIds = {
+	"rbxassetid://132725601768618",
+	"rbxassetid://118861398234801",
+	"rbxassetid://73048386765082",
+	"rbxassetid://80922461169812",
+	"rbxassetid://121984128639453",
+	"rbxassetid://121984128639453",
+	"rbxassetid://125335594549446",
+	"rbxassetid://83241775239139"
+}
+
+antitab:Toggle("Anti Domain", function()
+	antiDomainEnabled = not antiDomainEnabled
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Anti Domain",
+		Text = antiDomainEnabled and "Enabled." or "Disabled.",
+		Duration = 2
+	})
+end)
+
+local player = game:GetService("Players").LocalPlayer
+local runService = game:GetService("RunService")
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+player.CharacterAdded:Connect(function(c)
+	char = c
+	hrp = c:WaitForChild("HumanoidRootPart")
+end)
+
+local function isAnimationPlaying(humanoid)
+	for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+		for _, id in ipairs(animationIds) do
+			if track.Animation and track.Animation.AnimationId == id then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+runService.RenderStepped:Connect(function(dt)
+	if not antiDomainEnabled or not char or not hrp then return end
+
+	if activeTarget and lerpProgress < lerpTime then
+		lerpProgress += dt
+		local alpha = math.clamp(lerpProgress / lerpTime, 0, 1)
+		local targetHRP = activeTarget:FindFirstChild("HumanoidRootPart")
+		if targetHRP then
+			local startCF = CFrame.new(lerpStart, lerpStart + hrp.CFrame.LookVector)
+			local endCF = CFrame.new(lerpEnd, lerpEnd + hrp.CFrame.LookVector)
+			hrp.CFrame = startCF:Lerp(endCF, alpha)
+		end
+		return
+	end
+
+	if activeTarget then
+		local targetHRP = activeTarget:FindFirstChild("HumanoidRootPart")
+		if not targetHRP or (hrp.Position - targetHRP.Position).Magnitude > 75 then
+			activeTarget = nil
+			lerpStart = nil
+			lerpEnd = nil
+			lerpProgress = 0
+		end
+	end
+
+	for _, otherPlayer in ipairs(game:GetService("Players"):GetPlayers()) do
+		if otherPlayer ~= player then
+			local otherChar = otherPlayer.Character
+			local otherHRP = otherChar and otherChar:FindFirstChild("HumanoidRootPart")
+			local otherHum = otherChar and otherChar:FindFirstChildOfClass("Humanoid")
+
+			if otherHRP and otherHum then
+				local dist = (hrp.Position - otherHRP.Position).Magnitude
+				if dist <= 50 and isAnimationPlaying(otherHum) then
+					local direction = (hrp.Position - otherHRP.Position).Unit
+					local escapePos = otherHRP.Position + direction * 75
+
+					activeTarget = otherChar
+					lerpStart = hrp.Position
+					lerpEnd = escapePos
+					lerpProgress = 0
+					break
+				end
+			end
+		end
+	end
+end)
+
+funtab:Toggle("Climb Walls", function()
 	getgenv().climbWallsEnabled = not getgenv().climbWallsEnabled
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -522,191 +634,9 @@ funtab:Button("Climb Walls", function()
 	end
 end)
 
-funtab:Button("Invade Domain (Look At Domain.)", function()
-game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame+=workspace.CurrentCamera.CFrame.LookVector*10
-end)
-
-
-
-funtab:Button("Call Train", function()
-local player = game:GetService("Players").LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-
-hrp:SetAttribute("ReturnPosition", hrp.Position)
-
-local button = workspace:WaitForChild("Map"):WaitForChild("Destructible"):WaitForChild("Model")
-	:WaitForChild("StationControl"):WaitForChild("ButtonTrain"):WaitForChild("Button")
-
-hrp.CFrame = button.CFrame + Vector3.new(0, 3, 0)
-
-task.wait(0.1)
-
-local prompt = button:FindFirstChildWhichIsA("ProximityPrompt")
-if prompt then
-	prompt.HoldDuration = 0
-	fireproximityprompt(prompt)
-end
-
-task.wait(1)
-
-local returnPos = hrp:GetAttribute("ReturnPosition")
-if returnPos then
-	hrp.CFrame = CFrame.new(returnPos)
-end
-end)
-
-escapeEnabled = false
-escapeConnection = nil
-
-antitab:Button("Anti-Damage", function()
-	escapeEnabled = not escapeEnabled
-
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-Damage",
-		Text = escapeEnabled and "Enabled." or "Disabled.",
-		Duration = 2
-	})
-
-	if escapeEnabled then
-		if escapeConnection then escapeConnection:Disconnect() end
-
-		lastHealth = game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health
-
-		escapeConnection = game:GetService("RunService").Heartbeat:Connect(function()
-			char = game:GetService("Players").LocalPlayer.Character
-			hum = char and char:FindFirstChildOfClass("Humanoid")
-			hrp = char and char:FindFirstChild("HumanoidRootPart")
-			if not hum or not hrp then return end
-
-			if hum.Health < lastHealth then
-				closest = nil
-				shortest = math.huge
-				for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
-					if p ~= game:GetService("Players").LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-						d = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
-						if d < shortest then
-							shortest = d
-							closest = p
-						end
-					end
-				end
-				if closest and closest.Character and closest.Character:FindFirstChild("HumanoidRootPart") then
-					dir = (hrp.Position - closest.Character.HumanoidRootPart.Position).Unit
-					hrp.CFrame = CFrame.new(hrp.Position + dir * 10)
-				end
-			end
-
-			lastHealth = hum.Health
-		end)
-	else
-		if escapeConnection then
-			escapeConnection:Disconnect()
-			escapeConnection = nil
-		end
-	end
-end)
-
-local antiDomainEnabled = false
-local activeTarget = nil
-local lerpStart = nil
-local lerpEnd = nil
-local lerpTime = 0.8
-local lerpProgress = 0
-
-local animationIds = {
-	"rbxassetid://132725601768618",
-	"rbxassetid://118861398234801",
-	"rbxassetid://73048386765082",
-	"rbxassetid://80922461169812",
-	"rbxassetid://121984128639453",
-	"rbxassetid://121984128639453",
-	"rbxassetid://125335594549446",
-	"rbxassetid://83241775239139"
-}
-
-antitab:Button("Anti-Domain", function()
-	antiDomainEnabled = not antiDomainEnabled
-
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-Domain",
-		Text = antiDomainEnabled and "Enabled." or "Disabled.",
-		Duration = 2
-	})
-end)
-
-local player = game:GetService("Players").LocalPlayer
-local runService = game:GetService("RunService")
-local char = player.Character or player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-
-player.CharacterAdded:Connect(function(c)
-	char = c
-	hrp = c:WaitForChild("HumanoidRootPart")
-end)
-
-local function isAnimationPlaying(humanoid)
-	for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
-		for _, id in ipairs(animationIds) do
-			if track.Animation and track.Animation.AnimationId == id then
-				return true
-			end
-		end
-	end
-	return false
-end
-
-runService.RenderStepped:Connect(function(dt)
-	if not antiDomainEnabled or not char or not hrp then return end
-
-	if activeTarget and lerpProgress < lerpTime then
-		lerpProgress += dt
-		local alpha = math.clamp(lerpProgress / lerpTime, 0, 1)
-		local targetHRP = activeTarget:FindFirstChild("HumanoidRootPart")
-		if targetHRP then
-			local startCF = CFrame.new(lerpStart, lerpStart + hrp.CFrame.LookVector)
-			local endCF = CFrame.new(lerpEnd, lerpEnd + hrp.CFrame.LookVector)
-			hrp.CFrame = startCF:Lerp(endCF, alpha)
-		end
-		return
-	end
-
-	if activeTarget then
-		local targetHRP = activeTarget:FindFirstChild("HumanoidRootPart")
-		if not targetHRP or (hrp.Position - targetHRP.Position).Magnitude > 75 then
-			activeTarget = nil
-			lerpStart = nil
-			lerpEnd = nil
-			lerpProgress = 0
-		end
-	end
-
-	for _, otherPlayer in ipairs(game:GetService("Players"):GetPlayers()) do
-		if otherPlayer ~= player then
-			local otherChar = otherPlayer.Character
-			local otherHRP = otherChar and otherChar:FindFirstChild("HumanoidRootPart")
-			local otherHum = otherChar and otherChar:FindFirstChildOfClass("Humanoid")
-
-			if otherHRP and otherHum then
-				local dist = (hrp.Position - otherHRP.Position).Magnitude
-				if dist <= 50 and isAnimationPlaying(otherHum) then
-					local direction = (hrp.Position - otherHRP.Position).Unit
-					local escapePos = otherHRP.Position + direction * 75
-
-					activeTarget = otherChar
-					lerpStart = hrp.Position
-					lerpEnd = escapePos
-					lerpProgress = 0
-					break
-				end
-			end
-		end
-	end
-end)
-
 local itemesp = false
 
-funtab:Button("Item ESP", function()
+funtab:Toggle("Item ESP", function()
 	itemesp = not itemesp
 
 	for _, obj in ipairs(workspace.Items:GetDescendants()) do
