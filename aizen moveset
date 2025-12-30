@@ -20,8 +20,7 @@ local spiritbombfx = "https://pastebin.com/raw/aZ3kAGQd"
 local names = {
 	"Kurohitsugi",
 	"Shunpō (Flashstep)",
-	"Hogyoku Shinka",
-	"Reiatsu."
+	"Hogyoku Shinka"
 }
 
 task.spawn(function()
