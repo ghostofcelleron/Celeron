@@ -1,0 +1,1178 @@
+local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Luna-Interface-Suite/refs/heads/master/source.lua"))()
+
+local Window = Luna:CreateWindow({
+    Name = "Celeron's GUI (Azure Latch)",
+    Subtitle = "Join The Discord!",
+    LogoID = "6031097225",
+    LoadingEnabled = false
+})
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local ContentProvider = game:GetService("ContentProvider")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local SoundService = game:GetService("SoundService")
+local TweenService = game:GetService("TweenService")
+local Workspace = workspace
+
+buffer = buffer or {
+    fromstring = function(str) return str end
+}
+
+_G.suppressNotifs = _G.suppressNotifs or false
+
+local function notify(title, text, duration)
+    if not _G.suppressNotifs then
+        StarterGui:SetCore("SendNotification", {
+            Title = title,
+            Text = text,
+            Duration = duration or 2
+        })
+    end
+end
+
+local home = Window:CreateTab({ Name = "Home", Icon = "list", ImageSource = "Material", ShowTitle = true })
+local blatant = Window:CreateTab({ Name = "Blatant", Icon = "source", ImageSource = "Material", ShowTitle = true })
+local silent = Window:CreateTab({ Name = "Silent", Icon = "code", ImageSource = "Material", ShowTitle = true })
+local movesets = Window:CreateTab({ Name = "Movesets", Icon = "shop", ImageSource = "Material", ShowTitle = true })
+local emotetab = Window:CreateTab({ Name = "Emotes", Icon = "extension", ImageSource = "Material", ShowTitle = true })
+local teleporttab = Window:CreateTab({ Name = "Teleports", Icon = "settings_brightness", ImageSource = "Material", ShowTitle = true })
+local misctab = Window:CreateTab({ Name = "Others", Icon = "build", ImageSource = "Material", ShowTitle = true })
+local helptab = Window:CreateTab({ Name = "Info", Icon = "info", ImageSource = "Material", ShowTitle = true })
+
+home:CreateSection("Welcome")
+home:CreateLabel({ Text = "Welcome to Celeron's GUI!", Style = 1 })
+home:CreateParagraph({ Title = "About This Script", Text = "This script has many features dedicated to Azure Latch. Check out the other tabs for all features!" })
+home:CreateSection("Quick Actions")
+home:CreateButton({
+    Name = "Join Discord",
+    Description = "Copies the discord invite to your clipboard.",
+    Callback = function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "Discord Invite",
+            Text = "Copied to your clipboard!",
+            Duration = 3,
+            Button1 = "alright fella",
+        })
+        setclipboard("https://discord.gg/8stFYxJv4R")
+    end
+})
+home:CreateButton({
+    Name = "Reload Script",
+    Description = "Reloads the script interface.",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/main/Azure%20Latch%20(OS)"))()
+    end
+})
+
+helptab:CreateSection("Info / Controls")
+helptab:CreateLabel({ Text = "Script Made By Celeron + Daffy!", Style = 1 })
+helptab:CreateLabel({ Text = "Show / Hide GUI: Right Alt", Style = 2 })
+helptab:CreateButton({
+    Name = "Show Keybinds",
+    Description = "Show the in-game keybind notification.",
+    Callback = function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "Keybinds",
+            Text = "Z = Auto-Dribble\nX = Move One\nC = Move Two",
+            Duration = 4
+        })
+        task.delay(0.5, function()
+            StarterGui:SetCore("SendNotification", {
+                Title = "Keybinds",
+                Text = "V = Move Three\nN = Move Four\nM = Move Five.",
+                Duration = 4
+            })
+        end)
+    end
+})
+helptab:CreateButton({
+    Name = "Copy Owner Discord Username",
+    Description = "Copy owner's Discord username.",
+    Callback = function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "Discord Username",
+            Text = "Copied to your clipboard!",
+            Duration = 3,
+            Button1 = "alright fella",
+        })
+        setclipboard("ghostofcelleron")
+    end
+})
+helptab:CreateButton({
+    Name = "Copy Discord Server Invite",
+    Description = "Copy server invite to clipboard.",
+    Callback = function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "Discord Invite",
+            Text = "Copied to your clipboard!",
+            Duration = 3,
+            Button1 = "alright fella",
+        })
+        setclipboard("https://discord.gg/8stFYxJv4R")
+    end
+})
+
+local LocalPlayer = Players.LocalPlayer
+
+blatant:CreateSection("Visuals & Misc")
+blatant:CreateButton({ Name = "Metavision", Description = "Load Metavision", Callback = function() loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))() end })
+blatant:CreateButton({ Name = "Metavision V2", Description = "Load Metavision V2", Callback = function() loadstring(game:HttpGet("https://pastebin.com/raw/HfpQBAsF"))() end })
+
+_G.AUTO_GOAL = _G.AUTO_GOAL or false
+blatant:CreateToggle({
+    Name = "Auto Goal",
+    Description = "Automatically steal and score if possible.",
+    CurrentValue = _G.AUTO_GOAL,
+    Callback = function(v)
+        _G.AUTO_GOAL = v
+        notify("Auto Goal", _G.AUTO_GOAL and "Enabled." or "Disabled.", 1)
+    end
+})
+
+do
+    local MapFolderName = "map"
+    local function IsInGame()
+        local LocalCharacter = LocalPlayer.Character
+        if not LocalCharacter then return false end
+        local StateFolder = LocalCharacter:FindFirstChild("state")
+        if not StateFolder then return false end
+        local InGameValue = StateFolder:FindFirstChild("ingame")
+        if not InGameValue then return false end
+        return InGameValue.Value
+    end
+
+    local function DisableCollisionBoxes()
+        local MapFolder = Workspace:FindFirstChild(MapFolderName)
+        if not MapFolder then return end
+        local GkBarriar = MapFolder:FindFirstChild("gkbarriar")
+        local AGoal = MapFolder:FindFirstChild("Agoal")
+        local BGoal = MapFolder:FindFirstChild("Bgoal")
+        if GkBarriar then
+            local ABarriar = GkBarriar:FindFirstChild("A")
+            local BBarriar = GkBarriar:FindFirstChild("B")
+            if ABarriar then ABarriar.CanCollide = false end
+            if BBarriar then BBarriar.CanCollide = false end
+        end
+        if AGoal then AGoal.CanCollide = false end
+        if BGoal then BGoal.CanCollide = false end
+    end
+
+    local function StealBall()
+        local LocalCharacter = LocalPlayer.Character
+        local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+        local Football = Workspace.Terrain:FindFirstChild("Ball")
+        if LocalHumanoidRootPart and Football then
+            LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position.X, 0, Football.Position.Z)
+        end
+        for _, OtherPlayer in pairs(Players:GetPlayers()) do
+            if OtherPlayer ~= LocalPlayer then
+                local OtherCharacter = OtherPlayer.Character
+                local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+                local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+                if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                    LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                    local args = { buffer.fromstring("\034\001"), { { "tackle" } } }
+                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                end
+            end
+        end
+    end
+
+    local function HasBall()
+        local LocalCharacter = LocalPlayer.Character
+        local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball")
+        return Football ~= nil
+    end
+
+    coroutine.resume(coroutine.create(function()
+        RunService.RenderStepped:Connect(function()
+            if not _G.AUTO_GOAL then return end
+            pcall(function()
+                if not IsInGame() then return end
+                DisableCollisionBoxes()
+                StealBall()
+                if HasBall() then
+                    local LocalCharacter = LocalPlayer.Character
+                    local LocalRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+                    local MapFolder = Workspace:FindFirstChild(MapFolderName)
+                    local AGoal = MapFolder and MapFolder:FindFirstChild("Agoal")
+                    local BGoal = MapFolder and MapFolder:FindFirstChild("Bgoal")
+                    local Goal = LocalPlayer.Team and ((LocalPlayer.Team.Name == "A") and BGoal or AGoal)
+                    if LocalRootPart and Goal then
+                        LocalRootPart.CFrame = Goal.CFrame
+                        wait(0.185)
+                        local args = { buffer.fromstring("\034\001"), { { "kick", 20, false, vector.create(0,1,0) } } }
+                        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                    end
+                end
+            end)
+        end)
+    end))
+end
+
+_G.ALWAYS_BALL_ACTIVE = _G.ALWAYS_BALL_ACTIVE or false
+blatant:CreateToggle({
+    Name = "Always Ball",
+    Description = "Stay attached to the ball (zero gravity while active).",
+    CurrentValue = _G.ALWAYS_BALL_ACTIVE,
+    Callback = function(v)
+        _G.ALWAYS_BALL_ACTIVE = v
+        if v then
+            notify("Always Ball", "Enabled.", 1)
+            workspace.Gravity = 0
+            spawn(function()
+                while _G.ALWAYS_BALL_ACTIVE do
+                    local LocalCharacter = LocalPlayer.Character
+                    local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+                    local Football = Workspace.Terrain:FindFirstChild("Ball")
+                    if LocalHumanoidRootPart and Football then
+                        LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position)
+                    end
+                    for _, OtherPlayer in pairs(Players:GetPlayers()) do
+                        if OtherPlayer ~= LocalPlayer then
+                            local OtherCharacter = OtherPlayer.Character
+                            local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+                            local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+                            if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                                LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                                local args = { buffer.fromstring("\034\001"), { { "tackle" } } }
+                                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                            end
+                        end
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        else
+            notify("Always Ball", "Disabled.", 1)
+            workspace.Gravity = 196.2
+        end
+    end
+})
+
+blatant:CreateButton({
+    Name = "Get Flow (Req. Ball)",
+    Description = "Spam-kicks to reach flow 100 (requires ball).",
+    Callback = function()
+        local player = Players.LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local root = char:WaitForChild("HumanoidRootPart")
+        local original = root.CFrame
+        local sword = Workspace:FindFirstChild("map") and Workspace.map.Lobby_Museum.Prop and Workspace.map.Lobby_Museum.Prop["Classic Roblox Sword"]
+        if sword then root.CFrame = sword.CFrame + Vector3.new(0,33,0) end
+        wait(0.67)
+        task.spawn(function()
+            local remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
+            local flow = Workspace:WaitForChild("characters"):WaitForChild(player.Name):WaitForChild("state"):WaitForChild("flow")
+            while flow.Value < 100 do
+                remote:FireServer(buffer.fromstring("\034\001"), { { "kick", 1, false, vector.create(0,1,0) } })
+                task.wait(0.01)
+            end
+            wait(0.9)
+            root.CFrame = original
+        end)
+    end
+})
+
+local isEnabled = false
+_G.ForwardRushEnabled = _G.ForwardRushEnabled or false
+_G.SideDashEnabled = _G.SideDashEnabled or false
+_G._rushing = _G._rushing or false
+_G._sideDashing = _G._sideDashing or false
+_G._dashBindsSetup = _G._dashBindsSetup or false
+_G._lastForwardRush = _G._lastForwardRush or 0
+_G._lastSideDash = _G._lastSideDash or 0
+
+local player = Players.LocalPlayer
+local character, humanoid, rootPart
+local function updateCharacter()
+    character = player.Character or player.CharacterAdded:Wait()
+    humanoid = character:WaitForChild("Humanoid")
+    rootPart = character:WaitForChild("HumanoidRootPart")
+end
+updateCharacter()
+player.CharacterAdded:Connect(updateCharacter)
+
+local function forwardRush()
+    if _G._rushing or not _G.ForwardRushEnabled or not humanoid or not rootPart then return end
+    if tick() - _G._lastForwardRush < 0.2 then return end
+    _G._lastForwardRush = tick()
+    _G._rushing = true
+    local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+    local animation = Instance.new("Animation"); animation.AnimationId = "rbxassetid://79394729551302"
+    local animationTrack = animator:LoadAnimation(animation); animationTrack:Play()
+    task.delay(0.05, function()
+        if animationTrack.IsPlaying then
+            local sound = Instance.new("Sound"); sound.SoundId = "rbxassetid://105267293181745"; sound.Parent = rootPart; sound:Play()
+            sound.Ended:Connect(function() sound:Destroy() end)
+        end
+    end)
+    local bv = Instance.new("BodyVelocity"); bv.MaxForce = Vector3.new(1e5,0,1e5); bv.Parent = rootPart
+    local dashId = "ForwardRush_" .. tostring(os.clock())
+    RunService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function()
+        if not rootPart or not rootPart.Parent then RunService:UnbindFromRenderStep(dashId); bv:Destroy(); _G._rushing = false; return end
+        bv.Velocity = rootPart.CFrame.LookVector * 100
+    end)
+    task.delay(0.5, function() RunService:UnbindFromRenderStep(dashId); bv:Destroy(); _G._rushing = false end)
+end
+
+local function sideDash(direction)
+    if _G._sideDashing or not _G.SideDashEnabled or not humanoid or not rootPart then return end
+    if tick() - _G._lastSideDash < 0.15 then return end
+    _G._lastSideDash = tick()
+    _G._sideDashing = true
+    local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+    local animation = Instance.new("Animation")
+    animation.AnimationId = direction == "right" and "rbxassetid://114016332539655" or "rbxassetid://100207093237932"
+    local animationTrack = animator:LoadAnimation(animation); animationTrack:Play()
+    local sound = Instance.new("Sound"); sound.SoundId = "rbxassetid://71212694698006"; sound.Parent = rootPart; sound:Play()
+    sound.Ended:Connect(function() sound:Destroy() end)
+    local bv = Instance.new("BodyVelocity"); bv.MaxForce = Vector3.new(1e5,0,1e5); bv.Parent = rootPart
+    local dashId = "SideDash_" .. tostring(os.clock())
+    RunService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function()
+        if not rootPart or not rootPart.Parent then RunService:UnbindFromRenderStep(dashId); bv:Destroy(); _G._sideDashing = false; return end
+        local rightVec = rootPart.CFrame.RightVector
+        bv.Velocity = rightVec * (direction == "right" and 75 or -75)
+    end)
+    task.delay(0.4, function() RunService:UnbindFromRenderStep(dashId); bv:Destroy(); _G._sideDashing = false end)
+end
+
+blatant:CreateLabel({ Text = "No Cooldown Features.", Style = 1 })
+blatant:CreateToggle({ Name = "No Rush Cooldown", Description = "Enable forward rush", CurrentValue = _G.ForwardRushEnabled, Callback = function(v) _G.ForwardRushEnabled = v notify("No Rush CD", v and "Enabled." or "Disabled.") end })
+blatant:CreateToggle({ Name = "No Side Dash Cooldown", Description = "Enable side dash", CurrentValue = _G.SideDashEnabled, Callback = function(v) _G.SideDashEnabled = v notify("No Side Dash CD", v and "Enabled." or "Disabled.") end })
+
+if not _G._dashBindsSetup then
+    _G._dashBindsSetup = true
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == Enum.KeyCode.F then forwardRush()
+        elseif input.KeyCode == Enum.KeyCode.Q then
+            local isA = UserInputService:IsKeyDown(Enum.KeyCode.A)
+            local isD = UserInputService:IsKeyDown(Enum.KeyCode.D)
+            if isD then sideDash("right") elseif isA then sideDash("left") end
+        end
+    end)
+end
+
+blatant:CreateSection("Break Ball")
+blatant:CreateButton({ Name = "Break Ball (Player Method, Req. Ball)", Description = "Creates far-away parts and teleports you high.", Callback = function()
+    local baseplatePosition = Vector3.new(-190, 14864566, 492)
+    local partSize = Vector3.new(10,1,10)
+    local gap = 0
+    for x = 0, 2 do for z = 0, 2 do
+        local part = Instance.new("Part"); part.Size = partSize; part.Anchored = true
+        part.Position = baseplatePosition + Vector3.new(x * (partSize.X + gap), 0, z * (partSize.Z + gap))
+        part.Parent = workspace
+    end end
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(baseplatePosition + Vector3.new(0, 100000000000000, 0))
+end })
+blatant:CreateButton({ Name = "Break Ball (Ball Method, Req. Ball)", Description = "Temporarily move you to a spot and jump to break the ball.", Callback = function()
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    if humanoidRootPart then
+        local originalPosition = humanoidRootPart.Position
+        humanoidRootPart.CFrame = CFrame.new(Vector3.new(-390, 475, 354))
+        task.wait(0.3)
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+        task.wait(0.1)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+        task.wait(0.3)
+        humanoidRootPart.CFrame = CFrame.new(originalPosition)
+    end
+end })
+blatant:CreateButton({ Name = "Permanent Break Ball (Req. Ball)", Description = "Permanently lower fallen parts destroy height and move player", Callback = function()
+    workspace.FallenPartsDestroyHeight = -50000
+    pcall(function() game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(1, -49999, 1)) end)
+end })
+
+blatant:CreateSection("Ball Control")
+blatant:CreateButton({ Name = "Steal Ball", Description = "Attempts to steal the ball until you have it", Callback = function()
+    local LocalPlayer = Players.LocalPlayer
+    local function HasBall() local LocalCharacter = LocalPlayer.Character; local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball"); return Football ~= nil end
+    local function StealBall()
+        while not HasBall() do
+            local LocalCharacter = LocalPlayer.Character
+            local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+            local Football = Workspace.Terrain:FindFirstChild("Ball")
+            if LocalHumanoidRootPart and Football then LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position) end
+            for _, OtherPlayer in pairs(Players:GetPlayers()) do
+                if OtherPlayer ~= LocalPlayer then
+                    local OtherCharacter = OtherPlayer.Character
+                    local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+                    local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+                    if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                        LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                        local args = { buffer.fromstring("\034\001"), { { "tackle" } } }
+                        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                    end
+                end
+            end
+            task.wait(0.2)
+        end
+    end
+    StealBall()
+end })
+blatant:CreateButton({ Name = "Bring Ball", Description = "Bring the ball to you briefly", Callback = function()
+    local LocalPlayer = Players.LocalPlayer
+    local function HasBall() local LocalCharacter = LocalPlayer.Character; local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball"); return Football ~= nil end
+    local function StealBall()
+        while not HasBall() do
+            local LocalCharacter = LocalPlayer.Character
+            local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+            local Football = Workspace.Terrain:FindFirstChild("Ball")
+            if LocalHumanoidRootPart and Football then LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position) end
+            for _, OtherPlayer in pairs(Players:GetPlayers()) do
+                if OtherPlayer ~= LocalPlayer then
+                    local OtherCharacter = OtherPlayer.Character
+                    local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+                    local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+                    if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                        LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                        local args = { buffer.fromstring("\034\001"), { { "tackle" } } }
+                        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                    end
+                end
+            end
+            task.wait(0.2)
+        end
+    end
+    spawn(function()
+        local LocalCharacter = LocalPlayer.Character
+        local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+        local Football = Workspace.Terrain:FindFirstChild("Ball")
+        if LocalHumanoidRootPart and Football then
+            local originalPosition = LocalHumanoidRootPart.CFrame
+            LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position)
+            StealBall()
+            task.wait(0.3)
+            LocalHumanoidRootPart.CFrame = originalPosition
+        end
+    end)
+end })
+
+silent:CreateSection("Ball Magnet")
+getgenv().ballMagnetActive = getgenv().ballMagnetActive or false
+silent:CreateToggle({
+    Name = "Ball Magnet (Auto Fire)",
+    Description = "Continuously fire the magnet remote.",
+    CurrentValue = getgenv().ballMagnetActive,
+    Callback = function(v)
+        getgenv().ballMagnetActive = v
+        StarterGui:SetCore("SendNotification", {
+            Title = "Ball Magnet",
+            Text = getgenv().ballMagnetActive and "Enabled." or "Disabled.",
+            Duration = 1
+        })
+        local remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
+        if getgenv().ballMagnetActive then
+            if getgenv().ballMagnetConnection then getgenv().ballMagnetConnection:Disconnect() end
+            getgenv().ballMagnetConnection = task.spawn(function()
+                while getgenv().ballMagnetActive do
+                    pcall(function() remote:FireServer(buffer.fromstring("\033")) end)
+                    task.wait()
+                end
+            end)
+        else
+            if getgenv().ballMagnetConnection then getgenv().ballMagnetConnection = nil end
+        end
+    end
+})
+
+do
+    local magnetEnabled = false
+    local beganConnection, endedConnection, holding = nil, nil, false
+    silent:CreateToggle({
+        Name = "Ball Magnet (Bind: M2 Hold)",
+        Description = "Hold right-click to magnet the ball.",
+        CurrentValue = false,
+        Callback = function()
+            magnetEnabled = not magnetEnabled
+            if magnetEnabled then
+                beganConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                    if gameProcessed then return end
+                    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                        holding = true
+                        task.spawn(function()
+                            local remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
+                            while holding do
+                                remote:FireServer(buffer.fromstring("\033"))
+                                task.wait(0.05)
+                            end
+                        end)
+                    end
+                end)
+                endedConnection = UserInputService.InputEnded:Connect(function(input, gameProcessed)
+                    if gameProcessed then return end
+                    if input.UserInputType == Enum.UserInputType.MouseButton2 then holding = false end
+                end)
+                StarterGui:SetCore("SendNotification", { Title = "Ball Magnet (M2 Hold)", Text = "Enabled.", Duration = 3 })
+            else
+                holding = false
+                if beganConnection then beganConnection:Disconnect() beganConnection = nil end
+                if endedConnection then endedConnection:Disconnect() endedConnection = nil end
+                StarterGui:SetCore("SendNotification", { Title = "Ball Magnet (M2 Hold)", Text = "Disabled.", Duration = 3 })
+            end
+        end
+    })
+end
+
+getgenv().ballMagnetRadius = getgenv().ballMagnetRadius or 1
+silent:CreateSlider({
+    Name = "Ball Magnet Radius",
+    Range = {1,50},
+    Increment = 0.1,
+    CurrentValue = getgenv().ballMagnetRadius,
+    Callback = function(v) getgenv().ballMagnetRadius = v end
+})
+if getgenv().ballMagnetConnection then getgenv().ballMagnetConnection:Disconnect() end
+do
+    local lastFire = 0
+    local FIRE_INTERVAL = 0.1
+    local hrp
+    local localPlayer = Players.LocalPlayer
+    local function setupCharacter(char) hrp = char:WaitForChild("HumanoidRootPart", 10) end
+    if localPlayer.Character then setupCharacter(localPlayer.Character) end
+    localPlayer.CharacterAdded:Connect(setupCharacter)
+    getgenv().ballMagnetConnection = RunService.Heartbeat:Connect(function()
+        local radius = getgenv().ballMagnetRadius or 1
+        if radius < 2 then return end
+        local ball = Workspace.Terrain:FindFirstChild("Ball")
+        if not ball then return end
+        if hrp then
+            local dist = (hrp.Position - ball.Position).Magnitude
+            if dist <= radius and (time() - lastFire) >= FIRE_INTERVAL then
+                lastFire = time()
+                pcall(function() ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\033")) end)
+            end
+        end
+    end)
+end
+
+silent:CreateSection("Auto Counters")
+silent:CreateLabel({ Text = "Notification Suppression: Useful When Streaming.", Style = 2 })
+silent:CreateToggle({ Name = "Suppress Notifications", Description = "Toggle notification suppression.", CurrentValue = _G.suppressNotifs, Callback = function(v) _G.suppressNotifs = v StarterGui:SetCore("SendNotification", { Title = "Notifications", Text = _G.suppressNotifs and "Suppressed." or "Un-Suppressed.", Duration = 1 }) end })
+
+_G.autoSkills = _G.autoSkills or { ["toggleDetection"]="dribble", ["toggleCounter1"]="skill1", ["toggleCounter2"]="skill2", ["toggleCounter3"]="skill3", ["toggleCounter4"]="skill4", ["toggleCounter5"]="skill5" }
+
+do
+    local player = Players.LocalPlayer
+    local ANIMATION_ID = "rbxassetid://109744655458082"
+    local cooldowns = {}
+    RunService.Stepped:Connect(function()
+        local char = player.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        for _, target in ipairs(Players:GetPlayers()) do
+            if target ~= player and target.Character and target.Team ~= player.Team then
+                local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
+                local targetHumanoid = target.Character:FindFirstChild("Humanoid")
+                local animator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
+                if targetHRP and animator then
+                    local distance = (root.Position - targetHRP.Position).Magnitude
+                    if distance <= 35 then
+                        local now = tick()
+                        local last = cooldowns[target] or 0
+                        if now - last >= 0.5 then
+                            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                                if track.Animation.AnimationId == ANIMATION_ID then
+                                    cooldowns[target] = now
+                                    for _, toggleKey in ipairs({ "toggleDetection", "toggleCounter1", "toggleCounter2", "toggleCounter3", "toggleCounter4", "toggleCounter5" }) do
+                                        local skillName = _G.autoSkills[toggleKey]
+                                        if _G[toggleKey] and skillName then
+                                            local args
+                                            if skillName == "dribble" then
+                                                args = { buffer.fromstring("\034\001"), { { skillName, false } } }
+                                            else
+                                                args = { buffer.fromstring("\034\001"), { { skillName } } }
+                                            end
+                                            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                                        end
+                                    end
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
+silent:CreateToggle({ Name = "Toggle Keybinds", Description = "Enable keybinds (Z/X/C/V/N/M)", CurrentValue = (_G.keybindsEnabled or false), Callback = function(v) _G.keybindsEnabled = v notify("Keybinds", v and "Enabled." or "Disabled.", 3) end })
+
+local function createAutoCounterUI(name, key)
+    silent:CreateToggle({ Name = name, Description = "Auto counter toggle", CurrentValue = _G[key] or false, Callback = function(v) _G[key] = v notify(name, v and "Enabled." or "Disabled.", 3) end })
+end
+
+createAutoCounterUI("Auto Dribble", "toggleDetection")
+createAutoCounterUI("Auto Counter (Move One)", "toggleCounter1")
+createAutoCounterUI("Auto Counter (Move Two)", "toggleCounter2")
+createAutoCounterUI("Auto Counter (Move Three)", "toggleCounter3")
+createAutoCounterUI("Auto Counter (Move Four)", "toggleCounter4")
+createAutoCounterUI("Auto Counter (Move Five)", "toggleCounter5")
+
+if not _G._keybindSetup then
+    _G._keybindSetup = true
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed or not _G.keybindsEnabled then return end
+        local keyMap = {
+            [Enum.KeyCode.Z] = {"toggleDetection", "Auto-Dribble"},
+            [Enum.KeyCode.X] = {"toggleCounter1", "Auto-Counter (Move One)"},
+            [Enum.KeyCode.C] = {"toggleCounter2", "Auto-Counter (Move Two)"},
+            [Enum.KeyCode.V] = {"toggleCounter3", "Auto-Counter (Move Three)"},
+            [Enum.KeyCode.N] = {"toggleCounter4", "Auto-Counter (Move Four)"},
+            [Enum.KeyCode.M] = {"toggleCounter5", "Auto-Counter (Move Five)"}
+        }
+        local mapping = keyMap[input.KeyCode]
+        if mapping then
+            local toggleKey, label = unpack(mapping)
+            _G[toggleKey] = not (_G[toggleKey] or false)
+            notify(label, _G[toggleKey] and "Enabled." or "Disabled.", 3)
+        end
+    end)
+end
+
+blatant:CreateSection("Auto Goal Features")
+blatant:CreateButton({ Name = "Barou Devour Goal", Description = "Teleport sequence using two enemies", Callback = function()
+    local plr = Players.LocalPlayer
+    local function countEnimTeamMembers()
+        local op = game.Teams:FindFirstChild("A")
+        if plr.Team == game.Teams:FindFirstChild("A") then op = game.Teams:FindFirstChild("B") end
+        local count = 0
+        for _, player in ipairs(Players:GetPlayers()) do if player.Team == op then count += 1 end end
+        return count
+    end
+    local function getTwoRandomEnemies()
+        local enemies = {}
+        local op = game.Teams:FindFirstChild("A")
+        if plr.Team == game.Teams:FindFirstChild("A") then op = game.Teams:FindFirstChild("B") end
+        for _, player in ipairs(Players:GetPlayers()) do if player ~= plr and player.Team == op then table.insert(enemies, player) end end
+        for i = #enemies, 2, -1 do local j = math.random(1,i); enemies[i], enemies[j] = enemies[j], enemies[i] end
+        return enemies[1], enemies[2]
+    end
+    if countEnimTeamMembers() >= 2 then
+        local p1, p2 = getTwoRandomEnemies()
+        if not p1 or not p2 then return end
+        local function tpToPlayer(targetPlayer)
+            local char = plr.Character or plr.CharacterAdded:Wait()
+            local root = char:WaitForChild("HumanoidRootPart")
+            local targetRoot = targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if root and targetRoot then root.CFrame = targetRoot.CFrame end
+        end
+        tpToPlayer(p1); task.wait(0.3); tpToPlayer(p2); task.wait(0.3)
+        if plr.Team == game.Teams:FindFirstChild("A") then plr.Character.HumanoidRootPart.Position = Vector3.new(-625,3,925)
+        elseif plr.Team == game.Teams:FindFirstChild("B") then plr.Character.HumanoidRootPart.Position = Vector3.new(-588,3,1643) end
+    end
+end })
+
+blatant:CreateButton({ Name = "Nagi Dream Goal", Description = "Perform Nagi Dream Goal", Callback = function()
+    local plr = Players.LocalPlayer
+    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = plr.Character.HumanoidRootPart
+        if plr.Team == game.Teams:FindFirstChild("A") then
+            hrp.CFrame = CFrame.new(-459, 3, 862)
+        elseif plr.Team == game.Teams:FindFirstChild("B") then
+            hrp.CFrame = CFrame.new(-611, 3, 1682) * CFrame.Angles(0, math.rad(180), 0)
+        end
+        if plr.Character and plr.Character:FindFirstChild("Humanoid") then plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end
+        task.wait(0.2)
+        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
+        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
+    end
+end })
+
+blatant:CreateButton({ Name = "Shidou Back-Heel Goal (Must Be Overtime.)", Description = "Back-heel goal (overtime)", Callback = function()
+    local plr = Players.LocalPlayer
+    if plr.Team == game.Teams:FindFirstChild("A") then plr.Character.HumanoidRootPart.Position = Vector3.new(-625,3,925)
+    elseif plr.Team == game.Teams:FindFirstChild("B") then plr.Character.HumanoidRootPart.Position = Vector3.new(-588,3,1643) end
+    task.wait(0.25)
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
+end })
+
+blatant:CreateToggle({ Name = "Blatant Mode", Description = "Disable collisions on certain map parts", CurrentValue = false, Callback = function(v)
+    local blatantEnabled = v
+    local loopConnection
+    if blatantEnabled then
+        loopConnection = RunService.Heartbeat:Connect(function()
+            local ok, map = pcall(function() return Workspace.map end)
+            if ok and map then
+                local a = map:FindFirstChild("gkbarriar") and map.gkbarriar:FindFirstChild("Abarriar")
+                local b = map:FindFirstChild("gkbarriar") and map.gkbarriar:FindFirstChild("Bbarriar")
+                local ag = map:FindFirstChild("Agoal")
+                local bg = map:FindFirstChild("Bgoal")
+                if a then a.CanCollide = false end
+                if b then b.CanCollide = false end
+                if ag then ag.CanCollide = false end
+                if bg then bg.CanCollide = false end
+            end
+        end)
+        StarterGui:SetCore("SendNotification", { Title="Blatant Mode", Text="Enabled.", Duration=3 })
+    else
+        if loopConnection then loopConnection:Disconnect() loopConnection = nil end
+        local ok, map = pcall(function() return Workspace.map end)
+        if ok and map then
+            if map:FindFirstChild("gkbarriar") then
+                local a = map.gkbarriar:FindFirstChild("Abarriar")
+                local b = map.gkbarriar:FindFirstChild("Bbarriar")
+                if a then a.CanCollide = true end
+                if b then b.CanCollide = true end
+            end
+            if map:FindFirstChild("Agoal") then map.Agoal.CanCollide = true end
+            if map:FindFirstChild("Bgoal") then map.Bgoal.CanCollide = true end
+        end
+        StarterGui:SetCore("SendNotification", { Title="Blatant Mode", Text="Disabled.", Duration=3 })
+    end
+end })
+
+blatant:CreateToggle({ Name = "Spam Brick Sound (6V6 + GK Only.)", Description = "Spam to kick to target position", CurrentValue = false, Callback = function(state)
+    local running = state
+    if running then
+        StarterGui:SetCore("SendNotification", { Title = "Brick Spam", Text = "Enabled.", Duration = 3 })
+        task.spawn(function()
+            local char = Players.LocalPlayer.Character
+            local root = char and char:WaitForChild("HumanoidRootPart")
+            local team = Players.LocalPlayer.Team and Players.LocalPlayer.Team.Name
+            local targetPos
+            if team == "A" then targetPos = Vector3.new(-510,3,1706) elseif team == "B" then targetPos = Vector3.new(-559,3,843) end
+            if targetPos then
+                while running do
+                    if root then root.CFrame = CFrame.new(targetPos) end
+                    wait(0.1)
+                    local args = { buffer.fromstring("\034\001"), { { "kick", 27, false, vector.create(0,1,0) } } }
+                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                    task.wait(0.05)
+                end
+            end
+        end)
+    else
+        StarterGui:SetCore("SendNotification", { Title = "Brick Spam", Text = "Disabled.", Duration = 3 })
+    end
+end })
+
+blatant:CreateButton({ Name = "Manual Score", Description = "Teleport to opponent goal to score manually", Callback = function()
+    if Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        if Workspace:FindFirstChild("map") and Workspace.map:FindFirstChild("Agoal") and Workspace.map:FindFirstChild("Bgoal") then
+            if Players.LocalPlayer.Team then
+                Players.LocalPlayer.Character.HumanoidRootPart.CFrame =
+                    (Players.LocalPlayer.Team.Name == "A" and Workspace.map.Bgoal or Workspace.map.Agoal).CFrame
+            end
+        end
+    end
+end })
+
+silent:CreateSection("Other Silent Features")
+
+local airDribbleEnabled = false
+silent:CreateToggle({ Name = "Air Dribble (Bind: LeftAlt)", Description = "Perform air dribble using LeftAlt", CurrentValue = airDribbleEnabled, Callback = function(v) airDribbleEnabled = v StarterGui:SetCore("SendNotification", { Title = "Air Dribble", Text = airDribbleEnabled and "Enabled." or "Disabled.", Duration = 2 }) end })
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp or input.KeyCode ~= Enum.KeyCode.LeftAlt then return end
+    if not airDribbleEnabled then return end
+    local char = Players.LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not (hum and root) then return end
+    local anim = Instance.new("Animation"); anim.AnimationId = "rbxassetid://76587445975710"
+    local track = hum:LoadAnimation(anim); track:Play()
+    local dir = root.CFrame.LookVector
+    local kickVec = vector.create(dir.X * 0.75, 0.65, dir.Z * 0.75)
+    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\034\001"), { { "kick", 28, false, kickVec } })
+end)
+
+silent:CreateToggle({ Name = "Auto Formless (Binds To T.)", Description = "Automates formless when T pressed while mouse locked", CurrentValue = false, Callback = function()
+    _G.autoFormlessEnabled = not (_G.autoFormlessEnabled or false)
+    if not _G.suppressNotifs then StarterGui:SetCore("SendNotification", { Title = "Auto Formless", Text = _G.autoFormlessEnabled and "Enabled." or "Disabled.", Duration = 2 }) end
+end })
+UserInputService.InputBegan:Connect(function(input, gp)
+    if not _G.autoFormlessEnabled or gp or input.KeyCode ~= Enum.KeyCode.T or UserInputService.MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
+    local LP = Players.LocalPlayer
+    local ByteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
+    local char = LP.Character; local hrp = char and char:FindFirstChild("HumanoidRootPart"); local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum then return end
+    hum.AutoRotate = false
+    local Camera = workspace.CurrentCamera
+    local camType = Camera.CameraType; local camSubject = Camera.CameraSubject
+    local camCF = Camera.CFrame; local flipped = camCF * CFrame.Angles(0, math.rad(180), 0)
+    Camera.CameraType = Enum.CameraType.Scriptable; Camera.CFrame = flipped
+    task.delay(0.1, function()
+        if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
+            Camera.CameraSubject = LP.Character:FindFirstChildOfClass("Humanoid"); Camera.CameraType = Enum.CameraType.Custom
+        else
+            Camera.CameraSubject = camSubject; Camera.CameraType = camType
+        end
+        hum.AutoRotate = true
+    end)
+    task.wait(0.15)
+    local anim = Instance.new("Animation"); anim.AnimationId = "rbxassetid://76587445975710"
+    local track = hum:LoadAnimation(anim); track:Play()
+    local dir = hrp.CFrame.LookVector
+    local kickVec = vector.create(dir.X * 0.5, 1, dir.Z * 0.5)
+    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\034\001"), { { "kick", 25, false, kickVec } })
+    ByteNetReliable:FireServer(buffer.fromstring("\034\001"), { { "skill1" } })
+end)
+
+_G.nocutscene = _G.nocutscene or false
+silent:CreateToggle({ Name = "No Cutscene", Description = "Mute or restore cutscene crowd sound", CurrentValue = _G.nocutscene, Callback = function(v)
+    _G.nocutscene = v
+    local tempFolder = SoundService:FindFirstChild("celerontemp") or Instance.new("Folder", SoundService)
+    tempFolder.Name = "celerontemp"
+    local crowdSound = SoundService:FindFirstChild("football-crowd-3-69245") or tempFolder:FindFirstChild("football-crowd-3-69245")
+    StarterGui:SetCore("SendNotification", { Title = "No Cutscene", Text = _G.nocutscene and "Enabled." or "Disabled.", Duration = 1 })
+    if _G.nocutscene then
+        if crowdSound and crowdSound:IsDescendantOf(SoundService) then
+            local clone = crowdSound:Clone(); clone.Parent = tempFolder
+            crowdSound:Stop(); crowdSound:Destroy()
+        end
+    else
+        local stored = tempFolder:FindFirstChild("football-crowd-3-69245")
+        if stored then stored.Parent = SoundService; stored:Play() end
+    end
+end })
+
+silent:CreateToggle({ Name = "IFrame Indicator", Description = "Show dots above characters indicating iframe state", CurrentValue = false, Callback = function()
+    local iframeIndicatorEnabled = false
+    iframeIndicatorEnabled = not iframeIndicatorEnabled
+    StarterGui:SetCore("SendNotification", { Title = "IFrame Indicator", Text = iframeIndicatorEnabled and "Enabled." or "Disabled.", Duration = 3 })
+    local charactersFolder = Workspace:FindFirstChild("characters")
+    if not charactersFolder then return end
+    local activeDots = {}
+    local dotSize = UDim2.new(0,6,0,6)
+    local offset = Vector3.new(0,3,0)
+    local updateInterval = 0.2
+    local function createDot(char)
+        if activeDots[char] then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        local gui = Instance.new("BillboardGui"); gui.Name = "IframeDot"; gui.Size = UDim2.new(0,12,0,12)
+        gui.StudsOffset = offset; gui.AlwaysOnTop = true; gui.Adornee = hrp; gui.Parent = hrp
+        local dot = Instance.new("Frame"); dot.Size = dotSize; dot.Position = UDim2.new(0.5,-3,0.5,-3)
+        dot.BackgroundColor3 = Color3.fromRGB(128,128,128); dot.BorderSizePixel = 0; dot.BackgroundTransparency = 0; dot.Parent = gui
+        activeDots[char] = dot
+    end
+    local function updateDot(char, dot)
+        local state = char:FindFirstChild("state")
+        local iframe = state and state:FindFirstChild("iframe")
+        if iframe and iframe:IsA("BoolValue") then dot.BackgroundColor3 = iframe.Value and Color3.fromRGB(255,0,0) or Color3.fromRGB(0,255,0)
+        else dot.BackgroundColor3 = Color3.fromRGB(128,128,128) end
+    end
+    local function clearDots()
+        for char,dot in pairs(activeDots) do if dot and dot.Parent then dot.Parent:Destroy() end end
+        activeDots = {}
+    end
+    if iframeIndicatorEnabled then
+        for _, char in ipairs(charactersFolder:GetChildren()) do createDot(char) end
+        charactersFolder.ChildAdded:Connect(function(char) task.wait(0.5) if iframeIndicatorEnabled then createDot(char) end end)
+        task.spawn(function()
+            while iframeIndicatorEnabled do
+                for char,dot in pairs(activeDots) do if char and dot then updateDot(char, dot) end end
+                for _, char in ipairs(charactersFolder:GetChildren()) do if not activeDots[char] then createDot(char) end end
+                task.wait(updateInterval)
+            end
+        end)
+    else clearDots() end
+end })
+
+silent:CreateToggle({ Name = "Auto QuickTimeEvent", Description = "Automatically presses QTE keys", CurrentValue = false, Callback = function()
+    _G.QuickTimeEvent = not _G.QuickTimeEvent
+    local function convertNumberToKeyText(text)
+        local numberMap = { ["1"]="One", ["2"]="Two", ["3"]="Three", ["4"]="Four", ["5"]="Five", ["6"]="Six", ["7"]="Seven", ["8"]="Eight", ["9"]="Nine", ["0"]="Zero" }
+        return numberMap[text] or text
+    end
+    local function isShadeOfGreen(color) return color.G > color.R and color.G > color.B end
+    local function checkQTE()
+        if _G.QuickTimeEvent and LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then
+            local qteGui = LocalPlayer.PlayerGui:FindFirstChild("Qte")
+            if qteGui and qteGui:FindFirstChild("QTE") then
+                for _, descendant in ipairs(qteGui.QTE:GetDescendants()) do
+                    if descendant:IsA("Frame") or descendant:IsA("TextLabel") then
+                        if isShadeOfGreen(descendant.BackgroundColor3) then
+                            local textLabel = qteGui.QTE:FindFirstChild("TextLabel")
+                            if textLabel then
+                                local keyText = convertNumberToKeyText(textLabel.Text)
+                                local keyCode = Enum.KeyCode[keyText]
+                                if keyCode then
+                                    VirtualInputManager:SendKeyEvent(true, keyCode, false, game)
+                                    VirtualInputManager:SendKeyEvent(false, keyCode, false, game)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    RunService.RenderStepped:Connect(checkQTE)
+    notify("QuickTimeEvent", _G.QuickTimeEvent and "Enabled." or "Disabled.")
+end })
+
+silent:CreateButton({ Name = "Auto GK (Made By Daffy, Reset To Disable.)", Description = "Load Daffy's Auto GK", Callback = function() loadstring(game:HttpGet("https://pastebin.com/raw/ew2Zqhy0"))() end })
+
+silent:CreateButton({ Name = "Fix Duplicate Ball", Description = "Remove duplicate Ball mesh parts in terrain", Callback = function()
+    for _, obj in ipairs(Workspace.Terrain:GetDescendants()) do
+        if obj:IsA("MeshPart") and obj.Name == "Ball" then obj:Destroy() end
+    end
+end })
+
+movesets:CreateSection("Movesets")
+movesets:CreateLabel({ Text = "Celeron's Movesets, Recommend Using In Normal Servers.", Style = 1 })
+movesets:CreateButton({ Name = "Goku Moveset (Req. Isagi)", Callback = function()
+    StarterGui:SetCore("SendNotification", { Title = "Credits", Text = "brought to you by celeron!", Duration = 5, Button1 = "OK" })
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/goku%20moveset%20(azl)",true))()
+end })
+movesets:CreateButton({ Name = "Aizen Moveset (Req. Isagi, Early Access.)", Callback = function()
+    StarterGui:SetCore("SendNotification", { Title = "Credits", Text = "brought to you by celeron!", Duration = 5, Button1 = "OK" })
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/aizen%20moveset",true))()
+end })
+
+movesets:CreateLabel({ Text = "Daffy's Movesets.", Style = 1 })
+movesets:CreateButton({ Name = "Ronaldo V2 (Req. Shidou)", Callback = function()
+    StarterGui:SetCore("SendNotification", { Title = "Credits", Text = "brought to you by daffy!", Duration = 5, Button1 = "OK" })
+end })
+movesets:CreateButton({ Name = "Gojo Moveset (Req. Isagi.)", Callback = function()
+    StarterGui:SetCore("SendNotification", { Title = "Credits", Text = "brought to you by daffy!", Duration = 5, Button1 = "OK" })
+    loadstring(game:HttpGet("https://pastebin.com/raw/TH8xDy9X"))()
+end })
+movesets:CreateButton({ Name = "Loki Moveset (Req. Isagi.)", Callback = function()
+    StarterGui:SetCore("SendNotification", { Title = "Credits", Text = "brought to you by daffy!", Duration = 5, Button1 = "OK" })
+    loadstring(game:HttpGet("https://pastebin.com/raw/LbRRX7SK"))()
+end })
+
+misctab:CreateSection("Miscellaneous")
+misctab:CreateToggle({ Name = "Toggle Crowd", Description = "Mute or unmute crowd sound", CurrentValue = (_G.mutecrowd or false), Callback = function()
+    _G.mutecrowd = not (_G.mutecrowd or false)
+    StarterGui:SetCore("SendNotification", { Title = "Crowd Volume", Text = _G.mutecrowd and "Muted Crowd." or "Unmuted Crowd.", Duration = 1 })
+    task.spawn(function()
+        while true do
+            if _G.mutecrowd then
+                if SoundService:FindFirstChild("football-crowd-3-69245") then SoundService["football-crowd-3-69245"].Volume = 0 end
+            else
+                if SoundService:FindFirstChild("football-crowd-3-69245") then SoundService["football-crowd-3-69245"].Volume = 0.3 end
+                break
+            end
+            task.wait(0.05)
+        end
+    end)
+end })
+misctab:CreateButton({ Name = "Infinite Yield", Description = "Load Infinite Yield admin", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))() end })
+
+emotetab:CreateSection("Emotes (Toggles)")
+emotetab:CreateToggle({ Name = "Toosie Slide", Description = "Play Toosie Slide emote (toggles).", CurrentValue = false, Callback = function()
+    _G.isEnabled = _G.isEnabled or false
+    local animationId = "rbxassetid://95959941666543"
+    local soundId = "rbxassetid://1845341094"
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+    local animation = Instance.new("Animation"); animation.AnimationId = animationId
+    local animationTrack = animator:LoadAnimation(animation)
+    local function toggleState()
+        _G.isEnabled = not _G.isEnabled
+        if _G.isEnabled then
+            animationTrack:Play()
+            local sound = Instance.new("Sound"); sound.Name = "Toosie Slide"; sound.SoundId = soundId; sound.Looped = true; sound.Parent = game.SoundService; sound:Play()
+        else
+            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do track:Stop() end
+            local existingSound = game.SoundService:FindFirstChild("Toosie Slide")
+            if existingSound then existingSound:Stop(); existingSound:Destroy() end
+        end
+    end
+    toggleState()
+end })
+
+emotetab:CreateToggle({ Name = "Sae Pose", Description = "Play Sae Pose emote (toggles).", CurrentValue = false, Callback = function()
+    _G.SaePose = _G.SaePose or false
+    local animationId = "rbxassetid://136812327261825"
+    local soundId = "rbxassetid://1843404009"
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+    local animation = Instance.new("Animation"); animation.AnimationId = animationId
+    local animationTrack = animator:LoadAnimation(animation)
+    local function toggleState()
+        _G.SaePose = not _G.SaePose
+        if _G.SaePose then
+            animationTrack:Play()
+            local sound = Instance.new("Sound"); sound.Name = "Sae Pose"; sound.SoundId = soundId; sound.Volume = 1; sound.Looped = true; sound.Parent = game.SoundService; sound:Play()
+        else
+            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do track:Stop() end
+            local existingSound = game.SoundService:FindFirstChild("Sae Pose")
+            if existingSound then existingSound:Stop(); existingSound:Destroy() end
+        end
+    end
+    toggleState()
+end })
+
+emotetab:CreateToggle({ Name = "Assumptions", Description = "Play Assumptions emote (toggles).", CurrentValue = false, Callback = function()
+    _G.Assumptions = _G.Assumptions or false
+    local animationId = "rbxassetid://108778663919542"
+    local soundId = "rbxassetid://137023124734348"
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+    local animation = Instance.new("Animation"); animation.AnimationId = animationId
+    local animationTrack = animator:LoadAnimation(animation)
+    local function Assumptions()
+        _G.Assumptions = not _G.Assumptions
+        if _G.Assumptions then
+            animationTrack:Play()
+            local sound = Instance.new("Sound"); sound.Name = "Assumptions"; sound.SoundId = soundId; sound.PlaybackSpeed = 0.17; sound.Volume = 0.6; sound.Looped = true; sound.Parent = game.SoundService
+            local eq = Instance.new("EqualizerSoundEffect"); eq.LowGain = 10; eq.MidGain = 0; eq.HighGain = 4; eq.Parent = sound
+            sound:Play()
+        else
+            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do track:Stop() end
+            local existingSound = game.SoundService:FindFirstChild("Assumptions")
+            if existingSound then existingSound:Stop(); existingSound:Destroy() end
+        end
+    end
+    Assumptions()
+end })
+
+emotetab:CreateSection("Emote Buttons")
+emotetab:CreateButton({ Name = "Akuma Taunt", Callback = function()
+    local animationId = "rbxassetid://111005363990501"
+    local soundId = "rbxassetid://133370927301258"
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+    local animation = Instance.new("Animation"); animation.AnimationId = animationId
+    local animationTrack = animator:LoadAnimation(animation)
+    local sound = Instance.new("Sound"); sound.Name = "Akuma Taunt"; sound.SoundId = soundId; sound.Volume = 10; sound.Parent = game.SoundService
+    local function runOnce()
+        animationTrack:Play()
+        sound:Play()
+        sound.Ended:Connect(function() sound:Destroy() end)
+        animationTrack.Stopped:Connect(function() animationTrack:Stop() end)
+    end
+    runOnce()
+end })
+emotetab:CreateButton({ Name = "Cartoon Fall", Callback = function()
+    local animationId = "rbxassetid://98064370044269"
+    local soundIds = { "rbxassetid://8663054927", "rbxassetid://4979513906" }
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+    local animation = Instance.new("Animation"); animation.AnimationId = animationId
+    local animationTrack = animator:LoadAnimation(animation)
+    local sound = Instance.new("Sound"); sound.Name = "Ragdoll"; sound.Volume = 10; sound.Parent = game.SoundService
+    local currentIndex = 1
+    local function playNextSound()
+        if currentIndex <= #soundIds then
+            sound.SoundId = soundIds[currentIndex]; sound:Play()
+            sound.Ended:Connect(function()
+                currentIndex = currentIndex + 1
+                playNextSound()
+            end)
+        else sound:Destroy() end
+    end
+    animationTrack:Play()
+    playNextSound()
+end })
+emotetab:CreateButton({ Name = "Spit", Callback = function()
+    local animationId = "rbxassetid://97257010665720"
+    local soundId = "rbxassetid://18111052648"
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+    local animation = Instance.new("Animation"); animation.AnimationId = animationId
+    local animationTrack = animator:LoadAnimation(animation)
+    local sound = Instance.new("Sound"); sound.Name = "Spit"; sound.SoundId = soundId; sound.Volume = 2; sound.Parent = game.SoundService
+    animationTrack:Play(); sound:Play()
+    sound.Ended:Connect(function() sound:Destroy() end)
+end })
+
+teleporttab:CreateSection("Map Teleports")
+teleporttab:CreateButton({ Name = "Spawn Area", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-269,4,-1599) end end })
+teleporttab:CreateButton({ Name = "Middle Field", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-540,3,1274) end end })
+teleporttab:CreateButton({ Name = "Gallery Area", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(109,66,3337) end end })
+teleporttab:CreateButton({ Name = "Goal Box (A)", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-537,3,1575) end end })
+teleporttab:CreateButton({ Name = "Goal Box (B)", Callback = function() if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-534,3,974) end end })
+
+misctab:CreateButton({ Name = "Upgrade UI (very cool actually)", Callback = function() loadstring(game:HttpGet("https://pastebin.com/raw/QDNYsgxQ"))() end })
+misctab:CreateButton({ Name = "Overtime Cinematics", Callback = function()
+    local vals = ReplicatedStorage:WaitForChild("workspace")
+    local timer = vals.timer
+    local ingame = vals.roundstart
+    local music1Isagi = ReplicatedStorage.Resources.isagi["isagi themeover"]
+    local music2Sae = ReplicatedStorage.Resources.sae["sae one shot match theme"]
+    local gui = Instance.new("ScreenGui"); gui.ScreenInsets = Enum.ScreenInsets.None; gui.Name = "overtimethang"; gui.Parent = Players.LocalPlayer.PlayerGui
+    local image = Instance.new("ImageLabel"); image.AnchorPoint = Vector2.new(0.5,0.5); image.Position = UDim2.new(0.5,0,0.5,0); image.Size = UDim2.new(1.2,0,1.2,0)
+    image.Image = "rbxassetid://11030033771"; image.ImageTransparency = 0.8; image.BackgroundTransparency = 1; image.Parent = gui
+    local overtime = false
+    task.spawn(function()
+        while task.wait(0.05) do
+            image.Visible = overtime
+            if overtime == true then
+                if Workspace.CurrentCamera.CameraType == Enum.CameraType.Custom then TweenService:Create(Workspace.CurrentCamera, TweenInfo.new(0.2), {FieldOfView = 100}):Play() end
+                if image.Rotation == 0 then image.Rotation = 180 else image.Rotation = 0 end
+            end
+        end
+    end)
+    timer.Changed:Connect(function()
+        if timer.Value == 0 and ingame.Value == true then
+            overtime = true
+            repeat
+                music1Isagi:Play()
+                for i = 1, 50 do task.wait(1); if ingame.Value == false then break end end
+                music2Sae:Play()
+                for i = 1, 58 do task.wait(1); if ingame.Value == false then break end end
+            until ingame.Value == false
+        elseif ingame.Value == false then
+            overtime = false
+            music1Isagi:Stop()
+            music2Sae:Stop()
+            TweenService:Create(Workspace.CurrentCamera, TweenInfo.new(0.2), {FieldOfView = 70}):Play()
+        end
+    end)
+end })
+
+misctab:CreateButton({ Name = "Background Music", Callback = function()
+    local bgmusicdb = false
+    if bgmusicdb == false then
+        bgmusicdb = true
+        local plr = Players.LocalPlayer
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local music = {
+            "rbxassetid://126478006472705","rbxassetid://138210588552041","rbxassetid://137856744878500","rbxassetid://97581213878614",
+            "rbxassetid://71371939631022","rbxassetid://119592773299545","rbxassetid://134456641764445","rbxassetid://100509882059819",
+            "rbxassetid://128623853689708","rbxassetid://70979311703713","rbxassetid://92420662159372","rbxassetid://97837345641106",
+            "rbxassetid://102469310336986","rbxassetid://101851803743361"
+        }
+        if SoundService:FindFirstChild("BGMusic") then SoundService.BGMusic:Destroy() end
+        local sfx = Instance.new("Sound"); sfx.Name = "BGMusic"; sfx.Parent = SoundService; sfx.SoundId = music[math.random(1,#music)]
+        task.spawn(function()
+            while hum and sfx.Parent do
+                sfx:Play()
+                task.wait(sfx.TimeLength)
+                sfx.SoundId = music[math.random(1,#music)]
+            end
+        end)
+        task.spawn(function()
+            while hum and sfx.Parent do
+                task.wait()
+                if ReplicatedStorage:FindFirstChild("workspace") and ReplicatedStorage.workspace:FindFirstChild("awaken") and ReplicatedStorage.workspace.awaken.Value ~= nil then
+                    sfx:Pause()
+                else
+                    pcall(function() sfx:Resume() end)
+                end
+            end
+        end)
+        if hum then hum.Died:Connect(function() if sfx and sfx.Parent then sfx:Destroy() end end) end
+    end
+end })
+
+StarterGui:SetCore("SendNotification", { Title = "Celeron's GUI", Text = "Loaded!", Duration = 2 })
