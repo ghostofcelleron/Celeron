@@ -1,4 +1,4 @@
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui =  loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -18,9 +18,9 @@ end
 
 local win = ui:Create({
     Name = "Celeron's GUI (Basketball: Zero)",
-    ThemeColor = Color3.fromRGB(18, 18, 18),
+    ThemeColor = Color3.fromRGB(140, 120, 120),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.GothamBold
 })
 
 local maintab = win:Tab("Main")
@@ -28,6 +28,7 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
+misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
@@ -51,7 +52,7 @@ end
 local ranked3v3Enabled = false
 local ranked1v1Enabled = false
 
-maintab:Toggle("Always In (Ranked 1v1 / 2v2)", function()
+maintab:Toggle("Always In (Ranked 1v1 / 2v2)", "Use This Feature If You Are Playing Ranked 1v1 or 2v2.", function()
     ranked1v1Enabled = not ranked1v1Enabled
     StarterGui:SetCore("SendNotification", {
         Title = "Ranked 1v1/2v2",
@@ -60,7 +61,7 @@ maintab:Toggle("Always In (Ranked 1v1 / 2v2)", function()
     })
 end)
 
-maintab:Toggle("Always In (Public / Ranked 3v3)", function()
+maintab:Toggle("Always In (Public / Ranked 3v3)", "Use This Feature If You Aren't Playing The Modes Listed Above.", function()
     ranked3v3Enabled = not ranked3v3Enabled
     StarterGui:SetCore("SendNotification", {
         Title = "Ranked 3v3",
@@ -99,10 +100,6 @@ end)
 
 misctab:Button("Infinite Yield", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-end)
-
-misctab:Button("Shutdown Game", function()
-    game:Shutdown()
 end)
 
 misctab:Button("Rejoin Server", function()
