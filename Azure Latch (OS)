@@ -8,7 +8,7 @@ local win = ui:Create({
 	ToggledSideBar = true
 })
 
-print("version: 1.1")
+print("version: 1.2")
 
 local maintab = win:Tab("Blatant")
 local maintab2 = win:Tab("Silent")
@@ -26,7 +26,7 @@ misctab:Label("Miscellaneous Features, They Give No Advantages In-Game!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
-helptab:Button("Show Keybinds", function()
+helptab:Button("Show Keybinds", "Shows The Keybinds For The Toggle Keybinds Feature.", function()
     local StarterGui = game:GetService("StarterGui")
 
     StarterGui:SetCore("SendNotification", {
@@ -46,13 +46,13 @@ end)
 
 maintab2:Label("Notification Suppression: Useful When Streaming.")
 
-maintab2:Toggle("Suppress Notifications", function()
+maintab2:Toggle("Suppress Notifications", "Suppresses Notifications On Some Features, Made For Competitive Players.",  function()
     _G.suppressNotifs = not (_G.suppressNotifs or false)
     local StarterGui = game:GetService("StarterGui")
 
     StarterGui:SetCore("SendNotification", {
         Title = "Notifications",
-        Text = _G.suppressNotifs and "Suppressed." or "Un-Suppressed.",
+        Text = _G.suppressNotifs and "Suppressed." or "Removed Suppression.",
         Duration = 1
     })
 end)
@@ -64,16 +64,16 @@ for _, obj in ipairs(workspace:GetDescendants()) do
 	end
 end
 
-maintab:Button("Metavision", function()
+maintab:Button("Metavision V1", "This Feature Emulates Having Isagi's Metavision From The Show.", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
 end)
 
-maintab:Button("Metavision V2", function()
+maintab:Button("Metavision V2", "Similar To V1, Only Can Be Used Below 1:30 On Clock, Click Puzzle Piece To Activate.", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/HfpQBAsF"))()
 end)
 
 maintab:Label("Ball Features.")
-maintab:Toggle("Auto Goal", function()
+maintab:Toggle("Auto Goal", "Attempts To Steal The Ball And Score.", function()
     _G.AUTO_GOAL = not _G.AUTO_GOAL
     if _G.AUTO_GOAL then
         game.StarterGui:SetCore("SendNotification", {
@@ -208,7 +208,7 @@ end))
     end
 end)
 
-maintab:Toggle("Always Ball", function()
+maintab:Toggle("Always Ball", "Attempts To Always Hold The Ball (zero gravity while active).", function()
 _G.ALWAYS_BALL_ACTIVE = not _G.ALWAYS_BALL_ACTIVE
 if _G.ALWAYS_BALL_ACTIVE then
     game.StarterGui:SetCore("SendNotification", {
@@ -267,7 +267,7 @@ else
 end
 end)
 
-maintab:Button("Get Flow (Req. Ball)", function()
+maintab:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To Get Flow.", function()
 	local player = game:GetService("Players").LocalPlayer
 	local char = player.Character or player.CharacterAdded:Wait()
 	local root = char:WaitForChild("HumanoidRootPart")
@@ -339,7 +339,7 @@ local function teleportToBall()
     end
 end
 
-maintab:Button("Steal Ball", function()
+maintab:Button("Steal Ball", "Attempts Repeatedly To Obtain Ball.", function()
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -390,7 +390,7 @@ end
 StealBall()
 end)
 
-maintab:Button("Bring Ball", function()
+maintab:Button("Bring Ball", "Brings The Ball To Your Position.", function()
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -571,12 +571,12 @@ local function sideDash(direction)
 end
 
 maintab:Label("No Cooldown Features.")
-maintab:Toggle("No Rush Cooldown", function()
+maintab:Toggle("No Rush Cooldown", "Emulates Having No Rush Cooldown.", function()
     _G.ForwardRushEnabled = not _G.ForwardRushEnabled
     notify("No Rush CD", _G.ForwardRushEnabled and "Enabled." or "Disabled.")
 end)
 
-maintab:Toggle("No Side Dash Cooldown", function()
+maintab:Toggle("No Side Dash Cooldown", "Emulates Having No Side Dash Cooldown.", function()
     _G.SideDashEnabled = not _G.SideDashEnabled
     notify("No Side Dash CD", _G.SideDashEnabled and "Enabled." or "Disabled.")
 end)
@@ -602,7 +602,7 @@ if not _G._dashBindsSetup then
 end
 
 maintab:Label("Break Ball Features.")
-maintab:Button("Break Ball (Player Method, Req. Ball)", function()
+maintab:Button("Break Ball (Player Method, Req. Ball)", "Breaks The Ball By Going Extremely High Up.", function()
     local baseplatePosition = Vector3.new(-190, 14864566, 492)
     local partSize = Vector3.new(10, 1, 10)
     local gap = 0
@@ -624,7 +624,7 @@ maintab:Button("Break Ball (Player Method, Req. Ball)", function()
         CFrame.new(baseplatePosition + Vector3.new(0, 100000000000000, 0))
 end)
 
-maintab:Button("Break Ball (Ball Method, Req. Ball)", function()
+maintab:Button("Break Ball (Ball Method, Req. Ball)", "Breaks The Ball By Kicking It Out Of Bounds.", function()
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
@@ -642,14 +642,14 @@ if humanoidRootPart then
 end
 end)
 
-maintab:Button("Permanent Break Ball (Req. Ball)", function()
+maintab:Button("Permanent Break Ball (Req. Ball)", "Breaks The Ball By Placing It In The Void.", function()
 workspace.FallenPartsDestroyHeight = -50000
 game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(1, -49999, 1))
 end)
 
 maintab2:Label("Ball Magnet: Allows You To Grab The Ball From Further Away.")
 
-maintab2:Toggle("Ball Magnet", function()
+maintab2:Toggle("Ball Magnet", "The Original Ball Magnet, Always On Max Range.", function()
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
 
 getgenv().ballMagnetActive = not getgenv().ballMagnetActive
@@ -688,7 +688,7 @@ local holding = false
 local userInputService = game:GetService("UserInputService")
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
 
-maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", function()
+maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", "Similar To The Original, But Only Activate While Right Click Is Held Down.", function()
     if not magnetEnabled then
         magnetEnabled = true
 
@@ -887,7 +887,7 @@ function createAutoCounter(label, toggleKey)
 	end)
 end
 
-maintab2:Toggle("Toggle Keybinds", function()
+maintab2:Toggle("Toggle Keybinds", "Enables Auto Dribble / Auto Counter Features Via Keybinds, Check Info For Binds.", function()
 	_G.keybindsEnabled = not (_G.keybindsEnabled or false)
 	notify("Keybinds", _G.keybindsEnabled and "Enabled." or "Disabled.", 3)
 end)
@@ -924,7 +924,7 @@ if not _G._keybindSetup then
 end
 
 maintab:Label("Auto Goal Features.")
-maintab:Button("Barou Devour Goal", function()
+maintab:Button("Barou Devour Goal", "Attempts To Do Barou's Devour Auto Goal By Teleporting Behind Two Enemy Players.", function()
 local plr = game.Players.LocalPlayer
 
 			local function countEnimTeamMembers()
@@ -995,7 +995,7 @@ local plr = game.Players.LocalPlayer
 			end
 end)
 
-maintab:Button("Nagi Dream Goal", function()
+maintab:Button("Nagi Dream Goal", "Attempts To Do Nagi's Control Move Auto Goal In Flow.", function()
 local plr = game.Players.LocalPlayer
 if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
     local hrp = plr.Character.HumanoidRootPart
@@ -1014,7 +1014,7 @@ if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
 end
 end)
 
-maintab:Button("Shidou Back-Heel Goal (Must Be Overtime.)", function()
+maintab:Button("Shidou Back-Heel Goal", "Attempts To Do Shidou's Back Heel Auto Goal, MUST BE OVERTIME.", function()
 local plr = game.Players.LocalPlayer
 				if plr.Team == game.Teams:FindFirstChild("A") then
 					plr.Character.HumanoidRootPart.Position = Vector3.new(-625, 3, 925)
@@ -1044,7 +1044,7 @@ local function setCollide(state)
     if bg then bg.CanCollide = state end
 end
 
-maintab:Toggle("Blatant Mode", function()
+maintab:Toggle("Blatant Mode", "Removes Collisions With Goal Boxes.", function()
     blatantEnabled = not blatantEnabled
     if blatantEnabled then
         loopConnection = rs.Heartbeat:Connect(function() setCollide(false) end)
@@ -1059,7 +1059,7 @@ end)
 local running = false
 local sg = game:GetService("StarterGui")
 
-maintab:Toggle("Spam Brick Sound (6V6 + GK Only.)", function(state)
+maintab:Toggle("Spam Brick Sound (6V6 + GK Only.)", "This SHOULD Be Self Explanatory.", function(state)
     running = state
 
     if running then
@@ -1113,7 +1113,7 @@ maintab:Toggle("Spam Brick Sound (6V6 + GK Only.)", function(state)
     end
 end)
 
-maintab:Button("Manual Score", function()
+maintab:Button("Manual Score", "Enters The Other Team's Goal Box.", function()
 if game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
 	if workspace:WaitForChild("map"):WaitForChild("Agoal") and workspace:WaitForChild("map"):WaitForChild("Bgoal") then
 		if game:GetService("Players").LocalPlayer.Team then
@@ -1165,11 +1165,11 @@ function _G.fireGKPackets()
 	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\005\005\001\000A"))
 end
 
-maintab2:Toggle("Auto CF", function()
+maintab2:Toggle("Auto Pick CF", "Automatically Picks Center Field Position On Respawn Or Enable.", function()
 	_G.AutoToggles.CF = not _G.AutoToggles.CF
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Auto CF",
+		Title = "Auto Pick CF",
 		Text = _G.AutoToggles.CF and "Enabled." or "Disabled.",
 		Duration = 1
 	})
@@ -1192,11 +1192,11 @@ maintab2:Toggle("Auto CF", function()
 	end
 end)
 
-maintab2:Toggle("Auto GK", function()
+maintab2:Toggle("Auto Pick GK", "Automatically Picks Goalkeeper Position On Respawn Or Enable.", function()
 	_G.AutoToggles.GK = not _G.AutoToggles.GK
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Auto-GK",
+		Title = "Auto Pick GK",
 		Text = _G.AutoToggles.GK and "Enabled." or "Disabled.",
 		Duration = 1
 	})
@@ -1227,7 +1227,7 @@ local StarterGui = game:GetService("StarterGui")
 
 local airDribbleEnabled = false
 
-maintab2:Toggle("Air Dribble (Bind: LeftAlt)", function()
+maintab2:Toggle("Air Dribble (Bind: LeftAlt)", "Kicks The Ball Forward Infront Of You And Up On LeftAlt Click.", function()
     airDribbleEnabled = not airDribbleEnabled
     StarterGui:SetCore("SendNotification", {
         Title = "Air Dribble",
@@ -1256,7 +1256,7 @@ UIS.InputBegan:Connect(function(input, gp)
     remote:FireServer(buffer.fromstring("\034\001"), { { "kick", 28, false, kickVec } })
 end)
 
-maintab2:Toggle("Auto Formless (Binds To T.)", function()
+maintab2:Toggle("Auto Formless (Binds To T.)", "Shidou Only Formless Macro.", function()
 	local UIS = game:GetService("UserInputService")
 	local Players = game:GetService("Players")
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -1328,7 +1328,7 @@ end)
 
 _G.nocutscene = false
 
-maintab2:Toggle("No Cutscene", function()
+maintab2:Toggle("No Cutscene", "Shitty Feature For Right Now That Disables Cutscenes.", function()
 	_G.nocutscene = not _G.nocutscene
 
 	local StarterGui = game:GetService("StarterGui")
@@ -1366,7 +1366,7 @@ local dotSize = UDim2.new(0, 6, 0, 6)
 local offset = Vector3.new(0, 3, 0)
 local updateInterval = 0.2
 
-maintab2:Toggle("IFrame Indicator", function()
+maintab2:Toggle("IFrame Indicator", "Shows The I-Frame Status Of All Players. (Green = Off, Red = On.)", function()
 	iframeIndicatorEnabled = not iframeIndicatorEnabled
 
 	local StarterGui = game:GetService("StarterGui")
@@ -1455,7 +1455,7 @@ maintab2:Toggle("IFrame Indicator", function()
 end)
 
 maintab2:Label("Other Features: Other Silent Features, Continued.")
-maintab2:Toggle("Auto QuickTimeEvent", function()
+maintab2:Toggle("Auto QuickTimeEvent", "Automatically Does QuickTimeEvents, How Else Can I Explain It?", function()
 local runService = game:GetService("RunService")
 local players = game:GetService("Players")
 local virtualInputManager = game:GetService("VirtualInputManager")
@@ -1514,11 +1514,11 @@ runService.RenderStepped:Connect(checkQTE)
 sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
-maintab2:Button("Auto GK (Made By Daffy, Reset To Disable.)", function()
+maintab2:Button("Auto GK (Made By Daffy.)", "Automatically Attempts To Block Shots By Opponents, Reset Or Click F4 To Disable.", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/ew2Zqhy0"))()
 end)
 
-maintab2:Button("Fix Duplicate Ball", function()
+maintab2:Button("Fix Duplicate Ball", "I Don't Know If This Is Still An Issue But Removes Duplicate Balls If Existent.", function()
 for _, obj in ipairs(workspace.Terrain:GetDescendants()) do
 	if obj:IsA("MeshPart") and obj.Name == "Ball" then
 		obj:Destroy()
@@ -2235,7 +2235,7 @@ misctab:Button("Background Music", function()
     end
 end)
 
-helptab:Button("Copy Owner Discord Username", function()
+helptab:Button("Copy Owner Discord Username", "Copies The Owner's Discord Username To Your Clipboard.", function()
 local StarterGui = game:GetService("StarterGui")
 
 StarterGui:SetCore("SendNotification", {
@@ -2247,7 +2247,7 @@ StarterGui:SetCore("SendNotification", {
 setclipboard("ghostofcelleron")
 end)
 
-helptab:Button("Copy Discord Server Invite", function()
+helptab:Button("Copy Discord Server Invite", "Copies The Discord Invite To Your Clipboard.", function()
 local StarterGui = game:GetService("StarterGui")
 
 StarterGui:SetCore("SendNotification", {
