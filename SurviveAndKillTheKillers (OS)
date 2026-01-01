@@ -9,7 +9,7 @@ local endless = 2675280735
 local infection = 1076129670
 
 if game.PlaceId == classic then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SAKTK: Classic)",
@@ -308,7 +308,7 @@ setclipboard("https://discord.gg/8stFYxJv4R")
 end)
 
 elseif game.PlaceId == endless then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SAKTK: Endless)",
@@ -521,7 +521,7 @@ setclipboard("https://discord.gg/8stFYxJv4R")
 end)
 
 elseif game.PlaceId == juggernaut then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SAKTK: Juggernaut)",
@@ -1715,7 +1715,7 @@ setclipboard("https://discord.gg/8stFYxJv4R")
 end)
 
 elseif game.PlaceId == infection then
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (SAKTK: Infection)",
