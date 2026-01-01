@@ -1,10 +1,10 @@
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Arsenal)",
-    ThemeColor = Color3.fromRGB(14, 14, 14),
+    ThemeColor = Color3.fromRGB(144, 25, 25),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne,
+    ThemeFont = Enum.Font.GothamBold,
 	ToggledSideBar = true
 })
 
