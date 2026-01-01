@@ -13,19 +13,44 @@ for _,fn in ipairs({"getgc","hookmetamethod","getconnections","checkcaller","get
     end
 end
 
+print("credits to celeron, revamped by zylx")
+print("also credits to cazan for the bypass")
+
+local ps = game:GetService("Players")
+local lp = ps.LocalPlayer
+local RunService = game:GetService("RunService")
+local replicatedfirst = game:GetService("ReplicatedFirst")
+local BClient = replicatedfirst:WaitForChild("BClient")
+
 for _, v in pairs(getgc(true)) do
     if typeof(v) == "table" then
         if rawget(v, "ACTrigger") then
-            rawset(v, "ACTrigger", {FireServer = function() end})
+            rawset(v, "ACTrigger", {
+                FireServer = function() end,
+                UFireServer = function() end,
+                _Fire = function() end
+            })
         end
         if rawget(v, "ACCFrameChanged") then
-            rawset(v, "ACCFrameChanged", {FireServer = function() end})
+            rawset(v, "ACCFrameChanged", {
+                FireServer = function() end,
+                UFireServer = function() end,
+                _Fire = function() end
+            })
         end
         if rawget(v, "ACKickTrigger") then
-            rawset(v, "ACKickTrigger", {FireServer = function() end})
+            rawset(v, "ACKickTrigger", {
+                FireServer = function() end,
+                UFireServer = function() end,
+                _Fire = function() end
+            })
         end
         if rawget(v, "ACF") then
-            rawset(v, "ACF", {FireServer = function() end})
+            rawset(v, "ACF", {
+                FireServer = function() end,
+                UFireServer = function() end,
+                _Fire = function() end
+            })
         end
     end
 end
@@ -46,36 +71,22 @@ for _, fn in ipairs(getgc()) do
     end
 end
 
-getgenv().antiTR = true
-
-local ps = game:GetService("Players")
-local runservice = game:GetService("RunService")
-local replicatedfirst = game:GetService("ReplicatedFirst")
-local lighting = game:GetService("Lighting")
-
-local lp = ps.LocalPlayer
-local BClient = replicatedfirst:WaitForChild("BClient")
-
-local maxWalkSpeed = 0
-local maxJumpHeight = 0
-
-local hookRagdoll; hookRagdoll = hookmetamethod(game, "__namecall", function(self, ...)
-    local args = { ... }
+local hookRagdoll
+hookRagdoll = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
     local method = getnamecallmethod()
-
     if not checkcaller() and typeof(self) == "Instance" and self == lp.Character then
         if method == "SetAttribute" and args[1] == "Ragdoll" then
-            warn("Ragdoll blocked")
             return
         elseif method == "GetAttribute" and args[1] == "Ragdoll" then
             return false
         end
     end
-
     return hookRagdoll(self, unpack(args))
 end)
 
-local hookProps; hookProps = hookmetamethod(game, "__newindex", function(self, key, value)
+local hookProps
+hookProps = hookmetamethod(game, "__newindex", function(self, key, value)
     if not checkcaller() and self:IsA("Humanoid") and getcallingscript() == BClient then
         if key == "WalkSpeed" and value <= 16 then return end
         if key == "JumpHeight" and value <= 0 then return end
@@ -84,97 +95,21 @@ local hookProps; hookProps = hookmetamethod(game, "__newindex", function(self, k
     return hookProps(self, key, value)
 end)
 
-runservice.Heartbeat:Connect(function()
-    local char = lp.Character
-    if not char then return end
-
-    local hum = char:FindFirstChildWhichIsA("Humanoid")
-    if not hum then return end
-
-    if hum.WalkSpeed > maxWalkSpeed and hum.WalkSpeed > 16 then
-        maxWalkSpeed = hum.WalkSpeed
-    end
-    if hum.JumpHeight > maxJumpHeight and hum.JumpHeight > 7.2 then
-        maxJumpHeight = hum.JumpHeight
-    end
-
-    if hum.WalkSpeed <= 16 then
-        hum.WalkSpeed = maxWalkSpeed
-    end
-    if hum.JumpHeight <= 0 then
-        hum.JumpHeight = maxJumpHeight
-    end
-    if hum.AutoRotate == false then
-        hum.AutoRotate = true
-    end
-end)
-
-task.spawn(function()
-    while getgenv().antiTR do
-        for _, v in pairs(lighting:GetChildren()) do
-            if v:IsA("BlurEffect") or v:IsA("DepthOfFieldEffect") then
-                v.Enabled = false
-                v:GetPropertyChangedSignal("Enabled"):Connect(function()
-                    if v.Enabled then
-                        v.Enabled = false
-                    end
-                end)
-            end
-        end
-
-        local playerGui = lp:FindFirstChildOfClass("PlayerGui")
-        if playerGui then
-            for _, ui in pairs(playerGui:GetChildren()) do
-                if ui:IsA("ScreenGui") and ui:FindFirstChild("Hotbar") then
-                    local inv = ui:FindFirstChild("Hotbar")
-                    if inv:IsA("GuiObject") and not inv.Visible then
-                        inv.Visible = true
-                        inv:GetPropertyChangedSignal("Visible"):Connect(function()
-                            if not inv.Visible then inv.Visible = true end
-                        end)
-                    end
-                end
-            end
-        end
-
-        task.wait(1)
-    end
-end)
-
-local ps = game:GetService("Players")
-local lp = ps.LocalPlayer
-local rs = game:GetService("RunService")
-
---warn("Looking for RunService.Stepped connected closures in BClient")
-local ProtosAmount = 0
-local UpvaluesAmount = 9
-
-local function fuckRS()
-    for _,v in pairs(getconnections(game:GetService("RunService").Stepped)) do
+local function disableBClientConnections()
+    for _, v in pairs(getconnections(RunService.Stepped)) do
         if v.LuaConnection then
             local func = v.Function
-            if func then
-                if getfenv(func).script.Name == "BClient" then
-                    local uvs = debug.getupvalues(func)
-                    local protos = debug.getprotos(func)
-                    --print("CLOSURE STEPPED FOUND:\n    Upvalues: "..#uvs.."\n    Protos: "..#protos)
-                    if #protos == ProtosAmount then
-                        if #uvs == UpvaluesAmount then
-                            v:Disable()
-                            --warn("A connection has been disabled\nDisabled closure info:\n    Upvalues: "..#uvs.."\n    Protos: "..#protos)
-                        end
-                    end
-                end
+            if func and getfenv(func).script and getfenv(func).script.Name == "BClient" then
+                local uvs = (debug.getupvalues or getupvalues)(func)
+                local protos = debug.getprotos(func)
+                if #protos == 0 and #uvs == 9 then v:Disable() end
             end
         end
     end
 end
 
-fuckRS()
-
+disableBClientConnections()
 lp.CharacterAdded:Connect(function()
-    task.wait()
-    fuckRS()
-    wait(0.5)
-    fuckRS()
+    task.wait(0.1) disableBClientConnections()
+    task.wait(0.5) disableBClientConnections()
 end)
