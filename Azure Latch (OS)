@@ -1221,6 +1221,69 @@ end)
 
 maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
 
+local autoActivateDistance = 10
+local autoActivateToggle = false
+local autoActivateMove = 1
+local autoActivatedb = true
+
+maintab2:Textbox("Auto Activate Move Number", "eg: 1, 2, 3, 4, 5", function(v)
+    local nsdv = tonumber(v)
+    if nsdv and nsdv <= 5 and nsdv > 0 then
+        print("updated to " .. nsdv)
+        autoActivateMove = nsdv
+    end
+end)
+
+maintab2:Slider("Auto Activate Distance", 10, 3, 70, 0.5, function(v)
+    autoActivateDistance = v
+end)
+
+maintab2:Toggle("Auto Activate Toggle", "Hold M2 to have it on, let go to turn it off", function(v)
+    autoActivateToggle = not autoActivateToggle
+end)
+
+game.UserInputService.InputBegan:Connect(function(input, bg)
+    if bg then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        autoActivatedb = false
+    end
+end)
+
+game.UserInputService.InputEnded:Connect(function(input, bg)
+    if bg then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        autoActivatedb = true
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if not autoActivateToggle then return end
+
+    local char = game.Players.LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local playerPos = hrp.Position
+    
+    if game.Workspace.Terrain:FindFirstChild("Ball") then
+        local ballPos = game.Workspace.Terrain:FindFirstChild("Ball").Position
+        local distance = (playerPos - ballPos).Magnitude
+
+        if distance <= autoActivateDistance and not autoActivatedb then
+            local args = {
+                buffer.fromstring("\034\001"),
+                {
+                    { "skill" .. autoActivateMove }
+                }
+            }
+
+            game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+
+            print("tried")
+        end
+    end
+end)
+
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
 local UIS = game:GetService("UserInputService")
 local StarterGui = game:GetService("StarterGui")
