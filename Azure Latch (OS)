@@ -8,7 +8,7 @@ local win = ui:Create({
 	ToggledSideBar = true
 })
 
-print("version: 1.2")
+print("version: 1.3")
 
 local maintab = win:Tab("Blatant")
 local maintab2 = win:Tab("Silent")
@@ -267,18 +267,22 @@ else
 end
 end)
 
+local flowPart = Instance.new("Part")
+flowPart.Size = Vector3.new(6, 1, 6)
+flowPart.Anchored = true
+flowPart.CanCollide = true
+flowPart.Position = Vector3.new(100, 1000, 100)
+flowPart.Parent = workspace
+
 maintab:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To Get Flow.", function()
 	local player = game:GetService("Players").LocalPlayer
 	local char = player.Character or player.CharacterAdded:Wait()
 	local root = char:WaitForChild("HumanoidRootPart")
 	local original = root.CFrame
 
-	local sword = game:GetService("Workspace").map.Lobby_Museum.Prop["Classic Roblox Sword"]
-	if sword then
-		root.CFrame = sword.CFrame + Vector3.new(0, 33, 0)
-	end
+	root.CFrame = flowPart.CFrame + Vector3.new(0, 5, 0)
 
-	wait(0.67)
+	task.wait(0.67)
 
 	task.spawn(function()
 		local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
@@ -289,7 +293,7 @@ maintab:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To Ge
 			task.wait(0.01)
 		end
 
-		wait(0.9)
+		task.wait(0.9)
 		root.CFrame = original
 	end)
 end)
@@ -1150,8 +1154,8 @@ function _G.firePacketsIfNear()
 
 	if (root.Position - Vector3.new(-260, 4, -1474)).Magnitude <= 15 or
 	   (root.Position - Vector3.new(-262, 4, -1722)).Magnitude <= 15 then
-		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\005\001\001\000A"))
-		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\005\001\001\000B"))
+		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000A"))
+		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000B"))
 	end
 end
 
@@ -1161,8 +1165,8 @@ function _G.fireGKPackets()
 	local root = char:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 
-	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\005\005\001\000B"))
-	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\005\005\001\000A"))
+	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\006\001\000B"))
+	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\006\001\000A"))
 end
 
 maintab2:Toggle("Auto Pick CF", "Automatically Picks Center Field Position On Respawn Or Enable.", function()
@@ -1219,7 +1223,7 @@ maintab2:Toggle("Auto Pick GK", "Automatically Picks Goalkeeper Position On Resp
 	end
 end)
 
-maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
+maintab2:Label("Auto Activate: Automatically Activates The Move Within A Range Around Yourself.")
 
 local autoActivateDistance = 10
 local autoActivateToggle = false
@@ -1283,6 +1287,8 @@ game:GetService("RunService").RenderStepped:Connect(function()
         end
     end
 end)
+
+maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
 
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
 local UIS = game:GetService("UserInputService")
