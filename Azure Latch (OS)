@@ -1060,6 +1060,33 @@ maintab:Toggle("Blatant Mode", "Removes Collisions With Goal Boxes.", function()
     end
 end)
 
+local nostun = false
+local p = game.Players.LocalPlayer
+
+local function apply()
+    if not nostun then return end
+    local c = p.Character or p.CharacterAdded:Wait()
+    local h = c:WaitForChild("Humanoid")
+    h.WalkSpeed = 40
+end
+
+p.CharacterAdded:Connect(function()
+    if nostun then apply() end
+end)
+
+maintab:Toggle("No Stun", "Overrides The Stunned State So You Can Move.", function(v)
+    nostun = v
+    if v then
+        game.StarterGui:SetCore("SendNotification", {Title="No Stun", Text="Enabled"})
+    else
+        game.StarterGui:SetCore("SendNotification", {Title="No Stun", Text="Disabled"})
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if nostun then apply() end
+end)
+
 local running = false
 local sg = game:GetService("StarterGui")
 
