@@ -2111,6 +2111,18 @@ misctab:Button("Background Music", function()
     end
 end)
 
+misctab:Button("Enable Fandub (rejoin to fix)", function()
+game:GetService("ReplicatedStorage").Resources.aiku["aiku awake fail sfx"].SoundId = game:GetService("ReplicatedStorage").Resources.aiku.offtheballrnp.SoundId
+game:GetService("ReplicatedStorage").Resources.aiku["aiku awake_1"].SoundId = game:GetService("ReplicatedStorage").Resources.aiku["aiku awake_rnp"].SoundId
+game:GetService("ReplicatedStorage").Resources.aiku.defense.SoundId = game:GetService("ReplicatedStorage").Resources.aiku.defense_rnp.SoundId
+game:GetService("ReplicatedStorage").Resources.aiku.formerstriker.SoundId = game:GetService("ReplicatedStorage").Resources.aiku.formerstriker_rnp.SoundId
+
+game:GetService("ReplicatedStorage").Resources.nelisagi["isagi 1 percent flow sfx"].SoundId = game:GetService("ReplicatedStorage").Resources.nelisagi.RinNoPlay["isagi 1 percent flow sfx"].SoundId
+game:GetService("ReplicatedStorage").Resources.nelisagi["nelisagi awk off sfx"].SoundId = game:GetService("ReplicatedStorage").Resources.nelisagi.RinNoPlay["nelisagi awk off sfx"].SoundId
+game:GetService("ReplicatedStorage").Resources.nelisagi["nelisagi awk sfx"].SoundId = game:GetService("ReplicatedStorage").Resources.nelisagi.RinNoPlay["nelisagi awk sfx"].SoundId
+game:GetService("ReplicatedStorage").Resources.nelisagi["Isagi overtime sfx"].SoundId = game:GetService("ReplicatedStorage").Resources.nelisagi.RinNoPlay["Isagi overtime sfx"].SoundId
+end)
+
 misctab:Label("Emotes.")
 
 misctab:Toggle("Toosie Slide", function()
