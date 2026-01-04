@@ -2,49 +2,61 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
-    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeColor = Color3.fromRGB(104, 58, 91),
+	ThemeGradient = Color3.fromRGB(223, 107, 255),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.GothamBold,
 	ToggledSideBar = true
 })
 
-print("version: 1.3")
-
+local hometab = win:Tab("Home")
 local maintab = win:Tab("Blatant")
 local maintab2 = win:Tab("Silent")
 local funtab = win:Tab("Movesets")
-local emotetab = win:Tab("Emotes")
 local teleporttab = win:Tab("Teleports")
 local exploittab = win:Tab("Exploits")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
-maintab:Label("Script Made By Celeron + Daffy!")
-maintab:Label("Check The Info Tab For The Discord Invite.")
-emotetab:Label("The Sounds Are Client Sided, The Emotes Are Visible!")
+hometab:Label("Script Made By Celeron + Daffy!")
+hometab:Label("Join The Discord Server In Info For Updates / Suggestions.")
+helptab:Label("Show / Hide GUI: Right Alt")
+maintab:Label("Metavision Features.")
 teleporttab:Label("Map Teleports, No Prerequisites To Use!")
 misctab:Label("Miscellaneous Features, They Give No Advantages In-Game!")
 exploittab:Label("This Tab Comes With Useful Features.")
-helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
-helptab:Label("Show / Hide GUI: Right Alt")
 
-helptab:Button("Show Keybinds", "Shows The Keybinds For The Toggle Keybinds Feature.", function()
-    local StarterGui = game:GetService("StarterGui")
+helptab:Button("Copy Owner Discord Username", "Copies The Owner's Discord Username To Your Clipboard.", function()
+local StarterGui = game:GetService("StarterGui")
 
-    StarterGui:SetCore("SendNotification", {
-        Title = "Keybinds",
-        Text = "Z = Auto-Dribble\nX = Move One\nC = Move Two",
-        Duration = 4
-    })
-
-    task.delay(0.5, function()
-        StarterGui:SetCore("SendNotification", {
-            Title = "Keybinds",
-            Text = "V = Move Three\nN = Move Four\nM = Move Five.",
-            Duration = 4
-        })
-    end)
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
 end)
+
+helptab:Button("Copy Discord Server Invite", "Copies The Discord Invite To Your Clipboard.", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/8stFYxJv4R")
+end)
+
+local rarebanner = math.random(1,50)
+
+if rarebanner == 1 then
+    hometab:Banner("17327779381", 385)
+else
+    hometab:Banner("107478323974637", 135)
+end
 
 maintab2:Label("Notification Suppression: Useful When Streaming.")
 
@@ -792,6 +804,24 @@ getgenv().ballMagnetConnection = RunService.Heartbeat:Connect(function()
 end)
 
 maintab2:Label("Set The Auto-Counter Number To Your Character's Counter Move!")
+
+maintab2:Button("Show Keybinds", "Shows The Keybinds For The Toggle Keybinds Feature.", function()
+    local StarterGui = game:GetService("StarterGui")
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Keybinds",
+        Text = "Z = Auto-Dribble\nX = Move One\nC = Move Two",
+        Duration = 4
+    })
+
+    task.delay(0.5, function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "Keybinds",
+            Text = "V = Move Three\nN = Move Four\nM = Move Five.",
+            Duration = 4
+        })
+    end)
+end)
 
 _G.suppressNotifs = false
 
@@ -1923,254 +1953,6 @@ misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
 
-emotetab:Toggle("Toosie Slide", function()
-_G.isEnabled = _G.isEnabled or false
-
-local animationId = "rbxassetid://95959941666543"
-local soundId = "rbxassetid://1845341094"
-
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:FindFirstChildOfClass("Humanoid")
-local animator = humanoid:FindFirstChildOfClass("Animator")
-
-local animation = Instance.new("Animation")
-animation.AnimationId = animationId
-
-local animationTrack = animator:LoadAnimation(animation)
-
-local sound
-
-local function toggleState()
-    _G.isEnabled = not _G.isEnabled
-    
-    if _G.isEnabled then
-        animationTrack:Play()
-        sound = Instance.new("Sound")
-        sound.Name = "Toosie Slide"
-        sound.SoundId = soundId
-        sound.Looped = true
-        sound.Parent = game.SoundService
-        sound:Play()
-    else
-        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-            track:Stop()
-        end
-
-        local existingSound = game.SoundService:FindFirstChild("Toosie Slide")
-        if existingSound then
-            existingSound:Stop()
-            existingSound:Destroy()
-        end
-    end
-end
-
-toggleState()
-end)
-
-emotetab:Toggle("Sae Pose", function()
-
-_G.SaePose = _G.SaePose or false
-
-local animationId = "rbxassetid://136812327261825"
-local soundId = "rbxassetid://1843404009"
-
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:FindFirstChildOfClass("Humanoid")
-local animator = humanoid:FindFirstChildOfClass("Animator")
-
-local animation = Instance.new("Animation")
-animation.AnimationId = animationId
-
-local animationTrack = animator:LoadAnimation(animation)
-
-local sound
-
-local function toggleState()
-    _G.SaePose = not _G.SaePose
-    
-    if _G.SaePose then
-        animationTrack:Play()
-        sound = Instance.new("Sound")
-        sound.Name = "Sae Pose"
-        sound.SoundId = soundId
-        sound.Volume = 1
-        sound.Looped = true
-        sound.Parent = game.SoundService
-        sound:Play()
-    else
-        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-            track:Stop()
-        end
-
-        local existingSound = game.SoundService:FindFirstChild("Sae Pose")
-        if existingSound then
-            existingSound:Stop()
-            existingSound:Destroy()
-        end
-    end
-end
-
-toggleState()
-end)
-
-emotetab:Toggle("Assumptions", function()
-_G.Assumptions = _G.Assumptions or false
-
-local animationId = "rbxassetid://108778663919542"
-local soundId = "rbxassetid://137023124734348"
-
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:FindFirstChildOfClass("Humanoid")
-local animator = humanoid:FindFirstChildOfClass("Animator")
-
-local animation = Instance.new("Animation")
-animation.AnimationId = animationId
-
-local animationTrack = animator:LoadAnimation(animation)
-
-local sound
-
-function Assumptions()
-    _G.Assumptions = not _G.Assumptions
-    
-    if _G.Assumptions then
-        animationTrack:Play()
-        sound = Instance.new("Sound")
-        sound.Name = "Assumptions"
-        sound.SoundId = soundId
-        sound.PlaybackSpeed = 0.17
-        sound.Volume = 0.6
-        sound.Looped = true
-        sound.Parent = game.SoundService
-
-        local eq = Instance.new("EqualizerSoundEffect")
-        eq.LowGain = 10
-        eq.MidGain = 0
-        eq.HighGain = 4
-        eq.Parent = sound
-
-        sound:Play()
-    else
-        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-            track:Stop()
-        end
-
-        local existingSound = game.SoundService:FindFirstChild("Assumptions")
-        if existingSound then
-            existingSound:Stop()
-            existingSound:Destroy()
-        end
-    end
-end
-
-Assumptions()
-end)
-
-emotetab:Button("Akuma Taunt", function()
-local animationId = "rbxassetid://111005363990501"
-local soundId = "rbxassetid://133370927301258"
-
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:FindFirstChildOfClass("Humanoid")
-local animator = humanoid:FindFirstChildOfClass("Animator")
-
-local animation = Instance.new("Animation")
-animation.AnimationId = animationId
-
-local animationTrack = animator:LoadAnimation(animation)
-
-local sound = Instance.new("Sound")
-sound.Name = "Akuma Taunt"
-sound.SoundId = soundId
-sound.Volume = 10
-sound.Parent = game.SoundService
-
-local function runOnce()
-    animationTrack:Play()
-    sound:Play()
-
-    sound.Ended:Connect(function()
-        sound:Destroy()
-    end)
-
-    animationTrack.Stopped:Connect(function()
-        animationTrack:Stop()
-    end)
-end
-
-runOnce()
-end)
-
-emotetab:Button("Cartoon Fall", function()
-local animationId = "rbxassetid://98064370044269"
-local soundIds = { "rbxassetid://8663054927", "rbxassetid://4979513906" }
-
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:FindFirstChildOfClass("Humanoid")
-local animator = humanoid:FindFirstChildOfClass("Animator")
-
-local animation = Instance.new("Animation")
-animation.AnimationId = animationId
-
-local animationTrack = animator:LoadAnimation(animation)
-
-local sound = Instance.new("Sound")
-sound.Name = "Ragdoll"
-sound.Volume = 10
-sound.Parent = game.SoundService
-
-local currentIndex = 1
-
-local function playNextSound()
-    if currentIndex <= #soundIds then
-        sound.SoundId = soundIds[currentIndex]
-        sound:Play()
-
-        sound.Ended:Connect(function()
-            currentIndex = currentIndex + 1
-            playNextSound()
-        end)
-    else
-        sound:Destroy()
-    end
-end
-animationTrack:Play()
-playNextSound()
-end)
-
-emotetab:Button("Spit", function()
-local animationId = "rbxassetid://97257010665720"
-local soundId = "rbxassetid://18111052648"
-
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:FindFirstChildOfClass("Humanoid")
-local animator = humanoid:FindFirstChildOfClass("Animator")
-
-local animation = Instance.new("Animation")
-animation.AnimationId = animationId
-
-local animationTrack = animator:LoadAnimation(animation)
-
-local sound = Instance.new("Sound")
-sound.Name = "Spit"
-sound.SoundId = soundId
-sound.Volume = 2
-sound.Parent = game.SoundService
-
-animationTrack:Play()
-sound:Play()
-
-sound.Ended:Connect(function()
-    sound:Destroy()
-end)
-end)
-
 teleporttab:Button("Spawn Area", function()
 	game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-269, 4, -1599)
 end)
@@ -2327,6 +2109,256 @@ misctab:Button("Background Music", function()
             sfx:Destroy()
         end)
     end
+end)
+
+misctab:Label("Emotes.")
+
+misctab:Toggle("Toosie Slide", function()
+_G.isEnabled = _G.isEnabled or false
+
+local animationId = "rbxassetid://95959941666543"
+local soundId = "rbxassetid://1845341094"
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local animator = humanoid:FindFirstChildOfClass("Animator")
+
+local animation = Instance.new("Animation")
+animation.AnimationId = animationId
+
+local animationTrack = animator:LoadAnimation(animation)
+
+local sound
+
+local function toggleState()
+    _G.isEnabled = not _G.isEnabled
+    
+    if _G.isEnabled then
+        animationTrack:Play()
+        sound = Instance.new("Sound")
+        sound.Name = "Toosie Slide"
+        sound.SoundId = soundId
+        sound.Looped = true
+        sound.Parent = game.SoundService
+        sound:Play()
+    else
+        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+            track:Stop()
+        end
+
+        local existingSound = game.SoundService:FindFirstChild("Toosie Slide")
+        if existingSound then
+            existingSound:Stop()
+            existingSound:Destroy()
+        end
+    end
+end
+
+toggleState()
+end)
+
+misctab:Toggle("Sae Pose", function()
+
+_G.SaePose = _G.SaePose or false
+
+local animationId = "rbxassetid://136812327261825"
+local soundId = "rbxassetid://1843404009"
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local animator = humanoid:FindFirstChildOfClass("Animator")
+
+local animation = Instance.new("Animation")
+animation.AnimationId = animationId
+
+local animationTrack = animator:LoadAnimation(animation)
+
+local sound
+
+local function toggleState()
+    _G.SaePose = not _G.SaePose
+    
+    if _G.SaePose then
+        animationTrack:Play()
+        sound = Instance.new("Sound")
+        sound.Name = "Sae Pose"
+        sound.SoundId = soundId
+        sound.Volume = 1
+        sound.Looped = true
+        sound.Parent = game.SoundService
+        sound:Play()
+    else
+        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+            track:Stop()
+        end
+
+        local existingSound = game.SoundService:FindFirstChild("Sae Pose")
+        if existingSound then
+            existingSound:Stop()
+            existingSound:Destroy()
+        end
+    end
+end
+
+toggleState()
+end)
+
+misctab:Toggle("Assumptions", function()
+_G.Assumptions = _G.Assumptions or false
+
+local animationId = "rbxassetid://108778663919542"
+local soundId = "rbxassetid://137023124734348"
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local animator = humanoid:FindFirstChildOfClass("Animator")
+
+local animation = Instance.new("Animation")
+animation.AnimationId = animationId
+
+local animationTrack = animator:LoadAnimation(animation)
+
+local sound
+
+function Assumptions()
+    _G.Assumptions = not _G.Assumptions
+    
+    if _G.Assumptions then
+        animationTrack:Play()
+        sound = Instance.new("Sound")
+        sound.Name = "Assumptions"
+        sound.SoundId = soundId
+        sound.PlaybackSpeed = 0.17
+        sound.Volume = 0.6
+        sound.Looped = true
+        sound.Parent = game.SoundService
+
+        local eq = Instance.new("EqualizerSoundEffect")
+        eq.LowGain = 10
+        eq.MidGain = 0
+        eq.HighGain = 4
+        eq.Parent = sound
+
+        sound:Play()
+    else
+        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+            track:Stop()
+        end
+
+        local existingSound = game.SoundService:FindFirstChild("Assumptions")
+        if existingSound then
+            existingSound:Stop()
+            existingSound:Destroy()
+        end
+    end
+end
+
+Assumptions()
+end)
+
+misctab:Button("Akuma Taunt", function()
+local animationId = "rbxassetid://111005363990501"
+local soundId = "rbxassetid://133370927301258"
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local animator = humanoid:FindFirstChildOfClass("Animator")
+
+local animation = Instance.new("Animation")
+animation.AnimationId = animationId
+
+local animationTrack = animator:LoadAnimation(animation)
+
+local sound = Instance.new("Sound")
+sound.Name = "Akuma Taunt"
+sound.SoundId = soundId
+sound.Volume = 10
+sound.Parent = game.SoundService
+
+local function runOnce()
+    animationTrack:Play()
+    sound:Play()
+
+    sound.Ended:Connect(function()
+        sound:Destroy()
+    end)
+
+    animationTrack.Stopped:Connect(function()
+        animationTrack:Stop()
+    end)
+end
+
+runOnce()
+end)
+
+misctab:Button("Cartoon Fall", function()
+local animationId = "rbxassetid://98064370044269"
+local soundIds = { "rbxassetid://8663054927", "rbxassetid://4979513906" }
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local animator = humanoid:FindFirstChildOfClass("Animator")
+
+local animation = Instance.new("Animation")
+animation.AnimationId = animationId
+
+local animationTrack = animator:LoadAnimation(animation)
+
+local sound = Instance.new("Sound")
+sound.Name = "Ragdoll"
+sound.Volume = 10
+sound.Parent = game.SoundService
+
+local currentIndex = 1
+
+local function playNextSound()
+    if currentIndex <= #soundIds then
+        sound.SoundId = soundIds[currentIndex]
+        sound:Play()
+
+        sound.Ended:Connect(function()
+            currentIndex = currentIndex + 1
+            playNextSound()
+        end)
+    else
+        sound:Destroy()
+    end
+end
+animationTrack:Play()
+playNextSound()
+end)
+
+misctab:Button("Spit", function()
+local animationId = "rbxassetid://97257010665720"
+local soundId = "rbxassetid://18111052648"
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local animator = humanoid:FindFirstChildOfClass("Animator")
+
+local animation = Instance.new("Animation")
+animation.AnimationId = animationId
+
+local animationTrack = animator:LoadAnimation(animation)
+
+local sound = Instance.new("Sound")
+sound.Name = "Spit"
+sound.SoundId = soundId
+sound.Volume = 2
+sound.Parent = game.SoundService
+
+animationTrack:Play()
+sound:Play()
+
+sound.Ended:Connect(function()
+    sound:Destroy()
+end)
 end)
 
 exploittab:Label("Semi-Private Server: People MAY Still Join Depending On Updates.")
@@ -2584,30 +2616,6 @@ exploittab:Textbox("Goal Target", "Enter a number of goals to stop farming at.",
             Duration = 2
         })
     end
-end)
-
-helptab:Button("Copy Owner Discord Username", "Copies The Owner's Discord Username To Your Clipboard.", function()
-local StarterGui = game:GetService("StarterGui")
-
-StarterGui:SetCore("SendNotification", {
-    Title = "Discord Username",
-    Text = "Copied to your clipboard!",
-    Duration = 3,
-    Button1 = "alright fella",
-})
-setclipboard("ghostofcelleron")
-end)
-
-helptab:Button("Copy Discord Server Invite", "Copies The Discord Invite To Your Clipboard.", function()
-local StarterGui = game:GetService("StarterGui")
-
-StarterGui:SetCore("SendNotification", {
-    Title = "Discord Invite",
-    Text = "Copied to your clipboard!",
-    Duration = 3,
-    Button1 = "alright fella",
-})
-setclipboard("https://discord.gg/8stFYxJv4R")
 end)
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/old%20thing%20ill%20keep%20here",true))()
