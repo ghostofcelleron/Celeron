@@ -1244,8 +1244,8 @@ function _G.fireGKPackets()
 	local root = char:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 
-	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\006\001\000B"))
-	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\006\001\000A"))
+	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\005\001\000B"))
+	game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\005\001\000A"))
 end
 
 maintab2:Toggle("Auto Pick CF", "Automatically Picks Center Field Position On Respawn Or Enable.", function()
