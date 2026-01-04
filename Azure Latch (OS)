@@ -15,6 +15,7 @@ local maintab2 = win:Tab("Silent")
 local funtab = win:Tab("Movesets")
 local emotetab = win:Tab("Emotes")
 local teleporttab = win:Tab("Teleports")
+local exploittab = win:Tab("Exploits")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
@@ -23,6 +24,7 @@ maintab:Label("Check The Info Tab For The Discord Invite.")
 emotetab:Label("The Sounds Are Client Sided, The Emotes Are Visible!")
 teleporttab:Label("Map Teleports, No Prerequisites To Use!")
 misctab:Label("Miscellaneous Features, They Give No Advantages In-Game!")
+exploittab:Label("This Tab Comes With Useful Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
@@ -268,7 +270,7 @@ end
 end)
 
 local flowPart = Instance.new("Part")
-flowPart.Size = Vector3.new(6, 1, 6)
+flowPart.Size = Vector3.new(30, 1, 30)
 flowPart.Anchored = true
 flowPart.CanCollide = true
 flowPart.Position = Vector3.new(100, 1000, 100)
@@ -928,6 +930,26 @@ if not _G._keybindSetup then
 end
 
 maintab:Label("Auto Goal Features.")
+
+maintab:Button("Isagi U-20 Goal", "Attempts To Do Isagi's U-20 Auto Goal By Teleporting To The Designated Area.", function()
+local plr = game.Players.LocalPlayer
+if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+    local hrp = plr.Character.HumanoidRootPart
+    
+    if plr.Team == game.Teams:FindFirstChild("A") then
+        hrp.CFrame = CFrame.new(-459, 3, 862)
+    elseif plr.Team == game.Teams:FindFirstChild("B") then
+        hrp.CFrame = CFrame.new(-611, 3, 1682) * CFrame.Angles(0, math.rad(180), 0)
+    end
+    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+    plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+    task.wait(0.2)
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
+end
+end)
+
 maintab:Button("Barou Devour Goal", "Attempts To Do Barou's Devour Auto Goal By Teleporting Behind Two Enemy Players.", function()
 local plr = game.Players.LocalPlayer
 
@@ -1269,7 +1291,7 @@ maintab2:Slider("Auto Activate Distance", 10, 3, 70, 0.5, function(v)
     autoActivateDistance = v
 end)
 
-maintab2:Toggle("Auto Activate Toggle", "Hold M2 to have it on, let go to turn it off", function(v)
+maintab2:Toggle("Auto Activate Toggle", "Hold The Right Mouse Button To Have It On", function(v)
     autoActivateToggle = not autoActivateToggle
 end)
 
@@ -1897,30 +1919,6 @@ StarterGui:SetCore("SendNotification", {
 loadstring(game:HttpGet("https://pastebin.com/raw/LbRRX7SK"))()
 end)
 
-_G.mutecrowd = false
-
-misctab:Toggle("Toggle Crowd", function()
-	_G.mutecrowd = not _G.mutecrowd
-
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Crowd Volume",
-		Text = _G.mutecrowd and "Muted Crowd." or "Unmuted Crowd.",
-		Duration = 1
-	})
-
-	task.spawn(function()
-		while true do
-			if _G.mutecrowd then
-				game:GetService("SoundService")["football-crowd-3-69245"].Volume = 0
-			else
-				game:GetService("SoundService")["football-crowd-3-69245"].Volume = 0.3
-				break
-			end
-			task.wait(0.05)
-		end
-	end)
-end)
-
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
@@ -2328,6 +2326,263 @@ misctab:Button("Background Music", function()
         hum.Died:Connect(function()
             sfx:Destroy()
         end)
+    end
+end)
+
+exploittab:Label("Semi-Private Server: People MAY Still Join Depending On Updates.")
+
+exploittab:Button("Semi-Private Server Info", "This Comes With Instructions On How To Use The Feature Below.", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Semi-Private Server Info",
+    Text = "If you end up in a server with another player, block someone.",
+    Duration = 10
+}) wait(0.5)
+StarterGui:SetCore("SendNotification", {
+    Title = "Semi-Private Server Info",
+    Text = "After blocking a player in that server, run the feature to create a server again!",
+    Duration = 10
+})
+end)
+
+exploittab:Button("Semi-Private Server (Method: 11v11)", "This Feature Creates A Server Where You Can Farm Goals / Quests!", function()
+game:GetService("TeleportService"):Teleport(85946466968831, game.Players.LocalPlayer)
+end)
+
+exploittab:Label("Instant Disconnect: Automatically Disconnects If Other Players Join.")
+
+local limit = nil
+local enabled = false
+
+exploittab:Textbox("Instant Disconnect", "If More Than The Entered Number Of Players Join, You Disconnect.", function(v)
+    local n = tonumber(v)
+    if n then
+        limit = n
+    else
+        limit = nil
+    end
+end)
+
+exploittab:Toggle("Enable Instant Disconnect", "Toggles The Above Feature.", function(v)
+    enabled = v
+    if v then
+        game.StarterGui:SetCore("SendNotification", {Title="Instant Disconnect", Text="Enabled."})
+    else
+        game.StarterGui:SetCore("SendNotification", {Title="Instant Disconnect", Text="Disabled."})
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if enabled and limit and #game.Players:GetPlayers() > limit then
+        game.Players.LocalPlayer:Kick("Instant Disconnect Has Been Triggered.")
+    end
+end)
+
+exploittab:Label("Goal Farming: Use At Your Own Risk, I Am Not Responsible For Bans.")
+
+_G.GoalFarm = _G.GoalFarm or {
+    Enabled = false,
+    CFConn = nil,
+    RenderConn = nil,
+    StopAt = nil
+}
+
+buffer = buffer or {
+    fromstring = function(str)
+        return str
+    end
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local MapFolder = workspace:WaitForChild("map")
+local AGoal = MapFolder:WaitForChild("Agoal")
+local BGoal = MapFolder:WaitForChild("Bgoal")
+local LocalPlayer = Players.LocalPlayer
+
+local function firePacketsIfNear()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    if (root.Position - Vector3.new(-260, 4, -1474)).Magnitude <= 15 or
+       (root.Position - Vector3.new(-262, 4, -1722)).Magnitude <= 15 then
+        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000A"))
+        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000B"))
+    end
+end
+
+local function IsInGame()
+    local LocalCharacter = LocalPlayer.Character
+    if not LocalCharacter then return false end
+    local StateFolder = LocalCharacter:FindFirstChild("state")
+    if not StateFolder then return false end
+    local InGameValue = StateFolder:FindFirstChild("ingame")
+    if not InGameValue then return false end
+    return InGameValue.Value
+end
+
+local function DisableCollisionBoxes()
+    local MapFolder = workspace:FindFirstChild("map")
+    if not MapFolder then return end
+    local GkBarriar = MapFolder:FindFirstChild("gkbarriar")
+    local AGoal = MapFolder:FindFirstChild("Agoal")
+    local BGoal = MapFolder:FindFirstChild("Bgoal")
+    if GkBarriar then
+        local ABarriar = GkBarriar:FindFirstChild("A")
+        local BBarriar = GkBarriar:FindFirstChild("B")
+        if ABarriar then ABarriar.CanCollide = false end
+        if BBarriar then BBarriar.CanCollide = false end
+    end
+    if AGoal then AGoal.CanCollide = false end
+    if BGoal then BGoal.CanCollide = false end
+end
+
+local function StealBall()
+    local LocalCharacter = LocalPlayer.Character
+    local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+    local Football = workspace.Terrain:FindFirstChild("Ball")
+    if LocalHumanoidRootPart and Football then
+        task.wait(0.5)
+        LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position.X, 0, Football.Position.Z)
+    end
+    for _, OtherPlayer in pairs(Players:GetPlayers()) do
+        if OtherPlayer ~= LocalPlayer then
+            local OtherCharacter = OtherPlayer.Character
+            local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+            local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+            if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                task.wait(0.5)
+                LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                local args = {
+                    buffer.fromstring("\035\001"),
+                    {
+                        {
+                            "tackle"
+                        }
+                    }
+                }
+                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+            end
+        end
+    end
+end
+
+local function HasBall()
+    local LocalCharacter = LocalPlayer.Character
+    local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball")
+    return Football ~= nil
+end
+
+local function stopGoalFarm()
+    if not _G.GoalFarm.Enabled then return end
+    _G.GoalFarm.Enabled = false
+
+    if _G.GoalFarm.CFConn then
+        _G.GoalFarm.CFConn:Disconnect()
+        _G.GoalFarm.CFConn = nil
+    end
+    if _G.GoalFarm.RenderConn then
+        _G.GoalFarm.RenderConn:Disconnect()
+        _G.GoalFarm.RenderConn = nil
+    end
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Goal Farm",
+        Text = "Target Reached! :3",
+        Duration = 2
+    })
+end
+
+local function trackGoalsLoop()
+    task.spawn(function()
+        local goals = LocalPlayer:WaitForChild("leaderstats"):WaitForChild("goals") -- explicitly YOUR goals NumberValue
+        while _G.GoalFarm.Enabled do
+            task.wait(1)
+            local count = goals.Value
+            if _G.GoalFarm.StopAt and count >= _G.GoalFarm.StopAt then
+                stopGoalFarm()
+                return
+            end
+        end
+    end)
+end
+
+exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
+    _G.GoalFarm.Enabled = not _G.GoalFarm.Enabled
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Goal Farm",
+        Text = _G.GoalFarm.Enabled and "Enabled." or "Disabled.",
+        Duration = 1
+    })
+    if _G.GoalFarm.Enabled then
+        _G.GoalFarm.CFConn = LocalPlayer.CharacterAdded:Connect(function()
+            task.wait(1)
+            if _G.GoalFarm.Enabled then
+                firePacketsIfNear()
+            end
+        end)
+        task.spawn(function()
+            repeat task.wait() until LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if _G.GoalFarm.Enabled then
+                firePacketsIfNear()
+            end
+        end)
+        _G.GoalFarm.RenderConn = RunService.RenderStepped:Connect(function()
+            if not _G.GoalFarm.Enabled then return end
+            pcall(function()
+                if not IsInGame() then return end
+                DisableCollisionBoxes()
+                StealBall()
+                if HasBall() then
+                    local LocalCharacter = LocalPlayer.Character
+                    local LocalRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+                    local Goal = LocalPlayer.Team.Name == "A" and BGoal or AGoal
+                    if LocalRootPart and Goal then
+                        task.wait(0.5)
+                        LocalRootPart.CFrame = Goal.CFrame
+                        task.wait(0.185)
+                        local args = {
+                            buffer.fromstring("\035\001"),
+                            {
+                                {
+                                    "kick",
+                                    20,
+                                    false,
+                                    vector.create(0, 1, 0)
+                                }
+                            }
+                        }
+                        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                    end
+                end
+            end)
+        end)
+        trackGoalsLoop()
+    else
+        stopGoalFarm()
+    end
+end)
+
+exploittab:Textbox("Goal Target", "Enter a number of goals to stop farming at.", function(v)
+    local num = tonumber(v)
+    if num then
+        _G.GoalFarm.StopAt = num
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Goal Target",
+            Text = "Goal Target: " .. num,
+            Duration = 2
+        })
+    else
+        _G.GoalFarm.StopAt = math.huge
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Goal Target",
+            Text = "Invalid Target, Farm Will Be Infinite.",
+            Duration = 2
+        })
     end
 end)
 
