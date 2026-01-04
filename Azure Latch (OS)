@@ -2,8 +2,8 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
-    ThemeColor = Color3.fromRGB(176, 152, 97),
-	ThemeGradient = Color3.fromRGB(233, 117, 255),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+	ThemeGradient = Color3.fromRGB(10, 10, 10),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.GothamBold,
 	ToggledSideBar = true
@@ -55,7 +55,7 @@ local rarebanner = math.random(1,50)
 if rarebanner == 1 then
     hometab:Banner("17327779381", 385)
 else
-    hometab:Banner("137235366240913", 135)
+    hometab:Banner("13308582899", 135)
 end
 
 maintab2:Label("Notification Suppression: Useful When Streaming.")
