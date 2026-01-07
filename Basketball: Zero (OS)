@@ -18,7 +18,8 @@ end
 
 local win = ui:Create({
     Name = "Celeron's GUI (Basketball: Zero)",
-    ThemeColor = Color3.fromRGB(140, 120, 120),
+    ThemeColor = Color3.fromRGB(95, 2, 2),
+    ThemeGradient = Color3.fromRGB(111, 111, 111),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.GothamBold
 })
@@ -69,6 +70,8 @@ maintab:Toggle("Always In (Public / Ranked 3v3)", "Use This Feature If You Aren'
         Duration = 2
     })
 end)
+
+maintab:Banner("85176415170118", 165)
 
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
