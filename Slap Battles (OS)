@@ -432,7 +432,7 @@ getgenv().applySpeed = function()
 	end
 end
 
-maintab:Slider("Player Speed", 19.5, 1, 125, function(v)
+maintab:Slider("Player Speed", 19.5, 1, 125, 0.5, function(v)
 	getgenv().lastSliderSet = (v == 8) and 16 or v
 	getgenv().applySpeed()
 end)
@@ -4249,7 +4249,7 @@ local function applyVelocityControl(humanoid)
 	end)
 end
 
-maintab:Slider("Player Speed", 19.5, 5, 85, function(v)
+maintab:Slider("Player Speed", 19.5, 5, 85, 0.5, function(v)
 	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then return end
@@ -6030,7 +6030,7 @@ local function applySpeed(humanoid)
 	end)
 end
 
-maintab:Slider("Player Speed", 19.5, 5, 85, function(v)
+maintab:Slider("Player Speed", 19.5, 5, 85, 0.5, function(v)
 	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then return end
@@ -6704,7 +6704,7 @@ local function applySpeed(humanoid)
 	end)
 end
 
-maintab:Slider("Player Speed", 19.5, 5, 225, function(v)
+maintab:Slider("Player Speed", 19.5, 5, 225, 0.5, function(v)
 	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then return end
