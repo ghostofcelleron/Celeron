@@ -1,8 +1,13 @@
 --made by daffy734 you NERD, get out of here
 
-print("daffys ui: ver 1.11.0")
+print("🎨 Daffy's UI: ver 1.15.2")
 
-local location = game.CoreGui
+local location
+if game:GetService("RunService"):IsStudio() then
+	location = game.Players.LocalPlayer.PlayerGui
+else
+	location = game.Players.LocalPlayer.PlayerGui
+end
 
 for _,v in pairs(location:GetChildren()) do
 	if v.Name == "dark_UI" then
@@ -38,12 +43,36 @@ function Library:Create(config)
 	local PitchHoverColor = Color3.new(config.ThemeColor.R / 2.5, config.ThemeColor.G / 2.5, config.ThemeColor.B / 2.5)
 
 	local toggless = {}
+	local dragTween
+	local DRAG_SMOOTHNESS = 0.12 -- lower = smoother, higher = snappier
 
 	local main = Instance.new("Frame")
 	main.Name = "main"
-	main.BackgroundColor3 = config.ThemeColor
+	if config.ThemeGradient then
+		main.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	else
+		main.BackgroundColor3 = config.ThemeColor
+	end
+	main.BackgroundTransparency = 0.1
 	main.Position = UDim2.fromScale(0.244, 0.292)
-	main.Size = UDim2.fromOffset(488, 299)
+	main.Size = UDim2.fromOffset(488, 340)
+
+	local draggingSFX = Instance.new("Sound")
+	draggingSFX.Name = "draggingSFX"
+	draggingSFX.SoundId = "rbxassetid://5113213873"
+	draggingSFX.Volume = 0.06
+	draggingSFX.Looped = true
+	draggingSFX.PlaybackSpeed = 0
+	draggingSFX.Parent = main
+
+	local bgGrad = Instance.new("UIGradient")
+	bgGrad.Rotation = 90
+	if config.ThemeGradient then
+		bgGrad.Color = ColorSequence.new(config.ThemeColor, config.ThemeGradient)
+	else
+		bgGrad.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(156, 156, 156))
+	end
+	bgGrad.Parent = main
 
 	local outline = Instance.new("UIStroke")
 	outline.Color = lighterColor
@@ -287,18 +316,20 @@ function Library:Create(config)
 	local lastTime = tick()
 	local frameCount = 0
 
-	RunService.RenderStepped:Connect(function()
-		frameCount = frameCount + 1
-		local currentTime = tick()
-		if currentTime - lastTime >= 1 then
-			fps.Text = "FPS: " .. frameCount
-			frameCount = 0
-			lastTime = currentTime
-		end
+	if not RunService:IsStudio() then
+		RunService.RenderStepped:Connect(function()
+			frameCount = frameCount + 1
+			local currentTime = tick()
+			if currentTime - lastTime >= 1 then
+				fps.Text = "FPS: " .. frameCount
+				frameCount = 0
+				lastTime = currentTime
+			end
 
-		local pinge = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) -- seconds to milliseconds
-		ping.Text = "PING: " .. pinge .. "ms"
-	end)
+			local pinge = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) -- seconds to milliseconds
+			ping.Text = "PING: " .. pinge .. "ms"
+		end)
+	end
 
 	tabContainer.Parent = main
 	main.Parent = dark_UI
@@ -315,6 +346,23 @@ function Library:Create(config)
 		sfx:Play()
 		game.Debris:AddItem(sfx, 1)
 		dark_UI:Destroy()
+	end
+
+	local function getCurrentTabInt()
+		local currentTab = 0
+		for i, v in pairs(main:GetChildren()) do
+			if v.Name == "container" then
+				currentTab += 1
+			end
+		end
+		return currentTab
+	end
+
+	local function grad(obj, darker)
+		local bgGrad = Instance.new("UIGradient")
+		bgGrad.Rotation = 90
+		bgGrad.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), darker or Color3.fromRGB(225, 225, 225))
+		bgGrad.Parent = obj
 	end
 
 	local function hoverClickSFXs(button)
@@ -336,6 +384,43 @@ function Library:Create(config)
 		end)
 	end
 
+	local function bubbleClick(button: TextButton)
+		button.ClipsDescendants = true
+
+		button.MouseButton1Click:Connect(function()
+			local mousePos = UserInputService:GetMouseLocation()
+
+			local relativeX = mousePos.X - button.AbsolutePosition.X
+			local relativeY = (mousePos.Y - 55) - button.AbsolutePosition.Y 
+
+			local bubble = Instance.new("Frame")
+			bubble.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			bubble.BackgroundTransparency = 0.8
+			bubble.BorderSizePixel = 0
+			bubble.AnchorPoint = Vector2.new(0.5, 0.5)
+
+			bubble.Position = UDim2.fromOffset(relativeX, relativeY)
+			bubble.Size = UDim2.fromOffset(0, 0)
+			bubble.Parent = button
+
+			local corna = Instance.new("UICorner")
+			corna.CornerRadius = UDim.new(1, 0)
+			corna.Parent = bubble
+
+			local endSize = math.max(button.AbsoluteSize.X, button.AbsoluteSize.Y) * 0.5
+
+			local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			local tween = TweenService:Create(bubble, tweenInfo, {
+				Size = UDim2.fromOffset(endSize, endSize),
+				BackgroundTransparency = 1
+			})
+
+			tween:Play()
+			tween.Completed:Connect(function()
+				bubble:Destroy()
+			end)
+		end)
+	end
 
 	local function toggleUI(inputObject, gameProcessedEvent)
 		if not gameProcessedEvent then
@@ -344,9 +429,9 @@ function Library:Create(config)
 					if hidden == false then
 						hidden = true
 						ogPos = main.Position
-						local b = 1.2
+						local b = 1.4
 						if UserInputService.TouchEnabled then
-							b = 1.5
+							b = 1.7
 						end
 						game.TweenService:Create(main, TweenInfo.new(0.1), {Position = UDim2.new(0.5, 0,b, 0)}):Play()
 					else
@@ -375,12 +460,25 @@ function Library:Create(config)
 		main1.Size = UDim2.fromOffset(10, 24)
 		main1.Parent = tabContainer
 
+
 		--// Creating the container
+		local holda = Instance.new("Frame")
+		holda.Name = "container"
+		holda.BackgroundTransparency = 1
+		holda.ClipsDescendants = true
+		holda.Position = UDim2.fromScale(0.0342, 0.31)
+		holda.Size = UDim2.fromOffset(454, 220)
+
+
 		local container = Instance.new("Frame")
-		container.Name = "container"
+		container.Name = "containerr"
 		container.BackgroundColor3 = darkerColor
-		container.Position = UDim2.fromScale(0.0342, 0.31)
-		container.Size = UDim2.fromOffset(454, 183)
+		container.Size = UDim2.new(1, 0, 1, 0)
+
+		local currentInt = getCurrentTabInt()
+		holda:SetAttribute("ContainerInt", currentInt)
+
+		container.Position = UDim2.new(currentInt, 0, 0, 0)
 
 		local uICorner2 = Instance.new("UICorner")
 		uICorner2.Name = "uICorner2"
@@ -390,7 +488,7 @@ function Library:Create(config)
 		local holder = Instance.new("ScrollingFrame")
 		holder.Name = "holder"
 		holder.ScrollBarImageColor3 = Color3.fromRGB(76, 76, 76)
-		holder.ScrollBarThickness = 2
+		holder.ScrollBarThickness = 1
 		holder.ScrollingDirection = Enum.ScrollingDirection.Y
 		holder.CanvasSize = UDim2.new(0, 0, 0, 0)
 		holder.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -399,7 +497,7 @@ function Library:Create(config)
 		holder.BackgroundTransparency = 1
 		holder.BorderColor3 = Color3.fromRGB(33, 33, 33)
 		holder.Position = UDim2.fromScale(0.0022, 0.00404)
-		holder.Size = UDim2.fromOffset(452, 182)
+		holder.Size = UDim2.fromOffset(452, 215)
 
 		local uIPadding1 = Instance.new("UIPadding")
 		uIPadding1.Name = "uIPadding1"
@@ -419,34 +517,45 @@ function Library:Create(config)
 		uICorner11.Parent = holder
 
 		holder.Parent = container
-		container.Parent = main
-		container.Visible = false
+		container.Parent = holda
+		holda.Visible = true
+		holda.Parent = main
 
 		--// Event
 		hoverClickSFXs(main1)
 		main1.MouseButton1Click:Connect(function()
-			for _,v in pairs(location:FindFirstChild('dark_UI').main:GetChildren()) do
+			for _,v:Frame in pairs(location:FindFirstChild('dark_UI').main:GetChildren()) do
 				if v.Name == "container" then
-					v.Visible = false
+					local cont = v.containerr
+
+					local po = v:GetAttribute("ContainerInt") - currentInt
+
+					TweenService:Create(cont, TweenInfo.new(0.2), {Position = UDim2.new(po, 0, 0, 0)}):Play()
 				end
 			end
+
+
 			for _,v in pairs(location['dark_UI'].main.tabContainer:GetChildren()) do
 				if v:IsA('TextButton') then
 					game:GetService('TweenService'):Create(v, TweenInfo.new(0.15), {TextTransparency = 0.5}):Play()
 				end
 			end
-			container.Visible = true
+
+			holda.Visible = true
+			holda.ZIndex = 1
 			game:GetService('TweenService'):Create(main1, TweenInfo.new(0.15), {TextTransparency = 0}):Play()
 		end)
 
 		--// Elements
 		local ElementHandler = {}
-		function ElementHandler:Label(text)
+		function ElementHandler:Label(text, desc)
 			local label = Instance.new("Frame")
 			label.Name = "label"
 			label.BackgroundColor3 = PitchColor
 			label.Size = UDim2.fromOffset(441, 32)
 			label.Parent = holder
+
+			grad(label)
 
 			local uICorner3 = Instance.new("UICorner")
 			uICorner3.Name = "uICorner3"
@@ -464,9 +573,95 @@ function Library:Create(config)
 			textLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			textLabel.BackgroundTransparency = 1
 			textLabel.Position = UDim2.fromScale(0.0181, 0)
-			textLabel.Size = UDim2.fromOffset(1, 32)
+			textLabel.Size = UDim2.fromScale(0.5, 1)
 			textLabel.Parent = label
 		end
+
+		function ElementHandler:Banner(id, customHeight)
+			local label = Instance.new("ImageLabel")
+			label.Name = "banner"
+			label.BackgroundColor3 = PitchColor
+			if customHeight then
+				label.Size = UDim2.fromOffset(441, customHeight)
+			else
+				label.Size = UDim2.fromOffset(441, 80)
+			end
+			label.Parent = holder
+			label.Image = "rbxassetid://"..id
+			label.ScaleType = Enum.ScaleType.Crop
+
+			local uICorner3 = Instance.new("UICorner")
+			uICorner3.Name = "uICorner3"
+			uICorner3.CornerRadius = UDim.new(0, 6)
+			uICorner3.Parent = label
+		end
+
+		function ElementHandler:Image(assetId, imageWidth, height, desc)
+			height = height or 60
+
+			-- Container
+			local container = Instance.new("Frame")
+			container.Name = "ImageContainer"
+			container.BackgroundColor3 = PitchColor
+			container.Size = UDim2.new(0, 0, 0, height)
+			container.Size += UDim2.fromOffset(441, 0)
+			container.AutomaticSize = desc and Enum.AutomaticSize.Y or Enum.AutomaticSize.None
+			container.Parent = holder
+
+			grad(container)
+
+			local corner = Instance.new("UICorner")
+			corner.CornerRadius = UDim.new(0, 6)
+			corner.Parent = container
+
+			-- Padding
+			local padding = Instance.new("UIPadding")
+			padding.PaddingTop = UDim.new(0, 6)
+			padding.PaddingBottom = UDim.new(0, 6)
+			padding.PaddingLeft = UDim.new(0, 6)
+			padding.PaddingRight = UDim.new(0, 6)
+			padding.Parent = container
+
+			-- Vertical layout
+			local layout = Instance.new("UIListLayout")
+			layout.FillDirection = Enum.FillDirection.Vertical
+			layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+			layout.SortOrder = Enum.SortOrder.LayoutOrder
+			layout.Padding = UDim.new(0, 4)
+			layout.Parent = container
+
+			-- Image
+			local img = Instance.new("ImageLabel")
+			img.Name = "Image"
+			img.Image = "rbxassetid://" .. assetId
+			img.BackgroundTransparency = 1
+			img.Size = UDim2.fromOffset(imageWidth, height - 12)
+			img.Parent = container
+
+			local imgCorner = Instance.new("UICorner")
+			imgCorner.CornerRadius = UDim.new(0, 6)
+			imgCorner.Parent = img
+
+			-- Description (optional)
+			if desc then
+				local descLabel = Instance.new("TextLabel")
+				descLabel.Name = "Description"
+				descLabel.Font = config.ThemeFont
+				descLabel.Text = desc
+				descLabel.TextColor3 = Color3.fromRGB(203, 203, 203)
+				descLabel.TextSize = 10
+				descLabel.TextWrapped = true
+				descLabel.TextXAlignment = Enum.TextXAlignment.Left
+				descLabel.TextYAlignment = Enum.TextYAlignment.Top
+				descLabel.BackgroundTransparency = 1
+				descLabel.Size = UDim2.new(1, 0, 0, 0)
+				descLabel.AutomaticSize = Enum.AutomaticSize.Y
+				descLabel.Parent = container
+			end
+
+			return container
+		end
+
 
 		local startTime = tick()
 		local function formatTime(seconds)
@@ -481,8 +676,12 @@ function Library:Create(config)
 		end)
 
 
-		function ElementHandler:Button(text, callback)
+		function ElementHandler:Button(text, desc, callback)
 			text = text or "Button"
+			if desc ~= string and not callback then
+				callback = desc
+				desc = nil
+			end
 			callback = callback or function() end
 
 			local button = Instance.new("TextButton")
@@ -492,6 +691,9 @@ function Library:Create(config)
 			button.Size = UDim2.fromOffset(441, 32)
 			button.Text = ""
 			button.AutoButtonColor = false
+
+			bubbleClick(button)
+			grad(button)
 
 			local uICorner12 = Instance.new("UICorner")
 			uICorner12.Name = "uICorner12"
@@ -509,8 +711,27 @@ function Library:Create(config)
 			textLabel5.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			textLabel5.BackgroundTransparency = 1
 			textLabel5.Position = UDim2.fromScale(0.0181, 0)
-			textLabel5.Size = UDim2.fromOffset(1, 32)
+			textLabel5.Size = UDim2.fromScale(0.5, 1)
 			textLabel5.Parent = button
+
+			if desc then
+				local desclabl = Instance.new("TextLabel")
+				desclabl.Name = "desclabl"
+				desclabl.Font = config.ThemeFont
+				desclabl.Text = desc
+				desclabl.TextColor3 = Color3.fromRGB(203, 203, 203)
+				desclabl.TextSize = 10
+				desclabl.TextStrokeColor3 = Color3.fromRGB(195, 195, 195)
+				desclabl.TextXAlignment = Enum.TextXAlignment.Left
+				desclabl.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				desclabl.BackgroundTransparency = 1
+				desclabl.Position = UDim2.fromScale(0.0181, 0.38)
+				desclabl.Size = UDim2.fromOffset(1, 32)
+				desclabl.Parent = button
+
+				textLabel5.Size = UDim2.fromScale(0.5, 0.73)
+				button.Size = UDim2.fromOffset(441, 42)
+			end
 
 			local imageLabel = Instance.new("ImageLabel")
 			imageLabel.Name = "imageLabel"
@@ -550,6 +771,9 @@ function Library:Create(config)
 			button.Size = UDim2.fromOffset(441, 32)
 			button.Text = ""
 			button.AutoButtonColor = false
+
+			bubbleClick(button)
+			grad(button)
 
 			local uICorner12 = Instance.new("UICorner")
 			uICorner12.Name = "uICorner12"
@@ -641,6 +865,9 @@ function Library:Create(config)
 					item.TextScaled = true
 					item.Parent = drodownFrame
 
+
+					bubbleClick(item)
+
 					hoverClickSFXs(item)
 
 					local uICornerFrameb = Instance.new("UICorner")
@@ -677,6 +904,8 @@ function Library:Create(config)
 			button.BackgroundColor3 = PitchColor
 			button.Position = UDim2.fromScale(0, 0.135)
 			button.Size = UDim2.fromOffset(441, 32)
+
+			grad(button)
 
 			local uICorner12 = Instance.new("UICorner")
 			uICorner12.Name = "uICorner12"
@@ -722,18 +951,32 @@ function Library:Create(config)
 			UserInputService.InputBegan:connect(keybindClicked)
 		end
 
-		function ElementHandler:Slider(text, default, min, max, callback)
+		function ElementHandler:Slider(text, default, min, max, increments, callback)
 			text = text or "Slider"
 			min = min or 0
 			max = max or 100
-			default = math.clamp(default or min, min, max)
+			increments = increments or 1
 			callback = callback or function() end
 
+			local function roundToIncrement(n)
+				return math.round(n / increments) * increments
+			end
+
+			local function getDecimals(step)
+				local s = tostring(step)
+				local dot = string.find(s, "%.")
+				return dot and (#s - dot) or 0
+			end
+
+			local DECIMALS = getDecimals(increments)
+
+			local initialValue = math.clamp(default or min, min, max)
+			initialValue = roundToIncrement(initialValue)
+			initialValue = math.clamp(initialValue, min, max)
 			local TweenService = game:GetService("TweenService")
 			local UIS = game:GetService("UserInputService")
 			local RunService = game:GetService("RunService")
 
-			-- Slider button
 			local slider = Instance.new("TextButton")
 			slider.Name = "Slider"
 			slider.BackgroundColor3 = PitchColor
@@ -743,20 +986,21 @@ function Library:Create(config)
 			slider.Parent = holder
 			Instance.new("UICorner", slider).CornerRadius = UDim.new(0, 6)
 
+
+			grad(slider)
+
 			-- Title
 			local title = Instance.new("TextLabel")
 			title.Font = config.ThemeFont
 			title.Text = text
 			title.TextSize = 13
 			title.TextColor3 = Color3.new(1,1,1)
-			title.TextStrokeColor3 = Color3.fromRGB(195,195,195)
 			title.TextXAlignment = Enum.TextXAlignment.Left
 			title.BackgroundTransparency = 1
 			title.Position = UDim2.fromScale(0.02, 0)
 			title.Size = UDim2.fromScale(0.5, 1)
 			title.Parent = slider
 
-			-- Bar
 			local bar = Instance.new("Frame")
 			bar.BackgroundColor3 = darkerColor
 			bar.Position = UDim2.fromScale(0.75, 0.5)
@@ -765,99 +1009,108 @@ function Library:Create(config)
 			bar.Parent = slider
 			Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 3)
 
-			-- Fill
 			local fill = Instance.new("Frame")
 			fill.BackgroundColor3 = config.ThemeColor
-			fill.Size = UDim2.fromScale((default - min) / (max - min), 1)
+
+			local initialPercent = (initialValue - min) / (max - min)
+			fill.Size = UDim2.fromScale(initialPercent, 1)
 			fill.Parent = bar
 			Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 3)
 
-			-- Value
-			local valueLabel = Instance.new("TextLabel")
+			local valueLabel = Instance.new("TextBox")
 			valueLabel.Font = config.ThemeFont
 			valueLabel.TextSize = 13
 			valueLabel.TextColor3 = Color3.new(1,1,1)
-			valueLabel.TextStrokeColor3 = Color3.fromRGB(195,195,195)
 			valueLabel.BackgroundTransparency = 1
 			valueLabel.Position = UDim2.fromScale(0.65, 0)
 			valueLabel.Size = UDim2.fromOffset(44, 32)
-			valueLabel.Text = tostring(default)
+			valueLabel.Text = tostring(initialValue)
 			valueLabel.Parent = slider
 
-			-- State
 			local dragging = false
-			local activeInput = nil
-			local currentValue = default
+			local currentValue = initialValue
 
-			-- Helper
 			local function setValueFromX(x)
-				local percent = math.clamp(
-					(x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X,
-					0, 1
-				)
+				local rawPercent = math.clamp((x - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
+				local rawValue = min + (max - min) * rawPercent
 
-				local value = math.floor(min + (max - min) * percent)
+				local snappedValue = roundToIncrement(rawValue)
+				snappedValue = math.clamp(snappedValue, min, max)
 
-				if value ~= currentValue then
-					currentValue = value
-					valueLabel.Text = value
-					callback(value)
+
+				if snappedValue ~= currentValue then
+					currentValue = snappedValue
+					valueLabel.Text = string.format("%." .. DECIMALS .. "f", currentValue)
+					callback(currentValue)
 				end
 
-				TweenService:Create(fill, TweenInfo.new(0.06), {
-					Size = UDim2.fromScale(percent, 1)
+				local snappedPercent = (snappedValue - min) / (max - min)
+				TweenService:Create(fill, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Size = UDim2.fromScale(snappedPercent, 1)
 				}):Play()
 			end
 
-			-- Hover (PC only, harmless on mobile)
-			slider.MouseEnter:Connect(function()
-				TweenService:Create(slider, TweenInfo.new(0.25), {
-					BackgroundColor3 = PitchHoverColor
+			local function setValueFromNumber(n)
+				if not n then
+					valueLabel.Text = string.format("%." .. DECIMALS .. "f", currentValue)
+					return
+				end
+
+				local snappedValue = roundToIncrement(n)
+				snappedValue = math.clamp(snappedValue, min, max)
+
+				if snappedValue ~= currentValue then
+					currentValue = snappedValue
+					callback(currentValue)
+				end
+
+				valueLabel.Text = string.format("%." .. DECIMALS .. "f", currentValue)
+
+				local snappedPercent = (currentValue - min) / (max - min)
+				TweenService:Create(fill, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Size = UDim2.fromScale(snappedPercent, 1)
 				}):Play()
-			end)
+			end
 
-			slider.MouseLeave:Connect(function()
-				if not dragging then
-					TweenService:Create(slider, TweenInfo.new(0.25), {
-						BackgroundColor3 = PitchColor
-					}):Play()
-				end
-			end)
 
-			-- Input begin
 			slider.InputBegan:Connect(function(input)
-				if input.UserInputType == Enum.UserInputType.MouseButton1
-					or input.UserInputType == Enum.UserInputType.Touch then
+				if valueLabel:IsFocused() then return end
+
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 					dragging = true
-					activeInput = input
 					setValueFromX(input.Position.X)
 				end
 			end)
 
-			-- Input move
-			UIS.InputChanged:Connect(function(input)
-				if dragging and input == activeInput then
-					setValueFromX(input.Position.X)
+			valueLabel.FocusLost:Connect(function()
+				setValueFromNumber(tonumber(valueLabel.Text))
+			end)
+
+			RunService.RenderStepped:Connect(function()
+				if dragging then
+					local mousePos = UIS:GetMouseLocation()
+					setValueFromX(mousePos.X)
 				end
 			end)
 
-			-- Input end
 			UIS.InputEnded:Connect(function(input)
-				if input == activeInput then
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 					dragging = false
-					activeInput = nil
-
-					TweenService:Create(slider, TweenInfo.new(0.25), {
-						BackgroundColor3 = PitchColor
-					}):Play()
 				end
 			end)
 		end
 
 
-		function ElementHandler:Toggle(text, callback)
+
+		function ElementHandler:Toggle(text, desc, callback)
 			text = text or "Toggle"
+			if desc ~= string and not callback then
+				callback = desc
+				desc = nil
+			end
 			callback = callback or function() end
+			
+			local yeah = {}
 
 			toggless[text] = false
 
@@ -867,6 +1120,9 @@ function Library:Create(config)
 			toggle1.Size = UDim2.fromOffset(441, 32)
 			toggle1.Text = ""
 			toggle1.AutoButtonColor = false
+
+			bubbleClick(toggle1)
+			grad(toggle1)
 
 			local uICorner9 = Instance.new("UICorner")
 			uICorner9.Name = "uICorner9"
@@ -884,8 +1140,27 @@ function Library:Create(config)
 			textLabel4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			textLabel4.BackgroundTransparency = 1
 			textLabel4.Position = UDim2.fromScale(0.0181, 0)
-			textLabel4.Size = UDim2.fromOffset(1, 32)
+			textLabel4.Size = UDim2.fromScale(0.5, 1)
 			textLabel4.Parent = toggle1
+
+			if desc then
+				local desclabl = Instance.new("TextLabel")
+				desclabl.Name = "desclabl"
+				desclabl.Font = config.ThemeFont
+				desclabl.Text = desc
+				desclabl.TextColor3 = Color3.fromRGB(203, 203, 203)
+				desclabl.TextSize = 10
+				desclabl.TextStrokeColor3 = Color3.fromRGB(195, 195, 195)
+				desclabl.TextXAlignment = Enum.TextXAlignment.Left
+				desclabl.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				desclabl.BackgroundTransparency = 1
+				desclabl.Position = UDim2.fromScale(0.0181, 0.38)
+				desclabl.Size = UDim2.fromOffset(1, 32)
+				desclabl.Parent = toggle1
+
+				textLabel4.Size = UDim2.fromScale(0.5, 0.73)
+				toggle1.Size = UDim2.fromOffset(441, 42)
+			end
 
 			local frame3 = Instance.new("Frame")
 			frame3.Name = "frame3"
@@ -931,110 +1206,37 @@ function Library:Create(config)
 					game:GetService('TweenService'):Create(uIStroke1, TweenInfo.new(0.2), {Color = Color3.fromRGB(76, 76, 76)}):Play()
 				end
 			end)
-		end
-
-		function ElementHandler:LoopToggle(text, interval, callback)
-			text = text or "Toggle"
-			callback = callback or function() end
-
-			local toggle1 = Instance.new("TextButton")
-			toggle1.Name = "toggle1"
-			toggle1.BackgroundColor3 = PitchColor
-			toggle1.Size = UDim2.fromOffset(441, 32)
-			toggle1.Text = ""
-			toggle1.AutoButtonColor = false
-
-			local uICorner9 = Instance.new("UICorner")
-			uICorner9.Name = "uICorner9"
-			uICorner9.CornerRadius = UDim.new(0, 6)
-			uICorner9.Parent = toggle1
-
-			local textLabel4 = Instance.new("TextLabel")
-			textLabel4.Name = "textLabel4"
-			textLabel4.Font = config.ThemeFont
-			textLabel4.Text = text
-			textLabel4.TextColor3 = Color3.fromRGB(255, 255, 255)
-			textLabel4.TextSize = 13
-			textLabel4.TextStrokeColor3 = Color3.fromRGB(195, 195, 195)
-			textLabel4.TextXAlignment = Enum.TextXAlignment.Left
-			textLabel4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			textLabel4.BackgroundTransparency = 1
-			textLabel4.Position = UDim2.fromScale(0.0181, 0)
-			textLabel4.Size = UDim2.fromOffset(1, 32)
-			textLabel4.Parent = toggle1
-
-			local frame3 = Instance.new("Frame")
-			frame3.Name = "frame3"
-			frame3.BackgroundColor3 = config.ThemeColor
-			frame3.Position = UDim2.fromScale(0.943, 0.219)
-			frame3.Size = UDim2.fromOffset(18, 18)
-
-			local imag4e = Instance.new("ImageLabel")
-			imag4e.Name = "imag4e"
-			imag4e.BackgroundColor3 = config.ThemeColor
-			imag4e.BackgroundTransparency = 1
-			imag4e.Image = "rbxassetid://11570018242"
-			imag4e.Position = UDim2.fromScale(0.943, 0.219)
-			imag4e.Size = UDim2.fromOffset(18, 18)
-
-			local uICorner10 = Instance.new("UICorner")
-			uICorner10.Name = "uICorner10"
-			uICorner10.CornerRadius = UDim.new(0, 3)
-			uICorner10.Parent = frame3
-
-			local uIStroke1 = Instance.new("UIStroke")
-			uIStroke1.Name = "uIStroke1"
-			uIStroke1.Color = Color3.fromRGB(76, 76, 76)
-			uIStroke1.Parent = frame3
-
-			frame3.Parent = toggle1
-			imag4e.Parent = toggle1
-
-			toggle1.Parent = holder
-
-			local tog = false
-
-			hoverClickSFXs(toggle1)
-
-			toggle1.MouseEnter:Connect(function()
-				game:GetService('TweenService'):Create(toggle1, TweenInfo.new(0.3), {BackgroundColor3 = PitchHoverColor}):Play()
-			end)
-
-			toggle1.MouseLeave:Connect(function()
-				game:GetService('TweenService'):Create(toggle1, TweenInfo.new(0.3), {BackgroundColor3 = PitchColor}):Play()
-			end)
-
-			toggle1.MouseButton1Click:Connect(function()
-				tog = not tog
+			
+			function yeah.Set(bool)
+				tog = bool
+				toggless[text] = tog
+				callback(tog)
 				if tog then
 					game:GetService('TweenService'):Create(frame3, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(23, 143, 75)}):Play()
 					game:GetService('TweenService'):Create(uIStroke1, TweenInfo.new(0.1), {Color = Color3.fromRGB(32, 202, 106)}):Play()
 				else
-					game:GetService('TweenService'):Create(frame3, TweenInfo.new(0.1), {BackgroundColor3 = config.ThemeColor}):Play()
-					game:GetService('TweenService'):Create(uIStroke1, TweenInfo.new(0.1), {Color = Color3.fromRGB(76, 76, 76)}):Play()
+					game:GetService('TweenService'):Create(frame3, TweenInfo.new(0.2), {BackgroundColor3 = config.ThemeColor}):Play()
+					game:GetService('TweenService'):Create(uIStroke1, TweenInfo.new(0.2), {Color = Color3.fromRGB(76, 76, 76)}):Play()
 				end
-			end)
-
-			task.spawn(function()
-				while true do
-					if tog == true then
-						callback()
-						task.wait(interval)
-					else
-						task.wait()
-					end
-				end
-			end)
+			end
+			
+			return yeah
 		end
 
-		function ElementHandler:Textbox(text, callback)
+		function ElementHandler:Textbox(text, desc, callback)
 			text = text or "Textbox"
+			if desc ~= string and not callback then
+				callback = desc
+				desc = nil
+			end
 			callback = callback or function() end
 
 			local textbox = Instance.new("Frame")
 			textbox.Name = "textbox"
 			textbox.BackgroundColor3 = PitchColor
 			textbox.Size = UDim2.fromOffset(441, 32)
+
+			grad(textbox)
 
 			local uICorner13 = Instance.new("UICorner")
 			uICorner13.Name = "uICorner13"
@@ -1052,8 +1254,27 @@ function Library:Create(config)
 			textLabel6.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			textLabel6.BackgroundTransparency = 1
 			textLabel6.Position = UDim2.fromScale(0.0181, 0)
-			textLabel6.Size = UDim2.fromOffset(1, 32)
+			textLabel6.Size = UDim2.fromScale(0.5, 1)
 			textLabel6.Parent = textbox
+
+			if desc then
+				local desclabl = Instance.new("TextLabel")
+				desclabl.Name = "desclabl"
+				desclabl.Font = config.ThemeFont
+				desclabl.Text = desc
+				desclabl.TextColor3 = Color3.fromRGB(203, 203, 203)
+				desclabl.TextSize = 10
+				desclabl.TextStrokeColor3 = Color3.fromRGB(195, 195, 195)
+				desclabl.TextXAlignment = Enum.TextXAlignment.Left
+				desclabl.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				desclabl.BackgroundTransparency = 1
+				desclabl.Position = UDim2.fromScale(0.0181, 0.38)
+				desclabl.Size = UDim2.fromOffset(1, 32)
+				desclabl.Parent = textbox
+
+				textLabel6.Size = UDim2.fromScale(0.5, 0.73)
+				textbox.Size = UDim2.fromOffset(441, 42)
+			end
 
 			local textBox = Instance.new("TextBox")
 			textBox.Name = "textBox"
@@ -1114,39 +1335,111 @@ function Library:Create(config)
 	local dragInput
 	local dragStart
 	local startPos
+	local dragging = false
 
-	local function update(input)
-		local delta = input.Position - dragStart
-		main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	local lastPos = nil
+	local lastTime = 0
+	local smoothedPlayback = 1
+
+	local function startDrag(input)
+		dragging = true
+		dragStart = input.Position
+		startPos = main.Position
+
+		lastPos = nil
+		lastTime = os.clock()
+		smoothedPlayback = 1
+
+		draggingSFX.Looped = true
+		draggingSFX.PlaybackSpeed = 1
+		--draggingSFX:Play()
 	end
 
+	local function stopDrag()
+		dragging = false
+		lastPos = nil
+
+		if draggingSFX.IsPlaying then
+			TweenService:Create(draggingSFX, TweenInfo.new(0.2), {PlaybackSpeed = 0}):Play()
+		end
+	end
+
+	local function update(input)
+		local now = os.clock()
+		local dt = now - lastTime
+		lastTime = now
+
+		if not lastPos or dt <= 0 then
+			lastPos = input.Position
+			return
+		end
+
+		-- movement since last frame
+		local delta = input.Position - lastPos
+		lastPos = input.Position
+
+		-- === SFX SPEED (velocity based) ===
+		local speed = delta.Magnitude / dt
+		local targetPlayback = math.clamp(speed / 800, 0, 2)
+
+		smoothedPlayback += (targetPlayback - smoothedPlayback) * 0.25
+		draggingSFX.PlaybackSpeed = smoothedPlayback
+
+		-- === UI POSITION ===
+		local totalDelta = input.Position - dragStart
+
+		local targetPos = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + totalDelta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + totalDelta.Y
+		)
+
+		if dragTween then
+			dragTween:Cancel()
+		end
+
+		dragTween = TweenService:Create(
+			main,
+			TweenInfo.new(
+				DRAG_SMOOTHNESS,
+				Enum.EasingStyle.Quad,
+				Enum.EasingDirection.Out
+			),
+			{ Position = targetPos }
+		)
+
+		dragTween:Play()
+	end
+
+	-- === INPUT HANDLING ===
+
 	main.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			dragStart = input.Position
-			startPos = main.Position
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch then
+			startDrag(input)
 
 			input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
-					dragging = false
+					stopDrag()
 				end
 			end)
 		end
 	end)
 
 	main.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		if input.UserInputType == Enum.UserInputType.MouseMovement
+			or input.UserInputType == Enum.UserInputType.Touch then
 			dragInput = input
 		end
 	end)
 
 	UserInputService.InputChanged:Connect(function(input)
-		if input == dragInput and dragging then
-			if main.Visible then
-				update(input)
-			end
+		if input == dragInput and dragging and main.Visible then
+			update(input)
 		end
 	end)
+
 
 
 	-- make the first tab visible
