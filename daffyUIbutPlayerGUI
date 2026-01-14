@@ -6,7 +6,7 @@ local location
 if game:GetService("RunService"):IsStudio() then
 	location = game.Players.LocalPlayer.PlayerGui
 else
-	location = game.Players.LocalPlayer.PlayerGui
+	location = game:GetService("Players").LocalPlayer.PlayerGui.GameScreen
 end
 
 for _,v in pairs(location:GetChildren()) do
