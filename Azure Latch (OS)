@@ -665,7 +665,7 @@ workspace.FallenPartsDestroyHeight = -50000
 game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(1, -49999, 1))
 end)
 
-maintab2:Label("Ball Magnet: Allows You To Grab The Ball From Further Away.")
+maintab2:Label("Original Ball Magnet: Allows You To Grab The Ball From Further Away.")
 
 maintab2:Toggle("Ball Magnet", "The Original Ball Magnet, Always On Max Range.", function()
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
@@ -752,6 +752,84 @@ maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", "Similar To The Origina
     end
 end)
 
+maintab2:Toggle("Ball Magnet Hitbox", "Shows The Magnet's Hitbox On The Ball.", function()
+
+	getgenv().ballHitboxActive = not getgenv().ballHitboxActive
+
+	game.StarterGui:SetCore("SendNotification", {
+		Title = "Ball Magnet Hitbox",
+		Text = getgenv().ballHitboxActive and "Enabled." or "Disabled.",
+		Duration = 1
+	})
+
+	local RunService = game:GetService("RunService")
+
+	local function removeHitbox()
+		if getgenv().ballHitbox then
+			getgenv().ballHitbox:Destroy()
+			getgenv().ballHitbox = nil
+		end
+	end
+
+	local function stopLoop()
+		if getgenv().ballHitboxLoop then
+			getgenv().ballHitboxLoop:Disconnect()
+			getgenv().ballHitboxLoop = nil
+		end
+	end
+
+	if not getgenv().ballHitboxActive then
+		stopLoop()
+		removeHitbox()
+		return
+	end
+
+	stopLoop()
+
+	getgenv().ballHitboxLoop = RunService.Heartbeat:Connect(function()
+
+		if not getgenv().ballHitboxActive then
+			stopLoop()
+			removeHitbox()
+			return
+		end
+
+		local terrain = workspace:FindFirstChild("Terrain")
+		local ball = terrain and terrain:FindFirstChild("Ball")
+
+		if not ball or not ball:IsA("BasePart") then
+			removeHitbox()
+			return
+		end
+
+		if not getgenv().ballHitbox then
+			local hitbox = Instance.new("Part")
+			hitbox.Name = "BallMagnetHitbox"
+			hitbox.Shape = Enum.PartType.Ball
+			hitbox.Size = Vector3.new(50, 50, 50)
+			hitbox.Material = Enum.Material.Neon
+			hitbox.Color = Color3.fromRGB(15, 155, 155)
+			hitbox.Transparency = 0.9
+			hitbox.CanCollide = false
+			hitbox.CanTouch = false
+			hitbox.CanQuery = false
+			hitbox.Anchored = false
+			hitbox.Massless = true
+			hitbox.CFrame = ball.CFrame
+			hitbox.Parent = ball
+
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = ball
+			weld.Part1 = hitbox
+			weld.Parent = hitbox
+
+			getgenv().ballHitbox = hitbox
+		end
+	end)
+end)
+
+maintab2:Label("Ball Magnet Radius: Same As Above, But The Range Is Changeable.")
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -802,6 +880,83 @@ getgenv().ballMagnetConnection = RunService.Heartbeat:Connect(function()
         end
     end
 end)
+
+maintab2:Toggle("Ball Magnet Radius Hitbox", "Shows The Magnet's Hitbox On The Ball.", function()
+	getgenv().ballRangeVizEnabled = not getgenv().ballRangeVizEnabled
+
+	game.StarterGui:SetCore("SendNotification", {
+		Title = "Ball Magnet Radius Hitbox",
+		Text = getgenv().ballRangeVizEnabled and "Enabled." or "Disabled.",
+		Duration = 1
+	})
+
+	local RunService = game:GetService("RunService")
+
+	local function removeHitbox()
+		if getgenv().ballRangeHitbox then
+			getgenv().ballRangeHitbox:Destroy()
+			getgenv().ballRangeHitbox = nil
+		end
+	end
+
+	local function stopLoop()
+		if getgenv().ballRangeLoop then
+			getgenv().ballRangeLoop:Disconnect()
+			getgenv().ballRangeLoop = nil
+		end
+	end
+
+	if not getgenv().ballRangeVizEnabled then
+		stopLoop()
+		removeHitbox()
+		return
+	end
+
+	stopLoop()
+
+	getgenv().ballRangeLoop = RunService.Heartbeat:Connect(function()
+		if not getgenv().ballRangeVizEnabled then
+			stopLoop()
+			removeHitbox()
+			return
+		end
+
+		local terrain = workspace:FindFirstChild("Terrain")
+		local ball = terrain and terrain:FindFirstChild("Ball")
+		if not ball or not ball:IsA("MeshPart") then
+			removeHitbox()
+			return
+		end
+
+		local radius = getgenv().ballMagnetRadius or 1
+		if radius < 2 then
+			removeHitbox()
+			return
+		end
+
+		if not getgenv().ballRangeHitbox then
+			local hitbox = Instance.new("Part")
+			hitbox.Name = "BallMagnetRange"
+			hitbox.Shape = Enum.PartType.Ball
+			hitbox.Material = Enum.Material.Neon
+			hitbox.Color = Color3.fromRGB(15, 155, 155)
+			hitbox.Transparency = 0.9
+			hitbox.CanCollide = false
+			hitbox.CanTouch = false
+			hitbox.CanQuery = false
+			hitbox.Anchored = true
+			hitbox.Massless = true
+			hitbox.Parent = workspace
+			getgenv().ballRangeHitbox = hitbox
+		end
+
+		local d = radius * 2
+		local hitbox = getgenv().ballRangeHitbox
+		hitbox.Size = Vector3.new(d, d, d)
+		hitbox.CFrame = ball.CFrame
+	end)
+end)
+
 
 maintab2:Label("Set The Auto-Counter Number To Your Character's Counter Move!")
 
@@ -2111,18 +2266,6 @@ misctab:Button("Background Music", function()
     end
 end)
 
-misctab:Button("Enable Fandub (rejoin to fix)", function()
-game:GetService("ReplicatedStorage").Resources.aiku["aiku awake fail sfx"].SoundId = game:GetService("ReplicatedStorage").Resources.aiku.offtheballrnp.SoundId
-game:GetService("ReplicatedStorage").Resources.aiku["aiku awake_1"].SoundId = game:GetService("ReplicatedStorage").Resources.aiku["aiku awake_rnp"].SoundId
-game:GetService("ReplicatedStorage").Resources.aiku.defense.SoundId = game:GetService("ReplicatedStorage").Resources.aiku.defense_rnp.SoundId
-game:GetService("ReplicatedStorage").Resources.aiku.formerstriker.SoundId = game:GetService("ReplicatedStorage").Resources.aiku.formerstriker_rnp.SoundId
-
-game:GetService("ReplicatedStorage").Resources.nelisagi["isagi 1 percent flow sfx"].SoundId = game:GetService("ReplicatedStorage").Resources.nelisagi.RinNoPlay["isagi 1 percent flow sfx"].SoundId
-game:GetService("ReplicatedStorage").Resources.nelisagi["nelisagi awk off sfx"].SoundId = game:GetService("ReplicatedStorage").Resources.nelisagi.RinNoPlay["nelisagi awk off sfx"].SoundId
-game:GetService("ReplicatedStorage").Resources.nelisagi["nelisagi awk sfx"].SoundId = game:GetService("ReplicatedStorage").Resources.nelisagi.RinNoPlay["nelisagi awk sfx"].SoundId
-game:GetService("ReplicatedStorage").Resources.nelisagi["Isagi overtime sfx"].SoundId = game:GetService("ReplicatedStorage").Resources.nelisagi.RinNoPlay["Isagi overtime sfx"].SoundId
-end)
-
 misctab:Label("Emotes.")
 
 misctab:Toggle("Toosie Slide", function()
@@ -2543,7 +2686,7 @@ end
 
 local function trackGoalsLoop()
     task.spawn(function()
-        local goals = LocalPlayer:WaitForChild("leaderstats"):WaitForChild("goals") -- explicitly YOUR goals NumberValue
+        local goals = LocalPlayer:WaitForChild("leaderstats"):WaitForChild("goals")
         while _G.GoalFarm.Enabled do
             task.wait(1)
             local count = goals.Value
