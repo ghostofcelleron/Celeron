@@ -806,7 +806,7 @@ maintab2:Toggle("Ball Magnet Hitbox", "Shows The Magnet's Hitbox On The Ball.", 
 			local hitbox = Instance.new("Part")
 			hitbox.Name = "BallMagnetHitbox"
 			hitbox.Shape = Enum.PartType.Ball
-			hitbox.Size = Vector3.new(50, 50, 50)
+			hitbox.Size = Vector3.new(25, 25, 25)
 			hitbox.Material = Enum.Material.Neon
 			hitbox.Color = Color3.fromRGB(15, 155, 155)
 			hitbox.Transparency = 0.9
@@ -839,7 +839,7 @@ local localPlayer = Players.LocalPlayer
 
 getgenv().ballMagnetRadius = 1
 
-maintab2:Slider("Ball Magnet Radius", 1, 1, 50, 0.5, function(v)
+maintab2:Slider("Ball Magnet Radius", 1, 1, 25, 0.5, function(v)
     getgenv().ballMagnetRadius = v
 end)
 
@@ -1464,7 +1464,7 @@ local autoActivateToggle = false
 local autoActivateMove = 1
 local autoActivatedb = true
 
-maintab2:Textbox("Auto Activate Move Number", "eg: 1, 2, 3, 4, 5", function(v)
+maintab2:Textbox("Auto Activate Move Number", "Example: 1, 2, 3, 4, 5", function(v)
     local nsdv = tonumber(v)
     if nsdv and nsdv <= 5 and nsdv > 0 then
         print("updated to " .. nsdv)
@@ -1818,7 +1818,172 @@ sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
 maintab2:Button("Auto GK (Made By Daffy.)", "Automatically Attempts To Block Shots By Opponents, Reset Or Click F4 To Disable.", function()
-loadstring(game:HttpGet("https://pastebin.com/raw/ew2Zqhy0"))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local plr = Players.LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local cam = workspace.CurrentCamera
+local hum = char:WaitForChild("Humanoid")
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+local originalCamType = cam.CameraType
+local originalCamCFrame = cam.CFrame
+
+local guii = Instance.new("ScreenGui")
+guii.Parent = plr.PlayerGui
+
+local cambu = Instance.new("TextButton")
+cambu.Text = "Camera Mode"
+cambu.Size = UDim2.new(0.159,0,0.109,0)
+cambu.Position = UDim2.new(0.317,0,0.444,0)
+cambu.TextScaled = true
+cambu.Parent = guii
+
+local gerg = Instance.new("TextButton")
+gerg.Text = "Body Mode"
+gerg.Size = UDim2.new(0.159,0,0.109,0)
+gerg.Position = UDim2.new(0.524,0,0.444,0)
+gerg.TextScaled = true
+gerg.Parent = guii
+
+local dot = Instance.new("Frame")
+dot.Size = UDim2.new(0.012,0,0.025,0)
+dot.Position = UDim2.new(0.988,0,0.975,0)
+dot.BackgroundColor3 = Color3.fromRGB(0,255,0)
+dot.BorderSizePixel = 0
+dot.Parent = guii
+
+local buffers = {}
+loadstring(game:HttpGet("https://pastebin.com/raw/8XJh7dzh"))()
+repeat task.wait() until game.Lighting:FindFirstChild("BUFFERSTRINGS")
+for _,v in ipairs(game.Lighting.BUFFERSTRINGS:GetChildren()) do
+	buffers[v.Name] = v.Value
+end
+game.Lighting.BUFFERSTRINGS:Destroy()
+
+local kind = ""
+cambu.MouseButton1Up:Connect(function()
+	kind = "cam"
+end)
+gerg.MouseButton1Up:Connect(function()
+	kind = "body"
+end)
+
+repeat task.wait() until kind ~= ""
+cambu:Destroy()
+gerg:Destroy()
+
+local function getBall()
+	return workspace.Terrain:FindFirstChild("Ball")
+end
+
+local align
+if kind == "body" then
+	hum.AutoRotate = false
+	align = Instance.new("AlignOrientation")
+	align.Mode = Enum.OrientationAlignmentMode.OneAttachment
+	align.Attachment0 = hrp:WaitForChild("RootAttachment")
+	align.Responsiveness = 300
+	align.MaxTorque = math.huge
+	align.Enabled = false
+	align.Parent = hrp
+end
+
+local onn = true
+local pause = false
+
+local ballHolder = ReplicatedStorage.workspace.ballHolder
+local lastHolder = ballHolder.Value
+
+ballHolder.Changed:Connect(function()
+	local cur = ballHolder.Value
+	if lastHolder == char and cur == nil then
+		pause = true
+		task.delay(0.7, function()
+			pause = false
+		end)
+	end
+	lastHolder = cur
+end)
+
+local remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
+
+local function cleanup()
+	onn = false
+
+	if align then
+		align:Destroy()
+	end
+
+	cam.CameraType = originalCamType
+	cam.CFrame = originalCamCFrame
+
+	if guii then
+		guii:Destroy()
+	end
+end
+
+local con
+con = RunService.RenderStepped:Connect(function()
+	if not onn then
+		con:Disconnect()
+		return
+	end
+
+	local ball = getBall()
+	if not ball or plr.Team == game.Teams.lobby or pause then
+		if align then align.Enabled = false end
+		return
+	end
+
+	if kind == "cam" then
+		cam.CameraType = Enum.CameraType.Scriptable
+		cam.CFrame = CFrame.lookAt(cam.CFrame.Position, ball.Position)
+
+	elseif kind == "body" then
+		align.Enabled = true
+		local dir = ball.Position - hrp.Position
+		dir = Vector3.new(dir.X, 0, dir.Z)
+		if dir.Magnitude > 0.01 then
+			align.CFrame = CFrame.lookAt(Vector3.zero, dir)
+		end
+	end
+
+	local dist = (hrp.Position - ball.Position).Magnitude
+	if dist <= 60 then
+		if ball.Position.Y >= hrp.Position.Y + 6 then
+			hum.Jump = true
+		else
+			hum.Jump = false
+		end
+
+		remote:FireServer(
+			buffer.fromstring(buffers.base),
+			{
+				{ "tackle" }
+			}
+		)
+	end
+end)
+
+local kill
+kill = UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
+	if input.KeyCode == Enum.KeyCode.F4 then
+		cleanup()
+		kill:Disconnect()
+		con:Disconnect()
+	end
+end)
+
+repeat task.wait() until hum.Health <= 0 or plr.Team == game.Teams.lobby
+cleanup()
+kill:Disconnect()
+con:Disconnect()
+
 end)
 
 maintab2:Button("Fix Duplicate Ball", "I Don't Know If This Is Still An Issue But Removes Duplicate Balls If Existent.", function()
@@ -2104,6 +2269,17 @@ StarterGui:SetCore("SendNotification", {
 loadstring(game:HttpGet("https://pastebin.com/raw/LbRRX7SK"))()
 end)
 
+funtab:Button("Lore Sae Moveset (Req. Sae.)", function()
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Credits",
+    Text = "brought to you by daffy!",
+    Duration = 5,
+    Button1 = "OK",
+})
+loadstring(game:HttpGet("https://pastebin.com/raw/kMQ0v88u"))()
+end)
+
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
@@ -2206,63 +2382,118 @@ timer.Changed:Connect(function()
 end)
 end)
 
-local bgmusicdb = false
-misctab:Button("Background Music", function()
-    if bgmusicdb == false then
-        bgmusicdb = true
-        local plr = game.Players.LocalPlayer
-        local char = plr.Character
-        local hum = char.Humanoid
+local Players = game:GetService("Players")
+local SoundService = game:GetService("SoundService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
 
-        local music = {
-            "rbxassetid://126478006472705",
-            "rbxassetid://138210588552041",
-            "rbxassetid://137856744878500",
-            "rbxassetid://97581213878614",
-            "rbxassetid://71371939631022",
-            "rbxassetid://119592773299545",
-            "rbxassetid://134456641764445",
-            "rbxassetid://100509882059819",
-            "rbxassetid://128623853689708",
-            "rbxassetid://70979311703713",
-            "rbxassetid://92420662159372",
-            "rbxassetid://97837345641106",
-            "rbxassetid://102469310336986",
-            "rbxassetid://101851803743361",
-        }
+local plr = Players.LocalPlayer
 
+local bgmusicEnabled = false
+local musicThread
+local awakenThread
+local sfx
 
-        if game.SoundService:FindFirstChild("BGMusic") then
-            game.SoundService.BGMusic:Destroy()
+local music = {
+    "rbxassetid://126478006472705",
+    "rbxassetid://138210588552041",
+    "rbxassetid://137856744878500",
+    "rbxassetid://97581213878614",
+    "rbxassetid://71371939631022",
+    "rbxassetid://119592773299545",
+    "rbxassetid://134456641764445",
+    "rbxassetid://100509882059819",
+    "rbxassetid://128623853689708",
+    "rbxassetid://70979311703713",
+    "rbxassetid://92420662159372",
+    "rbxassetid://97837345641106",
+    "rbxassetid://102469310336986",
+    "rbxassetid://101851803743361",
+	"rbxassetid://88021645218929"
+}
+
+local function notify(title, text)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = 3
+    })
+end
+
+local function stopMusic()
+    bgmusicEnabled = false
+
+    if musicThread then
+        task.cancel(musicThread)
+        musicThread = nil
+    end
+
+    if awakenThread then
+        task.cancel(awakenThread)
+        awakenThread = nil
+    end
+
+    if sfx then
+        sfx:Stop()
+        sfx:Destroy()
+        sfx = nil
+    end
+
+    notify("Background Music", "Disabled.")
+end
+
+local function startMusic()
+    bgmusicEnabled = true
+
+    local char = plr.Character or plr.CharacterAdded:Wait()
+    local hum = char:WaitForChild("Humanoid")
+
+    if SoundService:FindFirstChild("BGMusic") then
+        SoundService.BGMusic:Destroy()
+    end
+
+    sfx = Instance.new("Sound")
+    sfx.Name = "BGMusic"
+    sfx.Volume = 1
+    sfx.Looped = false
+    sfx.SoundId = music[math.random(#music)]
+    sfx.Parent = SoundService
+
+    musicThread = task.spawn(function()
+        while bgmusicEnabled and hum.Health > 0 do
+            sfx:Play()
+            sfx.Ended:Wait()
+            if not bgmusicEnabled then break end
+            sfx.SoundId = music[math.random(#music)]
         end
-        local sfx = Instance.new("Sound")
-        sfx.Name = "BGMusic"
-        sfx.Parent = game.SoundService
-        sfx.SoundId = music[math.random(1, #music)]
+    end)
 
-        task.spawn(function()
-            while hum do
-                sfx:Play()
-                task.wait(sfx.TimeLength)
-                sfx.SoundId = music[math.random(1, #music)]
-            end
-        end)
-
-        task.spawn(function()
-            while hum do
-                task.wait()
-
-                if game:GetService("ReplicatedStorage").workspace.awaken.Value ~= nil then
+    awakenThread = task.spawn(function()
+        while bgmusicEnabled and hum.Health > 0 do
+            task.wait(0.2)
+            local awaken = ReplicatedStorage.workspace.awaken.Value
+            if awaken ~= nil then
+                if sfx.IsPlaying then
                     sfx:Pause()
-                else
+                end
+            else
+                if not sfx.IsPlaying then
                     sfx:Resume()
                 end
             end
-        end)
+        end
+    end)
 
-        hum.Died:Connect(function()
-            sfx:Destroy()
-        end)
+    hum.Died:Connect(stopMusic)
+
+    notify("Background Music", "Enabled.")
+end
+
+misctab:Toggle("Background Music", function()
+    if bgmusicEnabled then
+        stopMusic()
+    else
+        startMusic()
     end
 end)
 
@@ -2773,4 +3004,4 @@ exploittab:Textbox("Goal Target", "Enter a number of goals to stop farming at.",
     end
 end)
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/old%20thing%20ill%20keep%20here",true))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/old%20thing%20ill%20keep%20here",true))()a
