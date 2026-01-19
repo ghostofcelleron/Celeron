@@ -100,7 +100,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
 		task.wait(0.35)
 		local forward = (root.CFrame - root.Position).LookVector
 		ReplicatedStorage.ByteNetReliable:FireServer(
-			buffer.fromstring("\034\001"),
+			buffer.fromstring("\035\001"),
 			{ { "kick", 100, false, vector.create(forward.X, forward.Y + 0.3, forward.Z) } }
 		)
 	end
