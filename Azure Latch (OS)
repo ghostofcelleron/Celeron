@@ -1,4 +1,4 @@
-local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/daff"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
@@ -8,8 +8,6 @@ local win = ui:Create({
     ThemeFont = Enum.Font.GothamBold,
 	ToggledSideBar = true
 })
-
-print("version: v2")
 
 local hometab = win:Tab("Home")
 local maintab = win:Tab("Blatant")
@@ -3007,3 +3005,4 @@ exploittab:Textbox("Goal Target", "Enter a number of goals to stop farming at.",
 end)
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/oldthingyep",true))()
+loadstring(game:HttpGet("https://pastebin.com/raw/rQMS2B9R",true))()
