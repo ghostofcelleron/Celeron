@@ -3007,5 +3007,3 @@ exploittab:Textbox("Goal Target", "Enter a number of goals to stop farming at.",
 end)
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/oldthingyep",true))()
-loadstring(game:HttpGet("https://pastebin.com/raw/fuWtkE23",true))()
-loadstring(game:HttpGet("https://pastebin.com/raw/rQMS2B9R",true))()
