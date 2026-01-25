@@ -1297,7 +1297,7 @@ end)
 local running = false
 local sg = game:GetService("StarterGui")
 
-maintab:Toggle("Spam Brick Sound (6V6 + GK Only.)", "This SHOULD Be Self Explanatory.", function(state)
+maintab:Toggle("Spam Brick Sound (5v5 + GK Only.)", "This SHOULD Be Self Explanatory.", function(state)
     running = state
 
     if running then
