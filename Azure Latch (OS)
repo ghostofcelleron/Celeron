@@ -1351,18 +1351,22 @@ maintab:Toggle("Spam Brick Sound (6V6 + GK Only.)", "This SHOULD Be Self Explana
     end
 end)
 
-maintab:Button("Manual Score", "Enters The Other Team's Goal Box.", function()
-if game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-	if workspace:WaitForChild("map"):WaitForChild("Agoal") and workspace:WaitForChild("map"):WaitForChild("Bgoal") then
-		if game:GetService("Players").LocalPlayer.Team then
-			game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame =
-				(game:GetService("Players").LocalPlayer.Team.Name == "A"
-					and workspace.map.Bgoal
-					or workspace.map.Agoal
-				).CFrame
-		end
-	end
-end
+maintab:Button("Goalkeeper Anywhere (Rejoin To Disable.) (Credit: someone cool..)", "Allows You To Do GK Side Dashes Instead!", function()
+game:GetService("StarterGui"):SetCore("SendNotification", {
+			Title = "Goalkeeper Anywhere",
+			Text = "If You Don't See GK Animations, Your Executor Doesn't Support The Required Functions.",
+			Duration = 10,
+            Button1 = "ok my executor is fine",
+            Button2 = "aw man my executor sucks"
+})
+
+local module = game:GetService("ReplicatedStorage").util.actionUtil
+local env = require(module)
+
+local oldfunc
+oldfunc = hookfunction(env.checkGK, function (...)
+    return true
+end)
 end)
 
 maintab2:Label("Auto Position: Instantly Picks Certain Position.")
