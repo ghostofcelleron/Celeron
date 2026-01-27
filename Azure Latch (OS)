@@ -1528,7 +1528,7 @@ end)
 
 maintab2:Label("Auto Goalkeeper: Automatically Plays As GK For You.")
 
-maintab2:Button("Celeron's Auto GK", "Automatically Attempts To Block Shots By Opponents, Reset Or Click F4 To Disable.", function()
+maintab2:Button("Celeron's Auto GK (V1, Silent.)", "Automatically Attempts To Block Shots By Opponents, Reset Or Click F4 To Disable.", function()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -1659,6 +1659,171 @@ conn = RunService.RenderStepped:Connect(function(dt)
 		hum.Jump = true
 		local moveDir = (Vector3.new(predictedPos.X, hrp.Position.Y, predictedPos.Z) - hrp.Position).Unit
 		hrp.Velocity = moveDir * 90 + Vector3.new(0, hrp.Velocity.Y, 0) -- dash slightly slower than max
+	end
+
+	if dist <= 65 then
+		remote:FireServer(buffer.fromstring("\037\001"), {{ "tackle" }})
+	end
+end)
+
+local disable
+disable = UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
+	if input.KeyCode == Enum.KeyCode.F4 then
+		onn = false
+		look:Destroy()
+		disable:Disconnect()
+		conn:Disconnect()
+	end
+end)
+
+repeat task.wait() until hum.Health <= 0 or plr.Team == game.Teams.lobby
+onn = false
+look:Destroy()
+disable:Disconnect()
+conn:Disconnect()
+end)
+
+maintab2:Button("Celeron's Auto GK (V2, Semi-Blatant.)", "Automatically Attempts To Block Shots By Opponents, Reset Or Click F4 To Disable.", function()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local plr = Players.LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local hum = char:WaitForChild("Humanoid")
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+local function getBall()
+	return Workspace.Terrain:FindFirstChild("Ball")
+end
+
+hum.AutoRotate = false
+
+local look = Instance.new("AlignOrientation")
+look.Mode = Enum.OrientationAlignmentMode.OneAttachment
+look.Attachment0 = hrp:WaitForChild("RootAttachment")
+look.Responsiveness = 1200
+look.MaxTorque = math.huge
+look.Enabled = false
+look.Parent = hrp
+
+local onn = true
+local pause = false
+
+local ballHolder = ReplicatedStorage.workspace.ballHolder
+local lastHolder = ballHolder.Value
+
+ballHolder.Changed:Connect(function()
+	local cur = ballHolder.Value
+	if lastHolder == char and cur == nil then
+		pause = true
+		task.delay(0.3, function()
+			pause = false
+		end)
+	end
+	lastHolder = cur
+end)
+
+local remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
+local map = Workspace:WaitForChild("map")
+local GRAVITY = Vector3.new(0, -Workspace.Gravity, 0)
+
+local function getTeamGoal()
+	if plr.Team == game.Teams.B then
+		return map.Bgoal
+	elseif plr.Team == game.Teams.A then
+		return map.Agoal
+	end
+end
+
+local function predictGoalImpact(pos, vel, accel, goal)
+	if not goal then return nil end
+	local cf = goal.CFrame
+	local normal = cf.LookVector
+	local goalPos = cf.Position
+	local rel = pos - goalPos
+	local a = 0.5 * accel:Dot(normal)
+	local b = vel:Dot(normal)
+	local c = rel:Dot(normal)
+	if math.abs(a) < 1e-6 then
+		if math.abs(b) < 1e-6 then return nil end
+		local t = -c / b
+		return t > 0 and t or nil
+	end
+	local disc = b*b - 4*a*c
+	if disc < 0 then return nil end
+	local sqrtDisc = math.sqrt(disc)
+	local t1 = (-b - sqrtDisc) / (2*a)
+	local t2 = (-b + sqrtDisc) / (2*a)
+	local t
+	if t1 > 0 then t = t1 end
+	if t2 > 0 and (not t or t2 < t) then t = t2 end
+	if not t then return nil end
+	local impactPos = pos + vel * t + 0.5 * accel * t * t
+	return impactPos
+end
+
+local velSmooth = Vector3.zero
+local lastVel = Vector3.zero
+
+local conn
+conn = RunService.RenderStepped:Connect(function(dt)
+	if not onn then
+		conn:Disconnect()
+		return
+	end
+
+	local ball = getBall()
+	if not ball or plr.Team == game.Teams.lobby or pause then
+		look.Enabled = false
+		return
+	end
+
+	local rawVel = ball.AssemblyLinearVelocity
+	velSmooth = velSmooth:Lerp(rawVel, math.clamp(dt * 15, 0, 1))
+	local accel = (velSmooth - lastVel) / math.max(dt, 1/240)
+	lastVel = velSmooth
+
+	local goal = getTeamGoal()
+	local impactTime = predictGoalImpact(ball.Position, velSmooth, accel + GRAVITY, goal)
+
+	local predictedPos
+	if impactTime then
+		predictedPos = ball.Position + velSmooth * impactTime + 0.5 * (accel + GRAVITY) * impactTime * impactTime
+	else
+		predictedPos = ball.Position + velSmooth * 0.25 + 0.5 * GRAVITY * 0.25^2
+	end
+
+	look.Enabled = true
+	look.CFrame = CFrame.lookAt(
+		hrp.Position,
+		Vector3.new(predictedPos.X, hrp.Position.Y, predictedPos.Z)
+	)
+
+	local dist = (hrp.Position - ball.Position).Magnitude
+
+	if dist <= 14.5 then
+		remote:FireServer(buffer.fromstring("\036"))
+	end
+
+	local jumpTriggered = false
+	local steps = 20
+	for i = 0, steps do
+		local t = i / steps * math.min(0.5, dist / 60)
+		local point = ball.Position + velSmooth * t + 0.5 * (accel + GRAVITY) * t * t
+		if point.Y > hrp.Position.Y and (point - hrp.Position).Magnitude <= 65 then
+			jumpTriggered = true
+			break
+		end
+	end
+
+	if jumpTriggered then
+		hum.Jump = true
+		local moveDir = (Vector3.new(predictedPos.X, hrp.Position.Y, predictedPos.Z) - hrp.Position).Unit
+		hrp.Velocity = moveDir * 90 + Vector3.new(0, hrp.Velocity.Y, 0)
 	end
 
 	if dist <= 65 then
