@@ -3,8 +3,10 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcel
 local win = ui:Create({
     Name = "Celeron's GUI (Flee The Facility)",
     ThemeColor = Color3.fromRGB(45, 11, 11),
+    ThemeGradient = Color3.fromRGB(11, 22, 66),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.GothamBold
+    ThemeFont = Enum.Font.GothamBold,
+	ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -48,7 +50,7 @@ maintab:Textbox("Player Speed", function(v)
 	getgenv().applySpeed()
 end)
 
-maintab:Button("Automatic Hacking", function()
+maintab:Toggle("Automatic Hacking", "Hacking Is Always Successful Without Hitting Quick Time Events.", function()
 _G.AutomaticHackingEnabled = not _G.AutomaticHackingEnabled
 
 game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -67,25 +69,77 @@ while _G.AutomaticHackingEnabled do
 end
 end)
 
-maintab:Button("Self-Revive (Last Resort, Use In Freezer.)", function()
-local player = game:GetService("Players").LocalPlayer
-local character = player.Character
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 
-if character then
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        humanoid.Health = 0
-    end
+local speaker = Players.LocalPlayer
+local thirdPersonEnabled = false
+local cameraLoop = nil
+
+local function notify(title, text)
+	StarterGui:SetCore("SendNotification", {
+		Title = title,
+		Text = text,
+		Duration = 3
+	})
 end
 
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Alert";
-    Text = "You can no longer hack computers! You can still escape however.";
-    Duration = 10;
-})
+maintab:Toggle("Always Allow Third Person", "Allows You To Go Third Person As The Beast.", function()
+	thirdPersonEnabled = not thirdPersonEnabled
+
+	if thirdPersonEnabled then
+		notify("Always Allow Third Person", "Enabled.")
+		speaker.CameraMode = Enum.CameraMode.Classic
+		cameraLoop = RunService.RenderStepped:Connect(function()
+			if speaker.CameraMode ~= Enum.CameraMode.Classic then
+				speaker.CameraMode = Enum.CameraMode.Classic
+			end
+		end)
+	else
+		notify("Always Allow Third Person", "Disabled.")
+		if cameraLoop then
+			cameraLoop:Disconnect()
+			cameraLoop = nil
+		end
+	end
 end)
 
-maintab:Button("Join Mid-Game", function()
+local lastClickTime = 0
+local clickCooldown = 3
+
+maintab:Button("Self Revive (Use In Freezer, Double Click To Confirm.)", "Use This As A Last Resort. You Cannot Hack Computers After Using.", function()
+        local currentTime = tick()
+
+        if currentTime - lastClickTime <= clickCooldown then
+            local player = game:GetService("Players").LocalPlayer
+            local character = player.Character
+
+            if character then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.Health = 0
+                end
+            end
+
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Self Revive";
+                Text = "You can no longer hack computers! You can still escape however.";
+                Duration = 10;
+            })
+            lastClickTime = 0
+        else
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Self Revive";
+                Text = "Click again to confirm.";
+                Duration = 3;
+            })
+
+            lastClickTime = currentTime
+        end
+    end)
+
+maintab:Button("Join Mid-Game", "Teleports You To The Map, May Softlock Survivors By Hacking Computers.", function()
 local player = game:GetService("Players").LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 
@@ -109,42 +163,6 @@ local targetSpawnPad = findOBSpawnPadInParent()
 if targetSpawnPad then
     character:SetPrimaryPartCFrame(targetSpawnPad.CFrame + Vector3.new(0, 5, 0))
 end
-end)
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local StarterGui = game:GetService("StarterGui")
-
-local speaker = Players.LocalPlayer
-local thirdPersonEnabled = false
-local cameraLoop = nil
-
-local function notify(title, text)
-	StarterGui:SetCore("SendNotification", {
-		Title = title,
-		Text = text,
-		Duration = 3
-	})
-end
-
-maintab:Button("Always Allow Third Person", function()
-	thirdPersonEnabled = not thirdPersonEnabled
-
-	if thirdPersonEnabled then
-		notify("Always Allow Third Person", "Enabled.")
-		speaker.CameraMode = Enum.CameraMode.Classic
-		cameraLoop = RunService.RenderStepped:Connect(function()
-			if speaker.CameraMode ~= Enum.CameraMode.Classic then
-				speaker.CameraMode = Enum.CameraMode.Classic
-			end
-		end)
-	else
-		notify("Always Allow Third Person", "Disabled.")
-		if cameraLoop then
-			cameraLoop:Disconnect()
-			cameraLoop = nil
-		end
-	end
 end)
 
 local Players = game:GetService("Players")
@@ -188,12 +206,12 @@ local function applyHighlight(player)
         local humanoid = char:FindFirstChild("Humanoid")
         if humanoid then
             humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
-            humanoid.NameDisplayDistance = 100 -- default
+            humanoid.NameDisplayDistance = 100
         end
     end
 end
 
-esptab:Button("Player ESP", function()
+esptab:Toggle("Player ESP", function()
     playerESPEnabled = not playerESPEnabled
     notify("Player ESP", playerESPEnabled and "Enabled." or "Disabled.")
 
@@ -212,7 +230,7 @@ esptab:Button("Player ESP", function()
 end)
 
 
-esptab:Button("Computer ESP", function()
+esptab:Toggle("Computer ESP", function()
 	computerESPEnabled = not computerESPEnabled
 	notify("Computer ESP", computerESPEnabled and "Enabled." or "Disabled.")
 
@@ -243,29 +261,32 @@ esptab:Button("Computer ESP", function()
 	end
 end)
 
-esptab:Button("Exit-Door ESP", function()
+esptab:Toggle("Exit ESP", function()
 	exitESPEnabled = not exitESPEnabled
 	notify("Exit-Door ESP", exitESPEnabled and "Enabled." or "Disabled.")
 
 	for _, model in ipairs(Workspace:GetDescendants()) do
 		if model:IsA("Model") and model.Name == "ExitDoor" then
-			local light = model:FindFirstChild("Light")
-			if light then
-				local highlight = light:FindFirstChild("ExitESPHighlight")
-				if exitESPEnabled then
-					if not highlight then
-						local newHighlight = Instance.new("Highlight")
-						newHighlight.Name = "ExitESPHighlight"
-						newHighlight.Adornee = light
-						newHighlight.FillColor = Color3.new(1, 1, 0)
-						newHighlight.OutlineTransparency = 1
-						newHighlight.FillTransparency = 0.5
-						newHighlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-						newHighlight.Parent = light
+			local highlight = model:FindFirstChild("ExitESPHighlight")
+			if exitESPEnabled then
+				if not highlight then
+					local newHighlight = Instance.new("Highlight")
+					newHighlight.Name = "ExitESPHighlight"
+
+					if model.PrimaryPart then
+						newHighlight.Adornee = model.PrimaryPart
+					else
+						newHighlight.Adornee = model
 					end
-				elseif highlight then
-					highlight:Destroy()
+					
+					newHighlight.FillColor = Color3.new(1, 1, 0)
+					newHighlight.OutlineTransparency = 1
+					newHighlight.FillTransparency = 0.5
+					newHighlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+					newHighlight.Parent = model
 				end
+			elseif highlight then
+				highlight:Destroy()
 			end
 		end
 	end
@@ -280,7 +301,7 @@ tpstab:Button("Spawn", function()
 end)
 
 tpstab:Button("Map Voting", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(119, -10, -425))
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(157, 4, -344))
 end)
 
 tpstab:Button("Cave", function()
@@ -288,7 +309,7 @@ tpstab:Button("Cave", function()
 end)
 
 tpstab:Button("Trading Servers (Min. Level 6)", function()
-    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(206, -7, -577))
+    game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(65, 4, -308))
 end)
 
 tpstab:Label("In-Game Areas.")
