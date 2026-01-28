@@ -1369,6 +1369,228 @@ oldfunc = hookfunction(env.checkGK, function (...)
 end)
 end)
 
+maintab2:Label("Auto Activate: Activates The Move When Ball Within Range.")
+
+local autoActivateDistance = 10
+local autoActivateToggle = false
+local autoActivateMove = 1
+local autoActivatedb = true
+
+maintab2:Textbox("Auto Activate Move Number", "Example: 1, 2, 3, 4, 5", function(v)
+    local nsdv = tonumber(v)
+    if nsdv and nsdv <= 5 and nsdv > 0 then
+        print("updated to " .. nsdv)
+        autoActivateMove = nsdv
+    end
+end)
+
+maintab2:Slider("Auto Activate Distance", 10, 3, 70, 0.5, function(v)
+    autoActivateDistance = v
+end)
+
+maintab2:Toggle("Auto Activate Toggle", "Hold The Right Mouse Button To Have It On", function(v)
+    autoActivateToggle = not autoActivateToggle
+end)
+
+game.UserInputService.InputBegan:Connect(function(input, bg)
+    if bg then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        autoActivatedb = false
+    end
+end)
+
+game.UserInputService.InputEnded:Connect(function(input, bg)
+    if bg then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        autoActivatedb = true
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if not autoActivateToggle then return end
+
+    local char = game.Players.LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local playerPos = hrp.Position
+    
+    if game.Workspace.Terrain:FindFirstChild("Ball") then
+        local ballPos = game.Workspace.Terrain:FindFirstChild("Ball").Position
+        local distance = (playerPos - ballPos).Magnitude
+
+        if distance <= autoActivateDistance and not autoActivatedb then
+            local args = {
+                buffer.fromstring("\037\001"),
+                {
+                    { "skill" .. autoActivateMove }
+                }
+            }
+
+            game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+
+            print("tried")
+        end
+    end
+end)
+
+maintab2:Label("Auto Line Ups: Helps You Aim At Certain Areas.")
+
+local Workspace = game:GetService("Workspace")
+
+local padCount = 0
+local targetCount = 0
+
+local function pad(pos, color)
+	padCount += 1
+	local p = Instance.new("Part")
+	p.Name = "pad" .. padCount
+	p.Size = Vector3.new(5, 5, 5)
+	p.Position = pos
+    p.Transparency = 0.65
+	p.Anchored = true
+	p.CanCollide = false
+	p.Color = color
+	p.Material = Enum.Material.SmoothPlastic
+	p.Parent = Workspace
+end
+
+local function target(pos, color)
+	targetCount += 1
+	local t = Instance.new("Part")
+	t.Name = "target" .. targetCount
+	t.Shape = Enum.PartType.Ball
+	t.Size = Vector3.new(6, 6, 6)
+	t.Position = pos
+	t.Anchored = true
+	t.CanCollide = false
+	t.Color = color
+	t.Material = Enum.Material.Neon
+	t.Parent = Workspace
+end
+
+local StarterGui = game:GetService("StarterGui")
+
+maintab2:Toggle("Sae Line Ups", "Sae's Drive Shot Line Ups.", function(s)
+	if s then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Sae Line Ups",
+			Text = "Enabled.",
+			Duration = 3
+		})
+
+		pad(Vector3.new(-454, -1, 1557), Color3.fromRGB(255, 0, 0))
+		target(Vector3.new(-514, 54, 1693), Color3.fromRGB(255, 0, 0))
+
+		pad(Vector3.new(-363, -1, 1671), Color3.fromRGB(0, 255, 0))
+		target(Vector3.new(-424, 23, 1704), Color3.fromRGB(0, 255, 0))
+
+		pad(Vector3.new(-535, -1, 1508), Color3.fromRGB(255, 255, 0))
+		target(Vector3.new(-502, 95, 1705), Color3.fromRGB(255, 255, 0))
+
+		pad(Vector3.new(-613, -1, 1586), Color3.fromRGB(0, 0, 255))
+		target(Vector3.new(-452, 51, 1701), Color3.fromRGB(0, 0, 255))
+
+		pad(Vector3.new(-665, -1, 994), Color3.fromRGB(255, 0, 0))
+		target(Vector3.new(-585, 61, 844), Color3.fromRGB(255, 0, 0))
+
+		pad(Vector3.new(-725, -1, 894), Color3.fromRGB(0, 255, 0))
+		target(Vector3.new(-625, 39, 844), Color3.fromRGB(0, 255, 0))
+
+		pad(Vector3.new(-462, -1, 992), Color3.fromRGB(255, 255, 0))
+		target(Vector3.new(-592, 65, 844), Color3.fromRGB(255, 255, 0))
+
+		pad(Vector3.new(-536, -1, 1050), Color3.fromRGB(0, 0, 255))
+		target(Vector3.new(-541, 85, 883), Color3.fromRGB(0, 0, 255))
+
+	else
+		StarterGui:SetCore("SendNotification", {
+			Title = "Sae Line Ups",
+			Text = "Disabled.",
+			Duration = 3
+		})
+
+		for i = 1, padCount do
+			local p = Workspace:FindFirstChild("pad" .. i)
+			if p then p:Destroy() end
+		end
+
+		for i = 1, targetCount do
+			local t = Workspace:FindFirstChild("target" .. i)
+			if t then t:Destroy() end
+		end
+
+		padCount = 0
+		targetCount = 0
+	end
+end)
+
+maintab2:Toggle("Kaiser Line Ups", "Kaiser's Impact Magnus Line Ups.", function(k)
+	if k then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Kaiser Line Ups",
+			Text = "Enabled.",
+			Duration = 3
+		})
+
+    pad(Vector3.new(-538, -1, 1097), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-526, 121, 844), Color3.fromRGB(255, 0, 0))
+
+    pad(Vector3.new(-414, -1, 1049), Color3.fromRGB(0, 255, 0))
+    target(Vector3.new(-485, 84, 843), Color3.fromRGB(0, 255, 0))
+
+    pad(Vector3.new(-304, -1, 896), Color3.fromRGB(255, 255, 0))
+    target(Vector3.new(-418, 48, 849), Color3.fromRGB(255, 255, 0))
+
+    pad(Vector3.new(-327, -1, 843), Color3.fromRGB(0, 0, 255))
+    target(Vector3.new(-443, 38, 816), Color3.fromRGB(0, 0, 255))
+
+    pad(Vector3.new(-495, -1, 945), Color3.fromRGB(255, 0, 255))
+    target(Vector3.new(-510, 19, 841), Color3.fromRGB(255, 0, 255))
+
+    pad(Vector3.new(-669, -1, 976), Color3.fromRGB(255, 182, 193))
+    target(Vector3.new(-447, 66, 847), Color3.fromRGB(255, 182, 193))
+
+    pad(Vector3.new(-536, -1, 1469), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-547, 125, 1706), Color3.fromRGB(255, 0, 0))
+
+    pad(Vector3.new(-766, -1, 1659), Color3.fromRGB(0, 255, 0))
+    target(Vector3.new(-677, 34, 1697), Color3.fromRGB(0, 255, 0))
+
+    pad(Vector3.new(-655, -1, 1504), Color3.fromRGB(255, 255, 0))
+    target(Vector3.new(-588, 75, 1701), Color3.fromRGB(255, 255, 0))
+
+    pad(Vector3.new(-747, -1, 1704), Color3.fromRGB(0, 0, 255))
+    target(Vector3.new(-624, 43, 1732), Color3.fromRGB(0, 0, 255))
+
+    pad(Vector3.new(-583, -1, 1603), Color3.fromRGB(255, 0, 255))
+    target(Vector3.new(-559, 18, 1706), Color3.fromRGB(255, 0, 255))
+
+    pad(Vector3.new(-408, -1, 1573), Color3.fromRGB(255, 182, 193))
+    target(Vector3.new(-644, 70, 1705), Color3.fromRGB(255, 182, 193))
+
+	else
+		StarterGui:SetCore("SendNotification", {
+			Title = "Kaiser Line Ups",
+			Text = "Disabled.",
+			Duration = 3
+		})
+
+		for i = 1, padCount do
+			local p = Workspace:FindFirstChild("pad" .. i)
+			if p then p:Destroy() end
+		end
+
+		for i = 1, targetCount do
+			local t = Workspace:FindFirstChild("target" .. i)
+			if t then t:Destroy() end
+		end
+
+		padCount = 0
+		targetCount = 0
+	end
+end)
+
 maintab2:Label("Auto Position: Instantly Picks Certain Position.")
 
 _G.AutoToggles = _G.AutoToggles or {
@@ -1459,71 +1681,6 @@ maintab2:Toggle("Auto Pick GK", "Automatically Picks Goalkeeper Position On Resp
 			_G.AutoToggles.GKConn = nil
 		end
 	end
-end)
-
-maintab2:Label("Auto Activate: Activates The Move When Ball Within Range.")
-
-local autoActivateDistance = 10
-local autoActivateToggle = false
-local autoActivateMove = 1
-local autoActivatedb = true
-
-maintab2:Textbox("Auto Activate Move Number", "Example: 1, 2, 3, 4, 5", function(v)
-    local nsdv = tonumber(v)
-    if nsdv and nsdv <= 5 and nsdv > 0 then
-        print("updated to " .. nsdv)
-        autoActivateMove = nsdv
-    end
-end)
-
-maintab2:Slider("Auto Activate Distance", 10, 3, 70, 0.5, function(v)
-    autoActivateDistance = v
-end)
-
-maintab2:Toggle("Auto Activate Toggle", "Hold The Right Mouse Button To Have It On", function(v)
-    autoActivateToggle = not autoActivateToggle
-end)
-
-game.UserInputService.InputBegan:Connect(function(input, bg)
-    if bg then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        autoActivatedb = false
-    end
-end)
-
-game.UserInputService.InputEnded:Connect(function(input, bg)
-    if bg then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        autoActivatedb = true
-    end
-end)
-
-game:GetService("RunService").RenderStepped:Connect(function()
-    if not autoActivateToggle then return end
-
-    local char = game.Players.LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local playerPos = hrp.Position
-    
-    if game.Workspace.Terrain:FindFirstChild("Ball") then
-        local ballPos = game.Workspace.Terrain:FindFirstChild("Ball").Position
-        local distance = (playerPos - ballPos).Magnitude
-
-        if distance <= autoActivateDistance and not autoActivatedb then
-            local args = {
-                buffer.fromstring("\037\001"),
-                {
-                    { "skill" .. autoActivateMove }
-                }
-            }
-
-            game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-
-            print("tried")
-        end
-    end
 end)
 
 maintab2:Label("Auto Goalkeeper: Automatically Plays As GK For You.")
@@ -1626,7 +1783,7 @@ conn = RunService.RenderStepped:Connect(function(dt)
 	end
 
 	local rawVel = ball.AssemblyLinearVelocity
-	velSmooth = velSmooth:Lerp(rawVel, math.clamp(dt * 15, 0, 1)) -- smooth velocity
+	velSmooth = velSmooth:Lerp(rawVel, math.clamp(dt * 15, 0, 1))
 	local accel = (velSmooth - lastVel) / math.max(dt, 1/240)
 	lastVel = velSmooth
 
@@ -1658,7 +1815,7 @@ conn = RunService.RenderStepped:Connect(function(dt)
 	if jumpTriggered then
 		hum.Jump = true
 		local moveDir = (Vector3.new(predictedPos.X, hrp.Position.Y, predictedPos.Z) - hrp.Position).Unit
-		hrp.Velocity = moveDir * 90 + Vector3.new(0, hrp.Velocity.Y, 0) -- dash slightly slower than max
+		hrp.Velocity = moveDir * 90 + Vector3.new(0, hrp.Velocity.Y, 0)
 	end
 
 	if dist <= 65 then
