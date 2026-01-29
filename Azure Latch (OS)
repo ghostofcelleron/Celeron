@@ -1591,6 +1591,72 @@ maintab2:Toggle("Kaiser Line Ups", "Kaiser's Impact Magnus Line Ups.", function(
 	end
 end)
 
+maintab2:Toggle("Yukimiya Line Ups", "Yukimiya's Gyro Shot Line Ups.", function(y)
+	if y then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Yukimiya Line Ups",
+			Text = "Enabled.",
+			Duration = 3
+		})
+
+    pad(Vector3.new(-539, -1, 1037), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-579, 67, 844), Color3.fromRGB(255, 0, 0))
+
+    pad(Vector3.new(-630, -1, 966), Color3.fromRGB(0, 255, 0))
+    target(Vector3.new(-543, 44, 843), Color3.fromRGB(0, 255, 0))
+
+    pad(Vector3.new(-416, -1, 968), Color3.fromRGB(255, 255, 0))
+    target(Vector3.new(-539, 54, 843), Color3.fromRGB(255, 255, 0))
+
+    pad(Vector3.new(-432, -1, 917), Color3.fromRGB(0, 0, 255))
+    target(Vector3.new(-527, 33, 843), Color3.fromRGB(0, 0, 255))
+
+    pad(Vector3.new(-388, -1, 1008), Color3.fromRGB(255, 0, 255))
+    target(Vector3.new(-634, 129, 844), Color3.fromRGB(255, 0, 255))
+
+    pad(Vector3.new(-355, -1, 912), Color3.fromRGB(255, 182, 193))
+    target(Vector3.new(-764, 140, 844), Color3.fromRGB(255, 182, 193))
+
+    pad(Vector3.new(-681, -1, 1527), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-431, 138, 1704), Color3.fromRGB(255, 0, 0))
+
+    pad(Vector3.new(-717, -1, 1624), Color3.fromRGB(0, 255, 0))
+    target(Vector3.new(-604, 40, 1658), Color3.fromRGB(0, 255, 0))
+
+    pad(Vector3.new(-417, -1, 1577), Color3.fromRGB(255, 255, 0))
+    target(Vector3.new(-520, 43, 1705), Color3.fromRGB(255, 255, 0))
+
+    pad(Vector3.new(-533, -1, 1505), Color3.fromRGB(0, 0, 255))
+    target(Vector3.new(-499, 69, 1705), Color3.fromRGB(0, 0, 255))
+
+    pad(Vector3.new(-600, -1, 1568), Color3.fromRGB(255, 0, 255))
+    target(Vector3.new(-515, 29, 1705), Color3.fromRGB(255, 0, 255))
+
+    pad(Vector3.new(-641, -1, 1624), Color3.fromRGB(255, 182, 193))
+    target(Vector3.new(-540, 37, 1705), Color3.fromRGB(255, 182, 193))
+
+	else
+		StarterGui:SetCore("SendNotification", {
+			Title = "Yukimiya Line Ups",
+			Text = "Disabled.",
+			Duration = 3
+		})
+
+		for i = 1, padCount do
+			local p = Workspace:FindFirstChild("pad" .. i)
+			if p then p:Destroy() end
+		end
+
+		for i = 1, targetCount do
+			local t = Workspace:FindFirstChild("target" .. i)
+			if t then t:Destroy() end
+		end
+
+		padCount = 0
+		targetCount = 0
+	end
+end)
+
 maintab2:Label("Auto Position: Instantly Picks Certain Position.")
 
 _G.AutoToggles = _G.AutoToggles or {
@@ -2172,7 +2238,159 @@ repeat task.wait() until hum.Health <= 0 or plr.Team == game.Teams.lobby
 cleanup()
 kill:Disconnect()
 con:Disconnect()
+end)
 
+maintab2:Label("Movement Buffs: Allows Movement Moves To Go Further.")
+
+local footworkEnabled = false
+
+maintab2:Toggle("Naruhaya Footwork", "Toggles Footwork Distance Below.", function(foot)
+	footworkEnabled = foot
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Naruhaya Footwork",
+		Text = foot and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+end)
+
+maintab2:Slider("Naruhaya Footwork Distance", 0, 0, 170, 1, function(dist1)
+	distance = dist1
+end)
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local moving = false
+local onCooldown = false
+
+distance = 0
+local cooldownTime = 24
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if not footworkEnabled then return end
+	if input.KeyCode ~= Enum.KeyCode.Two then return end
+	if moving or onCooldown then return end
+
+	moving = true
+	onCooldown = true
+
+	task.delay(0.33, function()
+		if not footworkEnabled then
+			moving = false
+			onCooldown = false
+			return
+		end
+
+		local character = player.Character
+		if not character then moving = false onCooldown = false return end
+
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		if not hrp then moving = false onCooldown = false return end
+
+		local duration = distance / 200
+		if duration <= 0 then
+			moving = false
+			onCooldown = false
+			return
+		end
+
+		local speed = distance / duration
+		local elapsed = 0
+		local conn
+
+		conn = RunService.RenderStepped:Connect(function(dt)
+			if not footworkEnabled then
+				conn:Disconnect()
+				moving = false
+				onCooldown = false
+				return
+			end
+
+			elapsed += dt
+			if elapsed >= duration then
+				conn:Disconnect()
+				moving = false
+				task.delay(cooldownTime, function()
+					onCooldown = false
+				end)
+				return
+			end
+
+			local look = hrp.CFrame.LookVector
+			local dir = Vector3.new(look.X, 0, look.Z).Unit
+			hrp.CFrame += dir * speed * dt
+		end)
+	end)
+end)
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+local player = Players.LocalPlayer
+
+local raumEnabled = false
+local moving1 = false
+local onCooldown1 = false
+
+distance1 = 0
+local cooldownTime1 = 32
+
+maintab2:Toggle("Raumdeuter", "Toggles Raumdeuter Distance Below.", function(raum)
+	raumEnabled = raum
+	StarterGui:SetCore("SendNotification", {
+		Title = "Raumdeuter",
+		Text = raum and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+end)
+
+maintab2:Slider("Raumdeuter Distance", 0, 0, 170, 1, function(v)
+	distance1 = v
+end)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if not raumEnabled then return end
+	if input.KeyCode ~= Enum.KeyCode.Two then return end
+	if moving1 or onCooldown1 then return end
+
+	moving1 = true
+	onCooldown1 = true
+
+	task.delay(0.17, function()
+		local character = player.Character
+		if not character then moving1 = false onCooldown1 = false return end
+
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		if not hrp then moving1 = false onCooldown1 = false return end
+
+		local duration1 = distance1 / 200
+		local speed1 = distance1 / duration1
+		local elapsed = 0
+		local conn
+
+		conn = RunService.RenderStepped:Connect(function(dt)
+			elapsed += dt
+			if elapsed >= duration1 then
+				conn:Disconnect()
+				moving1 = false
+				task.delay(cooldownTime1, function()
+					onCooldown1 = false
+				end)
+				return
+			end
+
+			local look = hrp.CFrame.LookVector
+			local dir = Vector3.new(look.X, 0, look.Z).Unit
+			hrp.CFrame += dir * speed1 * dt
+		end)
+	end)
 end)
 
 maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
