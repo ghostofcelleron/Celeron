@@ -1235,7 +1235,7 @@ local plr = game.Players.LocalPlayer
 				task.wait(0.25)
                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
-			end)
+end)
 
 maintab:Label("Other Blatant Features.")
 local blatantEnabled, loopConnection = false, nil
@@ -1367,6 +1367,470 @@ local oldfunc
 oldfunc = hookfunction(env.checkGK, function (...)
     return true
 end)
+end)
+
+maintab:Label("Distance Move Buffs, Set To Zero To Disable.")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+local player = Players.LocalPlayer
+
+distance = 0
+local duration = 0.45
+local boostCooldownTime = 0.15
+local naru_anim = "rbxassetid://82240286756891"
+
+local moving = false
+local boostCooldown = false
+local animationDetected = false
+local armTime = 0
+
+maintab:Slider("Naruhaya Footwork Distance", 0, 0, 150, 1, function(v)
+	distance = v
+end)
+
+local function hookFootwork(char)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation
+		and track.Animation.AnimationId == naru_anim
+		and os.clock() >= armTime then
+			animationDetected = true
+		end
+	end)
+end
+
+if player.Character then hookFootwork(player.Character) end
+player.CharacterAdded:Connect(hookFootwork)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode ~= Enum.KeyCode.Two then return end
+	if distance <= 0 then return end
+	if moving or boostCooldown then return end
+
+	armTime = os.clock()
+	animationDetected = false
+	local currentDistance = distance
+
+	task.delay(0.33, function()
+		if not animationDetected or boostCooldown then return end
+
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+
+		moving = true
+		boostCooldown = true
+
+		local speed = currentDistance / duration
+		local remaining = currentDistance
+		local startY = hrp.Position.Y
+
+		local conn
+		conn = RunService.RenderStepped:Connect(function(dt)
+			local step = math.min(speed * dt, remaining)
+			local look = hrp.CFrame.LookVector
+			local dir = Vector3.new(look.X, 0, look.Z).Unit
+
+			local pos = hrp.Position + dir * step
+			hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
+
+			remaining -= step
+			if remaining <= 0 then
+				conn:Disconnect()
+				moving = false
+				task.delay(boostCooldownTime, function()
+					boostCooldown = false
+				end)
+			end
+		end)
+	end)
+end)
+
+distance1 = 0
+local duration1 = 0.625
+local boostCooldownTime1 = 0.15
+local raum_anims = {
+	["rbxassetid://81582265162782"] = true
+}
+
+local moving1 = false
+local boostCooldown1 = false
+local animationDetected1 = false
+local armTime1 = 0
+
+maintab:Slider("Raumdeuter Distance", 0, 0, 150, 1, function(v)
+	distance1 = v
+end)
+
+local function hookRaum(char)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation
+		and raum_anims[track.Animation.AnimationId]
+		and os.clock() >= armTime1 then
+			animationDetected1 = true
+		end
+	end)
+end
+
+if player.Character then hookRaum(player.Character) end
+player.CharacterAdded:Connect(hookRaum)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode ~= Enum.KeyCode.Two then return end
+	if distance1 <= 0 then return end
+	if moving1 or boostCooldown1 then return end
+
+	armTime1 = os.clock()
+	animationDetected1 = false
+	local currentDistance = distance1
+
+	task.delay(0.17, function()
+		if not animationDetected1 or boostCooldown1 then return end
+
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+
+		moving1 = true
+		boostCooldown1 = true
+
+		local speed = currentDistance / duration1
+		local remaining = currentDistance
+		local startY = hrp.Position.Y
+
+		local conn
+		conn = RunService.RenderStepped:Connect(function(dt)
+			local step = math.min(speed * dt, remaining)
+			local look = hrp.CFrame.LookVector
+			local dir = Vector3.new(look.X, 0, look.Z).Unit
+
+			local pos = hrp.Position + dir * step
+			hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
+
+			remaining -= step
+			if remaining <= 0 then
+				conn:Disconnect()
+				moving1 = false
+				task.delay(boostCooldownTime1, function()
+					boostCooldown1 = false
+				end)
+			end
+		end)
+	end)
+end)
+
+distance2 = 0
+local duration2 = 0.75
+local boostCooldownTime2 = 0.15
+local drac_anim = "rbxassetid://95359966795185"
+
+local moving2 = false
+local boostCooldown2 = false
+local animationDetected2 = false
+local armTime2 = 0
+
+maintab:Slider("Draconic Rush Distance", 0, 0, 150, 1, function(v)
+	distance2 = v
+end)
+
+local function hookDraconic(char)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation
+		and track.Animation.AnimationId == drac_anim
+		and os.clock() >= armTime2 then
+			animationDetected2 = true
+		end
+	end)
+end
+
+if player.Character then hookDraconic(player.Character) end
+player.CharacterAdded:Connect(hookDraconic)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode ~= Enum.KeyCode.Three then return end
+	if distance2 <= 0 then return end
+	if moving2 or boostCooldown2 then return end
+
+	armTime2 = os.clock()
+	animationDetected2 = false
+	local currentDistance = distance2
+
+	task.delay(0.17, function()
+		if not animationDetected2 or boostCooldown2 then return end
+
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+
+		moving2 = true
+		boostCooldown2 = true
+
+		local speed = currentDistance / duration2
+		local remaining = currentDistance
+		local startY = hrp.Position.Y
+
+		local conn
+		conn = RunService.RenderStepped:Connect(function(dt)
+			local step = math.min(speed * dt, remaining)
+			local look = hrp.CFrame.LookVector
+			local dir = Vector3.new(look.X, 0, look.Z).Unit
+
+			local pos = hrp.Position + dir * step
+			hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
+
+			remaining -= step
+			if remaining <= 0 then
+				conn:Disconnect()
+				moving2 = false
+				task.delay(boostCooldownTime2, function()
+					boostCooldown2 = false
+				end)
+			end
+		end)
+	end)
+end)
+
+distance3 = 0
+local duration3 = 0.25
+local boostCooldownTime3 = 0.15
+local step_anim = "rbxassetid://84063609284472"
+
+local moving3 = false
+local boostCooldown3 = false
+local animationDetected3 = false
+local armTime3 = 0
+
+maintab:Slider("Step Overs Distance", 0, 0, 150, 1, function(v)
+	distance3 = v
+end)
+
+local function hookStep(char)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation
+		and track.Animation.AnimationId == step_anim
+		and os.clock() >= armTime3 then
+			animationDetected3 = true
+		end
+	end)
+end
+
+if player.Character then hookStep(player.Character) end
+player.CharacterAdded:Connect(hookStep)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode ~= Enum.KeyCode.One then return end
+	if distance3 <= 0 then return end
+	if moving3 or boostCooldown3 then return end
+
+	armTime3 = os.clock()
+	animationDetected3 = false
+	local currentDistance = distance3
+
+	task.delay(1.275, function()
+		if not animationDetected3 or boostCooldown3 then return end
+
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+
+		moving3 = true
+		boostCooldown3 = true
+
+		local speed = currentDistance / duration3
+		local remaining = currentDistance
+		local startY = hrp.Position.Y
+
+		local conn
+		conn = RunService.RenderStepped:Connect(function(dt)
+			local step = math.min(speed * dt, remaining)
+			local look = hrp.CFrame.LookVector
+			local dir = Vector3.new(look.X, 0, look.Z).Unit
+
+			local pos = hrp.Position + dir * step
+			hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
+
+			remaining -= step
+			if remaining <= 0 then
+				conn:Disconnect()
+				moving3 = false
+				task.delay(boostCooldownTime3, function()
+					boostCooldown3 = false
+				end)
+			end
+		end)
+	end)
+end)
+
+distance4 = 0
+local duration4 = 0.55
+local boostCooldownTime4 = 0.15
+local kaiser_anim = "rbxassetid://110660551661470"
+
+local moving4 = false
+local boostCooldown4 = false
+local animationDetected4 = false
+local armTime4 = 0
+
+maintab:Slider("Off The Ball Distance", 0, 0, 150, 1, function(v)
+	distance4 = v
+end)
+
+local function hookKaiser(char)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation
+		and track.Animation.AnimationId == kaiser_anim
+		and os.clock() >= armTime4 then
+			animationDetected4 = true
+		end
+	end)
+end
+
+if player.Character then
+	hookKaiser(player.Character)
+end
+player.CharacterAdded:Connect(hookKaiser)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode ~= Enum.KeyCode.Three then return end
+	if distance4 <= 0 then return end
+	if moving4 or boostCooldown4 then return end
+
+	armTime4 = os.clock()
+	animationDetected4 = false
+	local currentDistance = distance4
+
+	task.delay(0.2, function()
+		if not animationDetected4 or boostCooldown4 then return end
+
+		local character = player.Character
+		if not character then return end
+
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+
+		moving4 = true
+		boostCooldown4 = true
+
+		local speed = currentDistance / duration4
+		local remaining = currentDistance
+		local startY = hrp.Position.Y
+
+		local conn
+		conn = RunService.RenderStepped:Connect(function(dt)
+			local step = math.min(speed * dt, remaining)
+			local look = hrp.CFrame.LookVector
+			local dir = Vector3.new(look.X, 0, look.Z)
+			if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
+			dir = dir.Unit
+
+			local pos = hrp.Position + dir * step
+			hrp.CFrame = CFrame.new(
+				Vector3.new(pos.X, startY, pos.Z),
+				pos + look
+			)
+
+			remaining -= step
+			if remaining <= 0 then
+				conn:Disconnect()
+				moving4 = false
+				task.delay(boostCooldownTime4, function()
+					boostCooldown4 = false
+				end)
+			end
+		end)
+	end)
+end)
+
+distance5 = 0
+local duration5 = 1
+local boostCooldownTime5 = 0.15
+local occlusion_anim = "rbxassetid://116181317759538"
+
+local moving5 = false
+local boostCooldown5 = false
+local animationDetected5 = false
+local armTime5 = 0
+
+maintab:Slider("Occlusion Break Distance", 0, 0, 150, 1, function(v)
+	distance5 = v
+end)
+
+local function hookOcclusion(char)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation
+		and track.Animation.AnimationId == occlusion_anim
+		and os.clock() >= armTime5 then
+			animationDetected5 = true
+		end
+	end)
+end
+
+if player.Character then
+	hookOcclusion(player.Character)
+end
+player.CharacterAdded:Connect(hookOcclusion)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.KeyCode ~= Enum.KeyCode.One then return end
+	if distance5 <= 0 then return end
+	if moving5 or boostCooldown5 then return end
+
+	armTime5 = os.clock()
+	animationDetected5 = false
+	local currentDistance = distance5
+
+	task.delay(0.2, function()
+		if not animationDetected5 or boostCooldown5 then return end
+
+		local character = player.Character
+		if not character then return end
+
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+
+		moving5 = true
+		boostCooldown5 = true
+
+		local speed = currentDistance / duration5
+		local remaining = currentDistance
+		local startY = hrp.Position.Y
+
+		local conn
+		conn = RunService.RenderStepped:Connect(function(dt)
+			local step = math.min(speed * dt, remaining)
+			local look = hrp.CFrame.LookVector
+			local dir = Vector3.new(look.X, 0, look.Z)
+			if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
+			dir = dir.Unit
+
+			local pos = hrp.Position + dir * step
+			hrp.CFrame = CFrame.new(
+				Vector3.new(pos.X, startY, pos.Z),
+				pos + look
+			)
+
+			remaining -= step
+			if remaining <= 0 then
+				conn:Disconnect()
+				moving5 = false
+				task.delay(boostCooldownTime5, function()
+					boostCooldown5 = false
+				end)
+			end
+		end)
+	end)
 end)
 
 maintab2:Label("Auto Activate: Activates The Move When Ball Within Range.")
@@ -2315,195 +2779,6 @@ kill:Disconnect()
 con:Disconnect()
 end)
 
-maintab2:Label("Movement Buffs: Allows Movement Moves To Go Further.")
-
-local footworkEnabled = false
-
-maintab2:Toggle("Naruhaya Footwork", "Toggles Footwork Distance Below.", function(foot)
-	footworkEnabled = foot
-
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Naruhaya Footwork",
-		Text = foot and "Enabled." or "Disabled.",
-		Duration = 3
-	})
-end)
-
-maintab2:Slider("Naruhaya Footwork Distance", 0, 0, 170, 1, function(dist1)
-	-- slider just stores latest value, actual read happens per keypress
-	distance = dist1
-end)
-
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
-local moving = false
-local onCooldown = false
-local boostCooldown = false
-local animationDetected = false
-local armTime = 0
-
-distance = 0
-local duration = 0.45
-local cooldownTime = 24
-local boostCooldownTime = 1
-local ANIMATION_ID = "rbxassetid://82240286756891"
-
-UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe then return end
-	if not footworkEnabled then return end
-	if input.KeyCode ~= Enum.KeyCode.Two then return end
-	if moving or onCooldown or boostCooldown then return end
-
-	armTime = os.clock()
-	onCooldown = true
-	animationDetected = false
-
-	-- read the slider value fresh on each press
-	local currentDistance = distance
-
-	task.delay(0.33, function()
-		if not footworkEnabled or not animationDetected or boostCooldown then
-			onCooldown = false
-			return
-		end
-
-		local character = player.Character
-		if not character then onCooldown = false return end
-
-		local hrp = character:FindFirstChild("HumanoidRootPart")
-		if not hrp then onCooldown = false return end
-
-		moving = true
-		boostCooldown = true
-
-		local speed = currentDistance / duration
-		local elapsed = 0
-		local distanceRemaining = currentDistance
-		local conn
-
-		conn = RunService.RenderStepped:Connect(function(dt)
-			if not footworkEnabled then
-				conn:Disconnect()
-				moving = false
-				boostCooldown = false
-				onCooldown = false
-				return
-			end
-
-			local moveStep = math.min(speed * dt, distanceRemaining)
-			local look = hrp.CFrame.LookVector
-			local dir = Vector3.new(look.X, 0, look.Z)
-			if dir.Magnitude == 0 then dir = Vector3.new(0,0,1) end
-			dir = dir.Unit
-
-			hrp.CFrame += dir * moveStep
-			distanceRemaining -= moveStep
-			elapsed += dt
-
-			if elapsed >= duration or distanceRemaining <= 0 then
-				conn:Disconnect()
-				moving = false
-				task.delay(boostCooldownTime, function()
-					boostCooldown = false
-				end)
-				task.delay(cooldownTime, function()
-					onCooldown = false
-				end)
-				return
-			end
-		end)
-	end)
-end)
-
-local function hookCharacter(char)
-	local humanoid = char:WaitForChild("Humanoid")
-	local animator = humanoid:WaitForChild("Animator")
-
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation
-		and track.Animation.AnimationId == ANIMATION_ID
-		and os.clock() >= armTime then
-			animationDetected = true
-		end
-	end)
-end
-
-if player.Character then
-	hookCharacter(player.Character)
-end
-
-player.CharacterAdded:Connect(hookCharacter)
-
-
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local StarterGui = game:GetService("StarterGui")
-
-local player = Players.LocalPlayer
-
-local raumEnabled = false
-local moving1 = false
-local onCooldown1 = false
-
-distance1 = 0
-local cooldownTime1 = 32
-
-maintab2:Toggle("Raumdeuter", "Toggles Raumdeuter Distance Below.", function(raum)
-	raumEnabled = raum
-	StarterGui:SetCore("SendNotification", {
-		Title = "Raumdeuter",
-		Text = raum and "Enabled." or "Disabled.",
-		Duration = 3
-	})
-end)
-
-maintab2:Slider("Raumdeuter Distance", 0, 0, 170, 1, function(v)
-	distance1 = v
-end)
-
-UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe then return end
-	if not raumEnabled then return end
-	if input.KeyCode ~= Enum.KeyCode.Two then return end
-	if moving1 or onCooldown1 then return end
-
-	moving1 = true
-	onCooldown1 = true
-
-	task.delay(0.17, function()
-		local character = player.Character
-		if not character then moving1 = false onCooldown1 = false return end
-
-		local hrp = character:FindFirstChild("HumanoidRootPart")
-		if not hrp then moving1 = false onCooldown1 = false return end
-
-		local duration1 = 0.17
-		local speed1 = distance1 / duration1
-		local elapsed = 0
-		local conn
-
-		conn = RunService.RenderStepped:Connect(function(dt)
-			elapsed += dt
-			if elapsed >= duration1 then
-				conn:Disconnect()
-				moving1 = false
-				task.delay(cooldownTime1, function()
-					onCooldown1 = false
-				end)
-				return
-			end
-
-			local look = hrp.CFrame.LookVector
-			local dir = Vector3.new(look.X, 0, look.Z).Unit
-			hrp.CFrame += dir * speed1 * dt
-		end)
-	end)
-end)
-
 maintab2:Label("Other Features: Self Explanatory, Other Silent Features.")
 
 local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
@@ -2539,6 +2814,65 @@ UIS.InputBegan:Connect(function(input, gp)
     local kickVec = vector.create(dir.X * 0.75, 0.65, dir.Z * 0.75)
 
     remote:FireServer(buffer.fromstring("\037\001"), { { "kick", 28, false, kickVec } })
+end)
+
+maintab2:Toggle("Auto QuickTimeEvent", "Automatically Does QuickTimeEvents, How Else Can I Explain It?", function()
+local runService = game:GetService("RunService")
+local players = game:GetService("Players")
+local virtualInputManager = game:GetService("VirtualInputManager")
+local starterGui = game:GetService("StarterGui")
+local player = players.LocalPlayer
+
+_G.QuickTimeEvent = not _G.QuickTimeEvent
+
+local function sendNotification(status)
+    if not _G.suppressNotifs then
+        starterGui:SetCore("SendNotification", {
+            Title = "QuickTimeEvent",
+            Text = status,
+            Duration = 1
+        })
+    end
+end
+
+local function convertNumberToKeyText(text)
+    local numberMap = {
+        ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
+        ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
+    }
+    return numberMap[text] or text
+end
+
+local function isShadeOfGreen(color)
+    return color.G > color.R and color.G > color.B
+end
+
+local function checkQTE()
+    if _G.QuickTimeEvent and player and player:FindFirstChild("PlayerGui") then
+        local qteGui = player.PlayerGui:FindFirstChild("Qte")
+        if qteGui and qteGui:FindFirstChild("QTE") then
+            for _, descendant in ipairs(qteGui.QTE:GetDescendants()) do
+                if descendant:IsA("Frame") or descendant:IsA("TextLabel") then
+                    if isShadeOfGreen(descendant.BackgroundColor3) then
+                        local textLabel = qteGui.QTE:FindFirstChild("TextLabel")
+                        if textLabel then
+                            local keyText = convertNumberToKeyText(textLabel.Text)
+                            local keyCode = Enum.KeyCode[keyText]
+                            if keyCode then
+                                virtualInputManager:SendKeyEvent(true, keyCode, false, game)
+                                virtualInputManager:SendKeyEvent(false, keyCode, false, game)
+                            end
+                        end
+                        break
+                    end
+                end
+            end
+        end
+    end
+end
+
+runService.RenderStepped:Connect(checkQTE)
+sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
 maintab2:Toggle("Auto Formless (Bind: Y)", "Shidou Only Formless Macro.", function()
@@ -2737,66 +3071,6 @@ maintab2:Toggle("IFrame Indicator", "Shows The I-Frame Status Of All Players. (G
 	else
 		clearDots()
 	end
-end)
-
-maintab2:Label("Other Features: Other Silent Features, Continued.")
-maintab2:Toggle("Auto QuickTimeEvent", "Automatically Does QuickTimeEvents, How Else Can I Explain It?", function()
-local runService = game:GetService("RunService")
-local players = game:GetService("Players")
-local virtualInputManager = game:GetService("VirtualInputManager")
-local starterGui = game:GetService("StarterGui")
-local player = players.LocalPlayer
-
-_G.QuickTimeEvent = not _G.QuickTimeEvent
-
-local function sendNotification(status)
-    if not _G.suppressNotifs then
-        starterGui:SetCore("SendNotification", {
-            Title = "QuickTimeEvent",
-            Text = status,
-            Duration = 1
-        })
-    end
-end
-
-local function convertNumberToKeyText(text)
-    local numberMap = {
-        ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
-        ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
-    }
-    return numberMap[text] or text
-end
-
-local function isShadeOfGreen(color)
-    return color.G > color.R and color.G > color.B
-end
-
-local function checkQTE()
-    if _G.QuickTimeEvent and player and player:FindFirstChild("PlayerGui") then
-        local qteGui = player.PlayerGui:FindFirstChild("Qte")
-        if qteGui and qteGui:FindFirstChild("QTE") then
-            for _, descendant in ipairs(qteGui.QTE:GetDescendants()) do
-                if descendant:IsA("Frame") or descendant:IsA("TextLabel") then
-                    if isShadeOfGreen(descendant.BackgroundColor3) then
-                        local textLabel = qteGui.QTE:FindFirstChild("TextLabel")
-                        if textLabel then
-                            local keyText = convertNumberToKeyText(textLabel.Text)
-                            local keyCode = Enum.KeyCode[keyText]
-                            if keyCode then
-                                virtualInputManager:SendKeyEvent(true, keyCode, false, game)
-                                virtualInputManager:SendKeyEvent(false, keyCode, false, game)
-                            end
-                        end
-                        break
-                    end
-                end
-            end
-        end
-    end
-end
-
-runService.RenderStepped:Connect(checkQTE)
-sendNotification(_G.QuickTimeEvent and "Enabled." or "Disabled.")
 end)
 
 maintab2:Button("Fix Duplicate Ball", "I Don't Know If This Is Still An Issue But Removes Duplicate Balls If Existent.", function()
