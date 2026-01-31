@@ -1437,9 +1437,33 @@ end)
 maintab2:Label("Auto Line Ups: Helps You Aim At Certain Areas.")
 
 local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local camera = Workspace.CurrentCamera
+
+local character = player.Character
+local hrp = character and character:FindFirstChild("HumanoidRootPart")
 
 local padCount = 0
 local targetCount = 0
+
+local holdingRMB = false
+local camLockConnection = nil
+local activeTarget = nil
+
+local function updateCharacterRefs(char)
+	character = char
+	hrp = character:WaitForChild("HumanoidRootPart")
+end
+
+if player.Character then
+	updateCharacterRefs(player.Character)
+end
+
+player.CharacterAdded:Connect(updateCharacterRefs)
 
 local function pad(pos, color)
 	padCount += 1
@@ -1447,7 +1471,7 @@ local function pad(pos, color)
 	p.Name = "pad" .. padCount
 	p.Size = Vector3.new(5, 5, 5)
 	p.Position = pos
-    p.Transparency = 0.65
+	p.Transparency = 0.65
 	p.Anchored = true
 	p.CanCollide = false
 	p.Color = color
@@ -1468,6 +1492,57 @@ local function target(pos, color)
 	t.Material = Enum.Material.Neon
 	t.Parent = Workspace
 end
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		holdingRMB = true
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		holdingRMB = false
+		activeTarget = nil
+		if camLockConnection then
+			camLockConnection:Disconnect()
+			camLockConnection = nil
+		end
+	end
+end)
+
+local function getPadUnderPlayer()
+	if not hrp then return end
+
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = {character}
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+
+	local result = Workspace:Raycast(hrp.Position, Vector3.new(0, -6, 0), params)
+	if result and result.Instance then
+		return result.Instance.Name:match("^pad(%d+)$")
+	end
+end
+
+RunService.RenderStepped:Connect(function()
+	if not holdingRMB or not hrp then return end
+
+	local padIndex = getPadUnderPlayer()
+	if not padIndex then return end
+
+	local targetPart = Workspace:FindFirstChild("target" .. padIndex)
+	if not targetPart then return end
+
+	activeTarget = targetPart
+
+	if not camLockConnection then
+		camLockConnection = RunService.RenderStepped:Connect(function()
+			if not holdingRMB or not activeTarget then return end
+			camera.CFrame = CFrame.new(camera.CFrame.Position, activeTarget.Position)
+		end)
+	end
+end)
+
 
 local StarterGui = game:GetService("StarterGui")
 
@@ -2255,6 +2330,7 @@ maintab2:Toggle("Naruhaya Footwork", "Toggles Footwork Distance Below.", functio
 end)
 
 maintab2:Slider("Naruhaya Footwork Distance", 0, 0, 170, 1, function(dist1)
+	-- slider just stores latest value, actual read happens per keypress
 	distance = dist1
 end)
 
@@ -2265,67 +2341,102 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local moving = false
 local onCooldown = false
+local boostCooldown = false
+local animationDetected = false
+local armTime = 0
 
 distance = 0
+local duration = 0.45
 local cooldownTime = 24
+local boostCooldownTime = 1
+local ANIMATION_ID = "rbxassetid://82240286756891"
 
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if not footworkEnabled then return end
 	if input.KeyCode ~= Enum.KeyCode.Two then return end
-	if moving or onCooldown then return end
+	if moving or onCooldown or boostCooldown then return end
 
-	moving = true
+	armTime = os.clock()
 	onCooldown = true
+	animationDetected = false
+
+	-- read the slider value fresh on each press
+	local currentDistance = distance
 
 	task.delay(0.33, function()
-		if not footworkEnabled then
-			moving = false
+		if not footworkEnabled or not animationDetected or boostCooldown then
 			onCooldown = false
 			return
 		end
 
 		local character = player.Character
-		if not character then moving = false onCooldown = false return end
+		if not character then onCooldown = false return end
 
 		local hrp = character:FindFirstChild("HumanoidRootPart")
-		if not hrp then moving = false onCooldown = false return end
+		if not hrp then onCooldown = false return end
 
-		local duration = distance / 200
-		if duration <= 0 then
-			moving = false
-			onCooldown = false
-			return
-		end
+		moving = true
+		boostCooldown = true
 
-		local speed = distance / duration
+		local speed = currentDistance / duration
 		local elapsed = 0
+		local distanceRemaining = currentDistance
 		local conn
 
 		conn = RunService.RenderStepped:Connect(function(dt)
 			if not footworkEnabled then
 				conn:Disconnect()
 				moving = false
+				boostCooldown = false
 				onCooldown = false
 				return
 			end
 
+			local moveStep = math.min(speed * dt, distanceRemaining)
+			local look = hrp.CFrame.LookVector
+			local dir = Vector3.new(look.X, 0, look.Z)
+			if dir.Magnitude == 0 then dir = Vector3.new(0,0,1) end
+			dir = dir.Unit
+
+			hrp.CFrame += dir * moveStep
+			distanceRemaining -= moveStep
 			elapsed += dt
-			if elapsed >= duration then
+
+			if elapsed >= duration or distanceRemaining <= 0 then
 				conn:Disconnect()
 				moving = false
+				task.delay(boostCooldownTime, function()
+					boostCooldown = false
+				end)
 				task.delay(cooldownTime, function()
 					onCooldown = false
 				end)
 				return
 			end
-
-			local look = hrp.CFrame.LookVector
-			local dir = Vector3.new(look.X, 0, look.Z).Unit
-			hrp.CFrame += dir * speed * dt
 		end)
 	end)
 end)
+
+local function hookCharacter(char)
+	local humanoid = char:WaitForChild("Humanoid")
+	local animator = humanoid:WaitForChild("Animator")
+
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation
+		and track.Animation.AnimationId == ANIMATION_ID
+		and os.clock() >= armTime then
+			animationDetected = true
+		end
+	end)
+end
+
+if player.Character then
+	hookCharacter(player.Character)
+end
+
+player.CharacterAdded:Connect(hookCharacter)
+
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -2370,7 +2481,7 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 		local hrp = character:FindFirstChild("HumanoidRootPart")
 		if not hrp then moving1 = false onCooldown1 = false return end
 
-		local duration1 = distance1 / 200
+		local duration1 = 0.17
 		local speed1 = distance1 / duration1
 		local elapsed = 0
 		local conn
