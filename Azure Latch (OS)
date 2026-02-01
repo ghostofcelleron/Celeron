@@ -2021,7 +2021,7 @@ maintab2:Toggle("Sae Line Ups", "Sae's Drive Shot Line Ups.", function(s)
 		pad(Vector3.new(-454, -1, 1557), Color3.fromRGB(255, 0, 0))
 		target(Vector3.new(-514, 54, 1693), Color3.fromRGB(255, 0, 0))
 
-		pad(Vector3.new(-363, -1, 1671), Color3.fromRGB(0, 255, 0))
+		pad(Vector3.new(-362, -1, 1675), Color3.fromRGB(0, 255, 0))
 		target(Vector3.new(-424, 23, 1704), Color3.fromRGB(0, 255, 0))
 
 		pad(Vector3.new(-535, -1, 1508), Color3.fromRGB(255, 255, 0))
