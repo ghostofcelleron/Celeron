@@ -1,0 +1,132 @@
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/daff"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (Neo Tennis)",
+    ThemeColor = Color3.fromRGB(60, 1, 82),
+    ThemeGradient = Color3.fromRGB(181, 146, 5),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.GothamBold
+})
+
+local maintab = win:Tab("Main")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+misctab:Label("Other Features.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function playerBoosts(character, propName, value)
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+    local running = true
+    task.spawn(function()
+        while running and humanoid.Parent do
+            humanoid[propName] = value
+            task.wait(0.1)
+        end
+    end)
+    return function() running = false end
+end
+
+do
+    local stopLoop
+    maintab:Textbox("Player Speed", function(v)
+        if stopLoop then stopLoop() end
+        local function apply(char)
+            if stopLoop then stopLoop() end
+            stopLoop = playerBoosts(char, "WalkSpeed", tonumber(v) or 16)
+        end
+        if LocalPlayer.Character then apply(LocalPlayer.Character) end
+        LocalPlayer.CharacterAdded:Connect(apply)
+    end)
+end
+
+do
+    local stopLoop
+    maintab:Textbox("Player Jump", function(v)
+        if stopLoop then stopLoop() end
+        local function apply(char)
+            if stopLoop then stopLoop() end
+            stopLoop = playerBoosts(char, "JumpPower", tonumber(v) or 50)
+        end
+        if LocalPlayer.Character then apply(LocalPlayer.Character) end
+        LocalPlayer.CharacterAdded:Connect(apply)
+    end)
+end
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local HitBallRF = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("HitBallRF")
+
+local autoHitEnabled = false
+local autoHitThread
+
+local calls = {
+	{
+		CamPos = vector.create(3097.899658203125, 53.92098617553711, 1033.461669921875),
+		HitPos = vector.create(3117.17333984375, 33.57522201538086, 1069.9830322265625),
+		HitBallType = 1,
+		ClientTick = 1769900288.773509,
+		CamDir = vector.create(0.45506051182746887, -0.5761227011680603, 0.6789717674255371),
+		AttackMoveSpeed = vector.zero
+	},
+	{
+		CamPos = vector.create(3139.632080078125, 41.7650146484375, 1022.8292236328125),
+		HitPos = vector.create(3120.614501953125, 24.232913970947266, 1068.6097412109375),
+		HitBallType = 1,
+		ClientTick = 1769900328.44514,
+		CamDir = vector.create(-0.4281608760356903, -0.38378453254699707, 0.8181612491607666),
+		AttackMoveSpeed = vector.zero
+	}
+}
+
+maintab:Toggle("Auto Hit", function(hit)
+	autoHitEnabled = hit
+
+	StarterGui:SetCore("SendNotification", {
+		Title = "Auto Hit",
+		Text = hit and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+
+	if hit then
+		autoHitThread = task.spawn(function()
+			while autoHitEnabled do
+				local chosen = calls[math.random(1, #calls)]
+				HitBallRF:InvokeServer(chosen)
+				task.wait(0.33)
+			end
+		end)
+	end
+end)
+
+misctab:Button("Infinite Yield", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Username",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Invite",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("https://discord.gg/8stFYxJv4R")
+end)
