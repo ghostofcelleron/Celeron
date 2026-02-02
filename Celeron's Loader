@@ -131,7 +131,7 @@ local function loadScripts()
 		if table.find(slapbattles, placeId) then
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Slap%20Battles%20(OS)", true))()
 		elseif table.find(azurelatch, placeId) then
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Azure%20Latch%20(OS)"))()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Azure%20Latch"))()
 		elseif table.find(fleethefacility, placeId) then
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Flee%20The%20Facility%20(OS)"))()
 		elseif table.find(towerofhell, placeId) then
