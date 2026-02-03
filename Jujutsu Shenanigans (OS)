@@ -1,23 +1,4 @@
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
-local staffcheck = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/old%20thing%20ill%20keep%20here",true))()
-
-local CoreGui = game:GetService("CoreGui")
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-local Workspace = game:GetService("Workspace")
-
-local player = Players.LocalPlayer
-local PlaceId = game.PlaceId
-local JobId = game.JobId
-
-local darkUI = CoreGui:FindFirstChild("dark_UI")
-if darkUI and typeof(syn) == "table" and syn.protect_gui then
-	syn.protect_gui(darkUI)
-end
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
 
 local win = ui:Create({
 	Name = "Celeron's GUI (Jujutsu Shenanigans)",
@@ -153,7 +134,7 @@ getgenv().applyTPWalk = function()
 	end)
 end
 
-maintab:Slider("Player Speed", 19.5, 1, 85, function(v)
+maintab:Slider("Player Speed", 19.5, 1, 85, 1, function(v)
 	getgenv().lastSliderSet = (v == 8) and 16 or v
 	getgenv().applyTPWalk()
 end)
@@ -167,7 +148,7 @@ end)
 
 getgenv().lastJumpSet = nil
 
-maintab:Slider("Player Jump", 10, 50, 300, function(v)
+maintab:Slider("Player Jump", 10, 50, 300, 1, function(v)
 	getgenv().lastJumpSet = v
 end)
 
@@ -718,3 +699,6 @@ helptab:Button("Copy Discord Server Invite", function()
 	})
 	setclipboard("https://discord.gg/8stFYxJv4R")
 end)
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/oldthingyep",true))()
+loadstring(game:HttpGet("https://pastebin.com/raw/rQMS2B9R",true))()
