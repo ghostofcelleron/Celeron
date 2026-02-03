@@ -2,11 +2,14 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
 	Name = "Celeron's GUI (Jujutsu Shenanigans)",
-	ThemeColor = Color3.fromRGB(18, 18, 18),
+	ThemeColor = Color3.fromRGB(185, 111, 111),
+    ThemeGradient = Color3.fromRGB(111, 111, 185),
 	StartupSound = "rbxassetid://6958727243",
-	ThemeFont = Enum.Font.FredokaOne
+	ThemeFont = Enum.Font.FredokaOne,
+    ToggledSideBar = true
 })
 
+local hometab = win:Tab("Home")
 local maintab = win:Tab("Main")
 local antitab = win:Tab("Protection")
 local funtab = win:Tab("Fun")
@@ -14,7 +17,9 @@ local qoltab = win:Tab("QOL")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
-maintab:Label("Script Made By Celeron + Daffy!")
+hometab:Label("Script Made By Celeron + Daffy!")
+hometab:Label("Join The Discord Server In Info For Updates / Suggestions.")
+maintab:Label("Main Features.")
 antitab:Label("Protection Features.")
 funtab:Label("Fun Features.")
 qoltab:Label("Quality Of Life Features, No Advantages.")
@@ -22,9 +27,11 @@ misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
+hometab:Banner("15586596109", 185)
+
 loopId = 0
 
-qoltab:Textbox("Invite Player (Duel Queue, Only Shows Entered Username.)", function(v)
+qoltab:Textbox("Better Inviting (Use In Duel Queue, Enter Username.)", function(v)
 	loopId += 1
 	local currentLoop = loopId
 
