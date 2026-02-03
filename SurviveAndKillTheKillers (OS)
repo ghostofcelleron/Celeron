@@ -13,9 +13,11 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SAKTK: Classic)",
-    ThemeColor = Color3.fromRGB(20, 20, 20),
+    ThemeColor = Color3.fromRGB(125, 125, 555),
+    ThemeGradient = Color3.fromRGB(555, 125, 125),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+    ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -312,9 +314,11 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SAKTK: Endless)",
-    ThemeColor = Color3.fromRGB(20, 20, 20),
+    ThemeColor = Color3.fromRGB(125, 125, 555),
+    ThemeGradient = Color3.fromRGB(555, 125, 125),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+    ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -525,9 +529,11 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SAKTK: Juggernaut)",
-    ThemeColor = Color3.fromRGB(20, 20, 20),
+    ThemeColor = Color3.fromRGB(125, 125, 555),
+    ThemeGradient = Color3.fromRGB(555, 125, 125),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+    ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -537,6 +543,7 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
+maintab:Label("This Mode Carries A Higher Risk Of Shadow Bans.")
 misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
@@ -1719,9 +1726,11 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SAKTK: Infection)",
-    ThemeColor = Color3.fromRGB(20, 20, 20),
+    ThemeColor = Color3.fromRGB(125, 125, 555),
+    ThemeGradient = Color3.fromRGB(555, 125, 125),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+    ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -1731,7 +1740,7 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
-maintab:Label("THIS MODE CARRYS A HIGHER BAN RISK, USE WITH DISCRETION.")
+maintab:Label("This Mode Carries A Higher Risk Of Shadow Bans.")
 misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
