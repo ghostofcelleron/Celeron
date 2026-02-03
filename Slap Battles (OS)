@@ -44,7 +44,8 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (Slap Battles)",
-    ThemeColor = Color3.fromRGB(14, 14, 14),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeGradient = Color3.fromRGB(13, 13, 13),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne,
 	ToggledSideBar = true
@@ -445,7 +446,7 @@ game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(c)
 	getgenv().applySpeed()
 end)
 
-maintab:Button("Infinite Jump", function()
+maintab:Toggle("Infinite Jump", function()
 	getgenv().infiniteJumpEnabled = not getgenv().infiniteJumpEnabled
 
 	local lp = game:GetService("Players").LocalPlayer
@@ -749,7 +750,7 @@ getgenv().findRelevantHitRemotes = function(gloveName)
 	return hits
 end
 
-maintab:Button("Slap Aura", function()
+maintab:Toggle("Slap Aura", function()
 	getgenv().slapaura_enabled = not getgenv().slapaura_enabled
 
 	if getgenv().slapaura_enabled and not getgenv().slapaura_connection then
@@ -851,7 +852,7 @@ local function findLegitRemotes(gloveName)
 	return hits
 end
 
-maintab:Button("Slap Aura (Legit)", function()
+maintab:Toggle("Slap Aura (Legit)", function()
 	getgenv().legitslapaura.enabled = not getgenv().legitslapaura.enabled
 
 	if getgenv().legitslapaura.enabled and not getgenv().legitslapaura.connection then
@@ -976,7 +977,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
 	end
 end)
 
-maintab:Button("Glove Triggerbot", function()
+maintab:Toggle("Glove Triggerbot", function()
 	enabled = not enabled
 	game:GetService("StarterGui"):SetCore("SendNotification", {
 		Title = "Glove Triggerbot",
@@ -988,7 +989,7 @@ end)
 local autoRhythmEnabled = false
 local barStates = {}
 
-maintab:Button("Auto Rhythm", function()
+maintab:Toggle("Auto Rhythm", function()
 	autoRhythmEnabled = not autoRhythmEnabled
 	game:GetService("StarterGui"):SetCore("SendNotification", {
 		Title = "Auto Rhythm",
@@ -1081,11 +1082,11 @@ end)
 
 getgenv().AutoClickTycoonEnabled = false
 
-maintab:Button("Auto-Click Tycoon (Must Be Near.)", function()
+maintab:Toggle("Auto Click Tycoon (Must Be Near.)", function()
 	getgenv().AutoClickTycoonEnabled = not getgenv().AutoClickTycoonEnabled
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Auto-Click Tycoon",
+		Title = "Auto Click Tycoon",
 		Text = getgenv().AutoClickTycoonEnabled and "Enabled." or "Disabled.",
 		Duration = 3
 	})
@@ -1226,16 +1227,6 @@ for i = 1, 25 do
 end
 end)
 
-maintab:Button("Tournament Safety (Auto-Win Tournament)", function()
-local p = Instance.new("Part", workspace)
-p.Size = Vector3.new(100,1,100)
-p.Position = Vector3.new(3441,314,-3)
-p.Anchored = true
-
-local hrp = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-hrp.CFrame = CFrame.new(p.Position + Vector3.new(0,5,0))
-end)
-
 getgenv().AntiFlingEnabled = false
 getgenv().RagdolledValue = Instance.new("BoolValue")
 getgenv().RagdolledValue.Name = "Ragdolled"
@@ -1284,10 +1275,10 @@ game:GetService("RunService").Heartbeat:Connect(function()
 	end
 end)
 
-antitab:Button("Anti-Knockback", function()
+antitab:Toggle("Anti Knockback", function()
 	getgenv().AntiFlingEnabled = not getgenv().AntiFlingEnabled
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-Knockback";
+		Title = "Anti Knockback";
 		Text = getgenv().AntiFlingEnabled and "Enabled." or "Disabled.";
 		Duration = 3;
 	})
@@ -1314,20 +1305,20 @@ game:GetService("RunService").Heartbeat:Connect(function()
 	end
 end)
 
-antitab:Button("Anti-Time Stop", function()
+antitab:Toggle("Anti Time Stop", function()
 	getgenv().AntiAnchorEnabled = not getgenv().AntiAnchorEnabled
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-Time Stop";
+		Title = "Anti Time Stop";
 		Text = getgenv().AntiAnchorEnabled and "Enabled." or "Disabled.";
 		Duration = 3;
 	})
 end)
 
-antitab:Button("Anti-Knockoff", function()
+antitab:Toggle("Anti Knockoff", function()
 	_G.AntiKnockoff = not _G.AntiKnockoff
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-Knockoff";
+		Title = "Anti Knockoff";
 		Text = _G.AntiKnockoff and "Enabled." or "Disabled.";
 		Duration = 3;
 	})
@@ -1344,11 +1335,11 @@ antitab:Button("Anti-Knockoff", function()
 	end
 end)
 
-antitab:Button("Anti-Bus", function()
+antitab:Toggle("Anti Bus", function()
 	_G.AntiBus = not _G.AntiBus
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-Bus";
+		Title = "Anti Bus";
 		Text = _G.AntiBus and "Enabled." or "Disabled.";
 		Duration = 3;
 	})
@@ -1367,11 +1358,11 @@ antitab:Button("Anti-Bus", function()
 	end
 end)
 
-antitab:Button("Anti-Pusher", function()
+antitab:Toggle("Anti Pusher", function()
 	_G.AntiWall = not _G.AntiWall
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-Pusher";
+		Title = "Anti Pusher";
 		Text = _G.AntiWall and "Enabled." or "Disabled.";
 		Duration = 3;
 	})
@@ -1414,11 +1405,11 @@ end
 
 getgenv().AntiOneShotConnection = nil
 
-antitab:Button("Anti-OneShot", function()
+antitab:Toggle("Anti OneShot", function()
 	getgenv().AntiOneShotEnabled = not getgenv().AntiOneShotEnabled
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-OneShot",
+		Title = "Anti OneShot",
 		Text = getgenv().AntiOneShotEnabled and "Enabled." or "Disabled.",
 		Duration = 3
 	})
@@ -1452,11 +1443,11 @@ getgenv().sbeveDetectionRadius = 15
 getgenv().sbevePushDistance = 22
 getgenv().sbeveConnection = nil
 
-antitab:Button("Anti-Sbeve", function()
+antitab:Toggle("Anti Sbeve", function()
 	getgenv().sbeveShieldEnabled = not getgenv().sbeveShieldEnabled
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-Sbeve",
+		Title = "Anti Sbeve",
 		Text = getgenv().sbeveShieldEnabled and "Enabled." or "Disabled.",
 		Duration = 3
 	})
@@ -1497,11 +1488,11 @@ antitab:Button("Anti-Sbeve", function()
 	end
 end)
 
-antitab:Button("Anti-MegaRock", function()
+antitab:Toggle("Anti MegaRock", function()
 	getgenv().antimegarocksb = not getgenv().antimegarocksb
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-MegaRock",
+		Title = "Anti MegaRock",
 		Text = getgenv().antimegarocksb and "Enabled." or "Disabled.",
 		Duration = 3
 	})
@@ -1519,10 +1510,6 @@ antitab:Button("Anti-MegaRock", function()
 			end
 		end)
 	end
-end)
-
-exptab:Button("Get All Badge Gloves (Instant, Recommended Not To Use On Main.)", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/IncognitoScripts/SlapBattles/refs/heads/main/InstantGloves"))()
 end)
 
 exptab:Button("Instant Egg Quest (Accept Quest From Hitman First.)", function()
@@ -1716,7 +1703,7 @@ end)
 
 getgenv().lastGroundedPos = nil
 
-antitab:Button("Anti-Void (Teleport Method, Rejoin To Disable.)", function()
+antitab:Button("Anti Void (Teleport Method, Rejoin To Disable.)", function()
 	getgenv().VoidBaseplate = Instance.new("Part")
 	getgenv().VoidBaseplate.Size = Vector3.new(99999, 1, 99999)
 	getgenv().VoidBaseplate.Position = Vector3.new(-30, -30, -30)
@@ -1757,7 +1744,7 @@ antitab:Button("Anti-Void (Teleport Method, Rejoin To Disable.)", function()
 	end)
 end)
 
-antitab:Button("Anti-Void (Baseplate Method)", function()
+antitab:Button("Anti Void (Baseplate Method)", function()
 	local baseplate = Instance.new("Part")
 	baseplate.Name = "VoidProtection"
 	baseplate.Size = Vector3.new(25000, 1, 25000)
@@ -1770,7 +1757,7 @@ antitab:Button("Anti-Void (Baseplate Method)", function()
 	baseplate.Parent = game:GetService("Workspace")
 end)
 
-antitab:Button("Remove Anti-Void", function()
+antitab:Button("Remove Anti Void", function()
 	for _, obj in ipairs(game:GetDescendants()) do
 		if obj:IsA("BasePart") and obj.Name == "VoidProtection" then
 			obj:Destroy()
@@ -1824,7 +1811,7 @@ teletab:Button("Baseplate", function()
 		:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(Vector3.new(5000, 228, 5000) + Vector3.new(0, 20 / 2 + 5, 0))
 end)
 
-farmtab:Label("Anti-AFK: Useful For Certain Farms.")
+farmtab:Label("Anti AFK: Useful For Certain Farms.")
 
 getgenv().antiAFK = false
 local lastInputTime = tick()
@@ -1845,10 +1832,10 @@ task.spawn(function()
 	end
 end)
 
-farmtab:Button("Anti-AFK", function()
+farmtab:Button("Anti AFK", function()
 	getgenv().antiAFK = not getgenv().antiAFK
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-AFK",
+		Title = "Anti AFK",
 		Text = getgenv().antiAFK and "Enabled." or "Disabled.",
 		Duration = 3
 	})
@@ -2171,20 +2158,6 @@ farmtab:Textbox("Kill Farm (Set Username To Main, Use In Arena.)", function(v)
 	if LocalPlayer.Character then
 		onCharacterSpawn(LocalPlayer.Character)
 	end
-end)
-
-farmtab:Label("Candy Corn Farm: Silent.")
-
-farmtab:Button("Candy Corn Farm", function()
-while true do
-for _, part in ipairs(workspace.CandyCorns:GetChildren()) do
-    if part:IsA("BasePart") then
-        firetouchinterest(part, game.Players.LocalPlayer.Character.HumanoidRootPart, 0)
-        firetouchinterest(part, game.Players.LocalPlayer.Character.HumanoidRootPart, 1)
-    end
-end
-wait(0.1)
-end
 end)
 
 farmtab:Label("Rob Farm: Silent, Teleport To Baseplate.")
@@ -3495,7 +3468,8 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Evil Barzil)",
-    ThemeColor = Color3.fromRGB(14, 14, 14),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeGradient = Color3.fromRGB(13, 13, 13),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne,
 	ToggledSideBar = true
@@ -4121,7 +4095,8 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Slap Royale)",
-    ThemeColor = Color3.fromRGB(14, 14, 14),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeGradient = Color3.fromRGB(13, 13, 13),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne,
 	ToggledSideBar = true
@@ -4272,7 +4247,7 @@ LocalPlayer.CharacterAdded:Connect(function(character)
 	end
 end)
 
-maintab:Button("Infinite Jump", function()
+maintab:Toggle("Infinite Jump", function()
 	getgenv().infiniteJumpEnabled = not getgenv().infiniteJumpEnabled
 
 	local lp = game:GetService("Players").LocalPlayer
@@ -4353,7 +4328,7 @@ local function getClosestPlayer(radius)
 	return closest
 end
 
-maintab:Button("Slap Aura", function()
+maintab:Toggle("Slap Aura", function()
 	slapaura.enabled = not slapaura.enabled
 
 	if slapaura.enabled and not slapaura.connection then
@@ -4418,7 +4393,7 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
-maintab:Button("Glove Triggerbot", function()
+maintab:Toggle("Glove Triggerbot", function()
     enabled = not enabled
 
     local StarterGui = game:GetService("StarterGui")
@@ -5378,16 +5353,16 @@ end
 
 LocalPlayer.CharacterAdded:Connect(setupCharacter)
 
-antitab:Button("Anti-Knockback", function()
+antitab:Toggle("Anti Knockback", function()
 	antiFlingEnabled = not antiFlingEnabled
 	local status = antiFlingEnabled and "Enabled." or "Disabled."
-	notify("Anti-Knockback", status)
+	notify("Anti Knockback", status)
 end)
 
 local antiLavaEnabled = false
 local baseplates = {}
 
-antitab:Button("Anti Lava/Acid", function()
+antitab:Toggle("Anti Lava/Acid", function()
     local StarterGui = game:GetService("StarterGui")
 
     if not antiLavaEnabled then
@@ -5685,7 +5660,8 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Eternal Bob)",
-    ThemeColor = Color3.fromRGB(14, 14, 14),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeGradient = Color3.fromRGB(13, 13, 13),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne,
 	ToggledSideBar = true
@@ -6142,7 +6118,7 @@ maintab:Label("You Can Slap Farm Using The Mini Bobs!")
 local autoAttackBob = false
 local attackLoop = nil
 
-maintab:Button("Slap Aura (Players / Mini Bob)", function()
+maintab:Toggle("Slap Aura (Players / Mini Bob)", function()
     autoAttackBob = not autoAttackBob
 
     game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -6281,10 +6257,10 @@ end
 
 LocalPlayer.CharacterAdded:Connect(setupCharacter)
 
-antitab:Button("Anti-Knockback", function()
+antitab:Toggle("Anti Knockback", function()
 	antiFlingEnabled = not antiFlingEnabled
 	local status = antiFlingEnabled and "Enabled." or "Disabled."
-	notify("Anti-Knockback", status)
+	notify("Anti Knockback", status)
 end)
 
 local Players = game:GetService("Players")
@@ -6294,12 +6270,12 @@ local RunService = game:GetService("RunService")
 local antiRingEnabled = false
 local antiRingLoop = nil
 
-antitab:Button("Anti-Ring", function()
+antitab:Toggle("Anti Ring", function()
 	antiRingEnabled = not antiRingEnabled
 
 	if antiRingEnabled then
 		StarterGui:SetCore("SendNotification", {
-			Title = "Anti-Ring",
+			Title = "Anti Ring",
 			Text = "Enabled.",
 			Duration = 2
 		})
@@ -6312,7 +6288,7 @@ antitab:Button("Anti-Ring", function()
 		end)
 	else
 		StarterGui:SetCore("SendNotification", {
-			Title = "Anti-Ring",
+			Title = "Anti Ring",
 			Text = "Disabled.",
 			Duration = 2
 		})
@@ -6353,7 +6329,8 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Killstreak Only)",
-    ThemeColor = Color3.fromRGB(14, 14, 14),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeGradient = Color3.fromRGB(13, 13, 13),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne,
 	ToggledSideBar = true
@@ -6791,7 +6768,7 @@ local function getClosestPlayer()
 	return closest
 end
 
-maintab:Button("Slap Aura", function()
+maintab:Toggle("Slap Aura", function()
 	auraEnabled = not auraEnabled
 
 	if auraEnabled and not connection then
@@ -6837,7 +6814,7 @@ maintab:Button("Slap Aura", function()
 	notify("Slap Aura", auraEnabled and "Enabled." or "Disabled.")
 end)
 
-maintab:Button("Infinite Jump", function()
+maintab:Toggle("Infinite Jump", function()
 	getgenv().infiniteJumpEnabled = not getgenv().infiniteJumpEnabled
 
 	local lp = game:GetService("Players").LocalPlayer
@@ -7026,13 +7003,13 @@ end
 
 LocalPlayer.CharacterAdded:Connect(setupCharacter)
 
-antitab:Button("Anti-Knockback", function()
+antitab:Toggle("Anti Knockback", function()
 	antiFlingEnabled = not antiFlingEnabled
 	local status = antiFlingEnabled and "Enabled." or "Disabled."
-	notify("Anti-Knockback", status)
+	notify("Anti Knockback", status)
 end)
 
-antitab:Button("Anti-Void (Teleport Method, Rejoin To Disable.)", function()
+antitab:Button("Anti Void (Teleport Method, Rejoin To Disable.)", function()
 local lp = game.Players.LocalPlayer
 local lastGroundedPos = nil
 
@@ -7081,7 +7058,7 @@ baseplate.Touched:Connect(function(hit)
 end)
 end)
 
-antitab:Button("Anti-Void (Baseplate Method)", function()
+antitab:Button("Anti Void (Baseplate Method)", function()
 local Workspace = game:GetService("Workspace")
 
 local baseplate = Instance.new("Part")
@@ -7096,7 +7073,7 @@ baseplate.CastShadow = false
 baseplate.Parent = workspace
 end)
 
-antitab:Button("Remove Anti-Void", function()
+antitab:Button("Remove Anti Void", function()
 local function removeVoidProtections(parent)
 	for _, obj in ipairs(parent:GetDescendants()) do
 		if obj:IsA("BasePart") and obj.Name == "VoidProtection" then
@@ -7167,12 +7144,12 @@ ensureBaseplate()
 teleportToBaseplate()
 end)
 
-farmtab:Label("Anti-AFK: Useful For Certain Farms.")
+farmtab:Label("Anti AFK: Useful For Certain Farms.")
 
-farmtab:Button("Anti-AFK", function()
+farmtab:Button("Anti AFK", function()
 	getgenv().antiAFK = not getgenv().antiAFK
 	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti-AFK",
+		Title = "Anti AFK",
 		Text = getgenv().antiAFK and "Enabled." or "Disabled.",
 		Duration = 3
 	})
@@ -7463,7 +7440,8 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Null Zone)",
-    ThemeColor = Color3.fromRGB(14, 14, 14),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeGradient = Color3.fromRGB(13, 13, 13),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.FredokaOne,
 	ToggledSideBar = true
@@ -7479,12 +7457,12 @@ helptab:Label("Show / Hide GUI: Right Alt")
 local antinull = false
 local loopThread = nil
 
-maintab:Button("Anti-Null", function()
+maintab:Button("Anti Null", function()
 	antinull = not antinull
 
 	if antinull then
 		game:GetService("StarterGui"):SetCore("SendNotification", {
-			Title = "Anti-Null";
+			Title = "Anti Null";
 			Text = "Enabled.";
 			Duration = 3;
 		})
@@ -7502,7 +7480,7 @@ maintab:Button("Anti-Null", function()
 		coroutine.resume(loopThread)
 	else
 		game:GetService("StarterGui"):SetCore("SendNotification", {
-			Title = "Anti-Null";
+			Title = "Anti Null";
 			Text = "Disabled.";
 			Duration = 3;
 		})
@@ -7564,9 +7542,11 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Eggler)",
-    ThemeColor = Color3.fromRGB(14, 14, 14),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeGradient = Color3.fromRGB(13, 13, 13),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+    ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -7639,9 +7619,11 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Barzil)",
-    ThemeColor = Color3.fromRGB(14, 14, 14),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeGradient = Color3.fromRGB(13, 13, 13),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+    ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -7840,9 +7822,11 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Shattered Mirror)",
-    ThemeColor = Color3.fromRGB(14, 14, 14),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeGradient = Color3.fromRGB(13, 13, 13),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+    ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
@@ -7982,9 +7966,11 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/c
 
 local win = ui:Create({
     Name = "Celeron's GUI (SB: Elude)",
-    ThemeColor = Color3.fromRGB(14, 14, 14),
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeGradient = Color3.fromRGB(13, 13, 13),
     StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+    ThemeFont = Enum.Font.FredokaOne,
+	ToggledSideBar = true
 })
 
 local maintab = win:Tab("Main")
