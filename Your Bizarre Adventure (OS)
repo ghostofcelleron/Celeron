@@ -8,10 +8,10 @@ local sbr = 4643697430
 
 if game.PlaceId == normal then
 
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
 
 local win = ui:Create({
-    Name = "Celeron's GUI (Your Bizarre Adventure)",
+    Name = "Celeron's GUI (YBA)",
     ThemeColor = Color3.fromRGB(80, 0, 145),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.GothamBold
@@ -26,6 +26,7 @@ local helptab = win:Tab("Info")
 maintab:Label("Script Made By Celeron + Daffy!")
 vistab:Label("Visual Settings.")
 maptab:Label("Teleport Features, May Be Buggy.")
+misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
@@ -204,7 +205,7 @@ getgenv().applySpeed = function()
 	end)()
 end
 
-maintab:Slider("Player Speed", 20, 0, 240, function(v)
+maintab:Slider("Player Speed", 20, 0, 240, 1, function(v)
 	getgenv().lastSliderSet = (v == 8) and 16 or v
 	getgenv().applySpeed()
 end)
@@ -245,7 +246,7 @@ getgenv().applyJump = function()
 	end
 end
 
-maintab:Slider("Player Jump", 50, 0, 350, function(v)
+maintab:Slider("Player Jump", 50, 0, 350, 1, function(v)
 	getgenv().lastJumpSet = v
 	getgenv().applyJump()
 end)
@@ -280,7 +281,7 @@ local activeESP = {}
 local lastItemNames = {}
 local currentRoot = nil
 
-vistab:Button("Item ESP", function()
+vistab:Toggle("Item ESP", function()
 	itemESPEnabled = not itemESPEnabled
 
 	local StarterGui = game:GetService("StarterGui")
@@ -419,7 +420,7 @@ vistab:Button("Item ESP", function()
 	end
 end)
 
-vistab:Button("Always Night", function()
+vistab:Toggle("Always Night", function()
 	getgenv().AlwaysNight = not getgenv().AlwaysNight
 
 	local Lighting = game:GetService("Lighting")
@@ -554,7 +555,7 @@ end)
 
 elseif game.PlaceId == sbr then
 
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/PQBu5K3w"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (YBA: SBR)",
@@ -570,6 +571,7 @@ local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
 vistab:Label("Visual Settings.")
+misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
@@ -748,7 +750,7 @@ getgenv().applySpeed = function()
 	end)()
 end
 
-maintab:Slider("Player Speed", 20, 0, 240, function(v)
+maintab:Slider("Player Speed", 20, 0, 240, 1, function(v)
 	getgenv().lastSliderSet = (v == 8) and 16 or v
 	getgenv().applySpeed()
 end)
@@ -832,7 +834,7 @@ local function applyHighlight(player)
     end
 end
 
-vistab:Button("Player ESP", function()
+vistab:Toggle("Player ESP", function()
     playerESPEnabled = not playerESPEnabled
     notify("Player ESP", playerESPEnabled and "Enabled." or "Disabled.")
 
@@ -850,7 +852,7 @@ vistab:Button("Player ESP", function()
     end)
 end)
 
-vistab:Button("Always Night", function()
+vistab:Toggle("Always Night", function()
 	getgenv().AlwaysNight = not getgenv().AlwaysNight
 
 	local Lighting = game:GetService("Lighting")
