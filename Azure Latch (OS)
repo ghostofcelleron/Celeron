@@ -1351,6 +1351,97 @@ maintab:Toggle("Spam Brick Sound (5v5 + GK Only.)", "This SHOULD Be Self Explana
     end
 end)
 
+maintab:Label("Additional Fun Features!")
+
+local plr = game.Players.LocalPlayer
+local mouse = plr:GetMouse()
+local fahh = false
+getgenv().InfiniteRangePassing = false
+
+local passNames = {
+	["100-Point Pass"] = Enum.KeyCode.Two,
+	["Magic Pass"] = Enum.KeyCode.Four,
+	["Undead Crash"] = Enum.KeyCode.Two,
+	["Chilling Pass"] = Enum.KeyCode.Four,
+}
+
+local function HasPassMove()
+	local hotbar = plr.PlayerGui:FindFirstChild("Hotbar") and plr.PlayerGui.Hotbar.Backpack.Hotbar
+	if hotbar then
+		for _, v in pairs(hotbar:GetChildren()) do
+			if v:FindFirstChild("Base") and passNames[v.Base.ToolName.Text] then
+				return v
+			end
+		end
+	end
+	return nil
+end
+
+local function getNearestPlayerToMouse()
+	local closestPlayer = nil
+	local closestDist = math.huge
+	local mousePos = mouse.Hit.Position
+
+	for _, target in ipairs(game:GetService("Players"):GetPlayers()) do
+		if target ~= plr and target.Team == plr.Team then
+			local hrp = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+			local humanoid = target.Character and target.Character:FindFirstChild("Humanoid")
+			if hrp and humanoid and humanoid.Health > 0 then
+				local dist = (hrp.Position - mousePos).Magnitude
+				if dist < closestDist then
+					closestDist = dist
+					closestPlayer = target
+				end
+			end
+		end
+	end
+
+	return closestPlayer and closestPlayer.Character or nil
+end
+
+game:GetService("UserInputService").InputBegan:Connect(function(key, bg)
+	if bg or not getgenv().InfiniteRangePassing then return end
+	if plr.Team == game.Teams.lobby then return end
+	if fahh then return end
+	if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
+
+	local button = HasPassMove()
+	if button and key.KeyCode == passNames[button.Base.ToolName.Text] then
+		local target = getNearestPlayerToMouse()
+		if target and target:FindFirstChild("HumanoidRootPart") and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+			target.HumanoidRootPart.Anchored = true
+			local originalCFrame = target.HumanoidRootPart.CFrame
+			task.wait()
+			target.HumanoidRootPart.CFrame = game.Workspace.CurrentCamera.CFrame * CFrame.new(0, 0, -2)
+
+			task.delay(0.1, function()
+				fahh = true
+				game:GetService("VirtualInputManager"):SendKeyEvent(true, passNames[button.Base.ToolName.Text], false, game)
+				task.wait(0.02)
+				game:GetService("VirtualInputManager"):SendKeyEvent(false, passNames[button.Base.ToolName.Text], false, game)
+				task.wait(0.05)
+				fahh = false
+			end)
+
+			task.wait(0.2)
+			if target:FindFirstChild("HumanoidRootPart") then
+				target.HumanoidRootPart.Anchored = false
+				task.wait()
+				target.HumanoidRootPart.CFrame = originalCFrame
+			end
+		end
+	end
+end)
+
+maintab:Toggle("Infinite Range Passing", "Allows You To Pass From Anywhere On The Field.", function(state)
+	getgenv().InfiniteRangePassing = state
+	if state then
+		game.StarterGui:SetCore("SendNotification", {Title = "Infinite Pass", Text = "Enabled.", Duration = 5})
+	else
+		game.StarterGui:SetCore("SendNotification", {Title = "Infinite Pass", Text = "Disabled.", Duration = 5})
+	end
+end)
+
 maintab:Button("Goalkeeper Anywhere (Rejoin To Disable.) (Credit: someone cool..)", "Allows You To Do GK Side Dashes Instead!", function()
 game:GetService("StarterGui"):SetCore("SendNotification", {
 			Title = "Goalkeeper Anywhere",
@@ -1377,18 +1468,18 @@ local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
 
-distance = 0
+getgenv().distance = 0
 local duration = 0.45
 local boostCooldownTime = 0.15
 local naru_anim = "rbxassetid://82240286756891"
 
-local moving = false
-local boostCooldown = false
-local animationDetected = false
-local armTime = 0
+getgenv().moving = false
+getgenv().boostCooldown = false
+getgenv().animationDetected = false
+getgenv().armTime = 0
 
 maintab:Slider("Naruhaya Footwork Distance", 0, 0, 200, 1, function(v)
-	distance = v
+	getgenv().distance = v
 end)
 
 local function hookFootwork(char)
@@ -1396,8 +1487,8 @@ local function hookFootwork(char)
 	animator.AnimationPlayed:Connect(function(track)
 		if track.Animation
 		and track.Animation.AnimationId == naru_anim
-		and os.clock() >= armTime then
-			animationDetected = true
+		and os.clock() >= getgenv().armTime then
+			getgenv().animationDetected = true
 		end
 	end)
 end
@@ -1408,21 +1499,21 @@ player.CharacterAdded:Connect(hookFootwork)
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode ~= Enum.KeyCode.Two then return end
-	if distance <= 0 then return end
-	if moving or boostCooldown then return end
+	if getgenv().distance <= 0 then return end
+	if getgenv().moving or getgenv().boostCooldown then return end
 
-	armTime = os.clock()
-	animationDetected = false
-	local currentDistance = distance
+	getgenv().armTime = os.clock()
+	getgenv().animationDetected = false
+	local currentDistance = getgenv().distance
 
 	task.delay(0.33, function()
-		if not animationDetected or boostCooldown then return end
+		if not getgenv().animationDetected or getgenv().boostCooldown then return end
 
 		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
 
-		moving = true
-		boostCooldown = true
+		getgenv().moving = true
+		getgenv().boostCooldown = true
 
 		local speed = currentDistance / duration
 		local remaining = currentDistance
@@ -1440,29 +1531,29 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			remaining -= step
 			if remaining <= 0 then
 				conn:Disconnect()
-				moving = false
+				getgenv().moving = false
 				task.delay(boostCooldownTime, function()
-					boostCooldown = false
+					getgenv().boostCooldown = false
 				end)
 			end
 		end)
 	end)
 end)
 
-distance1 = 0
+getgenv().distance1 = 0
 local duration1 = 0.625
 local boostCooldownTime1 = 0.15
 local raum_anims = {
 	["rbxassetid://81582265162782"] = true
 }
 
-local moving1 = false
-local boostCooldown1 = false
-local animationDetected1 = false
-local armTime1 = 0
+getgenv().moving1 = false
+getgenv().boostCooldown1 = false
+getgenv().animationDetected1 = false
+getgenv().armTime1 = 0
 
 maintab:Slider("Raumdeuter Distance", 0, 0, 200, 1, function(v)
-	distance1 = v
+	getgenv().distance1 = v
 end)
 
 local function hookRaum(char)
@@ -1470,8 +1561,8 @@ local function hookRaum(char)
 	animator.AnimationPlayed:Connect(function(track)
 		if track.Animation
 		and raum_anims[track.Animation.AnimationId]
-		and os.clock() >= armTime1 then
-			animationDetected1 = true
+		and os.clock() >= getgenv().armTime1 then
+			getgenv().animationDetected1 = true
 		end
 	end)
 end
@@ -1482,21 +1573,21 @@ player.CharacterAdded:Connect(hookRaum)
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode ~= Enum.KeyCode.Two then return end
-	if distance1 <= 0 then return end
-	if moving1 or boostCooldown1 then return end
+	if getgenv().distance1 <= 0 then return end
+	if getgenv().moving1 or getgenv().boostCooldown1 then return end
 
-	armTime1 = os.clock()
-	animationDetected1 = false
-	local currentDistance = distance1
+	getgenv().armTime1 = os.clock()
+	getgenv().animationDetected1 = false
+	local currentDistance = getgenv().distance1
 
 	task.delay(0.17, function()
-		if not animationDetected1 or boostCooldown1 then return end
+		if not getgenv().animationDetected1 or getgenv().boostCooldown1 then return end
 
 		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
 
-		moving1 = true
-		boostCooldown1 = true
+		getgenv().moving1 = true
+		getgenv().boostCooldown1 = true
 
 		local speed = currentDistance / duration1
 		local remaining = currentDistance
@@ -1514,27 +1605,27 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			remaining -= step
 			if remaining <= 0 then
 				conn:Disconnect()
-				moving1 = false
+				getgenv().moving1 = false
 				task.delay(boostCooldownTime1, function()
-					boostCooldown1 = false
+					getgenv().boostCooldown1 = false
 				end)
 			end
 		end)
 	end)
 end)
 
-distance2 = 0
+getgenv().distance2 = 0
 local duration2 = 0.75
 local boostCooldownTime2 = 0.15
 local drac_anim = "rbxassetid://95359966795185"
 
-local moving2 = false
-local boostCooldown2 = false
-local animationDetected2 = false
-local armTime2 = 0
+getgenv().moving2 = false
+getgenv().boostCooldown2 = false
+getgenv().animationDetected2 = false
+getgenv().armTime2 = 0
 
 maintab:Slider("Draconic Rush Distance", 0, 0, 200, 1, function(v)
-	distance2 = v
+	getgenv().distance2 = v
 end)
 
 local function hookDraconic(char)
@@ -1542,8 +1633,8 @@ local function hookDraconic(char)
 	animator.AnimationPlayed:Connect(function(track)
 		if track.Animation
 		and track.Animation.AnimationId == drac_anim
-		and os.clock() >= armTime2 then
-			animationDetected2 = true
+		and os.clock() >= getgenv().armTime2 then
+			getgenv().animationDetected2 = true
 		end
 	end)
 end
@@ -1554,21 +1645,21 @@ player.CharacterAdded:Connect(hookDraconic)
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode ~= Enum.KeyCode.Three then return end
-	if distance2 <= 0 then return end
-	if moving2 or boostCooldown2 then return end
+	if getgenv().distance2 <= 0 then return end
+	if getgenv().moving2 or getgenv().boostCooldown2 then return end
 
-	armTime2 = os.clock()
-	animationDetected2 = false
-	local currentDistance = distance2
+	getgenv().armTime2 = os.clock()
+	getgenv().animationDetected2 = false
+	local currentDistance = getgenv().distance2
 
 	task.delay(0.17, function()
-		if not animationDetected2 or boostCooldown2 then return end
+		if not getgenv().animationDetected2 or getgenv().boostCooldown2 then return end
 
 		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
 
-		moving2 = true
-		boostCooldown2 = true
+		getgenv().moving2 = true
+		getgenv().boostCooldown2 = true
 
 		local speed = currentDistance / duration2
 		local remaining = currentDistance
@@ -1586,27 +1677,27 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			remaining -= step
 			if remaining <= 0 then
 				conn:Disconnect()
-				moving2 = false
+				getgenv().moving2 = false
 				task.delay(boostCooldownTime2, function()
-					boostCooldown2 = false
+					getgenv().boostCooldown2 = false
 				end)
 			end
 		end)
 	end)
 end)
 
-distance3 = 0
+getgenv().distance3 = 0
 local duration3 = 0.25
 local boostCooldownTime3 = 0.15
 local step_anim = "rbxassetid://84063609284472"
 
-local moving3 = false
-local boostCooldown3 = false
-local animationDetected3 = false
-local armTime3 = 0
+getgenv().moving3 = false
+getgenv().boostCooldown3 = false
+getgenv().animationDetected3 = false
+getgenv().armTime3 = 0
 
 maintab:Slider("Step Overs Distance", 0, 0, 200, 1, function(v)
-	distance3 = v
+	getgenv().distance3 = v
 end)
 
 local function hookStep(char)
@@ -1614,8 +1705,8 @@ local function hookStep(char)
 	animator.AnimationPlayed:Connect(function(track)
 		if track.Animation
 		and track.Animation.AnimationId == step_anim
-		and os.clock() >= armTime3 then
-			animationDetected3 = true
+		and os.clock() >= getgenv().armTime3 then
+			getgenv().animationDetected3 = true
 		end
 	end)
 end
@@ -1626,21 +1717,21 @@ player.CharacterAdded:Connect(hookStep)
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode ~= Enum.KeyCode.One then return end
-	if distance3 <= 0 then return end
-	if moving3 or boostCooldown3 then return end
+	if getgenv().distance3 <= 0 then return end
+	if getgenv().moving3 or getgenv().boostCooldown3 then return end
 
-	armTime3 = os.clock()
-	animationDetected3 = false
-	local currentDistance = distance3
+	getgenv().armTime3 = os.clock()
+	getgenv().animationDetected3 = false
+	local currentDistance = getgenv().distance3
 
 	task.delay(1.275, function()
-		if not animationDetected3 or boostCooldown3 then return end
+		if not getgenv().animationDetected3 or getgenv().boostCooldown3 then return end
 
 		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
 
-		moving3 = true
-		boostCooldown3 = true
+		getgenv().moving3 = true
+		getgenv().boostCooldown3 = true
 
 		local speed = currentDistance / duration3
 		local remaining = currentDistance
@@ -1658,58 +1749,56 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			remaining -= step
 			if remaining <= 0 then
 				conn:Disconnect()
-				moving3 = false
+				getgenv().moving3 = false
 				task.delay(boostCooldownTime3, function()
-					boostCooldown3 = false
+					getgenv().boostCooldown3 = false
 				end)
 			end
 		end)
 	end)
 end)
 
-distance4 = 0
+
+getgenv().distance4 = 0
 local duration4 = 0.55
 local boostCooldownTime4 = 0.15
 local kaiser_anim = "rbxassetid://110660551661470"
 
-local moving4 = false
-local boostCooldown4 = false
-local animationDetected4 = false
-local armTime4 = 0
+getgenv().moving4 = false
+getgenv().boostCooldown4 = false
+getgenv().animationDetected4 = false
+getgenv().armTime4 = 0
 
 maintab:Slider("Off The Ball Distance", 0, 0, 200, 1, function(v)
-	distance4 = v
+	getgenv().distance4 = v
 end)
 
 local function hookKaiser(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-
 	animator.AnimationPlayed:Connect(function(track)
 		if track.Animation
 		and track.Animation.AnimationId == kaiser_anim
-		and os.clock() >= armTime4 then
-			animationDetected4 = true
+		and os.clock() >= getgenv().armTime4 then
+			getgenv().animationDetected4 = true
 		end
 	end)
 end
 
-if player.Character then
-	hookKaiser(player.Character)
-end
+if player.Character then hookKaiser(player.Character) end
 player.CharacterAdded:Connect(hookKaiser)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode ~= Enum.KeyCode.Three then return end
-	if distance4 <= 0 then return end
-	if moving4 or boostCooldown4 then return end
+	if getgenv().distance4 <= 0 then return end
+	if getgenv().moving4 or getgenv().boostCooldown4 then return end
 
-	armTime4 = os.clock()
-	animationDetected4 = false
-	local currentDistance = distance4
+	getgenv().armTime4 = os.clock()
+	getgenv().animationDetected4 = false
+	local currentDistance = getgenv().distance4
 
 	task.delay(0.2, function()
-		if not animationDetected4 or boostCooldown4 then return end
+		if not getgenv().animationDetected4 or getgenv().boostCooldown4 then return end
 
 		local character = player.Character
 		if not character then return end
@@ -1717,8 +1806,8 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 		local hrp = character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
 
-		moving4 = true
-		boostCooldown4 = true
+		getgenv().moving4 = true
+		getgenv().boostCooldown4 = true
 
 		local speed = currentDistance / duration4
 		local remaining = currentDistance
@@ -1733,66 +1822,60 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			dir = dir.Unit
 
 			local pos = hrp.Position + dir * step
-			hrp.CFrame = CFrame.new(
-				Vector3.new(pos.X, startY, pos.Z),
-				pos + look
-			)
+			hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
 
 			remaining -= step
 			if remaining <= 0 then
 				conn:Disconnect()
-				moving4 = false
+				getgenv().moving4 = false
 				task.delay(boostCooldownTime4, function()
-					boostCooldown4 = false
+					getgenv().boostCooldown4 = false
 				end)
 			end
 		end)
 	end)
 end)
 
-distance5 = 0
+getgenv().distance5 = 0
 local duration5 = 1
 local boostCooldownTime5 = 0.15
 local occlusion_anim = "rbxassetid://116181317759538"
 
-local moving5 = false
-local boostCooldown5 = false
-local animationDetected5 = false
-local armTime5 = 0
+getgenv().moving5 = false
+getgenv().boostCooldown5 = false
+getgenv().animationDetected5 = false
+getgenv().armTime5 = 0
 
 maintab:Slider("Occlusion Break Distance", 0, 0, 200, 1, function(v)
-	distance5 = v
+	getgenv().distance5 = v
 end)
 
 local function hookOcclusion(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-
 	animator.AnimationPlayed:Connect(function(track)
 		if track.Animation
 		and track.Animation.AnimationId == occlusion_anim
-		and os.clock() >= armTime5 then
-			animationDetected5 = true
+		and os.clock() >= getgenv().armTime5 then
+			getgenv().animationDetected5 = true
 		end
 	end)
 end
 
-if player.Character then
-	hookOcclusion(player.Character)
-end
+if player.Character then hookOcclusion(player.Character) end
 player.CharacterAdded:Connect(hookOcclusion)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode ~= Enum.KeyCode.One then return end
-	if distance5 <= 0 then return end
-	if moving5 or boostCooldown5 then return end
+	if getgenv().distance5 <= 0 then return end
+	if getgenv().moving5 or getgenv().boostCooldown5 then return end
 
-	armTime5 = os.clock()
-	animationDetected5 = false
-	local currentDistance = distance5
+	getgenv().armTime5 = os.clock()
+	getgenv().animationDetected5 = false
+	local currentDistance = getgenv().distance5
 
 	task.delay(0.2, function()
-		if not animationDetected5 or boostCooldown5 then return end
+		if not getgenv().animationDetected5 or getgenv().boostCooldown5 then return end
 
 		local character = player.Character
 		if not character then return end
@@ -1800,8 +1883,8 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 		local hrp = character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
 
-		moving5 = true
-		boostCooldown5 = true
+		getgenv().moving5 = true
+		getgenv().boostCooldown5 = true
 
 		local speed = currentDistance / duration5
 		local remaining = currentDistance
@@ -1816,75 +1899,66 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			dir = dir.Unit
 
 			local pos = hrp.Position + dir * step
-			hrp.CFrame = CFrame.new(
-				Vector3.new(pos.X, startY, pos.Z),
-				pos + look
-			)
+			hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
 
 			remaining -= step
 			if remaining <= 0 then
 				conn:Disconnect()
-				moving5 = false
+				getgenv().moving5 = false
 				task.delay(boostCooldownTime5, function()
-					boostCooldown5 = false
+					getgenv().boostCooldown5 = false
 				end)
 			end
 		end)
 	end)
 end)
 
-distance6 = 0
+getgenv().distance6 = 0
 local duration6 = 0.35
 local boostCooldownTime6 = 0.15
 local diving_anim = "rbxassetid://91506202951715"
 
-local moving6 = false
-local boostCooldown6 = false
-local animationDetected6 = false
-local armTime6 = 0
+getgenv().moving6 = false
+getgenv().boostCooldown6 = false
+getgenv().animationDetected6 = false
+getgenv().armTime6 = 0
 
 maintab:Slider("Diving Header Distance", 0, 0, 125, 1, function(v)
-	distance6 = v
+	getgenv().distance6 = v
 end)
 
 local function hookDiving(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-
 	animator.AnimationPlayed:Connect(function(track)
 		if track.Animation
 		and track.Animation.AnimationId == diving_anim
-		and os.clock() >= armTime6 then
-			animationDetected6 = true
+		and os.clock() >= getgenv().armTime6 then
+			getgenv().animationDetected6 = true
 		end
 	end)
 end
 
-if player.Character then
-	hookDiving(player.Character)
-end
+if player.Character then hookDiving(player.Character) end
 player.CharacterAdded:Connect(hookDiving)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode ~= Enum.KeyCode.Two then return end
-	if distance6 <= 0 then return end
-	if moving6 or boostCooldown6 then return end
+	if getgenv().distance6 <= 0 then return end
+	if getgenv().moving6 or getgenv().boostCooldown6 then return end
 
-	armTime6 = os.clock()
-	animationDetected6 = false
-	local currentDistance = distance6
+	getgenv().armTime6 = os.clock()
+	getgenv().animationDetected6 = false
+	local currentDistance = getgenv().distance6
 
 	task.delay(0.4, function()
-		if not animationDetected6 or boostCooldown6 then return end
+		if not getgenv().animationDetected6 or getgenv().boostCooldown6 then return end
 
-		local character = player.Character
-		if not character then return end
-
-		local hrp = character:FindFirstChild("HumanoidRootPart")
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
 
-		moving6 = true
-		boostCooldown6 = true
+		getgenv().moving6 = true
+		getgenv().boostCooldown6 = true
 
 		local speed = currentDistance / duration6
 		local remaining = currentDistance
@@ -1899,77 +1973,68 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			dir = dir.Unit
 
 			local pos = hrp.Position + dir * step
-			hrp.CFrame = CFrame.new(
-				Vector3.new(pos.X, startY, pos.Z),
-				pos + look
-			)
+			hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
 
 			remaining -= step
 			if remaining <= 0 then
 				conn:Disconnect()
-				moving6 = false
+				getgenv().moving6 = false
 				task.delay(boostCooldownTime6, function()
-					boostCooldown6 = false
+					getgenv().boostCooldown6 = false
 				end)
 			end
 		end)
 	end)
 end)
 
-distance8 = 0
+getgenv().distance8 = 0
 local duration8 = 0.35
 local boostCooldownTime8 = 0.15
 local mach_anim1 = "rbxassetid://133945265328817"
 local mach_anim2 = "rbxassetid://88448030655006"
 
-local moving8 = false
-local boostCooldown8 = false
-local animationDetected8 = false
-local armTime8 = 0
+getgenv().moving8 = false
+getgenv().boostCooldown8 = false
+getgenv().animationDetected8 = false
+getgenv().armTime8 = 0
 
 maintab:Slider("Mach Cut-In Distance", 0, 0, 200, 1, function(v)
-	distance8 = v
+	getgenv().distance8 = v
 end)
 
 local function hookMach(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-
 	animator.AnimationPlayed:Connect(function(track)
 		if track.Animation
 		and (track.Animation.AnimationId == mach_anim1
 		     or track.Animation.AnimationId == mach_anim2)
-		and os.clock() >= armTime8 then
-			animationDetected8 = true
+		and os.clock() >= getgenv().armTime8 then
+			getgenv().animationDetected8 = true
 		end
 	end)
 end
 
-if player.Character then
-	hookMach(player.Character)
-end
+if player.Character then hookMach(player.Character) end
 player.CharacterAdded:Connect(hookMach)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode ~= Enum.KeyCode.One then return end
-	if distance8 <= 0 then return end
-	if moving8 or boostCooldown8 then return end
+	if getgenv().distance8 <= 0 then return end
+	if getgenv().moving8 or getgenv().boostCooldown8 then return end
 
-	armTime8 = os.clock()
-	animationDetected8 = false
-	local currentDistance = distance8
+	getgenv().armTime8 = os.clock()
+	getgenv().animationDetected8 = false
+	local currentDistance = getgenv().distance8
 
 	task.delay(0.5, function()
-		if not animationDetected8 or boostCooldown8 then return end
+		if not getgenv().animationDetected8 or getgenv().boostCooldown8 then return end
 
-		local character = player.Character
-		if not character then return end
-
-		local hrp = character:FindFirstChild("HumanoidRootPart")
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
 
-		moving8 = true
-		boostCooldown8 = true
+		getgenv().moving8 = true
+		getgenv().boostCooldown8 = true
 
 		local speed = currentDistance / duration8
 		local remaining = currentDistance
@@ -1984,75 +2049,66 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			dir = dir.Unit
 
 			local pos = hrp.Position + dir * step
-			hrp.CFrame = CFrame.new(
-				Vector3.new(pos.X, startY, pos.Z),
-				pos + look
-			)
+			hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
 
 			remaining -= step
 			if remaining <= 0 then
 				conn:Disconnect()
-				moving8 = false
+				getgenv().moving8 = false
 				task.delay(boostCooldownTime8, function()
-					boostCooldown8 = false
+					getgenv().boostCooldown8 = false
 				end)
 			end
 		end)
 	end)
 end)
 
-distance7 = 0
+getgenv().distance7 = 0
 local duration7 = 0.2
 local boostCooldownTime7 = 0.15
 local reflex_anim = "rbxassetid://113088324958896"
 
-local moving7 = false
-local boostCooldown7 = false
-local animationDetected7 = false
-local armTime7 = 0
+getgenv().moving7 = false
+getgenv().boostCooldown7 = false
+getgenv().animationDetected7 = false
+getgenv().armTime7 = 0
 
 maintab:Slider("Reflex Tackle Distance", 0, 0, 125, 1, function(v)
-	distance7 = v
+	getgenv().distance7 = v
 end)
 
 local function hookReflex(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-
 	animator.AnimationPlayed:Connect(function(track)
 		if track.Animation
 		and track.Animation.AnimationId == reflex_anim
-		and os.clock() >= armTime7 then
-			animationDetected7 = true
+		and os.clock() >= getgenv().armTime7 then
+			getgenv().animationDetected7 = true
 		end
 	end)
 end
 
-if player.Character then
-	hookReflex(player.Character)
-end
+if player.Character then hookReflex(player.Character) end
 player.CharacterAdded:Connect(hookReflex)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode ~= Enum.KeyCode.Two then return end
-	if distance7 <= 0 then return end
-	if moving7 or boostCooldown7 then return end
+	if getgenv().distance7 <= 0 then return end
+	if getgenv().moving7 or getgenv().boostCooldown7 then return end
 
-	armTime7 = os.clock()
-	animationDetected7 = false
-	local currentDistance = distance7
+	getgenv().armTime7 = os.clock()
+	getgenv().animationDetected7 = false
+	local currentDistance = getgenv().distance7
 
 	task.delay(0.1, function()
-		if not animationDetected7 or boostCooldown7 then return end
+		if not getgenv().animationDetected7 or getgenv().boostCooldown7 then return end
 
-		local character = player.Character
-		if not character then return end
-
-		local hrp = character:FindFirstChild("HumanoidRootPart")
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
 
-		moving7 = true
-		boostCooldown7 = true
+		getgenv().moving7 = true
+		getgenv().boostCooldown7 = true
 
 		local speed = currentDistance / duration7
 		local remaining = currentDistance
@@ -2067,77 +2123,68 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			dir = dir.Unit
 
 			local pos = hrp.Position + dir * step
-			hrp.CFrame = CFrame.new(
-				Vector3.new(pos.X, startY, pos.Z),
-				pos + look
-			)
+			hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
 
 			remaining -= step
 			if remaining <= 0 then
 				conn:Disconnect()
-				moving7 = false
+				getgenv().moving7 = false
 				task.delay(boostCooldownTime7, function()
-					boostCooldown7 = false
+					getgenv().boostCooldown7 = false
 				end)
 			end
 		end)
 	end)
 end)
 
-distance9 = 0
+getgenv().distance9 = 0
 local duration9 = 1.15
 local boostCooldownTime9 = 0.15
 local speed_anim1 = "rbxassetid://70397727954557"
 local speed_anim2 = "rbxassetid://131196726012273"
 
-local moving9 = false
-local boostCooldown9 = false
-local animationDetected9 = false
-local armTime9 = 0
+getgenv().moving9 = false
+getgenv().boostCooldown9 = false
+getgenv().animationDetected9 = false
+getgenv().armTime9 = 0
 
 maintab:Slider("Speed Dribble Distance", 0, 0, 200, 1, function(v)
-	distance9 = v
+	getgenv().distance9 = v
 end)
 
 local function hookSpeed(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-
 	animator.AnimationPlayed:Connect(function(track)
 		if track.Animation
 		and (track.Animation.AnimationId == speed_anim1
 		     or track.Animation.AnimationId == speed_anim2)
-		and os.clock() >= armTime9 then
-			animationDetected9 = true
+		and os.clock() >= getgenv().armTime9 then
+			getgenv().animationDetected9 = true
 		end
 	end)
 end
 
-if player.Character then
-	hookSpeed(player.Character)
-end
+if player.Character then hookSpeed(player.Character) end
 player.CharacterAdded:Connect(hookSpeed)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode ~= Enum.KeyCode.Three then return end
-	if distance9 <= 0 then return end
-	if moving9 or boostCooldown9 then return end
+	if getgenv().distance9 <= 0 then return end
+	if getgenv().moving9 or getgenv().boostCooldown9 then return end
 
-	armTime9 = os.clock()
-	animationDetected9 = false
-	local currentDistance = distance9
+	getgenv().armTime9 = os.clock()
+	getgenv().animationDetected9 = false
+	local currentDistance = getgenv().distance9
 
 	task.delay(0.2, function()
-		if not animationDetected9 or boostCooldown9 then return end
+		if not getgenv().animationDetected9 or getgenv().boostCooldown9 then return end
 
-		local character = player.Character
-		if not character then return end
-
-		local hrp = character:FindFirstChild("HumanoidRootPart")
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
 
-		moving9 = true
-		boostCooldown9 = true
+		getgenv().moving9 = true
+		getgenv().boostCooldown9 = true
 
 		local speed = currentDistance / duration9
 		local remaining = currentDistance
@@ -2152,77 +2199,68 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			dir = dir.Unit
 
 			local pos = hrp.Position + dir * step
-			hrp.CFrame = CFrame.new(
-				Vector3.new(pos.X, startY, pos.Z),
-				pos + look
-			)
+			hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
 
 			remaining -= step
 			if remaining <= 0 then
 				conn:Disconnect()
-				moving9 = false
+				getgenv().moving9 = false
 				task.delay(boostCooldownTime9, function()
-					boostCooldown9 = false
+					getgenv().boostCooldown9 = false
 				end)
 			end
 		end)
 	end)
 end)
 
-distance10 = 0
+getgenv().distance10 = 0
 local duration10 = 1
 local boostCooldownTime10 = 0.1
 local cut_anim1 = "rbxassetid://133384553147918"
 local cut_anim2 = "rbxassetid://128936529440509"
 
-local moving10 = false
-local boostCooldown10 = false
-local animationDetected10 = false
-local armTime10 = 0
+getgenv().moving10 = false
+getgenv().boostCooldown10 = false
+getgenv().animationDetected10 = false
+getgenv().armTime10 = 0
 
 maintab:Slider("Cut In Distance", 0, 0, 200, 1, function(v)
-	distance10 = v
+	getgenv().distance10 = v
 end)
 
 local function hookCut(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-
 	animator.AnimationPlayed:Connect(function(track)
 		if track.Animation
 		and (track.Animation.AnimationId == cut_anim1
 		     or track.Animation.AnimationId == cut_anim2)
-		and os.clock() >= armTime10 then
-			animationDetected10 = true
+		and os.clock() >= getgenv().armTime10 then
+			getgenv().animationDetected10 = true
 		end
 	end)
 end
 
-if player.Character then
-	hookCut(player.Character)
-end
+if player.Character then hookCut(player.Character) end
 player.CharacterAdded:Connect(hookCut)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
 	if input.KeyCode ~= Enum.KeyCode.Two then return end
-	if distance10 <= 0 then return end
-	if moving10 or boostCooldown10 then return end
+	if getgenv().distance10 <= 0 then return end
+	if getgenv().moving10 or getgenv().boostCooldown10 then return end
 
-	armTime10 = os.clock()
-	animationDetected10 = false
-	local currentDistance = distance10
+	getgenv().armTime10 = os.clock()
+	getgenv().animationDetected10 = false
+	local currentDistance = getgenv().distance10
 
 	task.delay(0.2, function()
-		if not animationDetected10 or boostCooldown10 then return end
+		if not getgenv().animationDetected10 or getgenv().boostCooldown10 then return end
 
-		local character = player.Character
-		if not character then return end
-
-		local hrp = character:FindFirstChild("HumanoidRootPart")
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
 
-		moving10 = true
-		boostCooldown10 = true
+		getgenv().moving10 = true
+		getgenv().boostCooldown10 = true
 
 		local speed = currentDistance / duration10
 		local remaining = currentDistance
@@ -2237,17 +2275,14 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			dir = dir.Unit
 
 			local pos = hrp.Position + dir * step
-			hrp.CFrame = CFrame.new(
-				Vector3.new(pos.X, startY, pos.Z),
-				pos + look
-			)
+			hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
 
 			remaining -= step
 			if remaining <= 0 then
 				conn:Disconnect()
-				moving10 = false
+				getgenv().moving10 = false
 				task.delay(boostCooldownTime10, function()
-					boostCooldown10 = false
+					getgenv().boostCooldown10 = false
 				end)
 			end
 		end)
