@@ -1353,94 +1353,92 @@ end)
 
 maintab:Label("Additional Fun Features!")
 
-local plr = game.Players.LocalPlayer
-local mouse = plr:GetMouse()
-local fahh = false
-getgenv().InfiniteRangePassing = false
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
 
-local passNames = {
-	["100-Point Pass"] = Enum.KeyCode.Two,
-	["Magic Pass"] = Enum.KeyCode.Four,
-	["Undead Crash"] = Enum.KeyCode.Two,
-	["Chilling Pass"] = Enum.KeyCode.Four,
+local plr = Players.LocalPlayer
+local mouse = plr:GetMouse()
+local Camera = workspace.CurrentCamera
+
+local passpass = ReplicatedStorage:WaitForChild("ByteNetReliable")
+
+getgenv().InfiniteRangePassing = false
+local busy = false
+
+local keyToSkill = {
+	[Enum.KeyCode.One]   = "skill1",
+	[Enum.KeyCode.Two]   = "skill2",
+	[Enum.KeyCode.Three] = "skill3",
+	[Enum.KeyCode.Four]  = "skill4",
 }
 
-local function HasPassMove()
-	local hotbar = plr.PlayerGui:FindFirstChild("Hotbar") and plr.PlayerGui.Hotbar.Backpack.Hotbar
-	if hotbar then
-		for _, v in pairs(hotbar:GetChildren()) do
-			if v:FindFirstChild("Base") and passNames[v.Base.ToolName.Text] then
-				return v
-			end
-		end
-	end
-	return nil
-end
-
-local function getNearestPlayerToMouse()
-	local closestPlayer = nil
+local function getClosestPlayerToCursor()
+	local mousePos = UserInputService:GetMouseLocation()
+	local closestChar
 	local closestDist = math.huge
-	local mousePos = mouse.Hit.Position
 
-	for _, target in ipairs(game:GetService("Players"):GetPlayers()) do
-		if target ~= plr and target.Team == plr.Team then
-			local hrp = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
-			local humanoid = target.Character and target.Character:FindFirstChild("Humanoid")
-			if hrp and humanoid and humanoid.Health > 0 then
-				local dist = (hrp.Position - mousePos).Magnitude
-				if dist < closestDist then
-					closestDist = dist
-					closestPlayer = target
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= plr and p.Team == plr.Team then
+			local char = p.Character
+			local hum = char and char:FindFirstChild("Humanoid")
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+			if hum and hrp and hum.Health > 0 then
+				local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+				if onScreen then
+					local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+					if dist < closestDist then
+						closestDist = dist
+						closestChar = char
+					end
 				end
 			end
 		end
 	end
 
-	return closestPlayer and closestPlayer.Character or nil
+	return closestChar
 end
 
-game:GetService("UserInputService").InputBegan:Connect(function(key, bg)
-	if bg or not getgenv().InfiniteRangePassing then return end
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
+	if not getgenv().InfiniteRangePassing then return end
+	if busy then return end
 	if plr.Team == game.Teams.lobby then return end
-	if fahh then return end
-	if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
 
-	local button = HasPassMove()
-	if button and key.KeyCode == passNames[button.Base.ToolName.Text] then
-		local target = getNearestPlayerToMouse()
-		if target and target:FindFirstChild("HumanoidRootPart") and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-			target.HumanoidRootPart.Anchored = true
-			local originalCFrame = target.HumanoidRootPart.CFrame
-			task.wait()
-			target.HumanoidRootPart.CFrame = game.Workspace.CurrentCamera.CFrame * CFrame.new(0, 0, -2)
+	local skillName = keyToSkill[input.KeyCode]
+	if not skillName then return end
 
-			task.delay(0.1, function()
-				fahh = true
-				game:GetService("VirtualInputManager"):SendKeyEvent(true, passNames[button.Base.ToolName.Text], false, game)
-				task.wait(0.02)
-				game:GetService("VirtualInputManager"):SendKeyEvent(false, passNames[button.Base.ToolName.Text], false, game)
-				task.wait(0.05)
-				fahh = false
-			end)
+	local targetChar = getClosestPlayerToCursor()
+	if not targetChar then return end
 
-			task.wait(0.2)
-			if target:FindFirstChild("HumanoidRootPart") then
-				target.HumanoidRootPart.Anchored = false
-				task.wait()
-				target.HumanoidRootPart.CFrame = originalCFrame
-			end
-		end
-	end
+	busy = true
+
+	passpass:FireServer(
+		buffer.fromstring("\038\001"),
+		{
+			{
+				skillName,
+				targetChar
+			}
+		}
+	)
+
+	task.delay(0.1, function()
+		busy = false
+	end)
 end)
 
-maintab:Toggle("Infinite Range Passing", "Allows You To Pass From Anywhere On The Field.", function(state)
-	getgenv().InfiniteRangePassing = state
-	if state then
-		game.StarterGui:SetCore("SendNotification", {Title = "Infinite Pass", Text = "Enabled.", Duration = 5})
-	else
-		game.StarterGui:SetCore("SendNotification", {Title = "Infinite Pass", Text = "Disabled.", Duration = 5})
-	end
+maintab:Toggle("Infinite Range Passing", "Pass to closest teammate to your mouse from anywhere.", function(v)
+	getgenv().InfiniteRangePassing = v
+	StarterGui:SetCore("SendNotification", {
+		Title = "Infinite Pass",
+		Text = v and "Enabled." or "Disabled.",
+		Duration = 5
+	})
 end)
+
 
 maintab:Button("Goalkeeper Anywhere (Rejoin To Disable.) (Credit: someone cool..)", "Allows You To Do GK Side Dashes Instead!", function()
 game:GetService("StarterGui"):SetCore("SendNotification", {
