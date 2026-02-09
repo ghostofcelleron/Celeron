@@ -4103,14 +4103,13 @@ local win = ui:Create({
 
 local maintab = win:Tab("Main")
 local itemtab = win:Tab("Items")
-local antitab = win:Tab("Protection")
 local modetab = win:Tab("Modes")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
-antitab:Label("Protection Settings May Be Blatant.")
-itemtab:Label("Always Disable OR Unlock The Bunker Before Grabbing Items!")
+maintab:Label("Player Movement Features.")
+itemtab:Label("Reveal Bunker Code: Reveals The Bunker Code.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 modetab:Label("These Places Can Be Joined Instantly!")
@@ -4223,7 +4222,7 @@ local function applyVelocityControl(humanoid)
 	end)
 end
 
-maintab:Slider("Player Speed", 19.5, 5, 85, 0.5, function(v)
+maintab:Slider("Player Speed", 19.5, 5, 30, 0.5, function(v)
 	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then return end
@@ -4292,18 +4291,23 @@ maintab:Toggle("Infinite Jump", function()
 	})
 end)
 
+
+maintab:Label("Slap Aura: Automatically Slaps Other Players Around You.")
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
-local SlapRemote = ReplicatedStorage:WaitForChild("Events"):WaitForChild("Slap")
+local SlapRemote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Slap")
 
 local slapaura = {
 	enabled = false,
 	connection = nil,
-	radius = 100
+	radius = 18,
+	cooldown = 1,
+	lastFire = 0
 }
 
 local function getClosestPlayer(radius)
@@ -4332,12 +4336,19 @@ maintab:Toggle("Slap Aura", function()
 
 	if slapaura.enabled and not slapaura.connection then
 		slapaura.connection = RunService.Heartbeat:Connect(function()
+			local now = tick()
+			if now - slapaura.lastFire < slapaura.cooldown then
+				return
+			end
+
 			local targetPlayer = getClosestPlayer(slapaura.radius)
 			if targetPlayer and targetPlayer.Character then
-				local limb = targetPlayer.Character:FindFirstChild("Right Leg")
+				local limb =
+					targetPlayer.Character:FindFirstChild("Right Leg")
 					or targetPlayer.Character:FindFirstChild("HumanoidRootPart")
 
 				if limb then
+					slapaura.lastFire = now
 					SlapRemote:FireServer(limb)
 				end
 			end
@@ -4354,733 +4365,193 @@ maintab:Toggle("Slap Aura", function()
 	})
 end)
 
+maintab:Label("Hitbox Expanding: Expands Other Players' Hitboxes.")
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
-local range = 15
-local cooldown = 0.1
-local lastClick = 0
-local enabled = false
+local hitbox = {
+	size = 0,
+	connection = nil
+}
 
-local function emulateClick()
-	VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, nil, 0)
-	VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, nil, 0)
+local function getTorso(char)
+	return char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
 end
 
-RunService.RenderStepped:Connect(function()
-	if not enabled then return end
-
-	local now = tick()
-	if now - lastClick < cooldown then return end
-
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-			local targetHRP = player.Character.HumanoidRootPart
-			local dist = (HumanoidRootPart.Position - targetHRP.Position).Magnitude
-
-			if dist <= range then
-				emulateClick()
-				lastClick = now
-				break
+local function updateHitboxes()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and plr.Character then
+			local torso = getTorso(plr.Character)
+			if torso then
+				torso.Size = Vector3.new(hitbox.size, hitbox.size, hitbox.size)
+				torso.CanCollide = false
+				torso.Massless = true
+                torso.Transparency = 0.65
 			end
 		end
 	end
-end)
-
-maintab:Toggle("Glove Triggerbot", function()
-    enabled = not enabled
-
-    local StarterGui = game:GetService("StarterGui")
-    StarterGui:SetCore("SendNotification", {
-        Title = "Glove Triggerbot",
-        Text = enabled and "Enabled." or "Disabled.",
-        Duration = 2
-    })
-end)
-
-maintab:Button("Highlight Votekick Risks (Darker Color = Risky)", function()
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
-local HIGHLIGHT_TAG = "HighSlapHighlight"
-
-local function getHighlightColor(slapCount)
-	if slapCount >= 25001 then
-		return Color3.fromRGB(128, 0, 128)
-	elseif slapCount >= 17501 then
-		return Color3.fromRGB(255, 85, 0)
-	elseif slapCount >= 10001 then
-		return Color3.fromRGB(255, 165, 0)
-	elseif slapCount >= 7501 then
-		return Color3.fromRGB(255, 255, 0)
-	elseif slapCount >= 5000 then
-		return Color3.fromRGB(0, 255, 0)
-	else
-		return nil
-	end
 end
 
-local function applyHighlight(character, color)
-	if not character or not color then return end
+maintab:Slider("Expand Hitboxes", 15, 0, 15, 0.5, function(v)
+	hitbox.size = v
 
-	local existing = character:FindFirstChild(HIGHLIGHT_TAG)
-	if existing then
-		existing.FillColor = color
-		existing.OutlineColor = color
-		return
+	if not hitbox.connection then
+		hitbox.connection = RunService.Heartbeat:Connect(updateHitboxes)
 	end
-
-	local highlight = Instance.new("Highlight")
-	highlight.Name = HIGHLIGHT_TAG
-	highlight.FillColor = color
-	highlight.OutlineColor = color
-	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	highlight.Adornee = character
-	highlight.Parent = character
-end
-
-local function removeHighlight(character)
-	if not character then return end
-	local existing = character:FindFirstChild(HIGHLIGHT_TAG)
-	if existing then
-		existing:Destroy()
-	end
-end
-
-local function updateHighlights()
-	for _, player in ipairs(Players:GetPlayers()) do
-		local slaps = player:FindFirstChild("Slaps")
-		local character = player.Character
-
-		if slaps and slaps:IsA("IntValue") and character then
-			local color = getHighlightColor(slaps.Value)
-			if color then
-				applyHighlight(character, color)
-			else
-				removeHighlight(character)
-			end
-		else
-			removeHighlight(character)
-		end
-	end
-end
-
-RunService.Heartbeat:Connect(function()
-	updateHighlights()
 end)
-end)
+
+maintab:Label("Exit Bus: Exits The Bus Earlier Than Others.")
 
 maintab:Button("Exit Bus", function()
-game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("BusJumping"):FireServer()
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("BusJumping"):FireServer()
 end)
 
-maintab:Button("Attempt Portal Bus (Use Before Match, Req. Void Glove)", function()
+itemtab:Button("Reveal Bunker Code", function()
+	local Players = game:GetService("Players")
+	local StarterGui = game:GetService("StarterGui")
+	local LocalPlayer = Players.LocalPlayer
+
+	local gui = workspace.Map.CodeBrick.SurfaceGui
+
+	local imageMap = {
+		["http://www.roblox.com/asset/?id=9648769161"] = "4",
+		["http://www.roblox.com/asset/?id=9648765536"] = "2",
+		["http://www.roblox.com/asset/?id=9648762863"] = "3",
+		["http://www.roblox.com/asset/?id=9648759883"] = "9",
+		["http://www.roblox.com/asset/?id=9648755440"] = "8",
+		["http://www.roblox.com/asset/?id=9648752438"] = "2",
+		["http://www.roblox.com/asset/?id=9648749145"] = "8",
+		["http://www.roblox.com/asset/?id=9648745618"] = "3",
+		["http://www.roblox.com/asset/?id=9648742013"] = "7",
+		["http://www.roblox.com/asset/?id=9648738553"] = "8",
+		["http://www.roblox.com/asset/?id=9648734698"] = "2",
+		["http://www.roblox.com/asset/?id=9648730082"] = "6",
+		["http://www.roblox.com/asset/?id=9648723237"] = "3",
+		["http://www.roblox.com/asset/?id=9648718450"] = "6",
+		["http://www.roblox.com/asset/?id=9648715920"] = "6",
+		["http://www.roblox.com/asset/?id=9648712563"] = "2"
+	}
+
+	local templates = {}
+	for _, child in ipairs(gui:GetChildren()) do
+		if child:IsA("ImageLabel") and imageMap[child.Image] then
+			table.insert(templates, child)
+		end
+	end
+
+	table.sort(templates, function(a, b)
+		return a.AbsolutePosition.Y < b.AbsolutePosition.Y
+	end)
+
+	local code = {}
+	for i = 1, math.min(4, #templates) do
+		local digit = imageMap[templates[i].Image]
+		if digit then
+			table.insert(code, digit)
+		end
+	end
+
+	local codeString = table.concat(code)
+
+	StarterGui:SetCore("SendNotification", {
+		Title = "Bunker Code",
+		Text = codeString ~= "" and ("Code: " .. codeString) or "Failed To Get Code.",
+		Duration = 6
+	})
+end)
+
+itemtab:Label("Item ESP: Shows Where The Items Are.")
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local Debris = game:GetService("Debris")
-local StarterGui = game:GetService("StarterGui")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 
-local LP = Players.LocalPlayer
-
-local function notify(title, text, duration)
-	StarterGui:SetCore("SendNotification", {
-		Title = title,
-		Text = text,
-		Duration = duration or 3
-	})
-end
-
-notify("Void Kill", "Waiting for bus to spawn...", 3)
-local busModel = workspace:WaitForChild("BusModel")
-
-local event = ReplicatedStorage:WaitForChild("Events"):WaitForChild("BusJumping")
-event:FireServer()
-notify("Void Kill", "Predicting Drop Point...", 2)
-
-local positions = {}
-local startTime = os.clock()
-
-local conn
-conn = RunService.Heartbeat:Connect(function()
-	local now = os.clock()
-	if now - startTime >= 2 then
-		if conn then conn:Disconnect() end
-		return
-	end
-	table.insert(positions, {time = now, pos = busModel.Position})
-end)
-
-task.delay(2.1, function()
-	if #positions < 2 then
-		notify("Void Kill", "Not enough checks loaded. Aborting...", 4)
-		return
-	end
-
-	local first = positions[1]
-	local last = positions[#positions]
-	local deltaTime = last.time - first.time
-	local deltaPos = last.pos - first.pos
-	local velocity = deltaPos / deltaTime
-
-	local predictedPos = busModel.Position + velocity * 6.85
-	local targetPos = predictedPos - Vector3.new(0, 5, 0)
-
-	local char = LP.Character or LP.CharacterAdded:Wait()
-	local root = char:WaitForChild("HumanoidRootPart")
-
-	local baseplatePos = Vector3.new(112, -69, -241)
-	local baseplate = Instance.new("Part")
-	baseplate.Size = Vector3.new(20, 1, 20)
-	baseplate.Anchored = true
-	baseplate.CanCollide = true
-	baseplate.Material = Enum.Material.SmoothPlastic
-	baseplate.Color = Color3.fromRGB(50, 50, 50)
-	baseplate.Position = baseplatePos
-	baseplate.Parent = workspace
-	Debris:AddItem(baseplate, 15)
-
-	root.CFrame = CFrame.new(baseplatePos + Vector3.new(0, 3, 0))
-	local backpack = LP:WaitForChild("Backpack")
-	local tool
-	repeat
-		tool = backpack:FindFirstChild("Void")
-		task.wait(0.05)
-	until tool and tool:IsA("Tool")
-
-	tool.Parent = char
-	notify("Void Kill", "Placing Portals...", 2)
-
-	VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-	VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
-
-	wait(0.1)
-	local dropPlate = Instance.new("Part")
-	dropPlate.Size = Vector3.new(20, 1, 20)
-	dropPlate.Anchored = true
-	dropPlate.CanCollide = true
-	dropPlate.Material = Enum.Material.SmoothPlastic
-	dropPlate.Color = Color3.fromRGB(50, 50, 50)
-	dropPlate.Position = targetPos
-	dropPlate.Parent = workspace
-	Debris:AddItem(dropPlate, 15)
-
-	root.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
-	notify("Void Kill", "Attempted to send players to void successfully.", 3)
-end)
-end)
-
-itemtab:Button("Disable Bunker (Instant.)", function()
-local itemsFolder = workspace:WaitForChild("Items")
-local mapOffice = workspace:WaitForChild("Map"):WaitForChild("OriginOffice")
-
-local originParts = {}
-for _, descendant in ipairs(mapOffice:GetDescendants()) do
-    if descendant:IsA("BasePart") then
-        table.insert(originParts, descendant.Position)
-    end
-end
-
-for _, item in ipairs(itemsFolder:GetChildren()) do
-    if item:IsA("Tool") and item:FindFirstChild("Handle") then
-        local handle = item.Handle
-        for _, originPos in ipairs(originParts) do
-            if (handle.Position - originPos).Magnitude <= 20 then
-                item:Destroy()
-                break
-            end
-        end
-    end
-end
-
-mapOffice:Destroy()
-end)
-
-itemtab:Button("Unlock Bunker (Semi-Instant, Obtains Chain Glove.)", function()
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local TweenService = game:GetService("TweenService")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
-local gui = workspace.Map.CodeBrick.SurfaceGui
-local keypad = workspace.Map.OriginOffice.Door.Keypad
-local buttons = keypad:WaitForChild("Buttons")
-
-local pivot = keypad:GetPivot()
-local frontPos = pivot.Position + pivot.LookVector * -3 + Vector3.new(0, 2, 0)
-HumanoidRootPart.CFrame = CFrame.new(frontPos, pivot.Position)
-
-local imageMap = {
-	["http://www.roblox.com/asset/?id=9648769161"] = "4",
-	["http://www.roblox.com/asset/?id=9648765536"] = "2",
-	["http://www.roblox.com/asset/?id=9648762863"] = "3",
-	["http://www.roblox.com/asset/?id=9648759883"] = "9",
-	["http://www.roblox.com/asset/?id=9648755440"] = "8",
-	["http://www.roblox.com/asset/?id=9648752438"] = "2",
-	["http://www.roblox.com/asset/?id=9648749145"] = "8",
-	["http://www.roblox.com/asset/?id=9648745618"] = "3",
-	["http://www.roblox.com/asset/?id=9648742013"] = "7",
-	["http://www.roblox.com/asset/?id=9648738553"] = "8",
-	["http://www.roblox.com/asset/?id=9648734698"] = "2",
-	["http://www.roblox.com/asset/?id=9648730082"] = "6",
-	["http://www.roblox.com/asset/?id=9648723237"] = "3",
-	["http://www.roblox.com/asset/?id=9648718450"] = "6",
-	["http://www.roblox.com/asset/?id=9648715920"] = "6",
-	["http://www.roblox.com/asset/?id=9648712563"] = "2"
-}
-
-local templates = {}
-for _, child in ipairs(gui:GetChildren()) do
-	if child:IsA("ImageLabel") and imageMap[child.Image] then
-		table.insert(templates, child)
-	end
-end
-
-table.sort(templates, function(a, b)
-	return a.AbsolutePosition.Y < b.AbsolutePosition.Y
-end)
-
-local code = {}
-for i = 1, math.min(4, #templates) do
-	local template = templates[i]
-	local digit = imageMap[template.Image]
-	if digit then
-		code[i] = digit
-	end
-end
-
-local highlightColors = {
-	BrickColor.new("Bright red"),
-	BrickColor.new("Bright orange"),
-	BrickColor.new("Bright yellow"),
-	BrickColor.new("Bright green")
-}
-
-for i, digit in ipairs(code) do
-	local part = buttons:FindFirstChild(digit)
-	if part and part:IsA("BasePart") then
-		part.BrickColor = highlightColors[i]
-	end
-end
-
-local function clickButtonByDigit(digit)
-	local part = buttons:FindFirstChild(digit)
-	if not part or not part:IsA("BasePart") then return end
-
-	Camera.CameraType = Enum.CameraType.Scriptable
-	local camOffset = Vector3.new(0, 2, 4)
-	Camera.CFrame = CFrame.new(part.Position + camOffset, part.Position)
-
-	task.wait(0.2)
-
-	local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
-	if not onScreen then return end
-
-	local x, y = math.floor(screenPos.X), math.floor(screenPos.Y)
-	VirtualInputManager:SendMouseButtonEvent(x, y, 0, true, game, 0)
-	task.wait(0.05)
-	VirtualInputManager:SendMouseButtonEvent(x, y, 0, false, game, 0)
-	task.wait(0.1)
-end
-
-task.wait(1)
-
-clickButtonByDigit("Reset")
-for _, digit in ipairs(code) do
-	clickButtonByDigit(digit)
-end
-clickButtonByDigit("Enter")
-
-task.wait(0.3)
-Camera.CameraType = Enum.CameraType.Custom
-Camera.CameraSubject = Character:FindFirstChildOfClass("Humanoid") or HumanoidRootPart
-end)
-
-itemtab:Label("Item Grabbing: May Get Kicked If Match Didn't Start, Recommend Ice Cubes.")
-
-itemtab:Button("Grab All Items (More Risky In Lobby!)", function()
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local camera = workspace.CurrentCamera
 local itemsFolder = workspace:WaitForChild("Items")
 
-local moveDelay = 0.425
-local pauseTime = 0.15
-
-local function moveTo(part)
-	local direction = (part.Position - hrp.Position).Unit
-	local targetPos = part.Position - direction * 3
-	local targetCF = CFrame.new(targetPos)
-	hrp.CFrame = targetCF
-	task.wait(moveDelay)
-end
-
-local function faceTarget(part)
-	local lookVector = (part.Position - hrp.Position).Unit
-	local yaw = math.atan2(lookVector.X, lookVector.Z)
-	hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, yaw, 0)
-end
-
-local function rotateCameraTo(part)
-	local camPos = camera.CFrame.Position
-	local lookAt = part.Position
-	camera.CFrame = CFrame.new(camPos, lookAt)
-end
-
-local function sendFKey()
-	for _ = 1, 3 do
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-	end
-end
-
-for _, tool in ipairs(itemsFolder:GetChildren()) do
-	if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
-		local handle = tool.Handle
-		moveTo(handle)
-		task.wait(pauseTime)
-		faceTarget(handle)
-		rotateCameraTo(handle)
-		task.wait(pauseTime)
-		sendFKey()
-	end
-end
-end)
-
-itemtab:Button("Grab Permanent Items (Recommended!)", function()
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local camera = workspace.CurrentCamera
-local itemsFolder = workspace:WaitForChild("Items")
-
-local moveDelay = 0.425
-local pauseTime = 0.1
-
-local priorityOrder = {
-	"speed potion",
-	"frog potion",
-	"bull's essence",
-	"potion of strength",
-	"boba",
+local itemESP = {
+	enabled = false,
+	objects = {},
+	connection = nil
 }
 
-local function matches(name, target)
-	return string.find(string.lower(name), string.lower(target), 1, true)
-end
-
-local function moveTo(part)
-	local direction = (part.Position - hrp.Position).Unit
-	local targetPos = part.Position - direction
-	hrp.CFrame = CFrame.new(targetPos)
-	task.wait(moveDelay)
-end
-
-local function faceTarget(part)
-	local lookVector = (part.Position - hrp.Position).Unit
-	local yaw = math.atan2(lookVector.X, lookVector.Z)
-	hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, yaw, 0)
-end
-
-local function rotateCameraTo(part)
-	camera.CFrame = CFrame.new(camera.CFrame.Position, part.Position)
-end
-
-local function sendFKey()
-	for _ = 1, 3 do
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
+local function clearESP()
+	for _, obj in pairs(itemESP.objects) do
+		if obj.box then obj.box:Destroy() end
+		if obj.gui then obj.gui:Destroy() end
 	end
+	itemESP.objects = {}
 end
 
-local visited = {}
+local function createESP(tool)
+	if itemESP.objects[tool] then return end
+	if not tool:IsA("Tool") then return end
 
-for _, targetName in ipairs(priorityOrder) do
+	local handle = tool:FindFirstChild("Handle")
+	if not handle then return end
+
+	local box = Instance.new("BoxHandleAdornment")
+	box.Name = "ItemESPBox"
+	box.Adornee = handle
+	box.Size = handle.Size + Vector3.new(0.2, 0.2, 0.2)
+	box.AlwaysOnTop = true
+	box.ZIndex = 5
+	box.Transparency = 0.6
+	box.Color3 = Color3.fromRGB(0, 255, 0)
+	box.Parent = handle
+
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "ItemESPText"
+	gui.Adornee = handle
+	gui.Size = UDim2.new(0, 75, 0, 15)
+	gui.StudsOffset = Vector3.new(0, handle.Size.Y + 1.5, 0)
+	gui.AlwaysOnTop = true
+
+	local text = Instance.new("TextLabel")
+	text.Size = UDim2.fromScale(1, 1)
+	text.BackgroundTransparency = 1
+	text.Text = tool.Name
+	text.TextColor3 = Color3.fromRGB(255, 255, 255)
+	text.TextStrokeTransparency = 0
+	text.TextScaled = true
+	text.Font = Enum.Font.GothamBold
+	text.Parent = gui
+
+	gui.Parent = handle
+
+	itemESP.objects[tool] = {
+		box = box,
+		gui = gui
+	}
+end
+
+local function updateESP()
 	for _, tool in ipairs(itemsFolder:GetChildren()) do
-		if tool:IsA("Tool") and tool:FindFirstChild("Handle") and matches(tool.Name, targetName) and not visited[tool] then
-			visited[tool] = true
-			local handle = tool.Handle
-			moveTo(handle)
-			task.wait(pauseTime)
-			faceTarget(handle)
-			rotateCameraTo(handle)
-			task.wait(pauseTime)
-			sendFKey()
+		createESP(tool)
+	end
+
+	for tool, obj in pairs(itemESP.objects) do
+		if not tool.Parent then
+			if obj.box then obj.box:Destroy() end
+			if obj.gui then obj.gui:Destroy() end
+			itemESP.objects[tool] = nil
 		end
 	end
 end
-end)
 
-itemtab:Button("Grab PVP Items (Recommended!)", function()
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local camera = workspace.CurrentCamera
-local itemsFolder = workspace:WaitForChild("Items")
+itemtab:Toggle("Item ESP", function()
+	itemESP.enabled = not itemESP.enabled
 
-local moveDelay = 0.425
-local pauseTime = 0.1
-
-local priorityOrder = {
-	"true power",
-	"cube of ice",
-	"bull's essence",
-    "sphere of fury",
-    "potion of strength",
-	"boba"
-}
-
-local function matches(name, target)
-	return string.find(string.lower(name), string.lower(target), 1, true)
-end
-
-local function moveTo(part)
-	local direction = (part.Position - hrp.Position).Unit
-	local targetPos = part.Position - direction
-	hrp.CFrame = CFrame.new(targetPos)
-	task.wait(moveDelay)
-end
-
-local function faceTarget(part)
-	local lookVector = (part.Position - hrp.Position).Unit
-	local yaw = math.atan2(lookVector.X, lookVector.Z)
-	hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, yaw, 0)
-end
-
-local function rotateCameraTo(part)
-	camera.CFrame = CFrame.new(camera.CFrame.Position, part.Position)
-end
-
-local function sendFKey()
-	for _ = 1, 3 do
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-	end
-end
-
-local visited = {}
-
-for _, targetName in ipairs(priorityOrder) do
-	for _, tool in ipairs(itemsFolder:GetChildren()) do
-		if tool:IsA("Tool") and tool:FindFirstChild("Handle") and matches(tool.Name, targetName) and not visited[tool] then
-			visited[tool] = true
-			local handle = tool.Handle
-			moveTo(handle)
-			task.wait(pauseTime)
-			faceTarget(handle)
-			rotateCameraTo(handle)
-			task.wait(pauseTime)
-			sendFKey()
+	if itemESP.enabled then
+		updateESP()
+		itemESP.connection = RunService.Heartbeat:Connect(updateESP)
+	else
+		if itemESP.connection then
+			itemESP.connection:Disconnect()
+			itemESP.connection = nil
 		end
-	end
-end
-end)
-
-itemtab:Button("Grab Ice Cubes", function()
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local camera = workspace.CurrentCamera
-local itemsFolder = workspace:WaitForChild("Items")
-
-local moveDelay = 0.425
-local pauseTime = 0.1
-
-local priorityOrder = {
-	"cube of ice"
-}
-
-local function matches(name, target)
-	return string.find(string.lower(name), string.lower(target), 1, true)
-end
-
-local function moveTo(part)
-	local direction = (part.Position - hrp.Position).Unit
-	local targetPos = part.Position - direction * 3
-	hrp.CFrame = CFrame.new(targetPos)
-	task.wait(moveDelay)
-end
-
-local function faceTarget(part)
-	local lookVector = (part.Position - hrp.Position).Unit
-	local yaw = math.atan2(lookVector.X, lookVector.Z)
-	hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, yaw, 0)
-end
-
-local function rotateCameraTo(part)
-	camera.CFrame = CFrame.new(camera.CFrame.Position, part.Position)
-end
-
-local function sendFKey()
-	for _ = 1, 3 do
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-	end
-end
-
-local visited = {}
-
-for _, targetName in ipairs(priorityOrder) do
-	for _, tool in ipairs(itemsFolder:GetChildren()) do
-		if tool:IsA("Tool") and tool:FindFirstChild("Handle") and matches(tool.Name, targetName) and not visited[tool] then
-			visited[tool] = true
-			local handle = tool.Handle
-			moveTo(handle)
-			task.wait(pauseTime)
-			faceTarget(handle)
-			rotateCameraTo(handle)
-			task.wait(pauseTime)
-			sendFKey()
-		end
-	end
-end
-end)
-
-itemtab:Button("Grab Health Items", function()
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local camera = workspace.CurrentCamera
-local itemsFolder = workspace:WaitForChild("Items")
-
-local moveDelay = 0.425
-local pauseTime = 0.1
-
-local priorityOrder = {
-	"apple",
-    "first aid kit",
-    "bandage",
-	"health potion"
-}
-
-local function matches(name, target)
-	return string.find(string.lower(name), string.lower(target), 1, true)
-end
-
-local function moveTo(part)
-	local direction = (part.Position - hrp.Position).Unit
-	local targetPos = part.Position - direction * 3
-	hrp.CFrame = CFrame.new(targetPos)
-	task.wait(moveDelay)
-end
-
-local function faceTarget(part)
-	local lookVector = (part.Position - hrp.Position).Unit
-	local yaw = math.atan2(lookVector.X, lookVector.Z)
-	hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, yaw, 0)
-end
-
-local function rotateCameraTo(part)
-	camera.CFrame = CFrame.new(camera.CFrame.Position, part.Position)
-end
-
-local function sendFKey()
-	for _ = 1, 3 do
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-	end
-end
-
-local visited = {}
-
-for _, targetName in ipairs(priorityOrder) do
-	for _, tool in ipairs(itemsFolder:GetChildren()) do
-		if tool:IsA("Tool") and tool:FindFirstChild("Handle") and matches(tool.Name, targetName) and not visited[tool] then
-			visited[tool] = true
-			local handle = tool.Handle
-			moveTo(handle)
-			task.wait(pauseTime)
-			faceTarget(handle)
-			rotateCameraTo(handle)
-			task.wait(pauseTime)
-			sendFKey()
-		end
-	end
-end
-end)
-
-local Players = game:GetService("Players")
-local VirtualInputManager = game:GetService("VirtualInputManager") or getvirtualinputmanager()
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local hrp = character:WaitForChild("HumanoidRootPart")
-local camera = workspace.CurrentCamera
-local itemsFolder = workspace:WaitForChild("Items")
-
-local moveDelay = 0.425
-local pauseTime = 0.1
-
-local function matches(name, keyword)
-	return string.find(string.lower(name), string.lower(keyword), 1, true)
-end
-
-local function moveTo(part)
-	local direction = (part.Position - hrp.Position).Unit
-	local targetPos = part.Position - direction * 3
-	hrp.CFrame = CFrame.new(targetPos)
-	task.wait(moveDelay)
-end
-
-local function faceTarget(part)
-	local lookVector = (part.Position - hrp.Position).Unit
-	local yaw = math.atan2(lookVector.X, lookVector.Z)
-	hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(0, yaw, 0)
-end
-
-local function rotateCameraTo(part)
-	camera.CFrame = CFrame.new(camera.CFrame.Position, part.Position)
-end
-
-local function sendFKey()
-	for _ = 1, 3 do
-		VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-		VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-		task.wait(0.05)
-	end
-end
-
-itemtab:Textbox("Grab Certain Item", function(v)
-	for _, tool in ipairs(itemsFolder:GetChildren()) do
-		if tool:IsA("Tool") and tool:FindFirstChild("Handle") and matches(tool.Name, v) then
-			local handle = tool.Handle
-			moveTo(handle)
-			task.wait(pauseTime)
-			faceTarget(handle)
-			rotateCameraTo(handle)
-			task.wait(pauseTime)
-			sendFKey()
-		end
+		clearESP()
 	end
 end)
 
@@ -5281,130 +4752,6 @@ for _, tool in ipairs(Backpack:GetChildren()) do
 end
 end)
 
-local Workspace = game:GetService("Workspace")
-local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-local RunService = game:GetService("RunService")
-
-local LocalPlayer = Players.LocalPlayer
-local playerName = LocalPlayer.Name
-
-local root = nil
-local slappedValue = nil
-local ragdolledValue = Instance.new("BoolValue")
-ragdolledValue.Name = "Ragdolled"
-ragdolledValue.Value = false
-ragdolledValue.Parent = LocalPlayer
-
-local antiFlingEnabled = false
-
-local function notify(title, text)
-	pcall(function()
-		StarterGui:SetCore("SendNotification", {
-			Title = title;
-			Text = text;
-			Duration = 3,
-		})
-	end)
-end
-
-local function freezePlayer(source)
-	if not antiFlingEnabled or not root then return end
-
-	root.AssemblyLinearVelocity = Vector3.zero
-	root.AssemblyAngularVelocity = Vector3.zero
-	root.Anchored = true
-
-	task.delay(2, function()
-		if root then
-			root.Anchored = false
-		end
-	end)
-end
-
-RunService.Heartbeat:Connect(function()
-	if antiFlingEnabled and ragdolledValue and ragdolledValue.Value == true then
-		freezePlayer("Ragdolled")
-	end
-end)
-
-local function setupCharacter(character)
-	root = character:WaitForChild("HumanoidRootPart")
-
-	local localFolder = Workspace:FindFirstChild(playerName)
-	if localFolder then
-		slappedValue = localFolder:FindFirstChild("LastSlappedBy")
-		ragdolledValue = localFolder:FindFirstChild("Ragdolled") or ragdolledValue
-	end
-
-	if slappedValue then
-		slappedValue.Changed:Connect(function(newValue)
-			if antiFlingEnabled and newValue and newValue ~= "" then
-				freezePlayer("Slapped")
-			end
-		end)
-	end
-end
-
-if LocalPlayer.Character then
-	setupCharacter(LocalPlayer.Character)
-end
-
-LocalPlayer.CharacterAdded:Connect(setupCharacter)
-
-antitab:Toggle("Anti Knockback", function()
-	antiFlingEnabled = not antiFlingEnabled
-	local status = antiFlingEnabled and "Enabled." or "Disabled."
-	notify("Anti Knockback", status)
-end)
-
-local antiLavaEnabled = false
-local baseplates = {}
-
-antitab:Toggle("Anti Lava/Acid", function()
-    local StarterGui = game:GetService("StarterGui")
-
-    if not antiLavaEnabled then
-        local function createBaseplate(name, size, position)
-            local part = Instance.new("Part")
-            part.Name = name
-            part.Size = size
-            part.Position = position
-            part.Anchored = true
-            part.Material = Enum.Material.SmoothPlastic
-            part.Color = Color3.fromRGB(163, 162, 165)
-            part.Transparency = 0.7
-            part.TopSurface = Enum.SurfaceType.Smooth
-            part.BottomSurface = Enum.SurfaceType.Smooth
-            part.Parent = workspace
-            table.insert(baseplates, part)
-        end
-
-        createBaseplate("Baseplate_512x512", Vector3.new(512, 1, 512), Vector3.new(-289, -29, 439))
-        createBaseplate("Baseplate_100x100", Vector3.new(256, 1, 256), Vector3.new(-55, 3, -719))
-        antiLavaEnabled = true
-
-        StarterGui:SetCore("SendNotification", {
-            Title = "Anti Lava/Acid",
-            Text = "Enabled.",
-            Duration = 3
-        })
-    else
-        for _, part in ipairs(baseplates) do
-            if part and part.Parent then
-                part:Destroy()
-            end
-        end
-        baseplates = {}
-        antiLavaEnabled = false
-
-        StarterGui:SetCore("SendNotification", {
-            Title = "Anti Lava/Acid",
-            Text = "Disabled.",
-            Duration = 3
-        })
-    end
-end)
 misctab:Button("Infinite Yield", function()
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
