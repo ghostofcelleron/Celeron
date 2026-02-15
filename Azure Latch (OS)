@@ -26,6 +26,18 @@ teleporttab:Label("Map Teleports, No Prerequisites To Use!")
 misctab:Label("Miscellaneous Features, They Give No Advantages In-Game!")
 exploittab:Label("This Tab Comes With Useful Features.")
 
+-- buffer string
+local buffers = {}
+loadstring(game:HttpGet("https://pastebin.com/raw/8XJh7dzh"))()
+repeat
+    task.wait()
+until game.Lighting:FindFirstChild("BUFFERSTRINGS")
+for _, val in ipairs(game.Lighting:FindFirstChild("BUFFERSTRINGS"):GetChildren()) do
+    buffers[val.Name] = val.Value
+end
+game.Lighting:FindFirstChild("BUFFERSTRINGS"):Destroy()
+--
+
 helptab:Button("Copy Owner Discord Username", "Copies The Owner's Discord Username To Your Clipboard.", function()
 local StarterGui = game:GetService("StarterGui")
 
@@ -158,7 +170,7 @@ local function StealBall()
                 LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\040\001"),
+						buffer.fromstring(buffers["base"]),
 						{
 							{
 								"tackle"
@@ -195,7 +207,7 @@ coroutine.resume(coroutine.create(function()
 					wait(0.185)
 
 					local args = {
-						buffer.fromstring("\040\001"),
+						buffer.fromstring(buffers["base"]),
 						{
 							{
 								"kick",
@@ -254,7 +266,7 @@ if _G.ALWAYS_BALL_ACTIVE then
                         LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 						local args = {
-							buffer.fromstring("\040\001"),
+							buffer.fromstring(buffers["base"]),
 							{
 								{
 									"tackle"
@@ -303,7 +315,7 @@ maintab:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To Ge
 		local flow = workspace:WaitForChild("characters"):WaitForChild(player.Name):WaitForChild("state"):WaitForChild("flow")
 
 		while flow.Value < 100 do
-			remote:FireServer(buffer.fromstring("\040\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
+			remote:FireServer(buffer.fromstring(buffers["base"]), { { "kick", 1, false, vector.create(0, 1, 0) } })
 			task.wait(0.01)
 		end
 
@@ -389,7 +401,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\040\001"),
+						buffer.fromstring(buffers["base"]),
 							{
 								{
 								"tackle"
@@ -440,7 +452,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\040\001"),
+						buffer.fromstring(buffers["base"]),
 						{
 							{
 								"tackle"
@@ -686,7 +698,7 @@ if getgenv().ballMagnetActive then
 	getgenv().ballMagnetConnection = task.spawn(function()
 		while getgenv().ballMagnetActive do
 			pcall(function()
-				remote:FireServer(buffer.fromstring("\039"))
+				remote:FireServer(buffer.fromstring(buffers["grabball"]))
 			end)
 			task.wait()
 		end
@@ -716,7 +728,7 @@ maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", "Similar To The Origina
                 holding = true
                 task.spawn(function()
                     while holding do
-                        remote:FireServer(buffer.fromstring("\039"))
+                        remote:FireServer(buffer.fromstring(buffers["grabball"]))
                         task.wait(0.05)
                     end
                 end)
@@ -875,7 +887,7 @@ getgenv().ballMagnetConnection = RunService.Heartbeat:Connect(function()
         if dist <= radius and (time() - lastFire) >= FIRE_INTERVAL then
             lastFire = time()
             pcall(function()
-                remote:FireServer(buffer.fromstring("\039"))
+                remote:FireServer(buffer.fromstring(buffers["grabball"]))
             end)
         end
     end
@@ -1049,12 +1061,12 @@ RunService.Stepped:Connect(function()
 										local args
 										if skillName == "dribble" then
 											args = {
-												buffer.fromstring("\040\001"),
+												buffer.fromstring(buffers["base"]),
 												{ { skillName, false } }
 											}
 										else
 											args = {
-												buffer.fromstring("\040\001"),
+												buffer.fromstring(buffers["base"]),
 												{ { skillName } }
 											}
 										end
@@ -1326,7 +1338,7 @@ maintab:Toggle("Spam Brick Sound (5v5 + GK Only.)", "This SHOULD Be Self Explana
                     wait(0.1)
 
                     local args = {
-                        buffer.fromstring("\040\001"),
+                        buffer.fromstring(buffers["base"]),
                         {
                             {
                                 "kick",
@@ -1416,7 +1428,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
 	busy = true
 
 	passpass:FireServer(
-		buffer.fromstring("\040\001"),
+		buffer.fromstring(buffers["base"]),
 		{
 			{
 				skillName,
@@ -2339,7 +2351,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
 
         if distance <= autoActivateDistance and not autoActivatedb then
             local args = {
-                buffer.fromstring("\040\001"),
+                buffer.fromstring(buffers["base"]),
                 {
                     { "skill" .. autoActivateMove }
                 }
@@ -2878,7 +2890,7 @@ conn = RunService.RenderStepped:Connect(function(dt)
 	end
 
 	if dist <= 65 then
-		remote:FireServer(buffer.fromstring("\040\001"), {{ "tackle" }})
+		remote:FireServer(buffer.fromstring(buffers["base"]), {{ "tackle" }})
 	end
 end)
 
@@ -3022,7 +3034,7 @@ conn = RunService.RenderStepped:Connect(function(dt)
 	local dist = (hrp.Position - ball.Position).Magnitude
 
 	if dist <= 14.5 then
-		remote:FireServer(buffer.fromstring("\039"))
+		remote:FireServer(buffer.fromstring(buffers["grabball"]))
 	end
 
 	local jumpTriggered = false
@@ -3043,7 +3055,7 @@ conn = RunService.RenderStepped:Connect(function(dt)
 	end
 
 	if dist <= 65 then
-		remote:FireServer(buffer.fromstring("\040\001"), {{ "tackle" }})
+		remote:FireServer(buffer.fromstring(buffers["base"]), {{ "tackle" }})
 	end
 end)
 
@@ -3267,7 +3279,7 @@ UIS.InputBegan:Connect(function(input, gp)
     local dir = root.CFrame.LookVector
     local kickVec = vector.create(dir.X * 0.75, 0.65, dir.Z * 0.75)
 
-    remote:FireServer(buffer.fromstring("\040\001"), { { "kick", 28, false, kickVec } })
+    remote:FireServer(buffer.fromstring(buffers["base"]), { { "kick", 28, false, kickVec } })
 end)
 
 maintab2:Toggle("Auto QuickTimeEvent", "Automatically Does QuickTimeEvents, How Else Can I Explain It?", function()
@@ -3390,10 +3402,10 @@ maintab2:Toggle("Auto Formless (Bind: Y)", "Shidou Only Formless Macro.", functi
 		local dir = hrp.CFrame.LookVector
 		local kickVec = vector.create(dir.X * 0.5, 1, dir.Z * 0.5)
 
-		remote:FireServer(buffer.fromstring("\040\001"), { { "kick", 25, false, kickVec } })
+		remote:FireServer(buffer.fromstring(buffers["base"]), { { "kick", 25, false, kickVec } })
 
 		ByteNetReliable:FireServer(
-			buffer.fromstring("\040\001"),
+			buffer.fromstring(buffers["base"]),
 			{ { "skill1" } }
 		)
 	end)
@@ -4417,7 +4429,7 @@ local function StealBall()
                 task.wait(0.5)
                 LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
                 local args = {
-                    buffer.fromstring("\040\001"),
+                    buffer.fromstring(buffers["base"]),
                     {
                         {
                             "tackle"
@@ -4505,7 +4517,7 @@ exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
                         LocalRootPart.CFrame = Goal.CFrame
                         task.wait(0.185)
                         local args = {
-                            buffer.fromstring("\040\001"),
+                            buffer.fromstring(buffers["base"]),
                             {
                                 {
                                     "kick",
