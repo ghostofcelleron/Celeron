@@ -158,7 +158,7 @@ local function StealBall()
                 LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\038\001"),
+						buffer.fromstring("\040\001"),
 						{
 							{
 								"tackle"
@@ -195,7 +195,7 @@ coroutine.resume(coroutine.create(function()
 					wait(0.185)
 
 					local args = {
-						buffer.fromstring("\038\001"),
+						buffer.fromstring("\040\001"),
 						{
 							{
 								"kick",
@@ -254,7 +254,7 @@ if _G.ALWAYS_BALL_ACTIVE then
                         LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 						local args = {
-							buffer.fromstring("\038\001"),
+							buffer.fromstring("\040\001"),
 							{
 								{
 									"tackle"
@@ -303,7 +303,7 @@ maintab:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To Ge
 		local flow = workspace:WaitForChild("characters"):WaitForChild(player.Name):WaitForChild("state"):WaitForChild("flow")
 
 		while flow.Value < 100 do
-			remote:FireServer(buffer.fromstring("\038\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
+			remote:FireServer(buffer.fromstring("\040\001"), { { "kick", 1, false, vector.create(0, 1, 0) } })
 			task.wait(0.01)
 		end
 
@@ -389,7 +389,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\038\001"),
+						buffer.fromstring("\040\001"),
 							{
 								{
 								"tackle"
@@ -440,7 +440,7 @@ local function StealBall()
                     LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
 
 					local args = {
-						buffer.fromstring("\038\001"),
+						buffer.fromstring("\040\001"),
 						{
 							{
 								"tackle"
@@ -686,7 +686,7 @@ if getgenv().ballMagnetActive then
 	getgenv().ballMagnetConnection = task.spawn(function()
 		while getgenv().ballMagnetActive do
 			pcall(function()
-				remote:FireServer(buffer.fromstring("\037"))
+				remote:FireServer(buffer.fromstring("\039"))
 			end)
 			task.wait()
 		end
@@ -716,7 +716,7 @@ maintab2:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", "Similar To The Origina
                 holding = true
                 task.spawn(function()
                     while holding do
-                        remote:FireServer(buffer.fromstring("\037"))
+                        remote:FireServer(buffer.fromstring("\039"))
                         task.wait(0.05)
                     end
                 end)
@@ -875,7 +875,7 @@ getgenv().ballMagnetConnection = RunService.Heartbeat:Connect(function()
         if dist <= radius and (time() - lastFire) >= FIRE_INTERVAL then
             lastFire = time()
             pcall(function()
-                remote:FireServer(buffer.fromstring("\037"))
+                remote:FireServer(buffer.fromstring("\039"))
             end)
         end
     end
@@ -1049,12 +1049,12 @@ RunService.Stepped:Connect(function()
 										local args
 										if skillName == "dribble" then
 											args = {
-												buffer.fromstring("\038\001"),
+												buffer.fromstring("\040\001"),
 												{ { skillName, false } }
 											}
 										else
 											args = {
-												buffer.fromstring("\038\001"),
+												buffer.fromstring("\040\001"),
 												{ { skillName } }
 											}
 										end
@@ -1326,7 +1326,7 @@ maintab:Toggle("Spam Brick Sound (5v5 + GK Only.)", "This SHOULD Be Self Explana
                     wait(0.1)
 
                     local args = {
-                        buffer.fromstring("\038\001"),
+                        buffer.fromstring("\040\001"),
                         {
                             {
                                 "kick",
@@ -1416,7 +1416,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
 	busy = true
 
 	passpass:FireServer(
-		buffer.fromstring("\038\001"),
+		buffer.fromstring("\040\001"),
 		{
 			{
 				skillName,
@@ -2339,7 +2339,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
 
         if distance <= autoActivateDistance and not autoActivatedb then
             local args = {
-                buffer.fromstring("\038\001"),
+                buffer.fromstring("\040\001"),
                 {
                     { "skill" .. autoActivateMove }
                 }
@@ -2878,7 +2878,7 @@ conn = RunService.RenderStepped:Connect(function(dt)
 	end
 
 	if dist <= 65 then
-		remote:FireServer(buffer.fromstring("\038\001"), {{ "tackle" }})
+		remote:FireServer(buffer.fromstring("\040\001"), {{ "tackle" }})
 	end
 end)
 
@@ -3022,7 +3022,7 @@ conn = RunService.RenderStepped:Connect(function(dt)
 	local dist = (hrp.Position - ball.Position).Magnitude
 
 	if dist <= 14.5 then
-		remote:FireServer(buffer.fromstring("\037"))
+		remote:FireServer(buffer.fromstring("\039"))
 	end
 
 	local jumpTriggered = false
@@ -3043,7 +3043,7 @@ conn = RunService.RenderStepped:Connect(function(dt)
 	end
 
 	if dist <= 65 then
-		remote:FireServer(buffer.fromstring("\038\001"), {{ "tackle" }})
+		remote:FireServer(buffer.fromstring("\040\001"), {{ "tackle" }})
 	end
 end)
 
@@ -3267,7 +3267,7 @@ UIS.InputBegan:Connect(function(input, gp)
     local dir = root.CFrame.LookVector
     local kickVec = vector.create(dir.X * 0.75, 0.65, dir.Z * 0.75)
 
-    remote:FireServer(buffer.fromstring("\038\001"), { { "kick", 28, false, kickVec } })
+    remote:FireServer(buffer.fromstring("\040\001"), { { "kick", 28, false, kickVec } })
 end)
 
 maintab2:Toggle("Auto QuickTimeEvent", "Automatically Does QuickTimeEvents, How Else Can I Explain It?", function()
@@ -3390,10 +3390,10 @@ maintab2:Toggle("Auto Formless (Bind: Y)", "Shidou Only Formless Macro.", functi
 		local dir = hrp.CFrame.LookVector
 		local kickVec = vector.create(dir.X * 0.5, 1, dir.Z * 0.5)
 
-		remote:FireServer(buffer.fromstring("\038\001"), { { "kick", 25, false, kickVec } })
+		remote:FireServer(buffer.fromstring("\040\001"), { { "kick", 25, false, kickVec } })
 
 		ByteNetReliable:FireServer(
-			buffer.fromstring("\038\001"),
+			buffer.fromstring("\040\001"),
 			{ { "skill1" } }
 		)
 	end)
@@ -4417,7 +4417,7 @@ local function StealBall()
                 task.wait(0.5)
                 LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
                 local args = {
-                    buffer.fromstring("\038\001"),
+                    buffer.fromstring("\040\001"),
                     {
                         {
                             "tackle"
@@ -4505,7 +4505,7 @@ exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
                         LocalRootPart.CFrame = Goal.CFrame
                         task.wait(0.185)
                         local args = {
-                            buffer.fromstring("\038\001"),
+                            buffer.fromstring("\040\001"),
                             {
                                 {
                                     "kick",
