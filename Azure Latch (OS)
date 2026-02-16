@@ -231,7 +231,6 @@ flowPart.CanCollide = true
 flowPart.Position = Vector3.new(100, 1000, 100)
 flowPart.Parent = workspace
 
-
 maintab:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To Get Flow.", function()
     local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     local root = char:WaitForChild("HumanoidRootPart")
@@ -254,72 +253,54 @@ maintab:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To Ge
     end)
 end)
 
+maintab:Button("Steal Ball", "Repeatedly Attempts To Get The Ball.", function()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character.HumanoidRootPart
 
-maintab:Button("Steal Ball", "Attempts Repeatedly To Obtain Ball.", function()
-    local function HasBall()
-        local char = LocalPlayer.Character
-        local ball = char and char:FindFirstChild("Ball")
-        return ball ~= nil
-    end
+    while hrp and not (LocalPlayer.Character:FindFirstChild("Ball")) do
+        local ball = workspace.Terrain:FindFirstChild("Ball")
+        if ball then hrp.CFrame = CFrame.new(ball.Position) end
 
-    local function StealBall()
-        while not HasBall() do
-            local char = LocalPlayer.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            local ball = workspace.Terrain:FindFirstChild("Ball")
-
-            if hrp and ball then
-                hrp.CFrame = CFrame.new(ball.Position)
-            end
-
-            for _, plr in game:GetService("Players"):GetPlayers() do
-                if plr == LocalPlayer then continue end
-
-                local otherChar = plr.Character
-                local otherBall = otherChar and otherChar:FindFirstChild("Ball")
-
-                if otherBall and hrp then
-                    hrp.CFrame = otherBall.CFrame
-
-                    local args = {
-                        buffer.fromstring(buffers["base"]),
-                        { { "tackle" } }
-                    }
-                    ByteNetReliable:FireServer(unpack(args))
+        for _, p in game.Players:GetPlayers() do
+            if p ~= LocalPlayer then
+                local b = p.Character and p.Character:FindFirstChild("Ball")
+                if b then
+                    hrp.CFrame = b.CFrame
+                    ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"tackle"}})
                 end
             end
-            task.wait(0.2)
         end
-    end
 
-    StealBall()
+        task.wait(0.2)
+    end
 end)
 
 
-maintab:Button("Bring Ball", "Brings The Ball To Your Position.", function()
-    local function HasBall()
-        local char = LocalPlayer.Character
-        local ball = char and char:FindFirstChild("Ball")
-        return ball ~= nil
-    end
+maintab:Button("Bring Ball", "Steals The Ball Then Teleports To Where You Were.", function()
+    local hrp = LocalPlayer.Character and LocalPlayer.Character.HumanoidRootPart
+    if not hrp then return end
 
-    spawn(function()
-        local char = LocalPlayer.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        local ball = workspace.Terrain:FindFirstChild("Ball")
+    local orig = hrp.CFrame
+    local ball = workspace.Terrain:FindFirstChild("Ball")
+    if ball then hrp.CFrame = CFrame.new(ball.Position) end
+    task.wait(0.1)
 
-        if hrp and ball then
-            local original = hrp.CFrame
-            hrp.CFrame = CFrame.new(ball.Position)
+    while not (LocalPlayer.Character:FindFirstChild("Ball")) do
+        local b = workspace.Terrain:FindFirstChild("Ball")
+        if b then hrp.CFrame = CFrame.new(b.Position) end
 
-            StealBall()
-
-            task.wait(0.3)
-            if hrp and hrp.Parent then
-                hrp.CFrame = original
+        for _, p in game.Players:GetPlayers() do
+            if p ~= LocalPlayer then
+                local ob = p.Character and p.Character:FindFirstChild("Ball")
+                if ob then
+                    hrp.CFrame = ob.CFrame
+                    ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"tackle"}})
+                end
             end
         end
-    end)
+
+        task.wait(0.2)
+    end
+    if hrp.Parent then hrp.CFrame = orig end
 end)
 
 local userInputService = game:GetService("UserInputService")
@@ -1209,7 +1190,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local AnimationId = "rbxassetid://113098409724280"
-local SAFE_POSITION = Vector3.new(-540, 3, 1274)
+local safety = Vector3.new(-540, 3, 1274)
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -1217,11 +1198,6 @@ local humanoid = character:FindFirstChildWhichIsA("Humanoid")
 
 local animationTrack = nil
 local ghostActive = false
-
-local function loadReferences()
-	character = player.Character
-	humanoid = character:FindFirstChildWhichIsA("Humanoid")
-end
 
 local function startInvisibility()
 	if not humanoid then return end
@@ -1244,14 +1220,16 @@ local function stopInvisibility()
 		animationTrack:Destroy()
 		animationTrack = nil
 	end
+	if humanoid then
+		humanoid.CameraOffset = Vector3.new(0, 0, 0)
+	end
 end
 
 RunService.RenderStepped:Connect(function()
+	if not ghostActive then return end
 	if not humanoid or not character then return end
 
-	if ghostActive then
-		humanoid.CameraOffset = Vector3.new(0, 0, 0)
-	end
+	humanoid.CameraOffset = Vector3.new(0, 0, 0)
 
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
 	if rootPart then
@@ -1260,7 +1238,7 @@ RunService.RenderStepped:Connect(function()
 		local raycastResult = Workspace:Raycast(rayOrigin, rayDirection)
 
 		if not raycastResult then
-			rootPart.CFrame = CFrame.new(SAFE_POSITION)
+			rootPart.CFrame = CFrame.new(safety)
 		end
 	end
 end)
