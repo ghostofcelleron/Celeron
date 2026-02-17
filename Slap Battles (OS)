@@ -4165,64 +4165,105 @@ modetab:Button("Null Zone", function()
     teleportTo(14422118326)
 end)
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local players = game:GetService("Players")
+local runservice = game:GetService("RunService")
 
-local LocalPlayer = Players.LocalPlayer
-local lastSliderSet = nil
-local velocityConn = nil
+local localplayer = players.LocalPlayer
+local lastsliderset = nil
+local pulseconn = nil
 
-local function applyVelocityControl(humanoid)
+local pulseduration = 2
+local pulsecooldown = 2
+local lastpulsetime = 0
+local isactivepulse = false
+
+local function applypulsevelocity(humanoid)
 	if not humanoid then return end
 
 	local character = humanoid.Parent
 	local hrp = character:FindFirstChild("HumanoidRootPart")
 	if not hrp then return end
 
-	if velocityConn then
-		velocityConn:Disconnect()
-		velocityConn = nil
+	if pulseconn then
+		pulseconn:Disconnect()
+		pulseconn = nil
 	end
 
-	if lastSliderSet == 20 then
+	if lastsliderset == 20 or not lastsliderset then
 		return
 	end
 
-	velocityConn = RunService.Heartbeat:Connect(function()
-		local moveDirection = humanoid.MoveDirection
-		local currentVelocity = hrp.Velocity
+	pulseconn = runservice.Heartbeat:Connect(function()
+		if not hrp or not hrp.Parent or not humanoid or not humanoid.Parent then
+			return
+		end
 
-		if moveDirection.Magnitude > 0 then
-			local horizontalVelocity = moveDirection.Unit * lastSliderSet
-			hrp.Velocity = Vector3.new(horizontalVelocity.X, currentVelocity.Y, horizontalVelocity.Z)
+		local now = tick()
+
+		if isactivepulse then
+			local movedirection = humanoid.MoveDirection
+			local mag = movedirection.Magnitude
+
+			if mag > 0.01 then
+				local unit = movedirection / mag
+				local targethorizontal = unit * lastsliderset
+
+				hrp.AssemblyLinearVelocity = Vector3.new(
+					targethorizontal.X,
+					hrp.AssemblyLinearVelocity.Y,
+					targethorizontal.Z
+				)
+			else
+				hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
+			end
+
+			if now - lastpulsetime >= pulseduration then
+				hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
+				isactivepulse = false
+				lastpulsetime = now
+			end
 		else
-			hrp.Velocity = Vector3.new(0, currentVelocity.Y, 0)
+			if now - lastpulsetime >= pulsecooldown and humanoid.MoveDirection.Magnitude > 0.01 then
+				isactivepulse = true
+				lastpulsetime = now
+			end
 		end
 	end)
 end
 
-maintab:Slider("Player Speed", 20, 5, 30, 1, function(v)
-	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not humanoid then return end
-
-	lastSliderSet = (v == 8) and 16 or v
-	applyVelocityControl(humanoid)
-end)
-
-LocalPlayer.CharacterAdded:Connect(function(character)
-	character:WaitForChild("Humanoid"):GetPropertyChangedSignal("Parent"):Connect(function()
-		local newHumanoid = character:FindFirstChildOfClass("Humanoid")
-		if newHumanoid then
-			applyVelocityControl(newHumanoid)
+maintab:Slider("Player Speed", 20, 5, 45, 1, function(v)
+	lastsliderset = (v == 8) and 16 or v
+	
+	local character = localplayer.Character
+	if character then
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			applypulsevelocity(humanoid)
 		end
-	end)
-
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		applyVelocityControl(humanoid)
 	end
 end)
+
+localplayer.CharacterAdded:Connect(function(character)
+	task.wait(0.1)
+	local humanoid = character:WaitForChild("Humanoid", 5)
+	if humanoid then
+		humanoid:GetPropertyChangedSignal("Parent"):Connect(function()
+			if humanoid.Parent then
+				task.wait(0.1)
+				applypulsevelocity(humanoid)
+			end
+		end)
+		applypulsevelocity(humanoid)
+	end
+end)
+
+if localplayer.Character then
+	task.wait(0.1)
+	local humanoid = localplayer.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		applypulsevelocity(humanoid)
+	end
+end
 
 maintab:Toggle("Infinite Jump", function()
 	getgenv().infiniteJumpEnabled = not getgenv().infiniteJumpEnabled
@@ -4619,151 +4660,115 @@ end)
 itemtab:Label("Item Usage: Recommended To Use Away From Others.")
 
 itemtab:Button("Use Permanent Items", function()
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Backpack = LocalPlayer:WaitForChild("Backpack")
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local Backpack = LocalPlayer:WaitForChild("Backpack")
+	local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
-local keywords = {
-	"speed potion",
-	"frog potion",
-	"bull's essence",
-	"potion of strength",
-	"boba",
-}
+	local keywords = {"speed potion","frog potion","bull's essence","potion of strength","boba"}
 
-local function matches(name)
-	local lower = string.lower(name)
-	for _, keyword in ipairs(keywords) do
-		if string.find(lower, keyword, 1, true) then
-			return true
+	local function matches(name)
+		local lower = string.lower(name)
+		for _, k in ipairs(keywords) do
+			if string.find(lower, k, 1, true) then return true end
 		end
+		return false
 	end
-	return false
-end
 
-local matchingTools = {}
-for _, tool in ipairs(Backpack:GetChildren()) do
-	if tool:IsA("Tool") and matches(tool.Name) then
-		table.insert(matchingTools, tool)
+	local tools = {}
+	for _, t in Backpack:GetChildren() do
+		if t:IsA("Tool") and matches(t.Name) then table.insert(tools, t) end
 	end
-end
 
-for _, tool in ipairs(matchingTools) do
-	tool.Parent = Character
-	task.defer(function()
-		tool:Activate()
-	end)
-end
+	for _, tool in ipairs(tools) do
+		tool.Parent = Character
+		task.defer(tool.Activate, tool)
+		task.wait(0.75)
+	end
 end)
 
 itemtab:Button("Use Strength Items", function()
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Backpack = LocalPlayer:WaitForChild("Backpack")
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local Backpack = LocalPlayer:WaitForChild("Backpack")
+	local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
-local keywords = {
-	"bull's essence",
-	"potion of strength",
-	"boba"
-}
+	local keywords = {"bull's essence","potion of strength","boba"}
 
-local function matches(name)
-	local lower = string.lower(name)
-	for _, keyword in ipairs(keywords) do
-		if string.find(lower, keyword, 1, true) then
-			return true
+	local function matches(name)
+		local lower = string.lower(name)
+		for _, k in ipairs(keywords) do
+			if string.find(lower, k, 1, true) then return true end
 		end
+		return false
 	end
-	return false
-end
 
-local matchingTools = {}
-for _, tool in ipairs(Backpack:GetChildren()) do
-	if tool:IsA("Tool") and matches(tool.Name) then
-		table.insert(matchingTools, tool)
+	local tools = {}
+	for _, t in Backpack:GetChildren() do
+		if t:IsA("Tool") and matches(t.Name) then table.insert(tools, t) end
 	end
-end
 
-for _, tool in ipairs(matchingTools) do
-	tool.Parent = Character
-	task.defer(function()
-		tool:Activate()
-	end)
-end
+	for _, tool in ipairs(tools) do
+		tool.Parent = Character
+		task.defer(tool.Activate, tool)
+		task.wait(0.75)
+	end
 end)
 
 itemtab:Button("Use Speed / Jump Items", function()
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Backpack = LocalPlayer:WaitForChild("Backpack")
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local Backpack = LocalPlayer:WaitForChild("Backpack")
+	local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
-local keywords = {
-	"speed potion",
-	"frog potion",
-	"boba"
-}
+	local keywords = {"speed potion","frog potion","boba"}
 
-local function matches(name)
-	local lower = string.lower(name)
-	for _, keyword in ipairs(keywords) do
-		if string.find(lower, keyword, 1, true) then
-			return true
+	local function matches(name)
+		local lower = string.lower(name)
+		for _, k in ipairs(keywords) do
+			if string.find(lower, k, 1, true) then return true end
 		end
+		return false
 	end
-	return false
-end
 
-local matchingTools = {}
-for _, tool in ipairs(Backpack:GetChildren()) do
-	if tool:IsA("Tool") and matches(tool.Name) then
-		table.insert(matchingTools, tool)
+	local tools = {}
+	for _, t in Backpack:GetChildren() do
+		if t:IsA("Tool") and matches(t.Name) then table.insert(tools, t) end
 	end
-end
 
-for _, tool in ipairs(matchingTools) do
-	tool.Parent = Character
-	task.defer(function()
-		tool:Activate()
-	end)
-end
+	for _, tool in ipairs(tools) do
+		tool.Parent = Character
+		task.defer(tool.Activate, tool)
+		task.wait(0.75)
+	end
 end)
 
 itemtab:Button("Use Ice Cubes (Can Combo When Used Correctly.)", function()
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Backpack = LocalPlayer:WaitForChild("Backpack")
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local Players = game:GetService("Players")
+	local LocalPlayer = Players.LocalPlayer
+	local Backpack = LocalPlayer:WaitForChild("Backpack")
+	local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
-local keywords = {
-	"cube of ice"
-}
+	local keywords = {"cube of ice"}
 
-local function matches(name)
-	local lower = string.lower(name)
-	for _, keyword in ipairs(keywords) do
-		if string.find(lower, keyword, 1, true) then
-			return true
+	local function matches(name)
+		local lower = string.lower(name)
+		for _, k in ipairs(keywords) do
+			if string.find(lower, k, 1, true) then return true end
 		end
+		return false
 	end
-	return false
-end
 
-local matchingTools = {}
-for _, tool in ipairs(Backpack:GetChildren()) do
-	if tool:IsA("Tool") and matches(tool.Name) then
-		table.insert(matchingTools, tool)
+	local tools = {}
+	for _, t in Backpack:GetChildren() do
+		if t:IsA("Tool") and matches(t.Name) then table.insert(tools, t) end
 	end
-end
 
-for _, tool in ipairs(matchingTools) do
-	tool.Parent = Character
-	task.defer(function()
-		tool:Activate()
-	end)
-end
+	for _, tool in ipairs(tools) do
+		tool.Parent = Character
+		task.defer(tool.Activate, tool)
+		task.wait(0.75)
+	end
 end)
 
 itemtab:Label("Item Dropping: Recommended To Use Away From Others.")
