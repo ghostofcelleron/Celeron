@@ -4082,8 +4082,8 @@ local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
 maintab:Label("Script Made By Celeron + Daffy!")
-maintab:Label("Player Movement Features.")
 itemtab:Label("Reveal Bunker Code: Reveals The Bunker Code.")
+misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 modetab:Label("These Places Can Be Joined Instantly!")
@@ -4165,107 +4165,148 @@ modetab:Button("Null Zone", function()
     teleportTo(14422118326)
 end)
 
-local players = game:GetService("Players")
-local runservice = game:GetService("RunService")
+local a = maintab:Folder("Movement Features.", Color3.fromRGB(24, 255, 228), true)
+local b = maintab:Folder("Combat Features.", Color3.fromRGB(24, 255, 228), true)
 
-local localplayer = players.LocalPlayer
-local lastsliderset = nil
-local pulseconn = nil
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
-local pulseduration = 2
-local pulsecooldown = 2
-local lastpulsetime = 0
-local isactivepulse = false
+local localplayer = Players.LocalPlayer
 
-local function applypulsevelocity(humanoid)
-	if not humanoid then return end
-
-	local character = humanoid.Parent
-	local hrp = character:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
-
-	if pulseconn then
-		pulseconn:Disconnect()
-		pulseconn = nil
-	end
-
-	if lastsliderset == 20 or not lastsliderset then
-		return
-	end
-
-	pulseconn = runservice.Heartbeat:Connect(function()
-		if not hrp or not hrp.Parent or not humanoid or not humanoid.Parent then
-			return
-		end
-
-		local now = tick()
-
-		if isactivepulse then
-			local movedirection = humanoid.MoveDirection
-			local mag = movedirection.Magnitude
-
-			if mag > 0.01 then
-				local unit = movedirection / mag
-				local targethorizontal = unit * lastsliderset
-
-				hrp.AssemblyLinearVelocity = Vector3.new(
-					targethorizontal.X,
-					hrp.AssemblyLinearVelocity.Y,
-					targethorizontal.Z
-				)
-			else
-				hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
-			end
-
-			if now - lastpulsetime >= pulseduration then
-				hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
-				isactivepulse = false
-				lastpulsetime = now
-			end
-		else
-			if now - lastpulsetime >= pulsecooldown and humanoid.MoveDirection.Magnitude > 0.01 then
-				isactivepulse = true
-				lastpulsetime = now
-			end
-		end
-	end)
+local function gethrpandhumanoid()
+    local char = localplayer.Character
+    if not char then return nil, nil end
+    local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not (humanoid and hrp) then return nil, nil end
+    return hrp, humanoid
 end
 
-maintab:Slider("Player Speed", 20, 5, 45, 1, function(v)
-	lastsliderset = (v == 8) and 16 or v
-	
-	local character = localplayer.Character
-	if character then
-		local humanoid = character:FindFirstChildOfClass("Humanoid")
-		if humanoid then
-			applypulsevelocity(humanoid)
-		end
-	end
+local constantenabled = false
+local constantconn = nil
+local constantspeed = 20
+
+local function updateconstantspeed()
+    if constantconn then
+        constantconn:Disconnect()
+        constantconn = nil
+    end
+    if not constantenabled or constantspeed <= 0 then return end
+    local hrp, humanoid = gethrpandhumanoid()
+    if not (hrp and humanoid) then return end
+    constantconn = RunService.Heartbeat:Connect(function()
+        if not (hrp and hrp.Parent and humanoid and humanoid.Parent) then return end
+        local movedir = humanoid.MoveDirection
+        local curvel = hrp.Velocity
+        if movedir.Magnitude > 0 then
+            local target = movedir.Unit * constantspeed
+            hrp.Velocity = Vector3.new(target.X, curvel.Y, target.Z)
+        else
+            hrp.Velocity = Vector3.new(0, curvel.Y, 0)
+        end
+    end)
+end
+
+local pulseenabled = false
+local pulseconn = nil
+local pulsespeed = 20
+local pulseduration = 1.8
+local pulsecooldown = 2.0
+local lastpulsetime = 0
+local ispulseactive = false
+
+local function updatepulsespeed()
+    if pulseconn then
+        pulseconn:Disconnect()
+        pulseconn = nil
+    end
+    if not pulseenabled or pulsespeed <= 0 then return end
+    local hrp, humanoid = gethrpandhumanoid()
+    if not (hrp and humanoid) then return end
+    pulseconn = RunService.Heartbeat:Connect(function()
+        if not (hrp and hrp.Parent and humanoid and humanoid.Parent) then return end
+        local now = tick()
+        if ispulseactive then
+            local movedir = humanoid.MoveDirection
+            if movedir.Magnitude > 0.01 then
+                local target = movedir.Unit * pulsespeed
+                hrp.AssemblyLinearVelocity = Vector3.new(
+                    target.X,
+                    hrp.AssemblyLinearVelocity.Y,
+                    target.Z
+                )
+            else
+                hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
+            end
+            if now - lastpulsetime >= pulseduration then
+                hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
+                ispulseactive = false
+                lastpulsetime = now
+            end
+        else
+            if now - lastpulsetime >= pulsecooldown and humanoid.MoveDirection.Magnitude > 0.01 then
+                ispulseactive = true
+                lastpulsetime = now
+            end
+        end
+    end)
+end
+
+local function disableallspeed()
+    constantenabled = false
+    pulseenabled = false
+    ispulseactive = false
+    if constantconn then constantconn:Disconnect() constantconn = nil end
+    if pulseconn then pulseconn:Disconnect() pulseconn = nil end
+end
+
+a:Dropdown("Speed Method", {"Off", "Constant", "Acceleration"}, function(selected)
+    disableallspeed()
+    if selected == "Constant" then
+        constantenabled = true
+        updateconstantspeed()
+    elseif selected == "Acceleration" then
+        pulseenabled = true
+        updatepulsespeed()
+    end
 end)
 
-localplayer.CharacterAdded:Connect(function(character)
-	task.wait(0.1)
-	local humanoid = character:WaitForChild("Humanoid", 5)
-	if humanoid then
-		humanoid:GetPropertyChangedSignal("Parent"):Connect(function()
-			if humanoid.Parent then
-				task.wait(0.1)
-				applypulsevelocity(humanoid)
-			end
-		end)
-		applypulsevelocity(humanoid)
-	end
+a:Slider("Constant Speed", 20, 5, 30, 1, function(v)
+    constantspeed = (v == 8) and 16 or v
+    if constantenabled then
+        updateconstantspeed()
+    end
 end)
+
+a:Slider("Acceleration Speed", 20, 5, 40, 1, function(v)
+    pulsespeed = (v == 8) and 16 or v
+    if pulseenabled then
+        updatepulsespeed()
+    end
+end)
+
+local function oncharadded(char)
+    task.wait(0.1)
+    if constantenabled then
+        updateconstantspeed()
+    end
+    if pulseenabled then
+        updatepulsespeed()
+    end
+end
 
 if localplayer.Character then
-	task.wait(0.1)
-	local humanoid = localplayer.Character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		applypulsevelocity(humanoid)
-	end
+    oncharadded(localplayer.Character)
 end
 
-maintab:Toggle("Infinite Jump", function()
+localplayer.CharacterAdded:Connect(oncharadded)
+
+localplayer.CharacterRemoving:Connect(function()
+    if constantconn then constantconn:Disconnect() constantconn = nil end
+    if pulseconn then pulseconn:Disconnect() pulseconn = nil end
+end)
+
+a:Toggle("Infinite Jump", function()
 	getgenv().infiniteJumpEnabled = not getgenv().infiniteJumpEnabled
 
 	local lp = game:GetService("Players").LocalPlayer
@@ -4311,8 +4352,6 @@ maintab:Toggle("Infinite Jump", function()
 	})
 end)
 
-maintab:Label("Slap Aura: Automatically Slaps Other Players Around You.")
-
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
@@ -4352,7 +4391,7 @@ local function getClosestPlayer(radius)
 	return closest
 end
 
-maintab:Toggle("Slap Aura", function()
+b:Toggle("Slap Aura", function()
 	slapaura.enabled = not slapaura.enabled
 
 	if slapaura.enabled and not slapaura.connection then
@@ -4386,11 +4425,9 @@ maintab:Toggle("Slap Aura", function()
 	})
 end)
 
-maintab:Slider("Slap Aura Radius", 0, 0, 20, 0.5, function(v)
+b:Slider("Slap Aura Radius", 0, 0, 20, 0.5, function(v)
 	slapaura.radius = v
 end)
-
-maintab:Label("Hitbox Expanding: Expands Other Players' Hitboxes.")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -4424,7 +4461,7 @@ local function updateHitboxes()
 	end
 end
 
-maintab:Toggle("Expand Hitboxes", function(v)
+b:Toggle("Expand Hitboxes", function(v)
 	hitbox.enabled = v
 
 	if v then
@@ -4445,10 +4482,9 @@ maintab:Toggle("Expand Hitboxes", function(v)
 	})
 end)
 
-maintab:Slider("Hitbox Size", 0, 0, 20, 0.5, function(v)
+b:Slider("Hitbox Size", 0, 0, 20, 0.5, function(v)
 	hitbox.size = v
 end)
-
 
 maintab:Label("Player ESP: Highlights Other Players.")
 
@@ -4565,7 +4601,9 @@ itemtab:Button("Reveal Bunker Code", function()
 	})
 end)
 
-itemtab:Label("Item ESP: Shows Where The Items Are.")
+local c = itemtab:Folder("Item Based Features.", Color3.fromRGB(24, 255, 228), true)
+
+c:Label("Item ESP: Shows Items Through Walls.")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -4642,7 +4680,7 @@ local function updateESP()
 	end
 end
 
-itemtab:Toggle("Item ESP", function()
+c:Toggle("Item ESP", function()
 	itemESP.enabled = not itemESP.enabled
 
 	if itemESP.enabled then
@@ -4657,9 +4695,9 @@ itemtab:Toggle("Item ESP", function()
 	end
 end)
 
-itemtab:Label("Item Usage: Recommended To Use Away From Others.")
+c:Label("Item Usage: Recommended To Use Away From Others.")
 
-itemtab:Button("Use Permanent Items", function()
+c:Button("Use Permanent Items", function()
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local Backpack = LocalPlayer:WaitForChild("Backpack")
@@ -4687,7 +4725,7 @@ itemtab:Button("Use Permanent Items", function()
 	end
 end)
 
-itemtab:Button("Use Strength Items", function()
+c:Button("Use Strength Items", function()
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local Backpack = LocalPlayer:WaitForChild("Backpack")
@@ -4715,7 +4753,7 @@ itemtab:Button("Use Strength Items", function()
 	end
 end)
 
-itemtab:Button("Use Speed / Jump Items", function()
+c:Button("Use Speed / Jump Items", function()
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local Backpack = LocalPlayer:WaitForChild("Backpack")
@@ -4743,7 +4781,7 @@ itemtab:Button("Use Speed / Jump Items", function()
 	end
 end)
 
-itemtab:Button("Use Ice Cubes (Can Combo When Used Correctly.)", function()
+c:Button("Use Ice Cubes (Can Combo When Used Correctly.)", function()
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local Backpack = LocalPlayer:WaitForChild("Backpack")
@@ -4771,9 +4809,9 @@ itemtab:Button("Use Ice Cubes (Can Combo When Used Correctly.)", function()
 	end
 end)
 
-itemtab:Label("Item Dropping: Recommended To Use Away From Others.")
+c:Label("Item Dropping: Recommended To Use Away From Others.")
 
-itemtab:Button("Drop All Items", function()
+c:Button("Drop All Items", function()
 local Players = game:GetService("Players")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local LocalPlayer = Players.LocalPlayer
