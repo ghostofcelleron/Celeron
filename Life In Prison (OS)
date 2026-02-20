@@ -1,561 +1,640 @@
-if not _G.HasScriptRun then
-    _G.HasScriptRun = true
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/cazan's%20AC%20bypass", true))()
+local lp = game:GetService("Players").LocalPlayer
+for i, v in next, getgc() do
+	if typeof(v) ~= "function" then
+		continue
+	end
+	if not debug.info(v, "s"):find("BClient") then
+		continue
+	end
+	for i2, v2 in next, (debug.getconstants or getconstants)(v) do
+		if v2 == "ACTrigger" then
+			(debug.setconstant or setconstant)(v, i2, "im empty")
+		end
+	end
 end
-
-local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
-
-local win = ui:Create({
-    Name = "Celeron's GUI (Life in Prison)",
-    ThemeColor = Color3.fromRGB(100, 100, 100),
-    StartupSound = "rbxassetid://6958727243",
-    ThemeFont = Enum.Font.FredokaOne
+local UI = loadstring(game:HttpGet("https://github.com/biggaboy212/Cascade/releases/latest/download/dist.luau/"))()
+local App = UI.New()
+local Window = App:Window({
+	Title = "Life In Prison",
+	Subtitle = "Advanced cheat for Life In Prison",
+	UIBlur = true,
+	Searching = true,
+	Draggable = true,
+	Resizable = true
 })
-
-local function withTeleportBack(callback)
-    return function()
-        local p = game.Players.LocalPlayer
-        local char = p.Character or p.CharacterAdded:Wait()
-        local hrp = char:WaitForChild("HumanoidRootPart")
-        local originalCFrame = hrp.CFrame
-
-        callback()
-
-        task.delay(0.6, function()
-            if hrp and hrp.Parent then
-                hrp.CFrame = originalCFrame
-            end
-        end)
-    end
-end
-
-local maintab = win:Tab("Main")
-local itemsTab = win:Tab("Items")
-local teleportTab = win:Tab("Teleports")
-local misctab = win:Tab("Others")
-local helptab = win:Tab("Info")
-
-maintab:Label("Script Made By Celeron + Daffy!")
-itemsTab:Label("Manually Grab The Gun, And You Will Be Teleported Back!")
-teleportTab:Label("Teleport Features.")
-misctab:Label("Other Features.")
-helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
-helptab:Label("Show / Hide GUI: Right Alt")
-
-local players = game:GetService("Players")
-local localPlayer = players.LocalPlayer
-
-local targetSpeed = 18
-local targetJump = 50
-local humanoid
-
-local function applyStats()
-    if humanoid then
-        humanoid.WalkSpeed = targetSpeed
-        humanoid.UseJumpPower = true
-        humanoid.JumpPower = targetJump
-    end
-end
-
-local function setupCharacter(char)
-    humanoid = char:WaitForChild("Humanoid")
-    applyStats()
-end
-
-if localPlayer.Character then
-    setupCharacter(localPlayer.Character)
-end
-
-localPlayer.CharacterAdded:Connect(setupCharacter)
-
-maintab:Slider("Player Speed", targetSpeed, 5, 250, 0.1, function(v)
-    targetSpeed = v
-    applyStats()
-end)
-
-maintab:Slider("Player Jump-Power", targetJump, 25, 250, 0.1, function(v)
-    targetJump = v
-    applyStats()
-end)
-
-local flightEnabled = false
-local flightLoop = nil
-local bg = nil
-local bv = nil
-
-maintab:Toggle("Flight", function()
-    flightEnabled = not flightEnabled
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Flight",
-        Text = flightEnabled and "Enabled." or "Disabled.",
-        Duration = 2
-    })
-
-    if flightLoop then
-        flightLoop:Disconnect()
-        flightLoop = nil
-    end
-
-    local player = game:GetService("Players").LocalPlayer
-    local uis = game:GetService("UserInputService")
-    local cam = workspace.CurrentCamera
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hrp = char:WaitForChild("HumanoidRootPart")
-    local hum = char:WaitForChild("Humanoid")
-
-    if bg then bg:Destroy() bg = nil end
-    if bv then bv:Destroy() bv = nil end
-
-    if flightEnabled then
-        hum.AutoRotate = false
-        hum.PlatformStand = true
-
-        -- disable collisions globally
-        for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
-        end
-
-        bg = Instance.new("BodyGyro")
-        bg.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
-        bg.P = 1e5
-        bg.CFrame = hrp.CFrame
-        bg.Parent = hrp
-
-        bv = Instance.new("BodyVelocity")
-        bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-        bv.Velocity = Vector3.zero
-        bv.Parent = hrp
-
-        local currentSpeed = 0.85
-
-        flightLoop = game:GetService("RunService").RenderStepped:Connect(function()
-            bv.Velocity = Vector3.zero
-
-            local moveDir = Vector3.zero
-            if uis:IsKeyDown(Enum.KeyCode.W) then moveDir += cam.CFrame.LookVector end
-            if uis:IsKeyDown(Enum.KeyCode.S) then moveDir -= cam.CFrame.LookVector end
-            if uis:IsKeyDown(Enum.KeyCode.A) then moveDir -= cam.CFrame.RightVector end
-            if uis:IsKeyDown(Enum.KeyCode.D) then moveDir += cam.CFrame.RightVector end
-
-            if moveDir.Magnitude > 0 then
-                hrp.CFrame = hrp.CFrame + moveDir.Unit * currentSpeed
-            end
-
-            local look = cam.CFrame.LookVector
-            local up = cam.CFrame.UpVector
-            local target = CFrame.lookAt(hrp.Position, hrp.Position + look, up)
-            bg.CFrame = bg.CFrame:Lerp(target, 0.35)
-        end)
-    else
-        hum.PlatformStand = false
-        hum.AutoRotate = true
-
-        -- restore collisions globally
-        for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = true
-            end
-        end
-
-        if bg then bg:Destroy() bg = nil end
-        if bv then bv:Destroy() bv = nil end
-    end
-end)
-
-local aimlockEnabled = false
-local aimlockTarget = nil
-local fovCircle = nil
-local uis = game:GetService("UserInputService")
-local rs = game:GetService("RunService")
-local plr = game:GetService("Players").LocalPlayer
-local cam = workspace.CurrentCamera
-local bindConnection = nil
-local renderConnection = nil
-
-maintab:Toggle("Aimlock (Bind: M2)", function()
-    aimlockEnabled = not aimlockEnabled
-    if aimlockEnabled then
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Aimlock",
-            Text = "Enabled.",
-            Duration = 2
-        })
-        fovCircle = Drawing.new("Circle")
-        fovCircle.Visible = true
-        fovCircle.Color = Color3.fromRGB(255,255,255)
-        fovCircle.Thickness = 1
-        fovCircle.NumSides = 64
-        fovCircle.Radius = 128
-        fovCircle.Filled = false
-        fovCircle.Position = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
-
-        bindConnection = uis.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton2 then
-                if aimlockTarget then
-                    aimlockTarget = nil
-                else
-                    local closest, closestDist = nil, math.huge
-                    local screenCenter = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
-                    for _,v in pairs(game:GetService("Players"):GetPlayers()) do
-                        if v ~= plr and v.Team ~= plr.Team and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                            local pos, onScreen = cam:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
-                            if onScreen then
-                                local dist = (Vector2.new(pos.X,pos.Y) - screenCenter).Magnitude
-                                if dist <= fovCircle.Radius and dist < closestDist then
-                                    closestDist = dist
-                                    closest = v
-                                end
-                            end
-                        end
-                    end
-                    aimlockTarget = closest
-                end
-            end
-        end)
-
-        renderConnection = rs.RenderStepped:Connect(function()
-            if aimlockEnabled and fovCircle then
-                fovCircle.Position = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
-                if aimlockTarget and aimlockTarget.Character and aimlockTarget.Character:FindFirstChild("HumanoidRootPart") then
-                    cam.CFrame = CFrame.new(cam.CFrame.Position, aimlockTarget.Character.HumanoidRootPart.Position)
-                end
-            end
-        end)
-    else
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Aimlock",
-            Text = "Disabled.",
-            Duration = 2
-        })
-        if fovCircle then
-            fovCircle:Remove()
-            fovCircle = nil
-        end
-        if bindConnection then
-            bindConnection:Disconnect()
-            bindConnection = nil
-        end
-        if renderConnection then
-            renderConnection:Disconnect()
-            renderConnection = nil
-        end
-        aimlockTarget = nil
-    end
-end)
-
-local espEnabled = false
-local espObjects = {}
-local rs = game:GetService("RunService")
-local plr = game:GetService("Players").LocalPlayer
-local cam = workspace.CurrentCamera
-local renderConnection = nil
-
-local function createESP(v)
-    local box = Drawing.new("Square")
-    box.Thickness = 1
-    box.Filled = false
-
-    local healthBG = Drawing.new("Square")
-    healthBG.Filled = true
-    healthBG.Color = Color3.fromRGB(0,0,0)
-
-    local healthBar = Drawing.new("Square")
-    healthBar.Filled = true
-
-    local nameTag = Drawing.new("Text")
-    nameTag.Size = 16
-    nameTag.Center = true
-
-    espObjects[v] = {box=box,healthBG=healthBG,healthBar=healthBar,nameTag=nameTag}
-end
-
-local function removeESP(v)
-    if espObjects[v] then
-        for _,obj in pairs(espObjects[v]) do
-            obj:Remove()
-        end
-        espObjects[v] = nil
-    end
-end
-
-maintab:Toggle("Player ESP", function()
-    espEnabled = not espEnabled
-    if espEnabled then
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Player ESP",
-            Text = "Enabled.",
-            Duration = 2
-        })
-
-        for _,v in pairs(game:GetService("Players"):GetPlayers()) do
-            if v ~= plr then
-                createESP(v)
-                v.CharacterAdded:Connect(function()
-                    removeESP(v)
-                    createESP(v)
-                end)
-            end
-        end
-
-        renderConnection = rs.RenderStepped:Connect(function()
-            for v,objs in pairs(espObjects) do
-                local char = v.Character
-                if espEnabled and char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
-                    local hrp = char.HumanoidRootPart
-                    local hum = char.Humanoid
-                    local pos,onScreen = cam:WorldToViewportPoint(hrp.Position)
-                    if onScreen then
-                        local boxSize = Vector2.new(50,75)
-                        local boxPos = Vector2.new(pos.X - boxSize.X/2, pos.Y - boxSize.Y/2)
-
-                        objs.box.Visible = true
-                        objs.box.Color = v.Team and v.Team.TeamColor.Color or Color3.fromRGB(255,255,255)
-                        objs.box.Size = boxSize
-                        objs.box.Position = boxPos
-
-                        objs.healthBG.Visible = true
-                        objs.healthBG.Size = Vector2.new(4, boxSize.Y)
-                        objs.healthBG.Position = Vector2.new(boxPos.X - 6, boxPos.Y)
-
-                        local hpPercent = math.clamp(hum.Health/hum.MaxHealth,0,1)
-                        objs.healthBar.Visible = true
-                        objs.healthBar.Color = Color3.fromRGB(0,255,0)
-                        objs.healthBar.Size = Vector2.new(4, boxSize.Y*hpPercent)
-                        objs.healthBar.Position = Vector2.new(boxPos.X - 6, boxPos.Y + (boxSize.Y - boxSize.Y*hpPercent))
-
-                        objs.nameTag.Visible = true
-                        objs.nameTag.Text = v.Name
-                        objs.nameTag.Color = Color3.fromRGB(255,255,255)
-                        objs.nameTag.Position = Vector2.new(pos.X, boxPos.Y - 16)
-                    else
-                        objs.box.Visible = false
-                        objs.healthBG.Visible = false
-                        objs.healthBar.Visible = false
-                        objs.nameTag.Visible = false
-                    end
-                else
-                    objs.box.Visible = false
-                    objs.healthBG.Visible = false
-                    objs.healthBar.Visible = false
-                    objs.nameTag.Visible = false
-                end
-            end
-        end)
-    else
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Player ESP",
-            Text = "Disabled.",
-            Duration = 2
-        })
-        if renderConnection then
-            renderConnection:Disconnect()
-            renderConnection = nil
-        end
-        for v,objs in pairs(espObjects) do
-            for _,obj in pairs(objs) do
-                obj:Remove()
-            end
-        end
-        espObjects = {}
-    end
-end)
-
-misctab:Button("Infinite Yield", function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-end)
-
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-
-local function teleportTo(x, y, z)
-    local character = player.Character or player.CharacterAdded:Wait()
-    local hrp = character:WaitForChild("HumanoidRootPart")
-    hrp.CFrame = CFrame.new(x, y, z)
-end
-
-local function grabItemTeleport(x, y, z, itemName)
-    local character = player.Character or player.CharacterAdded:Wait()
-    local hrp = character:WaitForChild("HumanoidRootPart")
-    local originalCFrame = hrp.CFrame
-    teleportTo(x, y, z)
-    repeat task.wait(0.1) until player.Backpack:FindFirstChild(itemName)
-    hrp.CFrame = originalCFrame
-end
-
-itemsTab:Button("Bat (Melee)", function()
-    grabItemTeleport(824, 103, -676, "Bat")
-end)
-
-itemsTab:Button("Knife (Melee)", function()
-    grabItemTeleport(-663, 103, -96, "Knife")
-end)
-
-itemsTab:Button("Hammer (Melee)", function()
-    grabItemTeleport(-693, 103, -153, "Hammer")
-end)
-
-itemsTab:Button("M9 (Pistol)", function()
-    grabItemTeleport(-729, 105, -5, "M9")
-end)
-
-itemsTab:Button("SPAS (Shotgun)", function()
-    grabItemTeleport(-729, 105, -5, "SPAS")
-end)
-
-itemsTab:Button("FAL (Assault Rifle)", function()
-    grabItemTeleport(-729, 105, -5, "FAL")
-end)
-
-itemsTab:Button("TEC-9 (Pistol)", function()
-    grabItemTeleport(-722, 105, 34, "TEC-9")
-end)
-
-itemsTab:Button("AK-74 (Assault Rifle)", function()
-    grabItemTeleport(822, 103, -687, "AK-74")
-end)
-
-itemsTab:Button("M1 Carabine (Rifle)", function()
-    grabItemTeleport(319, 33, 712, "M1 Carabine")
-end)
-
-itemsTab:Button("Uzi (SMG)", function()
-    grabItemTeleport(845, 103, -716, "UZI")
-end)
-
-itemsTab:Button("M79 (Grenade Launcher)", function()
-    grabItemTeleport(441, 200, -231, "M79")
-end)
-
-itemsTab:Button("Mini Gun (SPECIAL)", function()
-    grabItemTeleport(686, 32, 643, "Minigun")
-end)
-
-itemsTab:Button("Multi-Rocket Launcher (SPECIAL)", function()
-    grabItemTeleport(-635, 49, 775, "Quad Launcher")
-end)
-
-teleportTab:Button("Armory", function()
-    teleportTo(-729, 105, 1)
-end)
-
-teleportTab:Button("Cafeteria", function()
-    teleportTo(-841, 105, 8)
-end)
-
-teleportTab:Button("Cellblock", function()
-    teleportTo(-809, 105, -96)
-end)
-
-teleportTab:Button("Yard", function()
-    teleportTo(-737, 103, -166)
-end)
-
-teleportTab:Button("Max Yard", function()
-    teleportTo(-908, 103, -67)
-end)
-
-teleportTab:Button("Soccer", function()
-    teleportTo(-777, 103, -160)
-end)
-
-teleportTab:Button("Bridge Control", function()
-    teleportTo(-220, 105, 7)
-end)
-
-teleportTab:Button("Doctor Store", function()
-    teleportTo(415, 33, -19)
-end)
-
-teleportTab:Button("Vehicle Spawner", function()
-    teleportTo(646, 32, 82)
-end)
-
-teleportTab:Button("Bunker", function()
-    teleportTo(-725, 33, 611)
-end)
-
-teleportTab:Button("Crim Base Yard", function()
-    teleportTo(788, 102, -641)
-end)
-
-teleportTab:Button("Crim Base", function()
-    teleportTo(828, 103, -687)
-end)
-
-teleportTab:Button("Barn", function()
-    teleportTo(281, 32, -825)
-end)
-
-teleportTab:Button("UFO", function()
-    teleportTo(-206, 214, -1385)
-end)
-
-teleportTab:Button("Outside Prison", function()
-    teleportTo(-465, 103, 7)
-end)
-
-teleportTab:Button("Prison Entrance", function()
-    teleportTo(-584, 103, -7)
-end)
-
-teleportTab:Button("Prison Watchtower", function()
-    teleportTo(-710, 124, -190)
-end)
-
-teleportTab:Button("Criminal Outpost", function()
-    teleportTo(-169, 33, 751)
-end)
-
-teleportTab:Button("Gun Shop", function()
-    teleportTo(291, 33, 712)
-end)
-
-teleportTab:Button("Safe Area", function()
-    teleportTo(-869, 276, -812)
-end)
-
-teleportTab:Button("Sky Bridge", function()
-    teleportTo(609, 199, -403)
-end)
-
-teleportTab:Button("Sky Watch", function()
-    teleportTo(438, 200, -230)
-end)
-
-teleportTab:Button("Under Bridge", function()
-    teleportTo(-131, 72, 44)
-end)
-
-teleportTab:Button("Breakroom", function()
-    teleportTo(-931, 105, 158)
-end)
-
-teleportTab:Button("Cazan's Home", function()
-    teleportTo(633, -39, 114)
-end)
-
-helptab:Button("Copy Owner Discord Username", function()
-local StarterGui = game:GetService("StarterGui")
-
-StarterGui:SetCore("SendNotification", {
-    Title = "Discord Username",
-    Text = "Copied to your clipboard!",
-    Duration = 3,
-    Button1 = "alright fella",
+local Section = Window:Section({
+	Title = "Main"
 })
-setclipboard("ghostofcelleron")
-end)
-
-helptab:Button("Copy Discord Server Invite", function()
-local StarterGui = game:GetService("StarterGui")
-
-StarterGui:SetCore("SendNotification", {
-    Title = "Discord Invite",
-    Text = "Copied to your clipboard!",
-    Duration = 3,
-    Button1 = "alright fella",
+local MainTab = Section:Tab({
+	Title = "Main"
 })
-setclipboard("https://discord.gg/8stFYxJv4R ")
-end)
+local ToolsTab = Section:Tab({
+	Title = "Tools"
+})
+local TeleportsTab = Section:Tab({
+	Title = "Teleports"
+})
+local OthersTab = Section:Tab({
+	Title = "Other"
+})
+MainTab:Button({
+	Label = "Silent Aim [LEGIT]",
+	Pushed = function()
+		local GetService = setmetaMainTable({}, {
+			__index = function(MainTable, Index)
+				MainTable[Index] = game:GetService(Index)
+				return MainTable[Index]
+			end
+		})
+		local Players = GetService.Players
+		local RunService = GetService.RunService
+		local UserInputService = GetService.UserInputService
+		local LocalPlayer = Players.LocalPlayer
+		local Camera = workspace.CurrentCamera
+		local CurrentTarget = nil
+		local MousePosition = nil
+		local FovCircle = Drawing.new("Circle")
+		FovCircle.Position = UserInputService:GetMouseLocation()
+		FovCircle.Radius = 300
+		FovCircle.Visible = true
+		FovCircle.Color = Color3.fromRGB(255, 0, 0)
+		local Line = Drawing.new("Line")
+		Line.Color = Color3.fromRGB(255, 0, 0)
+		local o;
+		o = hookmetamethod(game, "__namecall", newcclosure(function(...)
+			local Arguments = {
+				...
+			}
+			local CalledMethod = getnamecallmethod()
+			local CalledSelf = Arguments[1]
+			if CalledSelf == workspace and not checkcaller() then
+				if CurrentTarget then
+					if CalledMethod == "FindPartOnRayWithIgnoreList" or CalledMethod == "FindPartOnRayWithWhitelist" or CalledMethod == "FindPartOnRay" or CalledMethod == "findPartOnRay" then
+						local RayOrigin = Arguments[2].Origin
+						local TargetPosition = CurrentTarget.Position
+						local RayDirection = TargetPosition - RayOrigin
+						Arguments[2] = Ray.new(RayOrigin, RayDirection)
+						return o(unpack(Arguments))
+					elseif CalledMethod == "Raycast" then
+						local RayOrigin = Arguments[2]
+						local TargetPosition = CurrentTarget.Position
+						Arguments[3] = TargetPosition - RayOrigin
+						return o(unpack(Arguments))
+					end
+				end
+			end
+			return o(...)
+		end))
+		RunService.RenderStepped:Connect(function()
+			FovCircle.Position = UserInputService:GetMouseLocation()
+			local PlayerCharacter = LocalPlayer.Character
+			if not PlayerCharacter then
+				CurrentTarget = nil
+				return
+			end
+			local CharacterRoot = PlayerCharacter:FindFirstChild("HumanoidRootPart")
+			if not CharacterRoot then
+				CurrentTarget = nil
+				return
+			end
+			local CameraPosition = Camera.CFrame.Position
+			local CameraLookVector = Camera.CFrame.LookVector
+			CurrentTarget = nil
+			local ClosestDistance = math.huge
+			for _, OtherPlayer in Players:GetPlayers() do
+				if OtherPlayer == LocalPlayer then
+					continue
+				end
+				if OtherPlayer.Team == LocalPlayer.Team then
+					continue
+				end
+				local TargetCharacter = OtherPlayer.Character
+				if not TargetCharacter then
+					continue
+				end
+				local TargetHumanoid = TargetCharacter:FindFirstChildOfClass("Humanoid")
+				if not TargetHumanoid or TargetHumanoid.Health <= 0 then
+					continue
+				end
+				if TargetCharacter:FindFirstChildOfClass("ForceField") then
+					continue
+				end
+				local TargetHead = TargetCharacter:FindFirstChild("Head")
+				if not TargetHead then
+					continue
+				end
+				local HeadPosition = TargetHead.Position
+				local ScreenPosition, IsOnScreen = Camera:WorldToViewportPoint(HeadPosition)
+				if IsOnScreen then
+					local ScreenVector = Vector2.new(ScreenPosition.X, ScreenPosition.Y)
+					local DistanceFromCenter = (ScreenVector - UserInputService:GetMouseLocation()).Magnitude
+					if DistanceFromCenter <= FovCircle.Radius and DistanceFromCenter < ClosestDistance then
+						local DirectionToTarget = (HeadPosition - CameraPosition).Unit
+						local DotProduct = CameraLookVector:Dot(DirectionToTarget)
+						if DotProduct > 0 then
+							local WallCheckRay = Ray.new(CameraPosition, HeadPosition - CameraPosition)
+							local RayHit = workspace:FindPartOnRayWithIgnoreList(WallCheckRay, {
+								PlayerCharacter
+							})
+							local IsVisible = false
+							if RayHit then
+								if RayHit.Parent == TargetCharacter or RayHit.Parent.Parent == TargetCharacter then
+									IsVisible = true
+								end
+							else
+								IsVisible = true
+							end
+							if IsVisible then
+								ClosestDistance = DistanceFromCenter
+								CurrentTarget = TargetHead
+							end
+						end
+					end
+				end
+			end
+			if CurrentTarget then
+				local ScreenPosition, IsOnScreen = Camera:WorldToViewportPoint(CurrentTarget.Position)
+				if IsOnScreen then
+					local ScreenVector = Vector2.new(ScreenPosition.X, ScreenPosition.Y)
+					Line.Visible = true
+					Line.From = UserInputService:GetMouseLocation()
+					Line.To = ScreenVector
+				else
+					Line.Visible = false
+				end
+			else
+				Line.Visible = false
+			end
+		end)
+	end
+})
+MainTab:Button({
+	Label = "Kill All [MELEE]",
+	Pushed = function()
+		local Players = game:GetService("Players")
+		local ReplicatedStorage = game:GetService("ReplicatedStorage")
+		local Workspace = workspace
+		local LocalPlayer = Players.LocalPlayer
+		local RemoteEvent = ReplicatedStorage.Events.RemoteEvent
+		local Pickups = Workspace.pickups
+		local function GetKnife(MyChar)
+			local Root = MyChar:FindFirstChild("HumanoidRootPart")
+			if not Root then
+				return false
+			end
+			for _, Pickup in Pickups:GetChildren() do
+				if Pickup.Name == "Knife" then
+					local MeshPart = Pickup:FindFirstChild("Meshes/knife1")
+					if MeshPart and MeshPart:IsA("BasePart") and MeshPart.Parent then
+						Root.CFrame = CFrame.new(MeshPart.Position)
+						RemoteEvent:FireServer(12, Pickup)
+						return true
+					end
+				end
+			end
+			return false
+		end
+		local Victims = Players:GetPlayers()
+		for _, Target in ipairs(Victims) do
+			if Target == LocalPlayer then
+				continue
+			end
+			if not Target.Character or not Target.Character:FindFirstChild("Humanoid") or Target.Character.Humanoid.Health <= 0 then
+				continue
+			end
+			while Target.Parent and Target.Character and Target.Character:FindFirstChild("Humanoid") and Target.Character.Humanoid.Health > 0 do
+				local MyChar = LocalPlayer.Character
+				if not MyChar or not MyChar:FindFirstChild("Humanoid") or MyChar.Humanoid.Health <= 0 then
+					break
+				end
+				local Humanoid = MyChar.Humanoid
+				local Root = MyChar:FindFirstChild("HumanoidRootPart")
+				local Backpack = LocalPlayer:FindFirstChild("Backpack")
+				local Knife = (MyChar:FindFirstChild("Knife")) or (Backpack and Backpack:FindFirstChild("Knife"))
+				if not Knife then
+					if not GetKnife(MyChar) then
+						task.wait(0.1)
+					end
+					task.wait()
+					continue
+				end
+				local TargetChar = Target.Character
+				local TargetRoot = TargetChar:FindFirstChild("HumanoidRootPart")
+				local TargetHead = TargetChar:FindFirstChild("Head")
+				local ForceField = TargetChar:FindFirstChildOfClass("ForceField")
+				if ForceField then
+					break
+				end
+				if TargetRoot and TargetHead and Root then
+					if Humanoid.Sit then
+						Humanoid.Sit = false
+					end
+					Root.CFrame = TargetRoot.CFrame * CFrame.new(0, -6, 0)
+					Root.Velocity = Vector3.zero
+					local MyTeam = LocalPlayer.Team
+					local TargetTeam = Target.Team
+					local IsPolice = MyTeam and MyTeam.Name == "Police"
+					local TargetIsPolice = TargetTeam and TargetTeam.Name == "Police"
+					if IsPolice and TargetIsPolice then
+						if Knife.Parent == MyChar then
+							Humanoid:UnequipTools()
+						end
+						if (Root.Position - TargetRoot.Position).Magnitude <= 17 then
+							RemoteEvent:FireServer(33, TargetHead)
+						end
+					else
+						if Knife.Parent == Backpack then
+							Humanoid:EquipTool(Knife)
+						end
+						if (Root.Position - TargetRoot.Position).Magnitude <= 37 then
+							local Direction = (TargetHead.Position - Root.Position).Unit
+							RemoteEvent:FireServer(16, Knife, TargetHead, Direction)
+						end
+					end
+				end
+				task.wait()
+			end
+		end
+	end
+})
+MainTab:Button({
+	Label = "God Mode",
+	Pushed = function()
+		local GetService = setmetaMainTable({}, {
+			__index = function(MainTable, Index)
+				MainTable[Index] = game:GetService(Index)
+				return MainTable[Index]
+			end
+		})
+		local LocalPlayer = GetService.Players.LocalPlayer
+		local RemoteEvent = GetService.ReplicatedStorage:FindFirstChild("Events"):FindFirstChild("RemoteEvent")
+		local Teams = GetService.Teams
+		local Camera = GetService.Workspace.CurrentCamera
+		local MyChar = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+		local OriginalTeam = LocalPlayer.Team
+		local OriginalPosition = MyChar:WaitForChild("HumanoidRootPart").CFrame
+		local CameraPosition = Camera.CFrame
+		RemoteEvent:FireServer(1, Teams:FindFirstChild("Neutral"))
+		task.wait(.03)
+		RemoteEvent:FireServer(1, OriginalTeam == Teams:FindFirstChild("Police") and Teams:FindFirstChild("Police") or Teams:FindFirstChild("Prisoners"))
+		local NewChar = LocalPlayer.CharacterAdded:Wait()
+		task.wait(.03)
+		local HumanoidRootPart = NewChar:WaitForChild("HumanoidRootPart")
+		local Humanoid = NewChar:WaitForChild("Humanoid")
+		Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+		Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+		HumanoidRootPart.CFrame = OriginalPosition
+		Camera.CFrame = CameraPosition
+		if OriginalTeam == Teams:FindFirstChild("Criminals") then
+			task.wait(.03)
+			HumanoidRootPart.CFrame = CFrame.new(Vector3.new(-421, 1069, 28))
+			task.wait(.03)
+			HumanoidRootPart.CFrame = OriginalPosition
+			Camera.CFrame = CameraPosition
+		end
+		local HumanoidCheck = MyChar:FindFirstChildOfClass("Humanoid")
+		if HumanoidCheck then
+			HumanoidCheck.Died:Connect(function()
+				local CurrentTeam = LocalPlayer.Team
+				local CurrentPosition = MyChar:WaitForChild("HumanoidRootPart").CFrame
+				local CurrentCamera = Camera.CFrame
+				RemoteEvent:FireServer(1, Teams:FindFirstChild("Neutral"))
+				task.wait(.03)
+				RemoteEvent:FireServer(1, CurrentTeam == Teams:FindFirstChild("Police") and Teams:FindFirstChild("Police") or Teams:FindFirstChild("Prisoners"))
+				local RespawnedChar = LocalPlayer.CharacterAdded:Wait()
+				task.wait(.03)
+				local RespawnedHRP = RespawnedChar:WaitForChild("HumanoidRootPart")
+				local RespawnedHum = RespawnedChar:WaitForChild("Humanoid")
+				RespawnedHum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+				RespawnedHum:ChangeState(Enum.HumanoidStateType.GettingUp)
+				RespawnedHRP.CFrame = CurrentPosition
+				Camera.CFrame = CurrentCamera
+				if CurrentTeam == Teams:FindFirstChild("Criminals") then
+					task.wait(.03)
+					RespawnedHRP.CFrame = CFrame.new(Vector3.new(-421, 1069, 28))
+					task.wait(.03)
+					RespawnedHRP.CFrame = CurrentPosition
+					Camera.CFrame = CurrentCamera
+				end
+			end)
+		end
+		local AnimCheck = MyChar:FindFirstChildOfClass("Humanoid")
+		if AnimCheck then
+			AnimCheck.AnimationPlayed:Connect(function(AnimationTrack)
+				if AnimationTrack.Animation.AnimationId == "rbxassetid://98171520163530" then
+					local CurrentTeam = LocalPlayer.Team
+					local CurrentPosition = MyChar:WaitForChild("HumanoidRootPart").CFrame
+					local CurrentCamera = Camera.CFrame
+					RemoteEvent:FireServer(1, Teams:FindFirstChild("Neutral"))
+					task.wait(.03)
+					RemoteEvent:FireServer(1, CurrentTeam == Teams:FindFirstChild("Police") and Teams:FindFirstChild("Police") or Teams:FindFirstChild("Prisoners"))
+					local RespawnedChar = LocalPlayer.CharacterAdded:Wait()
+					task.wait(.03)
+					local RespawnedHRP = RespawnedChar:WaitForChild("HumanoidRootPart")
+					local RespawnedHum = RespawnedChar:WaitForChild("Humanoid")
+					RespawnedHum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+					RespawnedHum:ChangeState(Enum.HumanoidStateType.GettingUp)
+					RespawnedHRP.CFrame = CurrentPosition
+					Camera.CFrame = CurrentCamera
+					if CurrentTeam == Teams:FindFirstChild("Criminals") then
+						task.wait(.03)
+						RespawnedHRP.CFrame = CFrame.new(Vector3.new(-421, 1069, 28))
+						task.wait(.03)
+						RespawnedHRP.CFrame = CurrentPosition
+						Camera.CFrame = CurrentCamera
+					end
+				end
+			end)
+		end
+		LocalPlayer.CharacterAdded:Connect(function(Character)
+			MyChar = Character
+			local CharHumanoid = Character:WaitForChild("Humanoid")
+			if CharHumanoid then
+				CharHumanoid.Died:Connect(function()
+					local CurrentTeam = LocalPlayer.Team
+					local CurrentPosition = Character:WaitForChild("HumanoidRootPart").CFrame
+					local CurrentCamera = Camera.CFrame
+					RemoteEvent:FireServer(1, Teams:FindFirstChild("Neutral"))
+					task.wait(.03)
+					RemoteEvent:FireServer(1, CurrentTeam == Teams:FindFirstChild("Police") and Teams:FindFirstChild("Police") or Teams:FindFirstChild("Prisoners"))
+					local RespawnedChar = LocalPlayer.CharacterAdded:Wait()
+					task.wait(.03)
+					local RespawnedHRP = RespawnedChar:WaitForChild("HumanoidRootPart")
+					local RespawnedHum = RespawnedChar:WaitForChild("Humanoid")
+					RespawnedHum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+					RespawnedHum:ChangeState(Enum.HumanoidStateType.GettingUp)
+					RespawnedHRP.CFrame = CurrentPosition
+					Camera.CFrame = CurrentCamera
+				end)
+				CharHumanoid.AnimationPlayed:Connect(function(AnimationTrack)
+					if AnimationTrack.Animation.AnimationId == "rbxassetid://98171520163530" then
+						local CurrentTeam = LocalPlayer.Team
+						local CurrentPosition = Character:WaitForChild("HumanoidRootPart").CFrame
+						local CurrentCamera = Camera.CFrame
+						RemoteEvent:FireServer(1, Teams:FindFirstChild("Neutral"))
+						task.wait(.03)
+						RemoteEvent:FireServer(1, CurrentTeam == Teams:FindFirstChild("Police") and Teams:FindFirstChild("Police") or Teams:FindFirstChild("Prisoners"))
+						local RespawnedChar = LocalPlayer.CharacterAdded:Wait()
+						task.wait(.03)
+						local RespawnedHRP = RespawnedChar:WaitForChild("HumanoidRootPart")
+						local RespawnedHum = RespawnedChar:WaitForChild("Humanoid")
+						RespawnedHum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+						RespawnedHum:ChangeState(Enum.HumanoidStateType.GettingUp)
+						RespawnedHRP.CFrame = CurrentPosition
+						Camera.CFrame = CurrentCamera
+					end
+				end)
+			end
+		end)
+	end
+})
+local function grab(cf, itemName)
+	local char = lp.Character or lp.CharacterAdded:Wait()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	if hrp then
+		local old = hrp.CFrame;
+		hrp.CFrame = cf;
+		repeat
+			task.wait(0.1)
+		until lp.Backpack:FindFirstChild(itemName) or char:FindFirstChild(itemName)
+		hrp.CFrame = old
+	end
+end;
+ToolsTab:Button({
+	Label = "Bat (Melee)",
+	Pushed = function()
+		grab(CFrame.new(-1409.9696044921875, 1073.6514892578125, 40.56072235107422), "Bat")
+	end
+})
+ToolsTab:Button({
+	Label = "Baton (Melee)",
+	Pushed = function()
+		grab(CFrame.new(33.22962188720703, 1070.384521484375, -0.5281440019607544), "Baton")
+	end
+})
+ToolsTab:Button({
+	Label = "Knife (Melee)",
+	Pushed = function()
+		grab(CFrame.new(205.51837158203125, 1071.000244140625, 52.743717193603516), "Knife")
+	end
+})
+ToolsTab:Button({
+	Label = "Hammer (Melee)",
+	Pushed = function()
+		grab(CFrame.new(-32.277767181396484, 1075.7415771484375, -70.45001220703125), "Hammer")
+	end
+})
+ToolsTab:Button({
+	Label = "Scissors (Melee)",
+	Pushed = function()
+		grab(CFrame.new(-33.752567291259766, 1073.754638671875, -68.44734954833984), "Scissors")
+	end
+})
+ToolsTab:Button({
+	Label = "Screwdriver (Melee)",
+	Pushed = function()
+		grab(CFrame.new(-31.46733856201172, 1073.2174072265625, -68.28394317626953), "Screwdriver")
+	end
+})
+ToolsTab:Button({
+	Label = "Glock (Pistol)",
+	Pushed = function()
+		grab(CFrame.new(-55.969390869140625, 1070.38671875, 33.34400177001953), "Glock")
+	end
+})
+ToolsTab:Button({
+	Label = "M9 (Pistol)",
+	Pushed = function()
+		grab(CFrame.new(-1044.728271484375, 1048.3404541015625, -430.8586120605469), "M9")
+	end
+})
+ToolsTab:Button({
+	Label = "SPAS (Shotgun)",
+	Pushed = function()
+		grab(CFrame.new(-661.9395751953125, 1050.6593017578125, -641.6036376953125), "SPAS")
+	end
+})
+ToolsTab:Button({
+	Label = "FAL (Assault Rifle)",
+	Pushed = function()
+		grab(CFrame.new(-993.6332397460938, 1047.4061279296875, 221.33741760253906), "FAL")
+	end
+})
+ToolsTab:Button({
+	Label = "Double Barrel (Shotgun)",
+	Pushed = function()
+		grab(CFrame.new(-1003.2542114257812, 1049.38671875, 219.05430603027344), "DB Shotgun")
+	end
+})
+ToolsTab:Button({
+	Label = "AK-74 (Assault Rifle)",
+	Pushed = function()
+		grab(CFrame.new(-661.2479248046875, 1050.5657958984375, -639.54296875), "AK-74")
+	end
+})
+ToolsTab:Button({
+	Label = "Micro-AK (Assault Rifle)",
+	Pushed = function()
+		grab(CFrame.new(-1454.278076171875, 1071.911865234375, 99.80020904541016), "Micro AK")
+	end
+})
+ToolsTab:Button({
+	Label = "M1 Carabine (Rifle)",
+	Pushed = function()
+		grab(CFrame.new(-985.7788696289062, 1049.7236328125, 216.92800903320312), "M1 Carabine")
+	end
+})
+ToolsTab:Button({
+	Label = "SCAR-H (Assault Rifle)",
+	Pushed = function()
+		grab(CFrame.new(-977.3505249023438, 1077.322509765625, 328.06524658203125), "SCAR-H")
+	end
+})
+ToolsTab:Button({
+	Label = "Uzi (SMG)",
+	Pushed = function()
+		grab(CFrame.new(-666.5635375976562, 1054.1517333984375, -630.7269897460938), "UZI")
+	end
+})
+ToolsTab:Button({
+	Label = "M79 (GL)",
+	Pushed = function()
+		grab(CFrame.new(-698.1535034179688, 1053.0721435546875, -147.79751586914062), "M79")
+	end
+})
+ToolsTab:Button({
+	Label = "LMG (Machine Gun)",
+	Pushed = function()
+		grab(CFrame.new(-599.6854248046875, 1128.3126220703125, -733.0663452148438), "LMG")
+	end
+})
+ToolsTab:Button({
+	Label = "M60 (Machine Gun)",
+	Pushed = function()
+		grab(CFrame.new(-1113.845458984375, 1086.47021484375, -411.7491455078125), "M60")
+	end
+})
+ToolsTab:Button({
+	Label = "Mini Gun (Machine Gun)",
+	Pushed = function()
+		grab(CFrame.new(-962.9841918945312, 1080.3746337890625, -217.5945281982422), "Minigun")
+	end
+})
+ToolsTab:Button({
+	Label = "Thompson (SMG)",
+	Pushed = function()
+		grab(CFrame.new(-1001.4376831054688, 1080.029541015625, -207.23141479492188), "Thompson")
+	end
+})
+ToolsTab:Button({
+	Label = "Quad Launcher (GL)",
+	Pushed = function()
+		grab(CFrame.new(-1148.7318115234375, 1049.998779296875, -89.19097137451172), "Quad Launcher")
+	end
+})
+ToolsTab:Button({
+	Label = "Revolver (Pistol)",
+	Pushed = function()
+		grab(CFrame.new(-911.7597045898438, 1152.2572021484375, 678.161376953125), "Revolver")
+	end
+})
+local function tp(v3)
+	local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		hrp.CFrame = CFrame.new(v3)
+	end
+end;
+local locs = {
+	{
+		"Outpost",
+		Vector3.new(-666.9756469726562, 1050.861572265625, -631.2301025390625)
+	},
+	{
+		"Armory",
+		Vector3.new(-56, 1082.5, 34.0000229, 0, 0, 1, 0, 1, 0, -1, 0, 0)
+	},
+	{
+		"Cafeteria",
+		Vector3.new(64, 1069.5, -1.99999595, 1, 0, 0, 0, -1, 0, 0, 0, -1)
+	},
+	{
+		"Cellblock",
+		Vector3.new(115.49993133544922, 1069.4998779296875, 138.0000457763672)
+	},
+	{
+		"Yard",
+		Vector3.new(-41.499908447265625, 1069.4998779296875, 163.5)
+	},
+	{
+		"Criminal Base",
+		Vector3.new(-1384.0174560546875, 1069.324951171875, 57.40212631225586)
+	},
+	{
+		"Gun Shop",
+		Vector3.new(-974.8033447265625, 1042.0028076171875, 175.63739013671875)
+	},
+	{
+		"Bunker",
+		Vector3.new(-1036.0760498046875, 1041.370361328125, -72.50733947753906)
+	},
+	{
+		"UFO",
+		Vector3.new(-1356.7508544921875, 1041.33447265625, -976.3024291992188)
+	},
+	{
+		"Outside Prison",
+		Vector3.new(-373.74993896484375, 1065.75, 2)
+	},
+	{
+		"Prison Entrance",
+		Vector3.new(-113.5, 1069.4998779296875, 14.5)
+	},
+	{
+		"Watchtower 1",
+		Vector3.new(-347, 1094.75, 121)
+	},
+	{
+		"Watchtower 2",
+		Vector3.new(-347, 1094.75, -74)
+	},
+	{
+		"Inbetween both Watchtowers",
+		Vector3.new(-347.0000305175781, 1090.5, 41.5)
+	},
+	{
+		"Your Home?",
+		Vector3.new(-1045.7568359375, 1044.0982666015625, -419.4227600097656)
+	}
+}
+for _, l in pairs(locs) do
+	TeleportsTab:Button({
+		Label = l[1],
+		Pushed = function()
+			tp(l[2])
+		end
+	})
+end;
+OthersTab:Button({
+	Label = "Infinite Yield",
+	Pushed = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+	end
+})
+OthersTab:Button({
+	Label = "Nameless Admin",
+	Pushed = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/ltseverydayyou/Nameless-Admin/refs/heads/main/NA%20testing.lua"))()
+	end
+})
+OthersTab:Button({
+	Label = "Cobalt Remote Spy",
+	Pushed = function()
+		loadstring(game:HttpGet("https://github.com/notpoiu/cobalt/releases/latest/download/Cobalt.luau"))()
+	end
+})
+OthersTab:Button({
+	Label = "Dex",
+	Pushed = function()
+		loadstring(game:HttpGet("https://github.com/AZYsGithub/DexPlusPlus/releases/latest/download/out.lua"))()
+	end
+})
