@@ -40,7 +40,7 @@ local OthersTab = Section:Tab({
 MainTab:Button({
 	Label = "Silent Aim [LEGIT]",
 	Pushed = function()
-		local GetService = setmetaMainTable({}, {
+		local GetService = setmetatable({}, {
 			__index = function(MainTable, Index)
 				MainTable[Index] = game:GetService(Index)
 				return MainTable[Index]
@@ -260,7 +260,7 @@ MainTab:Button({
 MainTab:Button({
 	Label = "God Mode",
 	Pushed = function()
-		local GetService = setmetaMainTable({}, {
+		local GetService = setmetatable({}, {
 			__index = function(MainTable, Index)
 				MainTable[Index] = game:GetService(Index)
 				return MainTable[Index]
