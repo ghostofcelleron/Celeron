@@ -1,6 +1,6 @@
 if not _G.HasScriptRun then
     _G.HasScriptRun = true
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/cazan's%20AC%20bypass", true))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/lip%20ac%20byp", true))()
 end
 
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
@@ -68,12 +68,12 @@ end
 
 localPlayer.CharacterAdded:Connect(setupCharacter)
 
-maintab:Slider("Player Speed", targetSpeed, 5, 250, 0.1, function(v)
+maintab:Slider("Player Speed", targetSpeed, 5, 250, 1, function(v)
     targetSpeed = v
     applyStats()
 end)
 
-maintab:Slider("Player Jump-Power", targetJump, 25, 250, 0.1, function(v)
+maintab:Slider("Player Jump-Power", targetJump, 25, 250, 1, function(v)
     targetJump = v
     applyStats()
 end)
@@ -85,6 +85,7 @@ local bv = nil
 
 maintab:Toggle("Flight", function()
     flightEnabled = not flightEnabled
+    
     game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = "Flight",
         Text = flightEnabled and "Enabled." or "Disabled.",
@@ -110,8 +111,7 @@ maintab:Toggle("Flight", function()
         hum.AutoRotate = false
         hum.PlatformStand = true
 
-        -- disable collisions globally
-        for _, part in ipairs(workspace:GetDescendants()) do
+        for _, part in ipairs(char:GetDescendants()) do
             if part:IsA("BasePart") then
                 part.CanCollide = false
             end
@@ -128,7 +128,7 @@ maintab:Toggle("Flight", function()
         bv.Velocity = Vector3.zero
         bv.Parent = hrp
 
-        local currentSpeed = 0.85
+        local currentSpeed = 1.35
 
         flightLoop = game:GetService("RunService").RenderStepped:Connect(function()
             bv.Velocity = Vector3.zero
@@ -152,8 +152,7 @@ maintab:Toggle("Flight", function()
         hum.PlatformStand = false
         hum.AutoRotate = true
 
-        -- restore collisions globally
-        for _, part in ipairs(workspace:GetDescendants()) do
+        for _, part in ipairs(char:GetDescendants()) do
             if part:IsA("BasePart") then
                 part.CanCollide = true
             end
@@ -385,155 +384,155 @@ local function grabItemTeleport(x, y, z, itemName)
 end
 
 itemsTab:Button("Bat (Melee)", function()
-    grabItemTeleport(824, 103, -676, "Bat")
+    grabItemTeleport(-1410, 1074, 41, "Bat")
+end)
+
+itemsTab:Button("Baton (Melee)", function()
+    grabItemTeleport(33, 1070, -1, "Baton")
 end)
 
 itemsTab:Button("Knife (Melee)", function()
-    grabItemTeleport(-663, 103, -96, "Knife")
+    grabItemTeleport(206, 1071, 53, "Knife")
 end)
 
 itemsTab:Button("Hammer (Melee)", function()
-    grabItemTeleport(-693, 103, -153, "Hammer")
+    grabItemTeleport(-32, 1076, -70, "Hammer")
+end)
+
+itemsTab:Button("Scissors (Melee)", function()
+    grabItemTeleport(-34, 1074, -68, "Scissors")
+end)
+
+itemsTab:Button("Screwdriver (Melee)", function()
+    grabItemTeleport(-31, 1073, -68, "Screwdriver")
+end)
+
+itemsTab:Button("Glock (Pistol)", function()
+    grabItemTeleport(-56, 1070, 33, "Glock")
 end)
 
 itemsTab:Button("M9 (Pistol)", function()
-    grabItemTeleport(-729, 105, -5, "M9")
+    grabItemTeleport(-1045, 1048, -431, "M9")
+end)
+
+itemsTab:Button("Revolver (Pistol)", function()
+    grabItemTeleport(-912, 1152, 678, "Revolver")
 end)
 
 itemsTab:Button("SPAS (Shotgun)", function()
-    grabItemTeleport(-729, 105, -5, "SPAS")
+    grabItemTeleport(-662, 1051, -642, "SPAS")
+end)
+
+itemsTab:Button("Double Barrel (Shotgun)", function()
+    grabItemTeleport(-1003, 1049, 219, "DB Shotgun")
 end)
 
 itemsTab:Button("FAL (Assault Rifle)", function()
-    grabItemTeleport(-729, 105, -5, "FAL")
+    grabItemTeleport(-994, 1047, 221, "FAL")
 end)
 
-itemsTab:Button("TEC-9 (Pistol)", function()
-    grabItemTeleport(-722, 105, 34, "TEC-9")
+itemsTab:Button("SCAR-H (Assault Rifle)", function()
+    grabItemTeleport(-977, 1077, 328, "SCAR-H")
 end)
 
 itemsTab:Button("AK-74 (Assault Rifle)", function()
-    grabItemTeleport(822, 103, -687, "AK-74")
+    grabItemTeleport(-661, 1051, -640, "AK-74")
+end)
+
+itemsTab:Button("Micro-AK (Assault Rifle)", function()
+    grabItemTeleport(-1454, 1072, 100, "Micro AK")
 end)
 
 itemsTab:Button("M1 Carabine (Rifle)", function()
-    grabItemTeleport(319, 33, 712, "M1 Carabine")
+    grabItemTeleport(-986, 1050, 217, "M1 Carabine")
 end)
 
 itemsTab:Button("Uzi (SMG)", function()
-    grabItemTeleport(845, 103, -716, "UZI")
+    grabItemTeleport(-667, 1054, -631, "UZI")
 end)
 
-itemsTab:Button("M79 (Grenade Launcher)", function()
-    grabItemTeleport(441, 200, -231, "M79")
+itemsTab:Button("LMG (Machine Gun)", function()
+    grabItemTeleport(-600, 1128, -733, "LMG")
 end)
 
-itemsTab:Button("Mini Gun (SPECIAL)", function()
-    grabItemTeleport(686, 32, 643, "Minigun")
+itemsTab:Button("M60 (Machine Gun)", function()
+    grabItemTeleport(-1114, 1086, -412, "M60")
 end)
 
-itemsTab:Button("Multi-Rocket Launcher (SPECIAL)", function()
-    grabItemTeleport(-635, 49, 775, "Quad Launcher")
+itemsTab:Button("Mini Gun (Spec)", function()
+    grabItemTeleport(-963, 1080, -218, "Minigun")
+end)
+
+itemsTab:Button("Quad Launcher (Spec)", function()
+    grabItemTeleport(-1149, 1050, -89, "Quad Launcher")
+end)
+
+itemsTab:Button("M79 (Secondary Spec)", function()
+    grabItemTeleport(-701, 1043, -158, "M79")
 end)
 
 teleportTab:Button("Armory", function()
-    teleportTo(-729, 105, 1)
+    teleportTo(-53, 1070, 7)
 end)
 
 teleportTab:Button("Cafeteria", function()
-    teleportTo(-841, 105, 8)
+    teleportTo(103, 1070, -19)
 end)
 
 teleportTab:Button("Cellblock", function()
-    teleportTo(-809, 105, -96)
+    teleportTo(94, 1070, 121)
 end)
 
 teleportTab:Button("Yard", function()
-    teleportTo(-737, 103, -166)
+    teleportTo(-63, 1070, 240)
 end)
 
 teleportTab:Button("Max Yard", function()
-    teleportTo(-908, 103, -67)
+    teleportTo(195, 1070, 72)
 end)
 
-teleportTab:Button("Soccer", function()
-    teleportTo(-777, 103, -160)
-end)
-
-teleportTab:Button("Bridge Control", function()
-    teleportTo(-220, 105, 7)
-end)
-
-teleportTab:Button("Doctor Store", function()
-    teleportTo(415, 33, -19)
-end)
-
-teleportTab:Button("Vehicle Spawner", function()
-    teleportTo(646, 32, 82)
-end)
-
-teleportTab:Button("Bunker", function()
-    teleportTo(-725, 33, 611)
-end)
-
-teleportTab:Button("Crim Base Yard", function()
-    teleportTo(788, 102, -641)
+teleportTab:Button("Bridge", function()
+    teleportTo(-683, 1069, -9)
 end)
 
 teleportTab:Button("Crim Base", function()
-    teleportTo(828, 103, -687)
+    teleportTo(-1372, 1071, 35)
 end)
 
 teleportTab:Button("Barn", function()
-    teleportTo(281, 32, -825)
+    teleportTo(-970, 1052, 338)
 end)
 
 teleportTab:Button("UFO", function()
-    teleportTo(-206, 214, -1385)
+    teleportTo(-1363, 1045, -976)
 end)
 
 teleportTab:Button("Outside Prison", function()
-    teleportTo(-465, 103, 7)
+    teleportTo(-436, 1069, -2)
 end)
 
 teleportTab:Button("Prison Entrance", function()
-    teleportTo(-584, 103, -7)
+    teleportTo(-237, 1069, 18)
 end)
 
 teleportTab:Button("Prison Watchtower", function()
-    teleportTo(-710, 124, -190)
+    teleportTo(-349, 1099, 296)
 end)
 
 teleportTab:Button("Criminal Outpost", function()
-    teleportTo(-169, 33, 751)
+    teleportTo(-621, 1049, -603)
 end)
 
 teleportTab:Button("Gun Shop", function()
-    teleportTo(291, 33, 712)
-end)
-
-teleportTab:Button("Safe Area", function()
-    teleportTo(-869, 276, -812)
-end)
-
-teleportTab:Button("Sky Bridge", function()
-    teleportTo(609, 199, -403)
-end)
-
-teleportTab:Button("Sky Watch", function()
-    teleportTo(438, 200, -230)
+    teleportTo(-996, 1046, 207)
 end)
 
 teleportTab:Button("Under Bridge", function()
-    teleportTo(-131, 72, 44)
-end)
-
-teleportTab:Button("Breakroom", function()
-    teleportTo(-931, 105, 158)
+    teleportTo(-596, 1038, 6)
 end)
 
 teleportTab:Button("Cazan's Home", function()
-    teleportTo(633, -39, 114)
+    teleportTo(-1045, 1044, -419)
 end)
 
 helptab:Button("Copy Owner Discord Username", function()
@@ -557,5 +556,5 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R ")
+setclipboard("https://discord.gg/8stFYxJv4R")
 end)
