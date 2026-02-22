@@ -2595,27 +2595,22 @@ local autogk = maintab2:Folder("Auto Goalkeeper Features.", Color3.fromRGB(24, 2
 
 autogk:Label("Auto Goalkeeper: Automatically Plays As GK For You.")
 
-autogk:Button("Celeron's Auto GK (V1, Silent.)", "Automatically Attempts To Block Shots By Opponents, Reset Or Click F4 To Disable.", function()
+autogk:Button("Celeron's Auto GK", "Automatically Attempts To Block Shots By Opponents, Reset Or Click F4 To Disable.", function()
     getgenv().agk_plr = Players.LocalPlayer
     getgenv().agk_char = getgenv().agk_plr.Character or getgenv().agk_plr.CharacterAdded:Wait()
     getgenv().agk_hum = getgenv().agk_char:WaitForChild("Humanoid")
     getgenv().agk_hrp = getgenv().agk_char:WaitForChild("HumanoidRootPart")
-
     getgenv().agk_guii = Instance.new("ScreenGui")
     getgenv().agk_guii.Parent = getgenv().agk_plr.PlayerGui
-
     getgenv().agk_dot = Instance.new("Frame")
     getgenv().agk_dot.Size = UDim2.new(0.012,0,0.025,0)
     getgenv().agk_dot.Position = UDim2.new(0.988,0,0.975,0)
     getgenv().agk_dot.BackgroundColor3 = Color3.fromRGB(0,255,0)
     getgenv().agk_dot.BorderSizePixel = 0
     getgenv().agk_dot.Parent = getgenv().agk_guii
-
     getgenv().agk_onn = true
     getgenv().agk_pause = false
-
     getgenv().agk_hum.AutoRotate = false
-
     getgenv().agk_look = Instance.new("AlignOrientation")
     getgenv().agk_look.Mode = Enum.OrientationAlignmentMode.OneAttachment
     getgenv().agk_look.Attachment0 = getgenv().agk_hrp:WaitForChild("RootAttachment")
@@ -2623,179 +2618,26 @@ autogk:Button("Celeron's Auto GK (V1, Silent.)", "Automatically Attempts To Bloc
     getgenv().agk_look.MaxTorque = math.huge
     getgenv().agk_look.Enabled = false
     getgenv().agk_look.Parent = getgenv().agk_hrp
-
     getgenv().agk_ballHolder = ReplicatedStorage.workspace.ballHolder
     getgenv().agk_lastHolder = getgenv().agk_ballHolder.Value
+    getgenv().agk_iWasLastHolder = false
 
-    getgenv().agk_ballHolder.Changed:Connect(function()
-        local cur = getgenv().agk_ballHolder.Value
-        if getgenv().agk_lastHolder == getgenv().agk_char and cur == nil then
+    getgenv().agk_ballHolder.Changed:Connect(function(newHolder)
+        if newHolder == nil and getgenv().agk_lastHolder == getgenv().agk_char then
             getgenv().agk_pause = true
+            getgenv().agk_iWasLastHolder = true
             task.delay(0.3, function()
                 getgenv().agk_pause = false
             end)
-        end
-        getgenv().agk_lastHolder = cur
-    end)
-
-    getgenv().agk_remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
-    getgenv().agk_map = Workspace:WaitForChild("map")
-    getgenv().agk_GRAVITY = Vector3.new(0, -Workspace.Gravity, 0)
-
-    local function getBall()
-        return Workspace.Terrain:FindFirstChild("Ball")
-    end
-
-    local function getTeamGoal()
-        if getgenv().agk_plr.Team == game.Teams.B then
-            return getgenv().agk_map.Bgoal
-        elseif getgenv().agk_plr.Team == game.Teams.A then
-            return getgenv().agk_map.Agoal
-        end
-    end
-
-    local function predictGoalImpact(pos, vel, accel, goal)
-        if not goal then return nil end
-        local cf = goal.CFrame
-        local normal = cf.LookVector
-        local goalPos = cf.Position
-        local rel = pos - goalPos
-        local a = 0.5 * accel:Dot(normal)
-        local b = vel:Dot(normal)
-        local c = rel:Dot(normal)
-        if math.abs(a) < 1e-6 then
-            if math.abs(b) < 1e-6 then return nil end
-            local t = -c / b
-            return t > 0 and t or nil
-        end
-        local disc = b*b - 4*a*c
-        if disc < 0 then return nil end
-        local sqrtDisc = math.sqrt(disc)
-        local t1 = (-b - sqrtDisc) / (2*a)
-        local t2 = (-b + sqrtDisc) / (2*a)
-        local t
-        if t1 > 0 then t = t1 end
-        if t2 > 0 and (not t or t2 < t) then t = t2 end
-        if not t then return nil end
-        local impactPos = pos + vel * t + 0.5 * accel * t * t
-        return impactPos
-    end
-
-    getgenv().agk_velSmooth = Vector3.zero
-    getgenv().agk_lastVel = Vector3.zero
-
-    getgenv().agk_conn = RunService.RenderStepped:Connect(function(dt)
-        if not getgenv().agk_onn then
-            getgenv().agk_conn:Disconnect()
-            return
-        end
-        local ball = getBall()
-        if not ball or getgenv().agk_plr.Team == game.Teams.lobby or getgenv().agk_pause then
-            getgenv().agk_look.Enabled = false
-            return
-        end
-
-        local rawVel = ball.AssemblyLinearVelocity
-        getgenv().agk_velSmooth = getgenv().agk_velSmooth:Lerp(rawVel, math.clamp(dt * 15, 0, 1))
-        local accel = (getgenv().agk_velSmooth - getgenv().agk_lastVel) / math.max(dt, 1/240)
-        getgenv().agk_lastVel = getgenv().agk_velSmooth
-
-        local goal = getTeamGoal()
-        local predictedPos = nil
-        local impactTime = predictGoalImpact(ball.Position, getgenv().agk_velSmooth, accel + getgenv().agk_GRAVITY, goal)
-        if impactTime then
-            predictedPos = ball.Position + getgenv().agk_velSmooth * impactTime + 0.5 * (accel + getgenv().agk_GRAVITY) * impactTime * impactTime
-        else
-            predictedPos = ball.Position + getgenv().agk_velSmooth * 0.25 + 0.5 * getgenv().agk_GRAVITY * 0.25^2
-        end
-
-        getgenv().agk_look.Enabled = true
-        getgenv().agk_look.CFrame = CFrame.lookAt(getgenv().agk_hrp.Position, Vector3.new(predictedPos.X, getgenv().agk_hrp.Position.Y, predictedPos.Z))
-
-        local dist = (getgenv().agk_hrp.Position - ball.Position).Magnitude
-
-        local jumpTriggered = false
-        local steps = 20
-        for i = 0, steps do
-            local t = i / steps * math.min(0.5, dist/60)
-            local point = ball.Position + getgenv().agk_velSmooth * t + 0.5 * (accel + getgenv().agk_GRAVITY) * t * t
-            if (point.Y > getgenv().agk_hrp.Position.Y) and ((point - getgenv().agk_hrp.Position).Magnitude <= 65) then
-                jumpTriggered = true
-                break
-            end
-        end
-
-        if jumpTriggered then
-            getgenv().agk_hum.Jump = true
-            local moveDir = (Vector3.new(predictedPos.X, getgenv().agk_hrp.Position.Y, predictedPos.Z) - getgenv().agk_hrp.Position).Unit
-            getgenv().agk_hrp.Velocity = moveDir * 90 + Vector3.new(0, getgenv().agk_hrp.Velocity.Y, 0)
-        end
-
-        if dist <= 65 then
-            getgenv().agk_remote:FireServer(buffer.fromstring(buffers["base"]), {{ "tackle" }})
-        end
-    end)
-
-    getgenv().agk_disable = UserInputService.InputBegan:Connect(function(input, gp)
-        if gp then return end
-        if input.KeyCode == Enum.KeyCode.F4 then
-            getgenv().agk_onn = false
-            getgenv().agk_look:Destroy()
-            getgenv().agk_disable:Disconnect()
-            getgenv().agk_conn:Disconnect()
-            if getgenv().agk_guii then getgenv().agk_guii:Destroy() end
-        end
-    end)
-
-    repeat task.wait() until getgenv().agk_hum.Health <= 0 or getgenv().agk_plr.Team == game.Teams.lobby
-    getgenv().agk_onn = false
-    getgenv().agk_look:Destroy()
-    getgenv().agk_disable:Disconnect()
-    getgenv().agk_conn:Disconnect()
-    if getgenv().agk_guii then getgenv().agk_guii:Destroy() end
-end)
-
-autogk:Button("Celeron's Auto GK (V2, Semi-Blatant.)", "Automatically Attempts To Block Shots By Opponents, Reset Or Click F4 To Disable.", function()
-    getgenv().agk_plr = Players.LocalPlayer
-    getgenv().agk_char = getgenv().agk_plr.Character or getgenv().agk_plr.CharacterAdded:Wait()
-    getgenv().agk_hum = getgenv().agk_char:WaitForChild("Humanoid")
-    getgenv().agk_hrp = getgenv().agk_char:WaitForChild("HumanoidRootPart")
-
-    getgenv().agk_guii = Instance.new("ScreenGui")
-    getgenv().agk_guii.Parent = getgenv().agk_plr.PlayerGui
-
-    getgenv().agk_dot = Instance.new("Frame")
-    getgenv().agk_dot.Size = UDim2.new(0.012,0,0.025,0)
-    getgenv().agk_dot.Position = UDim2.new(0.988,0,0.975,0)
-    getgenv().agk_dot.BackgroundColor3 = Color3.fromRGB(0,255,0)
-    getgenv().agk_dot.BorderSizePixel = 0
-    getgenv().agk_dot.Parent = getgenv().agk_guii
-
-    getgenv().agk_onn = true
-    getgenv().agk_pause = false
-
-    getgenv().agk_hum.AutoRotate = false
-
-    getgenv().agk_look = Instance.new("AlignOrientation")
-    getgenv().agk_look.Mode = Enum.OrientationAlignmentMode.OneAttachment
-    getgenv().agk_look.Attachment0 = getgenv().agk_hrp:WaitForChild("RootAttachment")
-    getgenv().agk_look.Responsiveness = 1200
-    getgenv().agk_look.MaxTorque = math.huge
-    getgenv().agk_look.Enabled = false
-    getgenv().agk_look.Parent = getgenv().agk_hrp
-
-    getgenv().agk_ballHolder = ReplicatedStorage.workspace.ballHolder
-    getgenv().agk_lastHolder = getgenv().agk_ballHolder.Value
-
-    getgenv().agk_ballHolder.Changed:Connect(function()
-        local cur = getgenv().agk_ballHolder.Value
-        if getgenv().agk_lastHolder == getgenv().agk_char and cur == nil then
-            getgenv().agk_pause = true
-            task.delay(0.3, function()
-                getgenv().agk_pause = false
+            task.delay(5, function()
+                if getgenv().agk_iWasLastHolder then
+                    getgenv().agk_iWasLastHolder = false
+                end
             end)
+        elseif newHolder == getgenv().agk_char then
+            getgenv().agk_iWasLastHolder = false
         end
-        getgenv().agk_lastHolder = cur
+        getgenv().agk_lastHolder = newHolder
     end)
 
     getgenv().agk_remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
@@ -2863,7 +2705,6 @@ autogk:Button("Celeron's Auto GK (V2, Semi-Blatant.)", "Automatically Attempts T
 
         local goal = getTeamGoal()
         local impactTime = predictGoalImpact(ball.Position, getgenv().agk_velSmooth, accel + getgenv().agk_GRAVITY, goal)
-
         local predictedPos
         if impactTime then
             predictedPos = ball.Position + getgenv().agk_velSmooth * impactTime + 0.5 * (accel + getgenv().agk_GRAVITY) * impactTime * impactTime
@@ -2871,37 +2712,36 @@ autogk:Button("Celeron's Auto GK (V2, Semi-Blatant.)", "Automatically Attempts T
             predictedPos = ball.Position + getgenv().agk_velSmooth * 0.25 + 0.5 * getgenv().agk_GRAVITY * 0.25^2
         end
 
-        getgenv().agk_look.Enabled = true
-        getgenv().agk_look.CFrame = CFrame.lookAt(
-            getgenv().agk_hrp.Position,
-            Vector3.new(predictedPos.X, getgenv().agk_hrp.Position.Y, predictedPos.Z)
-        )
-
         local dist = (getgenv().agk_hrp.Position - ball.Position).Magnitude
 
-        if dist <= 14.5 then
-            getgenv().agk_remote:FireServer(buffer.fromstring(buffers["grabball"]))
-        end
-
-        local jumpTriggered = false
-        local steps = 20
-        for i = 0, steps do
-            local t = i / steps * math.min(0.5, dist / 60)
-            local point = ball.Position + getgenv().agk_velSmooth * t + 0.5 * (accel + getgenv().agk_GRAVITY) * t * t
-            if point.Y > getgenv().agk_hrp.Position.Y and (point - getgenv().agk_hrp.Position).Magnitude <= 65 then
-                jumpTriggered = true
-                break
+        if dist <= 35 then
+            if ball.Position.Y >= getgenv().agk_hrp.Position.Y + 6 then
+                getgenv().agk_hum.Jump = true
+            else
+                getgenv().agk_hum.Jump = false
             end
         end
 
-        if jumpTriggered then
-            getgenv().agk_hum.Jump = true
-            local moveDir = (Vector3.new(predictedPos.X, getgenv().agk_hrp.Position.Y, predictedPos.Z) - getgenv().agk_hrp.Position).Unit
-            getgenv().agk_hrp.Velocity = moveDir * 90 + Vector3.new(0, getgenv().agk_hrp.Velocity.Y, 0)
-        end
+        if not getgenv().agk_iWasLastHolder then
+            getgenv().agk_look.Enabled = true
+            
+            local targetPos = Vector3.new(predictedPos.X, getgenv().agk_hrp.Position.Y, predictedPos.Z)
+            local extraAhead = getgenv().agk_velSmooth * 0.18
+            local aheadPos = targetPos + extraAhead
+            
+            local horizontalLook = Vector3.new(aheadPos.X, getgenv().agk_hrp.Position.Y, aheadPos.Z)
+            getgenv().agk_look.CFrame = CFrame.lookAt(
+                getgenv().agk_hrp.Position,
+                horizontalLook
+            )
 
-        if dist <= 65 then
-            getgenv().agk_remote:FireServer(buffer.fromstring(buffers["base"]), {{ "tackle" }})
+            if dist <= 35 then
+                getgenv().agk_remote:FireServer(buffer.fromstring(buffers["base"]), {{ "tackle" }})
+                local moveDir = (horizontalLook - getgenv().agk_hrp.Position).Unit
+                getgenv().agk_hrp.Velocity = moveDir * 90 + Vector3.new(0, getgenv().agk_hrp.Velocity.Y, 0)
+            end
+        else
+            getgenv().agk_look.Enabled = false
         end
     end)
 
