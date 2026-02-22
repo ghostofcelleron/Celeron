@@ -13,8 +13,7 @@ for _,fn in ipairs({"getgc","hookmetamethod","getconnections","checkcaller","get
     end
 end
 
-print("credits to celeron, revamped by zylx")
-print("also credits to cazan for the bypass")
+print("credits to zylx for rewriting this very simply, hes the goat :D")
 
 for i, v in next, getgc() do
     if typeof(v) ~= "function" then
