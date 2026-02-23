@@ -326,7 +326,7 @@ end
 
 local function forwardRush()
     if _G._rushing or not _G.ForwardRushEnabled or not humanoid or not rootPart then return end
-    if tick() - _G._lastForwardRush < 0.2 then return end
+    if tick() - _G._lastForwardRush < 0.75 then return end
     _G._lastForwardRush = tick()
     _G._rushing = true
 
@@ -370,7 +370,7 @@ end
 
 local function sideDash(direction)
     if _G._sideDashing or not _G.SideDashEnabled or not humanoid or not rootPart then return end
-    if tick() - _G._lastSideDash < 0.15 then return end
+    if tick() - _G._lastSideDash < 0.3 then return end
     _G._lastSideDash = tick()
     _G._sideDashing = true
 
@@ -2192,6 +2192,178 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 	end)
 end)
 
+getgenv().distance12 = 0
+local duration12 = 1.175
+local boostCooldownTime12 = 0.15
+local kings_path_anim = "rbxassetid://73560885704292"
+
+getgenv().moving12 = false
+getgenv().boostCooldown12 = false
+getgenv().animationDetected12 = false
+getgenv().armTime12 = 0
+
+d:Slider("King's Path Distance", 0, 0, 750, 1, function(v)
+    getgenv().distance12 = v
+end)
+
+local function hookKingsPath(char)
+    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+    animator.AnimationPlayed:Connect(function(track)
+        if track.Animation
+        and track.Animation.AnimationId == kings_path_anim
+        and os.clock() >= getgenv().armTime12 then
+            getgenv().animationDetected12 = true
+        end
+    end)
+end
+
+if player.Character then hookKingsPath(player.Character) end
+player.CharacterAdded:Connect(hookKingsPath)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode ~= Enum.KeyCode.Three then return end
+    if getgenv().distance12 <= 0 then return end
+    if getgenv().moving12 or getgenv().boostCooldown12 then return end
+
+    getgenv().armTime12 = os.clock()
+    getgenv().animationDetected12 = false
+    local currentDistance = getgenv().distance12
+
+    task.delay(0.5, function()
+        if not getgenv().animationDetected12 or getgenv().boostCooldown12 then return end
+
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        getgenv().moving12 = true
+        getgenv().boostCooldown12 = true
+
+        local speed = currentDistance / duration12
+        local remaining = currentDistance
+        local startY = hrp.Position.Y
+
+        local conn
+        conn = RunService.RenderStepped:Connect(function(dt)
+            local step = math.min(speed * dt, remaining)
+            local look = hrp.CFrame.LookVector
+            local dir = Vector3.new(look.X, 0, look.Z)
+            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
+            dir = dir.Unit
+
+            local pos = hrp.Position + dir * step
+            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
+
+            remaining -= step
+            if remaining <= 0 then
+                conn:Disconnect()
+                getgenv().moving12 = false
+                task.delay(boostCooldownTime12, function()
+                    getgenv().boostCooldown12 = false
+                end)
+            end
+        end)
+    end)
+end)
+
+getgenv().maxDistance13 = 0
+getgenv().dashSpeed13 = 150
+getgenv().boostCooldownTime13 = 0.15
+
+local devour_anim = "rbxassetid://117921992582675"
+
+getgenv().isDashing13 = false
+getgenv().boostOnCooldown13 = false
+getgenv().animationArmed13 = false
+getgenv().armTime13 = 0
+
+local currentDashConnection = nil
+local currentTrack = nil
+
+d:Slider("Devour Distance", 0, 0, 750, 1, function(v)
+    getgenv().maxDistance13 = v
+end)
+
+local function hookDevour(char)
+    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+    animator.AnimationPlayed:Connect(function(track)
+        if track.Animation 
+        and track.Animation.AnimationId == devour_anim 
+        and os.clock() >= getgenv().armTime13 then
+            getgenv().animationArmed13 = true
+            currentTrack = track
+            local stoppedConn
+            stoppedConn = track.Stopped:Connect(function()
+                if currentDashConnection then
+                    currentDashConnection:Disconnect()
+                    currentDashConnection = nil
+                end
+                getgenv().isDashing13 = false
+                task.delay(getgenv().boostCooldownTime13, function()
+                    getgenv().boostOnCooldown13 = false
+                end)
+                currentTrack = nil
+                stoppedConn:Disconnect()
+            end)
+        end
+    end)
+end
+
+if player.Character then hookDevour(player.Character) end
+player.CharacterAdded:Connect(hookDevour)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode ~= Enum.KeyCode.Four then return end
+    if getgenv().maxDistance13 <= 0 then return end
+    if getgenv().isDashing13 or getgenv().boostOnCooldown13 then return end
+
+    getgenv().armTime13 = os.clock()
+    getgenv().animationArmed13 = false
+
+    task.delay(0.1, function()
+        if not getgenv().animationArmed13 or getgenv().boostOnCooldown13 then return end
+
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        getgenv().isDashing13 = true
+        getgenv().boostOnCooldown13 = true
+
+        local distanceTraveled = 0
+        local startY = hrp.Position.Y
+
+        currentDashConnection = RunService.RenderStepped:Connect(function(dt)
+            if not getgenv().isDashing13 then return end
+
+            local look = hrp.CFrame.LookVector
+            local dir = Vector3.new(look.X, 0, look.Z).Unit
+            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
+
+            local step = getgenv().dashSpeed13 * dt
+            local wouldTravel = distanceTraveled + step
+
+            if wouldTravel >= getgenv().maxDistance13 then
+                step = getgenv().maxDistance13 - distanceTraveled
+                getgenv().isDashing13 = false
+            end
+
+            local pos = hrp.Position + dir * step
+            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
+
+            distanceTraveled += step
+
+            if not getgenv().isDashing13 then
+                currentDashConnection:Disconnect()
+                currentDashConnection = nil
+                task.delay(getgenv().boostCooldownTime13, function()
+                    getgenv().boostOnCooldown13 = false
+                end)
+            end
+        end)
+    end)
+end)
+
 local autoact = maintab2:Folder("Auto Activate Features.", Color3.fromRGB(24, 255, 228), true)
 
 autoact:Label("Auto Activate: Activates The Move When Ball Within Range.")
@@ -2520,8 +2692,8 @@ function _G.firePacketsIfNear()
 	local root = char:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 
-	if (root.Position - Vector3.new(-260, 4, -1474)).Magnitude <= 15 or
-	   (root.Position - Vector3.new(-262, 4, -1722)).Magnitude <= 15 then
+	if (root.Position - Vector3.new(-371, 13, -1599)).Magnitude <= 15 or
+	   (root.Position - Vector3.new(-196, 13, -1599)).Magnitude <= 15 then
 		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000A"))
 		game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000B"))
 	end
@@ -2595,176 +2767,182 @@ local autogk = maintab2:Folder("Auto Goalkeeper Features.", Color3.fromRGB(24, 2
 
 autogk:Label("Auto Goalkeeper: Automatically Plays As GK For You.")
 
-autogk:Button("Celeron's Auto GK", "Automatically Attempts To Block Shots By Opponents, Reset Or Click F4 To Disable.", function()
-    getgenv().agk_plr = Players.LocalPlayer
-    getgenv().agk_char = getgenv().agk_plr.Character or getgenv().agk_plr.CharacterAdded:Wait()
-    getgenv().agk_hum = getgenv().agk_char:WaitForChild("Humanoid")
-    getgenv().agk_hrp = getgenv().agk_char:WaitForChild("HumanoidRootPart")
-    getgenv().agk_guii = Instance.new("ScreenGui")
-    getgenv().agk_guii.Parent = getgenv().agk_plr.PlayerGui
-    getgenv().agk_dot = Instance.new("Frame")
-    getgenv().agk_dot.Size = UDim2.new(0.012,0,0.025,0)
-    getgenv().agk_dot.Position = UDim2.new(0.988,0,0.975,0)
-    getgenv().agk_dot.BackgroundColor3 = Color3.fromRGB(0,255,0)
-    getgenv().agk_dot.BorderSizePixel = 0
-    getgenv().agk_dot.Parent = getgenv().agk_guii
-    getgenv().agk_onn = true
-    getgenv().agk_pause = false
-    getgenv().agk_hum.AutoRotate = false
-    getgenv().agk_look = Instance.new("AlignOrientation")
-    getgenv().agk_look.Mode = Enum.OrientationAlignmentMode.OneAttachment
-    getgenv().agk_look.Attachment0 = getgenv().agk_hrp:WaitForChild("RootAttachment")
-    getgenv().agk_look.Responsiveness = 1200
-    getgenv().agk_look.MaxTorque = math.huge
-    getgenv().agk_look.Enabled = false
-    getgenv().agk_look.Parent = getgenv().agk_hrp
-    getgenv().agk_ballHolder = ReplicatedStorage.workspace.ballHolder
-    getgenv().agk_lastHolder = getgenv().agk_ballHolder.Value
-    getgenv().agk_iWasLastHolder = false
+autogk:Button("Celeron's Auto GK Enhanced", "Click V To Toggle, Reset To Disable.", function()
+    task.spawn(function()
+        local Players = game:GetService("Players")
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local Workspace = game:GetService("Workspace")
+        local RunService = game:GetService("RunService")
+        local UserInputService = game:GetService("UserInputService")
 
-    getgenv().agk_ballHolder.Changed:Connect(function(newHolder)
-        if newHolder == nil and getgenv().agk_lastHolder == getgenv().agk_char then
-            getgenv().agk_pause = true
-            getgenv().agk_iWasLastHolder = true
-            task.delay(0.3, function()
-                getgenv().agk_pause = false
-            end)
-            task.delay(5, function()
-                if getgenv().agk_iWasLastHolder then
-                    getgenv().agk_iWasLastHolder = false
-                end
-            end)
-        elseif newHolder == getgenv().agk_char then
-            getgenv().agk_iWasLastHolder = false
-        end
-        getgenv().agk_lastHolder = newHolder
-    end)
+        local plr = Players.LocalPlayer
+        local char = plr.Character or plr.CharacterAdded:Wait()
+        local hum = char:WaitForChild("Humanoid")
+        local hrp = char:WaitForChild("HumanoidRootPart")
 
-    getgenv().agk_remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
-    getgenv().agk_map = Workspace:WaitForChild("map")
-    getgenv().agk_GRAVITY = Vector3.new(0, -Workspace.Gravity, 0)
+        local gui = Instance.new("ScreenGui")
+        gui.ResetOnSpawn = false
+        gui.Parent = plr.PlayerGui
 
-    local function getBall()
-        return Workspace.Terrain:FindFirstChild("Ball")
-    end
+        local dot = Instance.new("Frame")
+        dot.Size = UDim2.new(0.012, 0, 0.025, 0)
+        dot.Position = UDim2.new(0.988, 0, 0.975, 0)
+        dot.BorderSizePixel = 0
+        dot.Parent = gui
 
-    local function getTeamGoal()
-        if getgenv().agk_plr.Team == game.Teams.B then
-            return getgenv().agk_map.Bgoal
-        elseif getgenv().agk_plr.Team == game.Teams.A then
-            return getgenv().agk_map.Agoal
-        end
-    end
+        local enabled = true
+        local pause = false
 
-    local function predictGoalImpact(pos, vel, accel, goal)
-        if not goal then return nil end
-        local cf = goal.CFrame
-        local normal = cf.LookVector
-        local goalPos = cf.Position
-        local rel = pos - goalPos
-        local a = 0.5 * accel:Dot(normal)
-        local b = vel:Dot(normal)
-        local c = rel:Dot(normal)
-        if math.abs(a) < 1e-6 then
-            if math.abs(b) < 1e-6 then return nil end
-            local t = -c / b
-            return t > 0 and t or nil
-        end
-        local disc = b*b - 4*a*c
-        if disc < 0 then return nil end
-        local sqrtDisc = math.sqrt(disc)
-        local t1 = (-b - sqrtDisc) / (2*a)
-        local t2 = (-b + sqrtDisc) / (2*a)
-        local t
-        if t1 > 0 then t = t1 end
-        if t2 > 0 and (not t or t2 < t) then t = t2 end
-        if not t then return nil end
-        local impactPos = pos + vel * t + 0.5 * accel * t * t
-        return impactPos
-    end
+        local look = Instance.new("AlignOrientation")
+        look.Name = "AutoGKLook"
+        look.Mode = Enum.OrientationAlignmentMode.OneAttachment
+        look.Attachment0 = hrp:WaitForChild("RootAttachment")
+        look.Responsiveness = 1200
+        look.MaxTorque = math.huge
+        look.Enabled = false
+        look.Parent = hrp
 
-    getgenv().agk_velSmooth = Vector3.zero
-    getgenv().agk_lastVel = Vector3.zero
+        local ballHolder = ReplicatedStorage.workspace.ballHolder
+        local lastHolder = ballHolder.Value
 
-    getgenv().agk_conn = RunService.RenderStepped:Connect(function(dt)
-        if not getgenv().agk_onn then
-            getgenv().agk_conn:Disconnect()
-            return
+        local remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
+        local map = Workspace:WaitForChild("map")
+        local GRAVITY = Vector3.new(0, -Workspace.Gravity, 0)
+
+        local velSmooth = Vector3.zero
+        local lastVel = Vector3.zero
+        local tackleArgs = {buffer.fromstring(buffers.base), {{"tackle"}}}
+        local emptyBuffer = buffer.fromstring(buffers["grabball"])
+        local magnetBurstActive = false
+        local TACKLE_RADIUS = 46
+
+        local terrain = Workspace.Terrain
+        local cachedBall = terrain:FindFirstChild("Ball")
+
+        local renderConn, inputConn, holderConn, ballAdded, ballRemoved, diedConn, charAddedConn
+
+        local function updateIndicator()
+            dot.BackgroundColor3 = enabled and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
         end
 
-        local ball = getBall()
-        if not ball or getgenv().agk_plr.Team == game.Teams.lobby or getgenv().agk_pause then
-            getgenv().agk_look.Enabled = false
-            return
+        local function cleanup()
+            enabled = false
+            if renderConn then renderConn:Disconnect() end
+            if inputConn then inputConn:Disconnect() end
+            if holderConn then holderConn:Disconnect() end
+            if ballAdded then ballAdded:Disconnect() end
+            if ballRemoved then ballRemoved:Disconnect() end
+            if diedConn then diedConn:Disconnect() end
+            if charAddedConn then charAddedConn:Disconnect() end
+            if look then look:Destroy() end
+            if gui then gui:Destroy() end
         end
 
-        local rawVel = ball.AssemblyLinearVelocity
-        getgenv().agk_velSmooth = getgenv().agk_velSmooth:Lerp(rawVel, math.clamp(dt * 15, 0, 1))
-        local accel = (getgenv().agk_velSmooth - getgenv().agk_lastVel) / math.max(dt, 1/240)
-        getgenv().agk_lastVel = getgenv().agk_velSmooth
+        holderConn = ballHolder.Changed:Connect(function(cur)
+            if lastHolder == char and cur == nil then
+                pause = true
+                task.delay(2.6, function() pause = false end)
+            end
+            lastHolder = cur
+        end)
 
-        local goal = getTeamGoal()
-        local impactTime = predictGoalImpact(ball.Position, getgenv().agk_velSmooth, accel + getgenv().agk_GRAVITY, goal)
-        local predictedPos
-        if impactTime then
-            predictedPos = ball.Position + getgenv().agk_velSmooth * impactTime + 0.5 * (accel + getgenv().agk_GRAVITY) * impactTime * impactTime
-        else
-            predictedPos = ball.Position + getgenv().agk_velSmooth * 0.25 + 0.5 * getgenv().agk_GRAVITY * 0.25^2
+        ballAdded = terrain.ChildAdded:Connect(function(child)
+            if child.Name == "Ball" then cachedBall = child end
+        end)
+
+        ballRemoved = terrain.ChildRemoved:Connect(function(child)
+            if child == cachedBall then cachedBall = nil end
+        end)
+
+        local function predictGoalImpact(pos, vel, accel, goal)
+            if not goal then return nil end
+            local cf = goal.CFrame
+            local normal = cf.LookVector
+            local goalPos = cf.Position
+            local rel = pos - goalPos
+            local a = 0.5 * accel:Dot(normal)
+            local b = vel:Dot(normal)
+            local c = rel:Dot(normal)
+            if math.abs(a) < 1e-6 then
+                if math.abs(b) < 1e-6 then return nil end
+                local t = -c / b
+                return t > 0 and t
+            end
+            local disc = b*b - 4*a*c
+            if disc < 0 then return nil end
+            local sd = math.sqrt(disc)
+            local t1 = (-b - sd) / (2*a)
+            local t2 = (-b + sd) / (2*a)
+            return (t1 > 0 and t1) or (t2 > 0 and t2)
         end
 
-        local dist = (getgenv().agk_hrp.Position - ball.Position).Magnitude
+        renderConn = RunService.RenderStepped:Connect(function(dt)
+            if not enabled then return end
 
-        if dist <= 35 then
-            if ball.Position.Y >= getgenv().agk_hrp.Position.Y + 6 then
-                getgenv().agk_hum.Jump = true
+            local ball = cachedBall
+            if not ball or plr.Team == game.Teams.lobby or pause then
+                look.Enabled = false
+                return
+            end
+
+            local rawVel = ball.AssemblyLinearVelocity
+            velSmooth = velSmooth:Lerp(rawVel, math.clamp(dt*15, 0, 1))
+            local accel = (velSmooth - lastVel) / math.max(dt, 1/240)
+            lastVel = velSmooth
+
+            local goal = (plr.Team == game.Teams.B and map.Bgoal) or (plr.Team == game.Teams.A and map.Agoal)
+
+            local tImpact = predictGoalImpact(ball.Position, velSmooth, accel, goal)
+
+            local predicted
+            if tImpact then
+                predicted = ball.Position + velSmooth * tImpact + 0.5 * accel * tImpact^2
             else
-                getgenv().agk_hum.Jump = false
+                predicted = ball.Position + velSmooth * 0.25 + 0.5 * GRAVITY * 0.0625
             end
-        end
 
-        if not getgenv().agk_iWasLastHolder then
-            getgenv().agk_look.Enabled = true
-            
-            local targetPos = Vector3.new(predictedPos.X, getgenv().agk_hrp.Position.Y, predictedPos.Z)
-            local extraAhead = getgenv().agk_velSmooth * 0.18
-            local aheadPos = targetPos + extraAhead
-            
-            local horizontalLook = Vector3.new(aheadPos.X, getgenv().agk_hrp.Position.Y, aheadPos.Z)
-            getgenv().agk_look.CFrame = CFrame.lookAt(
-                getgenv().agk_hrp.Position,
-                horizontalLook
-            )
+            look.Enabled = true
+            look.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(predicted.X, hrp.Position.Y, predicted.Z))
 
-            if dist <= 35 then
-                getgenv().agk_remote:FireServer(buffer.fromstring(buffers["base"]), {{ "tackle" }})
-                local moveDir = (horizontalLook - getgenv().agk_hrp.Position).Unit
-                getgenv().agk_hrp.Velocity = moveDir * 90 + Vector3.new(0, getgenv().agk_hrp.Velocity.Y, 0)
+            local dist = (hrp.Position - ball.Position).Magnitude
+
+            if dist > TACKLE_RADIUS and dist <= 50 and ball.Position.Y > hrp.Position.Y + 6 then
+                hum.Jump = true
             end
-        else
-            getgenv().agk_look.Enabled = false
-        end
-    end)
 
-    getgenv().agk_disable = UserInputService.InputBegan:Connect(function(input, gp)
-        if gp then return end
-        if input.KeyCode == Enum.KeyCode.F4 then
-            getgenv().agk_onn = false
-            getgenv().agk_look:Destroy()
-            getgenv().agk_disable:Disconnect()
-            getgenv().agk_conn:Disconnect()
-            if getgenv().agk_guii then getgenv().agk_guii:Destroy() end
-        end
-    end)
+            if dist <= TACKLE_RADIUS then
+                remote:FireServer(unpack(tackleArgs))
+                if not magnetBurstActive then
+                    magnetBurstActive = true
+                    task.spawn(function()
+                        local start = os.clock()
+                        while os.clock() - start < 0.86 and enabled do
+                            remote:FireServer(emptyBuffer)
+                            task.wait(0.1)
+                        end
+                        magnetBurstActive = false
+                    end)
+                end
+            end
+        end)
 
-    repeat task.wait() until getgenv().agk_hum.Health <= 0 or getgenv().agk_plr.Team == game.Teams.lobby
-    getgenv().agk_onn = false
-    getgenv().agk_look:Destroy()
-    getgenv().agk_disable:Disconnect()
-    getgenv().agk_conn:Disconnect()
-    if getgenv().agk_guii then getgenv().agk_guii:Destroy() end
+        inputConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if gameProcessed then return end
+            if input.KeyCode == Enum.KeyCode.V then
+                enabled = not enabled
+                updateIndicator()
+                if not enabled then look.Enabled = false end
+            end
+        end)
+
+        diedConn = hum.Died:Connect(cleanup)
+        charAddedConn = plr.CharacterAdded:Connect(cleanup)
+
+        updateIndicator()
+    end)
 end)
 
-autogk:Button("Daffy's Auto GK", "Automatically Attempts To Block Shots By Opponents, Reset Or Click F4 To Disable.", function()
+autogk:Button("Daffy's Auto GK", "Reset Or Click F4 To Disable.", function()
     getgenv().agk_plr = Players.LocalPlayer
     getgenv().agk_char = getgenv().agk_plr.Character or getgenv().agk_plr.CharacterAdded:Wait()
     getgenv().agk_cam = workspace.CurrentCamera
@@ -4042,8 +4220,8 @@ local function firePacketsIfNear()
     if not char then return end
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return end
-    if (root.Position - Vector3.new(-260, 4, -1474)).Magnitude <= 15 or
-       (root.Position - Vector3.new(-262, 4, -1722)).Magnitude <= 15 then
+    if (root.Position - Vector3.new(-371, 13, -1599)).Magnitude <= 15 or
+       (root.Position - Vector3.new(-196, 13, -1599)).Magnitude <= 15 then
         getgenv().ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000A"))
         getgenv().ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000B"))
     end
