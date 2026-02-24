@@ -2814,7 +2814,7 @@ autogk:Button("Celeron's Auto GK Enhanced", "Click V To Toggle, Reset To Disable
         local tackleArgs = {buffer.fromstring(buffers.base), {{"tackle"}}}
         local emptyBuffer = buffer.fromstring(buffers["grabball"])
         local magnetBurstActive = false
-        local tackle_radius = 48
+        local tackle_radius = 50
 
         local terrain = Workspace.Terrain
         local cachedBall = terrain:FindFirstChild("Ball")
