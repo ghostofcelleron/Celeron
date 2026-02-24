@@ -2814,14 +2814,14 @@ autogk:Button("Celeron's Auto GK Enhanced", "Click V To Toggle, Reset To Disable
         local tackleArgs = {buffer.fromstring(buffers.base), {{"tackle"}}}
         local emptyBuffer = buffer.fromstring(buffers["grabball"])
         local magnetBurstActive = false
-        local TACKLE_RADIUS = 46
+        local tackle_radius = 42
 
         local terrain = Workspace.Terrain
         local cachedBall = terrain:FindFirstChild("Ball")
 
         local renderConn, inputConn, holderConn, ballAdded, ballRemoved, diedConn, charAddedConn
 
-        local function updateIndicator()
+        local function updateindicator()
             dot.BackgroundColor3 = enabled and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
         end
 
@@ -2854,7 +2854,7 @@ autogk:Button("Celeron's Auto GK Enhanced", "Click V To Toggle, Reset To Disable
             if child == cachedBall then cachedBall = nil end
         end)
 
-        local function predictGoalImpact(pos, vel, accel, goal)
+        local function predictgoalimpact(pos, vel, accel, goal)
             if not goal then return nil end
             local cf = goal.CFrame
             local normal = cf.LookVector
@@ -2892,7 +2892,7 @@ autogk:Button("Celeron's Auto GK Enhanced", "Click V To Toggle, Reset To Disable
 
             local goal = (plr.Team == game.Teams.B and map.Bgoal) or (plr.Team == game.Teams.A and map.Agoal)
 
-            local tImpact = predictGoalImpact(ball.Position, velSmooth, accel, goal)
+            local tImpact = predictgoalimpact(ball.Position, velSmooth, accel, goal)
 
             local predicted
             if tImpact then
@@ -2906,11 +2906,11 @@ autogk:Button("Celeron's Auto GK Enhanced", "Click V To Toggle, Reset To Disable
 
             local dist = (hrp.Position - ball.Position).Magnitude
 
-            if dist > TACKLE_RADIUS and dist <= 50 and ball.Position.Y > hrp.Position.Y + 6 then
+            if dist > tackle_radius and dist <= 50 and ball.Position.Y > hrp.Position.Y + 6 then
                 hum.Jump = true
             end
 
-            if dist <= TACKLE_RADIUS then
+            if dist <= tackle_radius then
                 remote:FireServer(unpack(tackleArgs))
                 if not magnetBurstActive then
                     magnetBurstActive = true
@@ -2930,7 +2930,7 @@ autogk:Button("Celeron's Auto GK Enhanced", "Click V To Toggle, Reset To Disable
             if gameProcessed then return end
             if input.KeyCode == Enum.KeyCode.V then
                 enabled = not enabled
-                updateIndicator()
+                updateindicator()
                 if not enabled then look.Enabled = false end
             end
         end)
@@ -2938,7 +2938,7 @@ autogk:Button("Celeron's Auto GK Enhanced", "Click V To Toggle, Reset To Disable
         diedConn = hum.Died:Connect(cleanup)
         charAddedConn = plr.CharacterAdded:Connect(cleanup)
 
-        updateIndicator()
+        updateindicator()
     end)
 end)
 
