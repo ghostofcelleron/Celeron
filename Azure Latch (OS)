@@ -1132,12 +1132,183 @@ player.CharacterAdded:Connect(function(char)
 	end
 end)
 
-add:Toggle("Invisibility", "Makes You Almost Fully Invisible To Other Players Using An Animation.", function(v)
+add:Toggle("Invisibility V1 (Method: Animation)", "Makes You Almost Fully Invisible To Other Players Using An Animation.", function(v)
 	if v then
 		startInvisibility()
 	else
 		stopInvisibility()
 	end
+end)
+
+add:Button("Invisibility V2 (Method: Clone)", "Makes You Almost Fully Invisible To Other Players Using Cloning. Click Z To Disable." , function(v)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local enabled = true
+
+local charactersfolder = workspace:WaitForChild("characters", 10)
+if not charactersfolder then return end
+
+local character = charactersfolder:WaitForChild(player.Name, 15)
+if not character then return end
+
+if not character:FindFirstChild("Humanoid") or not character:FindFirstChild("HumanoidRootPart") then return end
+
+character.Archivable = true
+local characterroot = character:WaitForChild("HumanoidRootPart")
+characterroot.Transparency = 1
+
+local clone = character:Clone()
+if not clone then return end
+
+clone.Name = player.Name .. "_Ghost"
+clone.Parent = workspace
+
+for _, obj in ipairs(clone:GetDescendants()) do
+    if obj:IsA("BasePart") or obj:IsA("MeshPart") or obj:IsA("Part") then
+        if obj.Name == "HumanoidRootPart" then
+            obj.Transparency = 1
+        else
+            obj.Transparency = 0.4
+        end
+        obj.CanCollide = true
+    elseif obj:IsA("Decal") or obj:IsA("Texture") or obj:IsA("ShirtGraphic") then
+        obj.Transparency = 0
+    end
+end
+
+local cloneroot = clone:WaitForChild("HumanoidRootPart", 5)
+if cloneroot then
+    cloneroot.Transparency = 1
+end
+
+local clonehumanoid = clone:WaitForChild("Humanoid", 5)
+if not cloneroot or not clonehumanoid then
+    clone:Destroy()
+    return
+end
+
+cloneroot.CFrame = character.HumanoidRootPart.CFrame + Vector3.new(0, 5, 0)
+clonehumanoid.PlatformStand = false
+clonehumanoid.WalkSpeed = 75
+clonehumanoid.JumpPower = 50
+
+player.Character = clone
+workspace.CurrentCamera.CameraSubject = clonehumanoid
+
+local animations = {
+    Run  = "rbxassetid://90801998022970",
+    Jump = "rbxassetid://80330677678466"
+}
+
+local runanim = Instance.new("Animation")
+runanim.AnimationId = animations.Run
+local runtrack = clonehumanoid:LoadAnimation(runanim)
+runtrack.Looped = true
+runtrack.Priority = Enum.AnimationPriority.Movement
+
+local jumpanim = Instance.new("Animation")
+jumpanim.AnimationId = animations.Jump
+local jumptrack = clonehumanoid:LoadAnimation(jumpanim)
+jumptrack.Looped = false
+jumptrack.Priority = Enum.AnimationPriority.Action
+
+local isrunning = false
+
+local teleportconn
+local speedenforceconn
+
+UserInputService.InputBegan:Connect(function(input, gameprocessed)
+    if gameprocessed then return end
+    if input.KeyCode == Enum.KeyCode.Z and enabled then
+        enabled = false
+        
+        if teleportconn then teleportconn:Disconnect() end
+        if speedenforceconn then speedenforceconn:Disconnect() end
+        teleportconn = nil
+        speedenforceconn = nil
+        
+        player.Character = character
+        workspace.CurrentCamera.CameraSubject = character:FindFirstChild("Humanoid")
+        
+        if clone then clone:Destroy() end
+        clone = nil
+        
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") or part:IsA("MeshPart") then
+                if part.Name == "HumanoidRootPart" then
+                    part.Transparency = 1
+                else
+                    part.Transparency = 0
+                end
+                part.CanCollide = true
+            elseif part:IsA("Decal") or part:IsA("Texture") or part:IsA("ShirtGraphic") then
+                part.Transparency = 0
+            end
+        end
+        
+        runtrack:Stop(0.2)
+        jumptrack:Stop(0.2)
+        isrunning = false
+    end
+end)
+
+teleportconn = RunService.Heartbeat:Connect(function()
+    if not enabled then return end
+    if not cloneroot or not cloneroot.Parent or not characterroot or not characterroot.Parent then return end
+    local clonepos = cloneroot.Position
+    local underpos = clonepos - Vector3.new(0, 27, 0)
+    characterroot.CFrame = CFrame.new(underpos, clonepos)
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") or part:IsA("MeshPart") then
+            part.Transparency = 1
+            part.CanCollide = false
+        end
+    end
+end)
+
+speedenforceconn = RunService.RenderStepped:Connect(function()
+    if not enabled then return end
+    if not clonehumanoid or not clonehumanoid.Parent then return end
+    clonehumanoid.WalkSpeed = 75
+    clonehumanoid.JumpPower = 50
+end)
+
+RunService.Heartbeat:Connect(function()
+    if not enabled or not clonehumanoid or not clonehumanoid.Parent then return end
+    local moving = clonehumanoid.MoveDirection.Magnitude > 0.01
+    local currentstate = clonehumanoid:GetState()
+    if moving and currentstate ~= Enum.HumanoidStateType.Jumping then
+        if not isrunning then
+            runtrack:Play(0.1)
+            isrunning = true
+        end
+    else
+        if isrunning then
+            runtrack:Stop(0.3)
+            isrunning = false
+        end
+    end
+    if currentstate == Enum.HumanoidStateType.Jumping or currentstate == Enum.HumanoidStateType.Freefall then
+        if not jumptrack.IsPlaying then
+            jumptrack:Play(0.15)
+        end
+    elseif jumptrack.IsPlaying then
+        jumptrack:Stop(0.2)
+    end
+end)
+
+player.CharacterRemoving:Connect(function()
+    enabled = false
+    if teleportconn then teleportconn:Disconnect() end
+    if speedenforceconn then speedenforceconn:Disconnect() end
+    runtrack:Stop(0)
+    jumptrack:Stop(0)
+    isrunning = false
+    if clone then clone:Destroy() end
+end)
 end)
 
 local Players = game:GetService("Players")
