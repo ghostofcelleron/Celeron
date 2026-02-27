@@ -164,7 +164,7 @@ local function loadScripts()
 		elseif table.find(neo, placeId) then
 		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Neo%20Tennis%20(OS)",true))()
 		elseif table.find(bls, placeId) then
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Neo%20Tennis%20(OS)",true))()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/BL%3AS%20(OS)",true))()
 		else
 			game:GetService("StarterGui"):SetCore("SendNotification", {
     			Title = "Celeron's Loader";
