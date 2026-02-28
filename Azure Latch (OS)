@@ -3430,6 +3430,10 @@ othersil:Toggle("Auto Formless (Bind: Y)", "Shidou Only Formless Macro.", functi
     end)
 end)
 
+-- dostuff()
+-- task.wait(0.5)
+-- dostuff2()
+
 _G.nocutscene = false
 
 othersil:Toggle("No Cutscene", "Shitty Feature For Right Now That Disables Cutscenes.", function()
