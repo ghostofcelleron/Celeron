@@ -22,7 +22,7 @@ local lastCast2 = 0
 local lastCast3 = 0
 local cd1 = 7.5
 local cd2 = 1.5
-local cd3 = 1      -- will be set to 35 when used
+local cd3 = 1
 
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
@@ -35,7 +35,6 @@ local names = {
     "Hogyoku Shinka"
 }
 
--- Cooldown UI helper function
 local function StartCooldownUI(slotNumber, duration)
     local gui = plr:WaitForChild("PlayerGui", 5)
     if not gui then return end
@@ -55,7 +54,7 @@ local function StartCooldownUI(slotNumber, duration)
     local cdFrame = skill:FindFirstChild("Cooldown")
     if not cdFrame then return end
     
-    cdFrame.Size = UDim2.new(1, 0, -1, 0)          -- start full (covering from bottom)
+    cdFrame.Size = UDim2.new(1, 0, -1, 0)
     cdFrame.Visible = true
     
     local tween = TweenService:Create(
@@ -146,7 +145,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
         if tick() - lastCast < cd1 then return end
         lastCast = tick()
 
-        StartCooldownUI(1, cd1)   -- ← cooldown bar for skill 1
+        StartCooldownUI(1, cd1)
 
         fx()
         task.wait(0.35)
@@ -174,7 +173,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
         if tick() - lastCast2 < cd2 then return end
         lastCast2 = tick()
 
-        StartCooldownUI(2, cd2)   -- ← cooldown bar for skill 2
+        StartCooldownUI(2, cd2)
 
         local anim = Instance.new("Animation")
         anim.AnimationId = "rbxassetid://84063609284472"
@@ -252,7 +251,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
         lastCast3 = tick()
         cd3 = 35
 
-        StartCooldownUI(3, cd3)   -- ← cooldown bar for skill 3 (using 35 seconds)
+        StartCooldownUI(3, cd3)
 
         local boostSpeed = 90
         local originalSpeed = humanoid.WalkSpeed
