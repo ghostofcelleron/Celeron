@@ -69,8 +69,11 @@ local function StartCooldownUI(slotNumber, duration)
     end)
 end
 
+local disabled = false
+
 task.spawn(function()
     while true do
+        if disabled then break end
         local hotbarGui = plr:FindFirstChild("PlayerGui")
         if hotbarGui then
             local hotbar = hotbarGui:FindFirstChild("Hotbar")
@@ -118,6 +121,7 @@ end)
 local crowdSound = SoundService:FindFirstChild("football-crowd-3-69245")
 task.spawn(function()
     while true do
+        if disabled then break end
         if crowdSound then crowdSound.Volume = 0 end
         task.wait()
     end
@@ -130,6 +134,12 @@ if theme2 and theme2:IsA("Sound") then theme2.SoundId = "rbxassetid://8237191500
 
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
+    if disabled then return end
+
+    if input.KeyCode == Enum.KeyCode.F4 then
+        disabled = true
+        return
+    end
 
     if input.KeyCode == Enum.KeyCode.One then
         local char = plr.Character
