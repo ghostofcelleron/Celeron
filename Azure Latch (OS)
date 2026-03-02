@@ -3669,7 +3669,7 @@ StarterGui:SetCore("SendNotification", {
 loadstring(game:HttpGet("https://pastebin.com/raw/PDwm0ZcF"))()
 end)
 
-funtab:Button("Loki Moveset (Req. Isagi.)", "Rejoin To Disable", function()
+funtab:Button("Loki Moveset (Req. Isagi.)", "Rejoin To Disable.", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
@@ -3680,7 +3680,7 @@ StarterGui:SetCore("SendNotification", {
 loadstring(game:HttpGet("https://pastebin.com/raw/LbRRX7SK"))()
 end)
 
-funtab:Button("Lore Sae Moveset (Req. Sae.)", "Rejoin To Disable", function()
+funtab:Button("Lore Sae Moveset (Req. Sae.)", "Rejoin To Disable.", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
