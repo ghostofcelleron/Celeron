@@ -1259,7 +1259,7 @@ teleportconn = RunService.Heartbeat:Connect(function()
     if not enabled then return end
     if not cloneroot or not cloneroot.Parent or not characterroot or not characterroot.Parent then return end
     local clonepos = cloneroot.Position
-    local underpos = clonepos - Vector3.new(0, 27, 0)
+    local underpos = clonepos - Vector3.new(0, 15, 0)
     characterroot.CFrame = CFrame.new(underpos, clonepos)
     for _, part in ipairs(character:GetDescendants()) do
         if part:IsA("BasePart") or part:IsA("MeshPart") then
@@ -1395,6 +1395,60 @@ add:Toggle("Infinite Range Passing", "Pass To The Closest Teammate To Your Mouse
 		Text = v and "Enabled." or "Disabled.",
 		Duration = 5
 	})
+end)
+
+add:Button("Steal Screen Time (funny)", "Click Z To Disable, Steals Screen Time.", function()
+local plr = game.Players.LocalPlayer
+local char = plr.Character
+local cam = workspace.CurrentCamera
+
+local stopped = false
+
+game.UserInputService.InputBegan:Connect(function(key, bg)
+    if bg then return end
+
+    if key.KeyCode == Enum.KeyCode.Z then
+        stopped = true
+    end
+end)
+
+local ogPos = plr.Character.HumanoidRootPart.Position
+local incut = false
+local anim:AnimationTrack = nil
+
+local con
+con = game["Run Service"].RenderStepped:Connect(function()
+    if stopped then
+        con:Disconnect()
+        return
+    end
+
+    if char ~= plr.Character then char = plr.Character end
+    local hum = char:FindFirstChild("Humanoid")
+    local root = char:FindFirstChild("HumanoidRootPart")
+
+    if cam.CameraType == Enum.CameraType.Scriptable then
+        if incut == false then
+            anim = hum.Animator:LoadAnimation(game:GetService("ReplicatedStorage").emoteWiki.myanimefans.Animation)
+            anim.Looped = true
+            anim:Play()
+            anim:AdjustSpeed(4)
+        end
+        incut = true
+        root.CFrame = cam.CFrame * CFrame.new(0, -1.3, -2.3) * CFrame.Angles(0, math.rad(180), 0)
+    else
+        if incut == true then
+            incut = false
+            if anim then
+                anim:Stop()
+            end
+            root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            root.CFrame = CFrame.new(ogPos)
+            root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+        end
+        ogPos = root.Position
+    end
+end)
 end)
 
 add:Button("Goalkeeper Anywhere (Rejoin To Disable.) (Credit: someone cool..)", "Allows You To Do GK Side Dashes Instead!", function()
@@ -3565,7 +3619,7 @@ end)
 
 funtab:Label("Celeron's Movesets, Recommend Using In Normal Servers.")
 
-funtab:Button("Goku Moveset (Req. Isagi)", function()
+funtab:Button("Goku Moveset (Req. Isagi)", "Click F4 To Disable.", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
@@ -3576,7 +3630,7 @@ StarterGui:SetCore("SendNotification", {
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/goku%20moveset%20(azl)",true))()
 end)
 
-funtab:Button("Aizen Moveset (Req. Isagi, Early Access.)", function()
+funtab:Button("Aizen Moveset (Req. Isagi)", "Click F4 To Disable.", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
@@ -3587,236 +3641,13 @@ StarterGui:SetCore("SendNotification", {
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/aizen%20moveset",true))()
 end)
 
+funtab:Button("Ronaldo V3 (Req. Shidou)", "Click F4 To Disable.", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/ronaldov3"))()
+end)
+
 funtab:Label("Daffy's Movesets.")
-funtab:Button("Ronaldo V2 (Req. Shidou)", function()
-local StarterGui = game:GetService("StarterGui")
-StarterGui:SetCore("SendNotification", {
-    Title = "Credits",
-    Text = "brought to you by daffy!",
-    Duration = 5,
-    Button1 = "OK",
-})
 
-local plr = game.Players.LocalPlayer
-local rep = game:GetService("ReplicatedStorage")
-local initialized = false
-local fahh = false
-
-local function ToggleAttachment(attachment, enabled, duration)
-	if not attachment then return end
-	for _, descendant in ipairs(attachment:GetDescendants()) do
-		if descendant:IsA("ParticleEmitter") then
-			descendant.Enabled = enabled
-		end
-	end
-	if duration and duration > 0 then
-		task.delay(duration, function()
-			ToggleAttachment(attachment, false)
-		end)
-	end
-end
-
-local function EmitAttachment(attachment)
-	if not attachment then return end
-	for _, descendant in ipairs(attachment:GetDescendants()) do
-		if descendant:IsA("ParticleEmitter") then
-			local delayTime = descendant:GetAttribute("EmitDelay") or 0
-			local count = descendant:GetAttribute("EmitCount") or 1
-			if delayTime > 0 then
-				task.delay(delayTime, function()
-					descendant:Emit(count)
-				end)
-			else
-				descendant:Emit(count)
-			end
-		end
-	end
-end
-
-local function GroupWeld(model, rootPart)
-	for _, part in ipairs(rootPart:GetDescendants()) do
-		if part:IsA("BasePart") and model:FindFirstChild(part.Name) then
-			local weld = Instance.new("Weld")
-			weld.Name = "weld"
-			weld.Part0 = model:FindFirstChild(part.Name)
-			weld.Part1 = part
-			weld.Parent = part
-		end
-	end
-end
-
-local function hasball()
-	return plr.Character:FindFirstChild("Ball") ~= nil
-end
-
-local function BodyVelocity(part, speed, duration, startAtZero, easingInfo, delayTween, delayStart, useCustomTween)
-	for _, v in pairs(part:GetChildren()) do
-		if v:IsA("BodyVelocity") then
-			v:Destroy()
-		end
-	end
-
-	local directionProperty = delayTween or "LookVector"
-	local bv = Instance.new("BodyVelocity")
-	bv.MaxForce = Vector3.new(350000, 0, 350000)
-	bv.Parent = part
-	task.delay(duration, bv.Destroy, bv)
-
-	local valueHolder = Instance.new("NumberValue")
-	valueHolder.Value = startAtZero and 0 or speed
-	valueHolder.Parent = bv
-
-	if not useCustomTween then
-		local tweenInfo = easingInfo or TweenInfo.new(duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
-		local goal = { Value = startAtZero and 0 or speed }
-		game.TweenService:Create(valueHolder, tweenInfo, goal):Play()
-	else
-		task.delay(useCustomTween, function()
-			local easingStyle = easingInfo or Enum.EasingStyle.Linear
-			local goal = { Value = startAtZero and 0 or speed }
-			local tweenInfo = TweenInfo.new(duration, easingStyle, Enum.EasingDirection.Out)
-			game.TweenService:Create(valueHolder, tweenInfo, goal):Play()
-		end)
-	end
-
-	if not delayStart then
-		bv.Velocity = part.CFrame[directionProperty] * speed
-		local connection
-		connection = game["Run Service"].RenderStepped:Connect(function()
-			if not bv:IsDescendantOf(game) then
-				connection:Disconnect()
-				return
-			end
-			bv.Velocity = part.CFrame[directionProperty] * valueHolder.Value
-		end)
-	end
-
-	return bv, valueHolder
-end
-
-local function sfx(sound:Sound, part:Instance)
-	local s = sound:Clone()
-	s.Parent = part
-	s:Play()
-	game.Debris:AddItem(s, s.TimeLength + 20)
-end
-
-game.UserInputService.InputBegan:Connect(function(input, bg)
-	if bg then return end
-	local char = plr.Character
-	if input.KeyCode == Enum.KeyCode.Three then
-		task.spawn(function()
-			char.state.stun.Value = true
-			task.wait(0.03)
-			char.state.stun.Value = fahh and true or false
-		end)
-
-		task.wait(0.03)
-
-		if char.state.stun.Value or not hasball() or fahh then return end
-
-		local root = char:FindFirstChild("HumanoidRootPart") or char.PrimaryPart
-		char.state.stun.Value = true
-		local loopws = game:GetService("RunService").RenderStepped:Connect(function()
-			char.Humanoid.WalkSpeed = 0
-		end)
-		fahh = true
-
-		task.delay(4.6, function()
-			loopws:Disconnect()
-			char.Humanoid.WalkSpeed = 40
-			char.state.stun.Value = false
-			local cooldown = plr.PlayerGui.Hotbar.Backpack.Hotbar.skill3.Cooldown
-			cooldown.Size = UDim2.new(1, 0, -1, 0)
-			cooldown.Visible = true
-			game.TweenService:Create(cooldown, TweenInfo.new(1, Enum.EasingStyle.Linear), {Size = UDim2.new(1, 0, 0, 0)}):Play()
-			task.wait(1)
-			cooldown.Visible = false
-			fahh = false
-		end)
-
-		local anim = char.Humanoid:LoadAnimation(rep.Resources.ronaldo.running)
-		anim:Play()
-
-		local dribbleClone = rep.Resources.RonaldoDribble:Clone()
-		GroupWeld(char, dribbleClone)
-		dribbleClone.Parent = workspace.Effects
-		sfx(rep.Resources.ronaldo.RonaldoDribble, root)
-		game.Debris:AddItem(dribbleClone, 5)
-
-		task.spawn(function()
-			task.delay(1.5,  function() BodyVelocity(root,  40, 1   ) end)
-			task.delay(1.8,  function() BodyVelocity(root, 120, 1.1 ) end)
-			task.delay(2.5,  function() BodyVelocity(root,  90, 0.75) end)
-			task.delay(2.9,  function() BodyVelocity(root, 100, 0.85) end)
-			task.delay(3.2,  function() BodyVelocity(root, 175, 1.7 ) end)
-			task.delay(3.9,  function() BodyVelocity(root,  40, 0.65) end)
-		end)
-
-		task.spawn(function()
-			local attach = dribbleClone.Rig.Head["1"]
-			EmitAttachment(attach)
-			ToggleAttachment(attach, true, 1)
-		end)
-
-		task.delay(2.5,   function() EmitAttachment(dribbleClone.Rig.HumanoidRootPart["3"]) end)
-		task.delay(2.933, function() EmitAttachment(dribbleClone.Rig.HumanoidRootPart["4"]) end)
-		task.delay(3.2,   function() EmitAttachment(dribbleClone.Rig.HumanoidRootPart["3.2"]) end)
-		task.delay(3.417, function() EmitAttachment(dribbleClone.Rig.HumanoidRootPart["3.5"]) end)
-		task.delay(3.933, function() EmitAttachment(dribbleClone.Rig.HumanoidRootPart["5"]) end)
-
-	elseif input.KeyCode == Enum.KeyCode.Two then
-		if char.state.stun.Value or not hasball() or plr.PlayerGui.Hotbar.Backpack.Hotbar.skill2.Cooldown.Visible then return end
-
-		local bicycle1 = Instance.new("Animation")
-		bicycle1.AnimationId = "rbxassetid://126734456236034"
-		local bicycle = char.Humanoid:LoadAnimation(bicycle1)
-		bicycle.Priority = Enum.AnimationPriority.Action2
-		bicycle:Play()
-
-		sfx(rep.Resources.ronaldo.KICK, char.HumanoidRootPart)
-
-		task.delay(0.8, function()
-			local boom = rep.Resources.ronaldo.bicyclekick:Clone()
-			boom.Parent = char.HumanoidRootPart
-			boom.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
-			for _, v in pairs(boom:GetDescendants()) do
-				if v:IsA("ParticleEmitter") then
-					v:Emit(v:GetAttribute("EmitCount"))
-				end
-			end
-			game.Debris:AddItem(boom, 5)
-		end)
-	end
-end)
-
-local function load(char)
-	if initialized then return end
-	initialized = true
-
-	repeat task.wait() until plr.Team ~= game.Teams.lobby
-	task.wait(0.1)
-
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
-
-	plr.PlayerGui.Hotbar.Backpack.Hotbar.skill1.Base.Reuse.Text = ""
-	plr.PlayerGui.Hotbar.Backpack.Hotbar.skill3.Base.ToolName.Text = "CR7 Dribble"
-	plr.PlayerGui.Hotbar.Backpack.Hotbar.skill2.Base.ToolName.Text = "Bicycle Kick"
-
-	rep.Resources.shidou.NEWthemes.SoundId = "rbxassetid://101265113960897"
-	rep.Resources.shidou.NEWshidouUlt.AnimationId = "rbxassetid://101997402253776"
-end
-
-load(plr.Character)
-
-plr.CharacterAdded:Connect(function(char)
-	task.wait(1)
-	load(char)
-end)
-end)
-
-funtab:Button("Gojo Moveset (Req. Isagi.)", function()
+funtab:Button("Gojo Moveset (Req. Isagi.)", "Click F4 To Disable.", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
@@ -3827,7 +3658,18 @@ StarterGui:SetCore("SendNotification", {
 loadstring(game:HttpGet("https://pastebin.com/raw/TH8xDy9X"))()
 end)
 
-funtab:Button("Loki Moveset (Req. Isagi.)", function()
+funtab:Button("Naoya Moveset (Req. Sae)", "Click F4 To Disable.", function()
+local StarterGui = game:GetService("StarterGui")
+StarterGui:SetCore("SendNotification", {
+    Title = "Credits",
+    Text = "brought to you by daffy!",
+    Duration = 5,
+    Button1 = "OK",
+})
+loadstring(game:HttpGet("https://pastebin.com/raw/PDwm0ZcF"))()
+end)
+
+funtab:Button("Loki Moveset (Req. Isagi.)", "Rejoin To Disable", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
@@ -3838,7 +3680,7 @@ StarterGui:SetCore("SendNotification", {
 loadstring(game:HttpGet("https://pastebin.com/raw/LbRRX7SK"))()
 end)
 
-funtab:Button("Lore Sae Moveset (Req. Sae.)", function()
+funtab:Button("Lore Sae Moveset (Req. Sae.)", "Rejoin To Disable", function()
 local StarterGui = game:GetService("StarterGui")
 StarterGui:SetCore("SendNotification", {
     Title = "Credits",
