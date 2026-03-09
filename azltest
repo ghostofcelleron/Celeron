@@ -1726,7 +1726,7 @@ local speed_anim1 = "rbxassetid://70397727954557"
 local speed_anim2 = "rbxassetid://131196726012273"
 local kings_path_anim = "rbxassetid://73560885704292"
 local devour_anim = "rbxassetid://117921992582675"
-local twister_anim = "rbxassetid://117921992582675"
+local zomb_anim = "rbxassetid://102294508090597"
 
 d:Slider("Naruhaya Footwork Distance", 0, 0, 200, 1, function(v)
     distanceMovesState.distance = v
@@ -2257,7 +2257,7 @@ UserInputService.InputBegan:Connect(function(input, gpe)
         distanceMovesState.moving8 = true
         distanceMovesState.boostCooldown8 = true
 
-        local speed = currentDistance / 0.35
+        local speed = currentDistance / 0.4
         local remaining = currentDistance
         local startY = hrp.Position.Y
 
@@ -2464,6 +2464,69 @@ UserInputService.InputBegan:Connect(function(input, gpe)
                 distanceMovesState.moving12 = false
                 task.delay(0.15, function()
                     distanceMovesState.boostCooldown12 = false
+                end)
+            end
+        end)
+    end)
+end)
+
+d:Slider("Zombie Dribble Distance", 0, 0, 250, 1, function(v)
+    distanceMovesState.distanceZomb = v
+end)
+
+local function hookZombDrib(char)
+    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+    animator.AnimationPlayed:Connect(function(track)
+        if track.Animation and track.Animation.AnimationId == zomb_anim 
+           and os.clock() >= (distanceMovesState.armTimeZomb or 0) then
+            distanceMovesState.animationDetectedZomb = true
+        end
+    end)
+end
+
+if player.Character then hookZombDrib(player.Character) end
+player.CharacterAdded:Connect(hookZombDrib)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode ~= Enum.KeyCode.One then return end
+    if distanceMovesState.distanceZomb <= 0 then return end
+    if distanceMovesState.movingZomb or distanceMovesState.boostCooldownZomb then return end
+
+    distanceMovesState.armTimeZomb = os.clock()
+    distanceMovesState.animationDetectedZomb = false
+    local currentDistance = distanceMovesState.distanceZomb
+
+    task.delay(0.25, function()
+        if not distanceMovesState.animationDetectedZomb or distanceMovesState.boostCooldownZomb then return end
+
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        distanceMovesState.movingZomb = true
+        distanceMovesState.boostCooldownZomb = true
+
+        local speed = currentDistance / 2.1
+        local remaining = currentDistance
+        local startY = hrp.Position.Y
+
+        local conn
+        conn = RunService.RenderStepped:Connect(function(dt)
+            local step = math.min(speed * dt, remaining)
+            local look = hrp.CFrame.LookVector
+            local dir = Vector3.new(look.X, 0, look.Z)
+            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
+            dir = dir.Unit
+
+            local pos = hrp.Position + dir * step
+            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
+
+            remaining -= step
+            if remaining <= 0 then
+                conn:Disconnect()
+                distanceMovesState.movingZomb = false
+                task.delay(0.15, function()
+                    distanceMovesState.boostCooldownZomb = false
                 end)
             end
         end)
