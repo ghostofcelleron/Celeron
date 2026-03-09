@@ -1082,7 +1082,7 @@ autogoal:Button("Nagi Dream Goal", "Attempts To Do Nagi's Control Move Auto Goal
         task.wait(0.2)
         ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(
             buffer.fromstring(buffers["base"]),
-            { { "skill2" } }
+            { { "skill2", true } }
         )
     end
 end)
@@ -1625,99 +1625,33 @@ d:Label("Distance Move Buffs: Buffs Movement Based Moves.")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
 
 local distanceMovesState = {
-    distance = 0,
-    distance1 = 0,
-    distance2 = 0,
-    distance3 = 0,
-    distance4 = 0,
-    distance5 = 0,
-    distance6 = 0,
-    distance7 = 0,
-    distance8 = 0,
-    distance9 = 0,
-    distance10 = 0,
-    distance12 = 0,
-    maxDistance13 = 0,
-    dashSpeed13 = 150,
-    
-    moving = false,
-    boostCooldown = false,
-    animationDetected = false,
-    armTime = 0,
-    
-    moving1 = false,
-    boostCooldown1 = false,
-    animationDetected1 = false,
-    armTime1 = 0,
-    
-    moving2 = false,
-    boostCooldown2 = false,
-    animationDetected2 = false,
-    armTime2 = 0,
-    
-    moving3 = false,
-    boostCooldown3 = false,
-    animationDetected3 = false,
-    armTime3 = 0,
-    
-    moving4 = false,
-    boostCooldown4 = false,
-    animationDetected4 = false,
-    armTime4 = 0,
-    
-    moving5 = false,
-    boostCooldown5 = false,
-    animationDetected5 = false,
-    armTime5 = 0,
-    
-    moving6 = false,
-    boostCooldown6 = false,
-    animationDetected6 = false,
-    armTime6 = 0,
-    
-    moving7 = false,
-    boostCooldown7 = false,
-    animationDetected7 = false,
-    armTime7 = 0,
-    
-    moving8 = false,
-    boostCooldown8 = false,
-    animationDetected8 = false,
-    armTime8 = 0,
-    
-    moving9 = false,
-    boostCooldown9 = false,
-    animationDetected9 = false,
-    armTime9 = 0,
-    
-    moving10 = false,
-    boostCooldown10 = false,
-    animationDetected10 = false,
-    armTime10 = 0,
-    
-    moving12 = false,
-    boostCooldown12 = false,
-    animationDetected12 = false,
-    armTime12 = 0,
-    
-    isDashing13 = false,
-    boostOnCooldown13 = false,
-    animationArmed13 = false,
-    armTime13 = 0,
-    currentDashConnection = nil,
-    currentTrack = nil
+	distance = 0, moving = false, boostCooldown = false, animationDetected = false, armTime = 0,
+	distance1 = 0, moving1 = false, boostCooldown1 = false, animationDetected1 = false, armTime1 = 0,
+	distance2 = 0, moving2 = false, boostCooldown2 = false, animationDetected2 = false, armTime2 = 0,
+	distance3 = 0, moving3 = false, boostCooldown3 = false, animationDetected3 = false, armTime3 = 0,
+	distance4 = 0, moving4 = false, boostCooldown4 = false, animationDetected4 = false, armTime4 = 0,
+	distance5 = 0, moving5 = false, boostCooldown5 = false, animationDetected5 = false, armTime5 = 0,
+	distance6 = 0, moving6 = false, boostCooldown6 = false, animationDetected6 = false, armTime6 = 0,
+	distance7 = 0, moving7 = false, boostCooldown7 = false, animationDetected7 = false, armTime7 = 0,
+	distance8 = 0, moving8 = false, boostCooldown8 = false, animationDetected8 = false, armTime8 = 0,
+	distance9 = 0, moving9 = false, boostCooldown9 = false, animationDetected9 = false, armTime9 = 0,
+	distance10 = 0, moving10 = false, boostCooldown10 = false, animationDetected10 = false, armTime10 = 0,
+	distance12 = 0, moving12 = false, boostCooldown12 = false, animationDetected12 = false, armTime12 = 0,
+	distanceZomb = 0, movingZomb = false, boostCooldownZomb = false, animationDetectedZomb = false, armTimeZomb = 0,
+	maxDistance13 = 0, dashSpeed13 = 150,
+	isDashing13 = false, boostOnCooldown13 = false, animationArmed13 = false, armTime13 = 0,
+	currentDashConnection = nil, currentTrack = nil
 }
 
 local naru_anim = "rbxassetid://82240286756891"
 local raum_anims = {["rbxassetid://81582265162782"] = true}
 local drac_anim = "rbxassetid://95359966795185"
 local step_anim = "rbxassetid://84063609284472"
-local kaiser_anim = "rbxassetid://110660551661302"
+local kaiser_anim = "rbxassetid://110660551661470"
 local occlusion_anim = "rbxassetid://116181317759538"
 local mach_anim1 = "rbxassetid://133945265328817"
 local mach_anim2 = "rbxassetid://88448030655006"
@@ -1726,829 +1660,467 @@ local speed_anim1 = "rbxassetid://70397727954557"
 local speed_anim2 = "rbxassetid://131196726012273"
 local kings_path_anim = "rbxassetid://73560885704292"
 local devour_anim = "rbxassetid://117921992582675"
+local zomb_anim = "rbxassetid://102294508090597"
+
+local function createDash(hrp, distance, durationEstimate, movingKey, cooldownKey)
+	distanceMovesState[movingKey] = true
+	distanceMovesState[cooldownKey] = true
+
+	local speed = distance / durationEstimate
+	local remaining = distance
+	local startY = hrp.Position.Y
+
+	local conn
+	conn = RunService.RenderStepped:Connect(function(dt)
+		local step = math.min(speed * dt, remaining)
+		local look = hrp.CFrame.LookVector
+		local dir = Vector3.new(look.X, 0, look.Z)
+		if dir.Magnitude < 0.01 then dir = Vector3.new(0,0,1) end
+		dir = dir.Unit
+
+		local pos = hrp.Position + dir * step
+		hrp.CFrame = CFrame.new(pos.X, startY, pos.Z) * CFrame.lookAt(Vector3.zero, look)
+
+		remaining -= step
+		if remaining <= 0 then
+			conn:Disconnect()
+			distanceMovesState[movingKey] = false
+			task.delay(0.15, function()
+				distanceMovesState[cooldownKey] = false
+			end)
+		end
+	end)
+end
 
 d:Slider("Naruhaya Footwork Distance", 0, 0, 200, 1, function(v)
-    distanceMovesState.distance = v
+	distanceMovesState.distance = v
 end)
 
 local function hookFootwork(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and track.Animation.AnimationId == naru_anim and os.clock() >= distanceMovesState.armTime then
-            distanceMovesState.animationDetected = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and track.Animation.AnimationId == naru_anim and os.clock() >= distanceMovesState.armTime then
+			distanceMovesState.animationDetected = true
+		end
+	end)
 end
 
 if player.Character then hookFootwork(player.Character) end
 player.CharacterAdded:Connect(hookFootwork)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.Two then return end
-    if distanceMovesState.distance <= 0 then return end
-    if distanceMovesState.moving or distanceMovesState.boostCooldown then return end
-
-    distanceMovesState.armTime = os.clock()
-    distanceMovesState.animationDetected = false
-    local currentDistance = distanceMovesState.distance
-
-    task.delay(0.33, function()
-        if not distanceMovesState.animationDetected or distanceMovesState.boostCooldown then return end
-
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.moving = true
-        distanceMovesState.boostCooldown = true
-
-        local speed = currentDistance / 0.45
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z).Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostCooldown = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.Two or distanceMovesState.distance <= 0 or distanceMovesState.moving or distanceMovesState.boostCooldown then return end
+	distanceMovesState.armTime = os.clock()
+	distanceMovesState.animationDetected = false
+	task.delay(0.33, function()
+		if not distanceMovesState.animationDetected or distanceMovesState.boostCooldown then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance, 0.45, "moving", "boostCooldown")
+	end)
 end)
 
 d:Slider("Raumdeuter Distance", 0, 0, 200, 1, function(v)
-    distanceMovesState.distance1 = v
+	distanceMovesState.distance1 = v
 end)
 
 local function hookRaum(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and raum_anims[track.Animation.AnimationId] and os.clock() >= distanceMovesState.armTime1 then
-            distanceMovesState.animationDetected1 = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and raum_anims[track.Animation.AnimationId] and os.clock() >= distanceMovesState.armTime1 then
+			distanceMovesState.animationDetected1 = true
+		end
+	end)
 end
 
 if player.Character then hookRaum(player.Character) end
 player.CharacterAdded:Connect(hookRaum)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.Two then return end
-    if distanceMovesState.distance1 <= 0 then return end
-    if distanceMovesState.moving1 or distanceMovesState.boostCooldown1 then return end
-
-    distanceMovesState.armTime1 = os.clock()
-    distanceMovesState.animationDetected1 = false
-    local currentDistance = distanceMovesState.distance1
-
-    task.delay(0.17, function()
-        if not distanceMovesState.animationDetected1 or distanceMovesState.boostCooldown1 then return end
-
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.moving1 = true
-        distanceMovesState.boostCooldown1 = true
-
-        local speed = currentDistance / 0.625
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z).Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving1 = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostCooldown1 = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.Two or distanceMovesState.distance1 <= 0 or distanceMovesState.moving1 or distanceMovesState.boostCooldown1 then return end
+	distanceMovesState.armTime1 = os.clock()
+	distanceMovesState.animationDetected1 = false
+	task.delay(0.17, function()
+		if not distanceMovesState.animationDetected1 or distanceMovesState.boostCooldown1 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance1, 0.625, "moving1", "boostCooldown1")
+	end)
 end)
 
 d:Slider("Draconic Rush Distance", 0, 0, 200, 1, function(v)
-    distanceMovesState.distance2 = v
+	distanceMovesState.distance2 = v
 end)
 
 local function hookDraconic(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and track.Animation.AnimationId == drac_anim and os.clock() >= distanceMovesState.armTime2 then
-            distanceMovesState.animationDetected2 = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and track.Animation.AnimationId == drac_anim and os.clock() >= distanceMovesState.armTime2 then
+			distanceMovesState.animationDetected2 = true
+		end
+	end)
 end
 
 if player.Character then hookDraconic(player.Character) end
 player.CharacterAdded:Connect(hookDraconic)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.Three then return end
-    if distanceMovesState.distance2 <= 0 then return end
-    if distanceMovesState.moving2 or distanceMovesState.boostCooldown2 then return end
-
-    distanceMovesState.armTime2 = os.clock()
-    distanceMovesState.animationDetected2 = false
-    local currentDistance = distanceMovesState.distance2
-
-    task.delay(0.17, function()
-        if not distanceMovesState.animationDetected2 or distanceMovesState.boostCooldown2 then return end
-
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.moving2 = true
-        distanceMovesState.boostCooldown2 = true
-
-        local speed = currentDistance / 0.75
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z).Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving2 = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostCooldown2 = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.Three or distanceMovesState.distance2 <= 0 or distanceMovesState.moving2 or distanceMovesState.boostCooldown2 then return end
+	distanceMovesState.armTime2 = os.clock()
+	distanceMovesState.animationDetected2 = false
+	task.delay(0.17, function()
+		if not distanceMovesState.animationDetected2 or distanceMovesState.boostCooldown2 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance2, 0.75, "moving2", "boostCooldown2")
+	end)
 end)
 
 d:Slider("Step Overs Distance", 0, 0, 200, 1, function(v)
-    distanceMovesState.distance3 = v
+	distanceMovesState.distance3 = v
 end)
 
 local function hookStep(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and track.Animation.AnimationId == step_anim and os.clock() >= distanceMovesState.armTime3 then
-            distanceMovesState.animationDetected3 = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and track.Animation.AnimationId == step_anim and os.clock() >= distanceMovesState.armTime3 then
+			distanceMovesState.animationDetected3 = true
+		end
+	end)
 end
 
 if player.Character then hookStep(player.Character) end
 player.CharacterAdded:Connect(hookStep)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.One then return end
-    if distanceMovesState.distance3 <= 0 then return end
-    if distanceMovesState.moving3 or distanceMovesState.boostCooldown3 then return end
-
-    distanceMovesState.armTime3 = os.clock()
-    distanceMovesState.animationDetected3 = false
-    local currentDistance = distanceMovesState.distance3
-
-    task.delay(1.275, function()
-        if not distanceMovesState.animationDetected3 or distanceMovesState.boostCooldown3 then return end
-
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.moving3 = true
-        distanceMovesState.boostCooldown3 = true
-
-        local speed = currentDistance / 0.25
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z).Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving3 = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostCooldown3 = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.One or distanceMovesState.distance3 <= 0 or distanceMovesState.moving3 or distanceMovesState.boostCooldown3 then return end
+	distanceMovesState.armTime3 = os.clock()
+	distanceMovesState.animationDetected3 = false
+	task.delay(1.275, function()
+		if not distanceMovesState.animationDetected3 or distanceMovesState.boostCooldown3 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance3, 0.25, "moving3", "boostCooldown3")
+	end)
 end)
 
 d:Slider("Off The Ball Distance", 0, 0, 200, 1, function(v)
-    distanceMovesState.distance4 = v
+	distanceMovesState.distance4 = v
 end)
 
 local function hookKaiser(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and track.Animation.AnimationId == kaiser_anim and os.clock() >= distanceMovesState.armTime4 then
-            distanceMovesState.animationDetected4 = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and track.Animation.AnimationId == kaiser_anim and os.clock() >= distanceMovesState.armTime4 then
+			distanceMovesState.animationDetected4 = true
+		end
+	end)
 end
 
 if player.Character then hookKaiser(player.Character) end
 player.CharacterAdded:Connect(hookKaiser)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.Three then return end
-    if distanceMovesState.distance4 <= 0 then return end
-    if distanceMovesState.moving4 or distanceMovesState.boostCooldown4 then return end
-
-    distanceMovesState.armTime4 = os.clock()
-    distanceMovesState.animationDetected4 = false
-    local currentDistance = distanceMovesState.distance4
-
-    task.delay(0.2, function()
-        if not distanceMovesState.animationDetected4 or distanceMovesState.boostCooldown4 then return end
-
-        local character = player.Character
-        if not character then return end
-
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.moving4 = true
-        distanceMovesState.boostCooldown4 = true
-
-        local speed = currentDistance / 0.55
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z)
-            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
-            dir = dir.Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving4 = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostCooldown4 = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.Three or distanceMovesState.distance4 <= 0 or distanceMovesState.moving4 or distanceMovesState.boostCooldown4 then return end
+	distanceMovesState.armTime4 = os.clock()
+	distanceMovesState.animationDetected4 = false
+	task.delay(0.2, function()
+		if not distanceMovesState.animationDetected4 or distanceMovesState.boostCooldown4 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance4, 0.55, "moving4", "boostCooldown4")
+	end)
 end)
 
 d:Slider("Occlusion Break Distance", 0, 0, 200, 1, function(v)
-    distanceMovesState.distance5 = v
+	distanceMovesState.distance5 = v
 end)
 
 local function hookOcclusion(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and track.Animation.AnimationId == occlusion_anim and os.clock() >= distanceMovesState.armTime5 then
-            distanceMovesState.animationDetected5 = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and track.Animation.AnimationId == occlusion_anim and os.clock() >= distanceMovesState.armTime5 then
+			distanceMovesState.animationDetected5 = true
+		end
+	end)
 end
 
 if player.Character then hookOcclusion(player.Character) end
 player.CharacterAdded:Connect(hookOcclusion)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.One then return end
-    if distanceMovesState.distance5 <= 0 then return end
-    if distanceMovesState.moving5 or distanceMovesState.boostCooldown5 then return end
-
-    distanceMovesState.armTime5 = os.clock()
-    distanceMovesState.animationDetected5 = false
-    local currentDistance = distanceMovesState.distance5
-
-    task.delay(0.2, function()
-        if not distanceMovesState.animationDetected5 or distanceMovesState.boostCooldown5 then return end
-
-        local character = player.Character
-        if not character then return end
-
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.moving5 = true
-        distanceMovesState.boostCooldown5 = true
-
-        local speed = currentDistance / 1
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z)
-            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
-            dir = dir.Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving5 = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostCooldown5 = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.One or distanceMovesState.distance5 <= 0 or distanceMovesState.moving5 or distanceMovesState.boostCooldown5 then return end
+	distanceMovesState.armTime5 = os.clock()
+	distanceMovesState.animationDetected5 = false
+	task.delay(0.2, function()
+		if not distanceMovesState.animationDetected5 or distanceMovesState.boostCooldown5 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance5, 1.0, "moving5", "boostCooldown5")
+	end)
 end)
 
 d:Slider("Diving Header Distance", 0, 0, 125, 1, function(v)
-    distanceMovesState.distance6 = v
+	distanceMovesState.distance6 = v
 end)
 
 local function hookDiving(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and track.Animation.AnimationId == "rbxassetid://91506202951715" and os.clock() >= distanceMovesState.armTime6 then
-            distanceMovesState.animationDetected6 = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and track.Animation.AnimationId == "rbxassetid://91506202951715" and os.clock() >= distanceMovesState.armTime6 then
+			distanceMovesState.animationDetected6 = true
+		end
+	end)
 end
 
 if player.Character then hookDiving(player.Character) end
 player.CharacterAdded:Connect(hookDiving)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.Two then return end
-    if distanceMovesState.distance6 <= 0 then return end
-    if distanceMovesState.moving6 or distanceMovesState.boostCooldown6 then return end
-
-    distanceMovesState.armTime6 = os.clock()
-    distanceMovesState.animationDetected6 = false
-    local currentDistance = distanceMovesState.distance6
-
-    task.delay(0.4, function()
-        if not distanceMovesState.animationDetected6 or distanceMovesState.boostCooldown6 then return end
-
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.moving6 = true
-        distanceMovesState.boostCooldown6 = true
-
-        local speed = currentDistance / 0.35
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z)
-            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
-            dir = dir.Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving6 = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostCooldown6 = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.Two or distanceMovesState.distance6 <= 0 or distanceMovesState.moving6 or distanceMovesState.boostCooldown6 then return end
+	distanceMovesState.armTime6 = os.clock()
+	distanceMovesState.animationDetected6 = false
+	task.delay(0.4, function()
+		if not distanceMovesState.animationDetected6 or distanceMovesState.boostCooldown6 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance6, 0.35, "moving6", "boostCooldown6")
+	end)
 end)
 
 d:Slider("Reflex Tackle Distance", 0, 0, 125, 1, function(v)
-    distanceMovesState.distance7 = v
+	distanceMovesState.distance7 = v
 end)
 
 local function hookReflex(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and track.Animation.AnimationId == reflex_anim and os.clock() >= distanceMovesState.armTime7 then
-            distanceMovesState.animationDetected7 = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and track.Animation.AnimationId == reflex_anim and os.clock() >= distanceMovesState.armTime7 then
+			distanceMovesState.animationDetected7 = true
+		end
+	end)
 end
 
 if player.Character then hookReflex(player.Character) end
 player.CharacterAdded:Connect(hookReflex)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.Two then return end
-    if distanceMovesState.distance7 <= 0 then return end
-    if distanceMovesState.moving7 or distanceMovesState.boostCooldown7 then return end
-
-    distanceMovesState.armTime7 = os.clock()
-    distanceMovesState.animationDetected7 = false
-    local currentDistance = distanceMovesState.distance7
-
-    task.delay(0.1, function()
-        if not distanceMovesState.animationDetected7 or distanceMovesState.boostCooldown7 then return end
-
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.moving7 = true
-        distanceMovesState.boostCooldown7 = true
-
-        local speed = currentDistance / 0.2
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z)
-            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
-            dir = dir.Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving7 = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostCooldown7 = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.Two or distanceMovesState.distance7 <= 0 or distanceMovesState.moving7 or distanceMovesState.boostCooldown7 then return end
+	distanceMovesState.armTime7 = os.clock()
+	distanceMovesState.animationDetected7 = false
+	task.delay(0.1, function()
+		if not distanceMovesState.animationDetected7 or distanceMovesState.boostCooldown7 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance7, 0.2, "moving7", "boostCooldown7")
+	end)
 end)
 
 d:Slider("Mach Cut-In Distance", 0, 0, 200, 1, function(v)
-    distanceMovesState.distance8 = v
+	distanceMovesState.distance8 = v
 end)
 
 local function hookMach(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and (track.Animation.AnimationId == mach_anim1 or track.Animation.AnimationId == mach_anim2) and os.clock() >= distanceMovesState.armTime8 then
-            distanceMovesState.animationDetected8 = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and (track.Animation.AnimationId == mach_anim1 or track.Animation.AnimationId == mach_anim2) and os.clock() >= distanceMovesState.armTime8 then
+			distanceMovesState.animationDetected8 = true
+		end
+	end)
 end
 
 if player.Character then hookMach(player.Character) end
 player.CharacterAdded:Connect(hookMach)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.One then return end
-    if distanceMovesState.distance8 <= 0 then return end
-    if distanceMovesState.moving8 or distanceMovesState.boostCooldown8 then return end
-
-    distanceMovesState.armTime8 = os.clock()
-    distanceMovesState.animationDetected8 = false
-    local currentDistance = distanceMovesState.distance8
-
-    task.delay(0.5, function()
-        if not distanceMovesState.animationDetected8 or distanceMovesState.boostCooldown8 then return end
-
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.moving8 = true
-        distanceMovesState.boostCooldown8 = true
-
-        local speed = currentDistance / 0.35
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z)
-            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
-            dir = dir.Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving8 = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostCooldown8 = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.One or distanceMovesState.distance8 <= 0 or distanceMovesState.moving8 or distanceMovesState.boostCooldown8 then return end
+	distanceMovesState.armTime8 = os.clock()
+	distanceMovesState.animationDetected8 = false
+	task.delay(0.5, function()
+		if not distanceMovesState.animationDetected8 or distanceMovesState.boostCooldown8 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance8, 0.35, "moving8", "boostCooldown8")
+	end)
 end)
 
 d:Slider("Speed Dribble Distance", 0, 0, 200, 1, function(v)
-    distanceMovesState.distance9 = v
+	distanceMovesState.distance9 = v
 end)
 
 local function hookSpeed(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and (track.Animation.AnimationId == speed_anim1 or track.Animation.AnimationId == speed_anim2) and os.clock() >= distanceMovesState.armTime9 then
-            distanceMovesState.animationDetected9 = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and (track.Animation.AnimationId == speed_anim1 or track.Animation.AnimationId == speed_anim2) and os.clock() >= distanceMovesState.armTime9 then
+			distanceMovesState.animationDetected9 = true
+		end
+	end)
 end
 
 if player.Character then hookSpeed(player.Character) end
 player.CharacterAdded:Connect(hookSpeed)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.Three then return end
-    if distanceMovesState.distance9 <= 0 then return end
-    if distanceMovesState.moving9 or distanceMovesState.boostCooldown9 then return end
-
-    distanceMovesState.armTime9 = os.clock()
-    distanceMovesState.animationDetected9 = false
-    local currentDistance = distanceMovesState.distance9
-
-    task.delay(0.2, function()
-        if not distanceMovesState.animationDetected9 or distanceMovesState.boostCooldown9 then return end
-
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.moving9 = true
-        distanceMovesState.boostCooldown9 = true
-
-        local speed = currentDistance / 1.15
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z)
-            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
-            dir = dir.Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving9 = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostCooldown9 = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.Three or distanceMovesState.distance9 <= 0 or distanceMovesState.moving9 or distanceMovesState.boostCooldown9 then return end
+	distanceMovesState.armTime9 = os.clock()
+	distanceMovesState.animationDetected9 = false
+	task.delay(0.2, function()
+		if not distanceMovesState.animationDetected9 or distanceMovesState.boostCooldown9 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance9, 1.15, "moving9", "boostCooldown9")
+	end)
 end)
 
 d:Slider("Cut In Distance", 0, 0, 200, 1, function(v)
-    distanceMovesState.distance10 = v
+	distanceMovesState.distance10 = v
 end)
 
 local function hookCut(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and (track.Animation.AnimationId == "rbxassetid://133384553147918" or track.Animation.AnimationId == "rbxassetid://128936529440509") and os.clock() >= distanceMovesState.armTime10 then
-            distanceMovesState.animationDetected10 = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and (track.Animation.AnimationId == "rbxassetid://133384553147918" or track.Animation.AnimationId == "rbxassetid://128936529440509") and os.clock() >= distanceMovesState.armTime10 then
+			distanceMovesState.animationDetected10 = true
+		end
+	end)
 end
 
 if player.Character then hookCut(player.Character) end
 player.CharacterAdded:Connect(hookCut)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.Two then return end
-    if distanceMovesState.distance10 <= 0 then return end
-    if distanceMovesState.moving10 or distanceMovesState.boostCooldown10 then return end
-
-    distanceMovesState.armTime10 = os.clock()
-    distanceMovesState.animationDetected10 = false
-    local currentDistance = distanceMovesState.distance10
-
-    task.delay(0.2, function()
-        if not distanceMovesState.animationDetected10 or distanceMovesState.boostCooldown10 then return end
-
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.moving10 = true
-        distanceMovesState.boostCooldown10 = true
-
-        local speed = currentDistance / 1
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z)
-            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
-            dir = dir.Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving10 = false
-                task.delay(0.1, function()
-                    distanceMovesState.boostCooldown10 = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.Two or distanceMovesState.distance10 <= 0 or distanceMovesState.moving10 or distanceMovesState.boostCooldown10 then return end
+	distanceMovesState.armTime10 = os.clock()
+	distanceMovesState.animationDetected10 = false
+	task.delay(0.2, function()
+		if not distanceMovesState.animationDetected10 or distanceMovesState.boostCooldown10 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance10, 1.0, "moving10", "boostCooldown10")
+	end)
 end)
 
 d:Slider("King's Path Distance", 0, 0, 750, 1, function(v)
-    distanceMovesState.distance12 = v
+	distanceMovesState.distance12 = v
 end)
 
 local function hookKingsPath(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and track.Animation.AnimationId == kings_path_anim and os.clock() >= distanceMovesState.armTime12 then
-            distanceMovesState.animationDetected12 = true
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and track.Animation.AnimationId == kings_path_anim and os.clock() >= distanceMovesState.armTime12 then
+			distanceMovesState.animationDetected12 = true
+		end
+	end)
 end
 
 if player.Character then hookKingsPath(player.Character) end
 player.CharacterAdded:Connect(hookKingsPath)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.Three then return end
-    if distanceMovesState.distance12 <= 0 then return end
-    if distanceMovesState.moving12 or distanceMovesState.boostCooldown12 then return end
+	if gpe or input.KeyCode ~= Enum.KeyCode.Three or distanceMovesState.distance12 <= 0 or distanceMovesState.moving12 or distanceMovesState.boostCooldown12 then return end
+	distanceMovesState.armTime12 = os.clock()
+	distanceMovesState.animationDetected12 = false
+	task.delay(0.5, function()
+		if not distanceMovesState.animationDetected12 or distanceMovesState.boostCooldown12 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distance12, 1.175, "moving12", "boostCooldown12")
+	end)
+end)
 
-    distanceMovesState.armTime12 = os.clock()
-    distanceMovesState.animationDetected12 = false
-    local currentDistance = distanceMovesState.distance12
+d:Slider("Zombie Dribble Distance", 0, 0, 250, 1, function(v)
+	distanceMovesState.distanceZomb = v
+end)
 
-    task.delay(0.5, function()
-        if not distanceMovesState.animationDetected12 or distanceMovesState.boostCooldown12 then return end
+local function hookZombDrib(char)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and track.Animation.AnimationId == zomb_anim and os.clock() >= distanceMovesState.armTimeZomb then
+			distanceMovesState.animationDetectedZomb = true
+		end
+	end)
+end
 
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
+if player.Character then hookZombDrib(player.Character) end
+player.CharacterAdded:Connect(hookZombDrib)
 
-        distanceMovesState.moving12 = true
-        distanceMovesState.boostCooldown12 = true
-
-        local speed = currentDistance / 1.175
-        local remaining = currentDistance
-        local startY = hrp.Position.Y
-
-        local conn
-        conn = RunService.RenderStepped:Connect(function(dt)
-            local step = math.min(speed * dt, remaining)
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z)
-            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
-            dir = dir.Unit
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            remaining -= step
-            if remaining <= 0 then
-                conn:Disconnect()
-                distanceMovesState.moving12 = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostCooldown12 = false
-                end)
-            end
-        end)
-    end)
+UserInputService.InputBegan:Connect(function(input, gpe)
+	if gpe or input.KeyCode ~= Enum.KeyCode.One or distanceMovesState.distanceZomb <= 0 or distanceMovesState.movingZomb or distanceMovesState.boostCooldownZomb then return end
+	distanceMovesState.armTimeZomb = os.clock()
+	distanceMovesState.animationDetectedZomb = false
+	task.delay(0.25, function()
+		if not distanceMovesState.animationDetectedZomb or distanceMovesState.boostCooldownZomb then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		createDash(hrp, distanceMovesState.distanceZomb, 2.1, "movingZomb", "boostCooldownZomb")
+	end)
 end)
 
 d:Slider("Devour Distance", 0, 0, 750, 1, function(v)
-    distanceMovesState.maxDistance13 = v
+	distanceMovesState.maxDistance13 = v
 end)
 
 local function hookDevour(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and track.Animation.AnimationId == devour_anim and os.clock() >= distanceMovesState.armTime13 then
-            distanceMovesState.animationArmed13 = true
-            distanceMovesState.currentTrack = track
-            local stoppedConn
-            stoppedConn = track.Stopped:Connect(function()
-                if distanceMovesState.currentDashConnection then
-                    distanceMovesState.currentDashConnection:Disconnect()
-                    distanceMovesState.currentDashConnection = nil
-                end
-                distanceMovesState.isDashing13 = false
-                task.delay(0.15, function()
-                    distanceMovesState.boostOnCooldown13 = false
-                end)
-                distanceMovesState.currentTrack = nil
-                stoppedConn:Disconnect()
-            end)
-        end
-    end)
+	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+	animator.AnimationPlayed:Connect(function(track)
+		if track.Animation and track.Animation.AnimationId == devour_anim and os.clock() >= distanceMovesState.armTime13 then
+			distanceMovesState.animationArmed13 = true
+			distanceMovesState.currentTrack = track
+			local stoppedConn
+			stoppedConn = track.Stopped:Connect(function()
+				if distanceMovesState.currentDashConnection then
+					distanceMovesState.currentDashConnection:Disconnect()
+					distanceMovesState.currentDashConnection = nil
+				end
+				distanceMovesState.isDashing13 = false
+				task.delay(0.15, function()
+					distanceMovesState.boostOnCooldown13 = false
+				end)
+				distanceMovesState.currentTrack = nil
+				stoppedConn:Disconnect()
+			end)
+		end
+	end)
 end
 
 if player.Character then hookDevour(player.Character) end
 player.CharacterAdded:Connect(hookDevour)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode ~= Enum.KeyCode.Four then return end
-    if distanceMovesState.maxDistance13 <= 0 then return end
-    if distanceMovesState.isDashing13 or distanceMovesState.boostOnCooldown13 then return end
-
-    distanceMovesState.armTime13 = os.clock()
-    distanceMovesState.animationArmed13 = false
-
-    task.delay(0.1, function()
-        if not distanceMovesState.animationArmed13 or distanceMovesState.boostOnCooldown13 then return end
-
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-
-        distanceMovesState.isDashing13 = true
-        distanceMovesState.boostOnCooldown13 = true
-
-        local distanceTraveled = 0
-        local startY = hrp.Position.Y
-
-        distanceMovesState.currentDashConnection = RunService.RenderStepped:Connect(function(dt)
-            if not distanceMovesState.isDashing13 then return end
-
-            local look = hrp.CFrame.LookVector
-            local dir = Vector3.new(look.X, 0, look.Z).Unit
-            if dir.Magnitude == 0 then dir = Vector3.new(0, 0, 1) end
-
-            local step = distanceMovesState.dashSpeed13 * dt
-            local wouldTravel = distanceTraveled + step
-
-            if wouldTravel >= distanceMovesState.maxDistance13 then
-                step = distanceMovesState.maxDistance13 - distanceTraveled
-                distanceMovesState.isDashing13 = false
-            end
-
-            local pos = hrp.Position + dir * step
-            hrp.CFrame = CFrame.new(Vector3.new(pos.X, startY, pos.Z), pos + look)
-
-            distanceTraveled += step
-
-            if not distanceMovesState.isDashing13 then
-                distanceMovesState.currentDashConnection:Disconnect()
-                distanceMovesState.currentDashConnection = nil
-                task.delay(0.15, function()
-                    distanceMovesState.boostOnCooldown13 = false
-                end)
-            end
-        end)
-    end)
+	if gpe or input.KeyCode ~= Enum.KeyCode.Four or distanceMovesState.maxDistance13 <= 0 or distanceMovesState.isDashing13 or distanceMovesState.boostOnCooldown13 then return end
+	distanceMovesState.armTime13 = os.clock()
+	distanceMovesState.animationArmed13 = false
+	task.delay(0.1, function()
+		if not distanceMovesState.animationArmed13 or distanceMovesState.boostOnCooldown13 then return end
+		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
+		distanceMovesState.isDashing13 = true
+		distanceMovesState.boostOnCooldown13 = true
+		local distanceTraveled = 0
+		local startY = hrp.Position.Y
+		distanceMovesState.currentDashConnection = RunService.RenderStepped:Connect(function(dt)
+			if not distanceMovesState.isDashing13 then return end
+			local look = hrp.CFrame.LookVector
+			local dir = Vector3.new(look.X, 0, look.Z).Unit
+			if dir.Magnitude < 0.01 then dir = Vector3.new(0,0,1) end
+			local step = distanceMovesState.dashSpeed13 * dt
+			local wouldTravel = distanceTraveled + step
+			if wouldTravel >= distanceMovesState.maxDistance13 then
+				step = distanceMovesState.maxDistance13 - distanceTraveled
+				distanceMovesState.isDashing13 = false
+			end
+			local pos = hrp.Position + dir * step
+			hrp.CFrame = CFrame.new(pos.X, startY, pos.Z) * CFrame.lookAt(Vector3.zero, look)
+			distanceTraveled += step
+			if not distanceMovesState.isDashing13 then
+				distanceMovesState.currentDashConnection:Disconnect()
+				distanceMovesState.currentDashConnection = nil
+				task.delay(0.15, function()
+					distanceMovesState.boostOnCooldown13 = false
+				end)
+			end
+		end)
+	end)
 end)
 
 local autoact = maintab2:Folder("Auto Activate Features.", Color3.fromRGB(24, 255, 228), true)
@@ -2561,7 +2133,7 @@ local autoActivateState = {
     db = true
 }
 
-autoact:Textbox("Auto Activate Move Number", "Example: 1, 2, 3, 4, 5", function(v)
+autoact:Textbox("Auto Activate Move Number", "Example: 1, 2, 3, 4, 5.", function(v)
     local nsdv = tonumber(v)
     if nsdv and nsdv <= 5 and nsdv > 0 then
         autoActivateState.moveNumber = nsdv
@@ -2924,13 +2496,13 @@ autoline:Toggle("Rin Line Ups", "Rin's Curve Shot Line Ups.", function(r)
     pad(Vector3.new(-619, -1, 988), Color3.fromRGB(255, 255, 0))
     target(Vector3.new(-564, 22, 854), Color3.fromRGB(255, 255, 0))
 
-    pad(Vector3.new(-698, -1, 923), Color3.fromRGB(0, 0, 255))
+    pad(Vector3.new(-704, -1, 923), Color3.fromRGB(0, 0, 255))
     target(Vector3.new(-564, 33, 854), Color3.fromRGB(0, 0, 255))
 
     pad(Vector3.new(-536, -1, 1506), Color3.fromRGB(255, 0, 0))
     target(Vector3.new(-536, 79, 1666), Color3.fromRGB(255, 0, 0))
 
-    pad(Vector3.new(-603, -1, 1507), Color3.fromRGB(0, 255, 0))
+    pad(Vector3.new(-605, -1, 1523), Color3.fromRGB(0, 255, 0))
     target(Vector3.new(-525, 81, 1666), Color3.fromRGB(0, 255, 0))
 
     pad(Vector3.new(-453, -1, 1605), Color3.fromRGB(255, 255, 0))
@@ -2942,6 +2514,48 @@ autoline:Toggle("Rin Line Ups", "Rin's Curve Shot Line Ups.", function(r)
 	else
 		StarterGui:SetCore("SendNotification", {
 			Title = "Rin Line Ups",
+			Text = "Disabled.",
+			Duration = 3
+		})
+
+		for i = 1, padCount do
+			local p = Workspace:FindFirstChild("pad" .. i)
+			if p then p:Destroy() end
+		end
+
+		for i = 1, targetCount do
+			local t = Workspace:FindFirstChild("target" .. i)
+			if t then t:Destroy() end
+		end
+
+		padCount = 0
+		targetCount = 0
+	end
+end)
+
+autoline:Toggle("Rin Flow Line Ups", "Rin's Kill Shot Line Ups.", function(k)
+	if k then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Rin Flow Line Ups",
+			Text = "Enabled.",
+			Duration = 3
+		})
+
+    pad(Vector3.new(-376, -1, 1149), Color3.fromRGB(147, 112, 219))
+    target(Vector3.new(-547, 134, 882), Color3.fromRGB(147, 112, 219))
+
+    pad(Vector3.new(-722, -1, 1118), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-564, 92, 848), Color3.fromRGB(255, 0, 0))
+
+    pad(Vector3.new(-652, -1, 1399), Color3.fromRGB(147, 112, 219))
+    target(Vector3.new(-520, 106, 1666), Color3.fromRGB(147, 112, 219))
+
+    pad(Vector3.new(-336, -1, 1445), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-504, 100, 1706), Color3.fromRGB(255, 0, 0))
+
+	else
+		StarterGui:SetCore("SendNotification", {
+			Title = "Rin Flow Line Ups",
 			Text = "Disabled.",
 			Duration = 3
 		})
