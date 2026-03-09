@@ -1082,7 +1082,7 @@ autogoal:Button("Nagi Dream Goal", "Attempts To Do Nagi's Control Move Auto Goal
         task.wait(0.2)
         ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(
             buffer.fromstring(buffers["base"]),
-            { { "skill2" } }
+            { { "skill2", true } }
         )
     end
 end)
@@ -1726,6 +1726,7 @@ local speed_anim1 = "rbxassetid://70397727954557"
 local speed_anim2 = "rbxassetid://131196726012273"
 local kings_path_anim = "rbxassetid://73560885704292"
 local devour_anim = "rbxassetid://117921992582675"
+local twister_anim = "rbxassetid://117921992582675"
 
 d:Slider("Naruhaya Footwork Distance", 0, 0, 200, 1, function(v)
     distanceMovesState.distance = v
@@ -2561,7 +2562,7 @@ local autoActivateState = {
     db = true
 }
 
-autoact:Textbox("Auto Activate Move Number", "Example: 1, 2, 3, 4, 5", function(v)
+autoact:Textbox("Auto Activate Move Number", "Example: 1, 2, 3, 4, 5.", function(v)
     local nsdv = tonumber(v)
     if nsdv and nsdv <= 5 and nsdv > 0 then
         autoActivateState.moveNumber = nsdv
@@ -2834,6 +2835,156 @@ autoline:Toggle("Kaiser Line Ups", "Kaiser's Impact Magnus Line Ups.", function(
 	else
 		StarterGui:SetCore("SendNotification", {
 			Title = "Kaiser Line Ups",
+			Text = "Disabled.",
+			Duration = 3
+		})
+
+		for i = 1, padCount do
+			local p = Workspace:FindFirstChild("pad" .. i)
+			if p then p:Destroy() end
+		end
+
+		for i = 1, targetCount do
+			local t = Workspace:FindFirstChild("target" .. i)
+			if t then t:Destroy() end
+		end
+
+		padCount = 0
+		targetCount = 0
+	end
+end)
+
+autoline:Toggle("Yukimiya Line Ups", "Yukimiya's Gyro Shot Line Ups.", function(y)
+	if y then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Yukimiya Line Ups",
+			Text = "Enabled.",
+			Duration = 3
+		})
+
+    pad(Vector3.new(-536, -1, 1050), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-592, 67, 841), Color3.fromRGB(255, 0, 0))
+
+    pad(Vector3.new(-617, -1, 1010), Color3.fromRGB(255, 255, 0))
+    target(Vector3.new(-586, 83, 842), Color3.fromRGB(255, 255, 0))
+
+    pad(Vector3.new(-404, -1, 964), Color3.fromRGB(0, 0, 255))
+    target(Vector3.new(-649, 104, 841), Color3.fromRGB(0, 0, 255))
+
+    pad(Vector3.new(-471, -1, 1020), Color3.fromRGB(0, 255, 0))
+    target(Vector3.new(-639, 137, 841), Color3.fromRGB(0, 255, 0))
+
+    pad(Vector3.new(-528, -1, 1513), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-469, 134, 1707), Color3.fromRGB(255, 0, 0))
+
+    pad(Vector3.new(-594, -1, 1518), Color3.fromRGB(0, 255, 0))
+    target(Vector3.new(-411, 158, 1707), Color3.fromRGB(0, 255, 0))
+
+    pad(Vector3.new(-466, -1, 1521), Color3.fromRGB(255, 255, 0))
+    target(Vector3.new(-473, 115, 1707), Color3.fromRGB(255, 255, 0))
+
+    pad(Vector3.new(-669, -1, 1606), Color3.fromRGB(0, 0, 255))
+    target(Vector3.new(-530, 65, 1666), Color3.fromRGB(0, 0, 255))
+
+	else
+		StarterGui:SetCore("SendNotification", {
+			Title = "Yukimiya Line Ups",
+			Text = "Disabled.",
+			Duration = 3
+		})
+
+		for i = 1, padCount do
+			local p = Workspace:FindFirstChild("pad" .. i)
+			if p then p:Destroy() end
+		end
+
+		for i = 1, targetCount do
+			local t = Workspace:FindFirstChild("target" .. i)
+			if t then t:Destroy() end
+		end
+
+		padCount = 0
+		targetCount = 0
+	end
+end)
+
+autoline:Toggle("Rin Line Ups", "Rin's Curve Shot Line Ups.", function(r)
+	if r then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Rin Line Ups",
+			Text = "Enabled.",
+			Duration = 3
+		})
+
+    pad(Vector3.new(-461, -1, 1028), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-529, 76, 882), Color3.fromRGB(255, 0, 0))
+
+    pad(Vector3.new(-537, -1, 1043), Color3.fromRGB(0, 255, 0))
+    target(Vector3.new(-535, 97, 882), Color3.fromRGB(0, 255, 0))
+
+    pad(Vector3.new(-619, -1, 988), Color3.fromRGB(255, 255, 0))
+    target(Vector3.new(-564, 22, 854), Color3.fromRGB(255, 255, 0))
+
+    pad(Vector3.new(-704, -1, 923), Color3.fromRGB(0, 0, 255))
+    target(Vector3.new(-564, 33, 854), Color3.fromRGB(0, 0, 255))
+
+    pad(Vector3.new(-536, -1, 1506), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-536, 79, 1666), Color3.fromRGB(255, 0, 0))
+
+    pad(Vector3.new(-605, -1, 1523), Color3.fromRGB(0, 255, 0))
+    target(Vector3.new(-525, 81, 1666), Color3.fromRGB(0, 255, 0))
+
+    pad(Vector3.new(-453, -1, 1605), Color3.fromRGB(255, 255, 0))
+    target(Vector3.new(-504, 21, 1699), Color3.fromRGB(255, 255, 0))
+
+    pad(Vector3.new(-371, -1, 1628), Color3.fromRGB(0, 0, 255))
+    target(Vector3.new(-504, 36, 1699), Color3.fromRGB(0, 0, 255))
+
+	else
+		StarterGui:SetCore("SendNotification", {
+			Title = "Rin Line Ups",
+			Text = "Disabled.",
+			Duration = 3
+		})
+
+		for i = 1, padCount do
+			local p = Workspace:FindFirstChild("pad" .. i)
+			if p then p:Destroy() end
+		end
+
+		for i = 1, targetCount do
+			local t = Workspace:FindFirstChild("target" .. i)
+			if t then t:Destroy() end
+		end
+
+		padCount = 0
+		targetCount = 0
+	end
+end)
+
+autoline:Toggle("Rin Flow Line Ups", "Rin's Kill Shot Line Ups.", function(k)
+	if k then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Rin Flow Line Ups",
+			Text = "Enabled.",
+			Duration = 3
+		})
+
+    pad(Vector3.new(-376, -1, 1149), Color3.fromRGB(147, 112, 219))
+    target(Vector3.new(-547, 134, 882), Color3.fromRGB(147, 112, 219))
+
+    pad(Vector3.new(-722, -1, 1118), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-564, 92, 848), Color3.fromRGB(255, 0, 0))
+
+    pad(Vector3.new(-652, -1, 1399), Color3.fromRGB(147, 112, 219))
+    target(Vector3.new(-520, 106, 1666), Color3.fromRGB(147, 112, 219))
+
+    pad(Vector3.new(-336, -1, 1445), Color3.fromRGB(255, 0, 0))
+    target(Vector3.new(-504, 100, 1706), Color3.fromRGB(255, 0, 0))
+
+	else
+		StarterGui:SetCore("SendNotification", {
+			Title = "Rin Flow Line Ups",
 			Text = "Disabled.",
 			Duration = 3
 		})
@@ -4386,4 +4537,4 @@ exploittab:Textbox("Goal Target", "Enter a number of goals to stop farming at.",
 end)
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/oldthingyep",true))()
-loadstring(game:HttpGet("https://pastebin.com/raw/rQMS2B9R",true))()w
+loadstring(game:HttpGet("https://pastebin.com/raw/rQMS2B9R",true))()
