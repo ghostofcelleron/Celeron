@@ -1629,22 +1629,23 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 local distanceMovesState = {
-	distance = 0, moving = false, boostCooldown = false, animationDetected = false, armTime = 0,
-	distance1 = 0, moving1 = false, boostCooldown1 = false, animationDetected1 = false, armTime1 = 0,
-	distance2 = 0, moving2 = false, boostCooldown2 = false, animationDetected2 = false, armTime2 = 0,
-	distance3 = 0, moving3 = false, boostCooldown3 = false, animationDetected3 = false, armTime3 = 0,
-	distance4 = 0, moving4 = false, boostCooldown4 = false, animationDetected4 = false, armTime4 = 0,
-	distance5 = 0, moving5 = false, boostCooldown5 = false, animationDetected5 = false, armTime5 = 0,
-	distance6 = 0, moving6 = false, boostCooldown6 = false, animationDetected6 = false, armTime6 = 0,
-	distance7 = 0, moving7 = false, boostCooldown7 = false, animationDetected7 = false, armTime7 = 0,
-	distance8 = 0, moving8 = false, boostCooldown8 = false, animationDetected8 = false, armTime8 = 0,
-	distance9 = 0, moving9 = false, boostCooldown9 = false, animationDetected9 = false, armTime9 = 0,
-	distance10 = 0, moving10 = false, boostCooldown10 = false, animationDetected10 = false, armTime10 = 0,
-	distance12 = 0, moving12 = false, boostCooldown12 = false, animationDetected12 = false, armTime12 = 0,
-	distanceZomb = 0, movingZomb = false, boostCooldownZomb = false, animationDetectedZomb = false, armTimeZomb = 0,
-	maxDistance13 = 0, dashSpeed13 = 150,
-	isDashing13 = false, boostOnCooldown13 = false, animationArmed13 = false, armTime13 = 0,
-	currentDashConnection = nil, currentTrack = nil
+    distance = 0, moving = false, boostCooldown = false, animationDetected = false, armTime = 0,
+    distance1 = 0, moving1 = false, boostCooldown1 = false, animationDetected1 = false, armTime1 = 0,
+    distance2 = 0, moving2 = false, boostCooldown2 = false, animationDetected2 = false, armTime2 = 0,
+    distance3 = 0, moving3 = false, boostCooldown3 = false, animationDetected3 = false, armTime3 = 0,
+    distance4 = 0, moving4 = false, boostCooldown4 = false, animationDetected4 = false, armTime4 = 0,
+    distance5 = 0, moving5 = false, boostCooldown5 = false, animationDetected5 = false, armTime5 = 0,
+    distance6 = 0, moving6 = false, boostCooldown6 = false, animationDetected6 = false, armTime6 = 0,
+    distance7 = 0, moving7 = false, boostCooldown7 = false, animationDetected7 = false, armTime7 = 0,
+    distance8 = 0, moving8 = false, boostCooldown8 = false, animationDetected8 = false, armTime8 = 0,
+    distance9 = 0, moving9 = false, boostCooldown9 = false, animationDetected9 = false, armTime9 = 0,
+    distance10 = 0, moving10 = false, boostCooldown10 = false, animationDetected10 = false, armTime10 = 0,
+    distance12 = 0, moving12 = false, boostCooldown12 = false, animationDetected12 = false, armTime12 = 0,
+    distance13 = 0, moving13 = false, boostCooldown13 = false, animationDetected13 = false, armTime13 = 0,
+    distance14 = 0, moving14 = false, boostCooldown14 = false, animationDetected14 = false, armTime14 = 0,
+    maxDistance14 = 0, dashSpeed13 = 150,
+    isDashing13 = false, boostOnCooldown13 = false, animationArmed13 = false, armTime13 = 0,
+    currentDashConnection = nil, currentTrack = nil
 }
 
 local naru_anim = "rbxassetid://82240286756891"
@@ -2029,34 +2030,34 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Slider("Zombie Dribble Distance", 0, 0, 250, 1, function(v)
-	distanceMovesState.distanceZomb = v
+    distanceMovesState.distance14 = v
 end)
 
 local function hookZombDrib(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == zomb_anim and os.clock() >= distanceMovesState.armTimeZomb then
-			distanceMovesState.animationDetectedZomb = true
-		end
-	end)
+    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+    animator.AnimationPlayed:Connect(function(track)
+        if track.Animation and track.Animation.AnimationId == zomb_anim and os.clock() >= distanceMovesState.armTime14 then
+            distanceMovesState.animationDetected14 = true
+        end
+    end)
 end
 
 if player.Character then hookZombDrib(player.Character) end
 player.CharacterAdded:Connect(hookZombDrib)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.One or distanceMovesState.distanceZomb <= 0 or distanceMovesState.movingZomb or distanceMovesState.boostCooldownZomb then return end
-	distanceMovesState.armTimeZomb = os.clock()
-	distanceMovesState.animationDetectedZomb = false
-	task.delay(0.25, function()
-		if not distanceMovesState.animationDetectedZomb or distanceMovesState.boostCooldownZomb then return end
-		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-		if not hrp then return end
-		createDash(hrp, distanceMovesState.distanceZomb, 2.1, "movingZomb", "boostCooldownZomb")
-	end)
+    if gpe or input.KeyCode ~= Enum.KeyCode.One or distanceMovesState.distance14 <= 0 or distanceMovesState.moving14 or distanceMovesState.boostCooldown14 then return end
+    distanceMovesState.armTime14 = os.clock()
+    distanceMovesState.animationDetected14 = false
+    task.delay(0.25, function()
+        if not distanceMovesState.animationDetected14 or distanceMovesState.boostCooldown14 then return end
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        createDash(hrp, distanceMovesState.distance14, 2.1, "moving14", "boostCooldown14")
+    end)
 end)
 
-d:Slider("Devour Distance", 0, 0, 750, 1, function(v)
+d:Slider("Devour Distance", 0, 0, 500, 1, function(v)
 	distanceMovesState.maxDistance13 = v
 end)
 
