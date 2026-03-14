@@ -883,6 +883,11 @@ RunService.Stepped:Connect(function()
     local root = char and char:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
+    local ball = char:FindFirstChild("Ball")
+    if not ball or not ball:IsA("MeshPart") then
+        return
+    end
+
     for _, target in ipairs(Players:GetPlayers()) do
         if target ~= player and target.Character and target.Team ~= player.Team then
             local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
@@ -891,7 +896,7 @@ RunService.Stepped:Connect(function()
 
             if targetHRP and animator then
                 local distance = (root.Position - targetHRP.Position).Magnitude
-                if distance <= 35 then
+                if distance <= 40 then
                     local now = tick()
                     local last = autoSkillState.cooldowns[target] or 0
                     if now - last >= 0.5 then
