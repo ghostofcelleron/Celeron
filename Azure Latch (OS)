@@ -234,7 +234,10 @@ end)
 local flowPartData = {
     LocalPlayer = game:GetService("Players").LocalPlayer,
     ByteNetReliable = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"),
-    flowPart = nil
+    flowPart = nil,
+    flowActive = false,
+    flowConnection = nil,
+    originalCFrame = nil
 }
 
 flowPartData.flowPart = Instance.new("Part")
@@ -244,63 +247,134 @@ flowPartData.flowPart.CanCollide = true
 flowPartData.flowPart.Position = Vector3.new(100, 1000, 100)
 flowPartData.flowPart.Parent = workspace
 
-ballfolder:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To Get Flow.", function()
-    local char = flowPartData.LocalPlayer.Character or flowPartData.LocalPlayer.CharacterAdded:Wait()
-    local root = char:WaitForChild("HumanoidRootPart")
-    local original = root.CFrame
+ballfolder:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To Get Flow. Click Again To Cancel.", function()
+    local char = flowPartData.LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    if flowPartData.flowActive then
+        flowPartData.flowActive = false
+
+        if flowPartData.flowConnection then
+            task.cancel(flowPartData.flowConnection)
+            flowPartData.flowConnection = nil
+        end
+
+        if flowPartData.originalCFrame then
+            root.CFrame = flowPartData.originalCFrame
+        end
+
+        return
+    end
+
+    flowPartData.flowActive = true
+    flowPartData.originalCFrame = root.CFrame
+
     root.CFrame = flowPartData.flowPart.CFrame + Vector3.new(0, 5, 0)
+
     task.wait(0.67)
-    task.spawn(function()
+
+    flowPartData.flowConnection = task.spawn(function()
         local flow = workspace:WaitForChild("characters"):WaitForChild(flowPartData.LocalPlayer.Name):WaitForChild("state"):WaitForChild("flow")
-        while flow.Value < 100 do
-            flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), { { "kick", 1, false, vector.create(0, 1, 0) } })
+
+        while flowPartData.flowActive and flow.Value < 100 do
+            flowPartData.ByteNetReliable:FireServer(
+                buffer.fromstring(buffers["base"]),
+                { { "kick", 1, false, vector.create(0, 1, 0) } }
+            )
             task.wait(0.01)
         end
+
         task.wait(0.9)
-        root.CFrame = original
+
+        if flowPartData.flowActive and root and root.Parent and flowPartData.originalCFrame then
+            root.CFrame = flowPartData.originalCFrame
+        end
+
+        flowPartData.flowActive = false
+        flowPartData.flowConnection = nil
     end)
 end)
 
-ballfolder:Button("Steal Ball", "Repeatedly Attempts To Get The Ball.", function()
-    local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
-    while hrp and not (flowPartData.LocalPlayer.Character:FindFirstChild("Ball")) do
-        local ball = workspace.Terrain:FindFirstChild("Ball")
-        if ball then hrp.CFrame = CFrame.new(ball.Position) end
-        for _, p in game.Players:GetPlayers() do
-            if p ~= flowPartData.LocalPlayer then
-                local b = p.Character and p.Character:FindFirstChild("Ball")
-                if b then
-                    hrp.CFrame = b.CFrame
-                    flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"tackle"}})
-                end
-            end
-        end
-        task.wait(0.2)
-    end
-end)
+local stealActive = false
 
-ballfolder:Button("Bring Ball", "Steals The Ball Then Teleports To Where You Were.", function()
+ballfolder:Button("Steal Ball", "Repeatedly Attempts To Get The Ball. Click Again To Cancel.", function()
     local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
     if not hrp then return end
-    local orig = hrp.CFrame
-    local ball = workspace.Terrain:FindFirstChild("Ball")
-    if ball then hrp.CFrame = CFrame.new(ball.Position) end
-    task.wait(0.1)
-    while not (flowPartData.LocalPlayer.Character:FindFirstChild("Ball")) do
-        local b = workspace.Terrain:FindFirstChild("Ball")
-        if b then hrp.CFrame = CFrame.new(b.Position) end
-        for _, p in game.Players:GetPlayers() do
-            if p ~= flowPartData.LocalPlayer then
-                local ob = p.Character and p.Character:FindFirstChild("Ball")
-                if ob then
-                    hrp.CFrame = ob.CFrame
-                    flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"tackle"}})
+
+    if stealActive then
+        stealActive = false
+        return
+    end
+
+    stealActive = true
+
+    spawn(function()
+        while stealActive and hrp and hrp.Parent and not flowPartData.LocalPlayer.Character:FindFirstChild("Ball") do
+            local ball = workspace.Terrain:FindFirstChild("Ball")
+            if ball then
+                hrp.CFrame = CFrame.new(ball.Position)
+            end
+
+            for _, p in game.Players:GetPlayers() do
+                if not stealActive then break end
+                if p ~= flowPartData.LocalPlayer then
+                    local b = p.Character and p.Character:FindFirstChild("Ball")
+                    if b then
+                        hrp.CFrame = b.CFrame
+                        flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"tackle"}})
+                    end
                 end
             end
+
+            task.wait(0.05)
         end
-        task.wait(0.2)
+
+        stealActive = false
+    end)
+end)
+
+ballfolder:Button("Bring Ball", "Steals The Ball Then Teleports Back. Click Again To Cancel.", function()
+    local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
+    if not hrp then return end
+
+    if stealActive then
+        stealActive = false
+        return
     end
-    if hrp.Parent then hrp.CFrame = orig end
+
+    stealActive = true
+
+    spawn(function()
+        local orig = hrp.CFrame
+
+        while stealActive and hrp and hrp.Parent and not flowPartData.LocalPlayer.Character:FindFirstChild("Ball") do
+            local ball = workspace.Terrain:FindFirstChild("Ball")
+            if ball then
+                hrp.CFrame = CFrame.new(ball.Position)
+            end
+
+            for _, p in game.Players:GetPlayers() do
+                if not stealActive then break end
+                if p ~= flowPartData.LocalPlayer then
+                    local ob = p.Character and p.Character:FindFirstChild("Ball")
+                    if ob then
+                        hrp.CFrame = ob.CFrame
+                        flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"tackle"}})
+                    end
+                end
+            end
+
+            task.wait(0.05)
+        end
+
+        if stealActive and hrp and hrp.Parent and flowPartData.LocalPlayer.Character:FindFirstChild("Ball") then
+            hrp.CFrame = orig
+        end
+
+        stealActive = false
+    end)
 end)
 
 local nocd = maintab:Folder("No Cooldown Features.", Color3.fromRGB(24, 255, 228), true)
@@ -1544,26 +1618,40 @@ local nostunPlayer = game.Players.LocalPlayer
 
 local function applyNoStun()
     if not nostunState.enabled then return end
-    local c = nostunPlayer.Character or nostunPlayer.CharacterAdded:Wait()
-    local h = c:WaitForChild("Humanoid")
-    h.WalkSpeed = 40
+    local c = nostunPlayer.Character
+    if not c then return end
+    local h = c:FindFirstChild("Humanoid")
+    if h then
+        h.WalkSpeed = 40
+    end
 end
 
-nostunPlayer.CharacterAdded:Connect(function()
-    if nostunState.enabled then applyNoStun() end
-end)
+local function setupCharacter(char)
+    if nostunState.enabled then
+        applyNoStun()
+    end
+end
+
+nostunPlayer.CharacterAdded:Connect(setupCharacter)
+
+if nostunPlayer.Character then
+    setupCharacter(nostunPlayer.Character)
+end
 
 oth:Toggle("No Stun", "Overrides The Stunned State So You Can Move.", function(v)
     nostunState.enabled = v
     if v then
         game.StarterGui:SetCore("SendNotification", {Title="No Stun", Text="Enabled"})
+        applyNoStun()
     else
         game.StarterGui:SetCore("SendNotification", {Title="No Stun", Text="Disabled"})
     end
 end)
 
 game:GetService("RunService").RenderStepped:Connect(function()
-    if nostunState.enabled then applyNoStun() end
+    if nostunState.enabled then
+        applyNoStun()
+    end
 end)
 
 local brickSpamState = {
