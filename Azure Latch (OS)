@@ -1065,16 +1065,15 @@ autogoal:Button("Isagi U-20 Goal", "Attempts To Do Isagi's U-20 Auto Goal By Tel
         local hrp = plr.Character.HumanoidRootPart
         
         if plr.Team == game.Teams:FindFirstChild("A") then
-            hrp.CFrame = CFrame.new(-459, 3, 862)
+            hrp.CFrame = CFrame.new(-536, 3, 999)
         elseif plr.Team == game.Teams:FindFirstChild("B") then
-            hrp.CFrame = CFrame.new(-611, 3, 1682) * CFrame.Angles(0, math.rad(180), 0)
-        end
-        if plr.Character and plr.Character:FindFirstChild("Humanoid") then
-            plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            hrp.CFrame = CFrame.new(-537, 3, 1549)
         end
         task.wait(0.2)
-        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Two, false, game)
-        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Two, false, game)
+        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(
+            buffer.fromstring(buffers["base"]),
+            { { "skill3"} }
+        )
     end
 end)
 
@@ -1712,6 +1711,189 @@ oth:Toggle("Spam Brick Sound (5v5 + GK Only.)", "This SHOULD Be Self Explanatory
     end
 end)
 
+local th = maintab:Folder("Trap Helper.", Color3.fromRGB(24, 255, 228), true)
+th:Label("Trap Helper: Automatically Moves Toward Ball During Trap Moves.")
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+local player = Players.LocalPlayer
+
+local trapAnims = {
+    "rbxassetid://73387016994281",
+    "rbxassetid://101043441232233",
+    "rbxassetid://96593185131882",
+    "rbxassetid://116422938520670",
+    "rbxassetid://90734196141468",
+    "rbxassetid://85349589701503"
+}
+
+local trapState = {
+    enabled = false,
+    detected = false,
+    armTime = 0,
+    active = false,
+    track = nil,
+    ball = nil,
+    conn = nil
+}
+
+local armWindow = 0.35
+local trapMaxDist = 50
+local trapSpeed = 50
+
+local function findBall()
+    local terrain = workspace.Terrain
+    if terrain then
+        local b = terrain:FindFirstChild("Ball")
+        if b and b:IsA("BasePart") then return b end
+    end
+end
+
+local function startLerpToBall(hrp, ball, track)
+    if (ball.Position - hrp.Position).Magnitude > trapMaxDist then return end
+
+    trapState.ball = ball
+    trapState.track = track
+    trapState.active = true
+
+    if trapState.conn then trapState.conn:Disconnect() end
+
+    trapState.conn = RunService.RenderStepped:Connect(function(dt)
+        if not trapState.track or not trapState.track.IsPlaying then
+            if trapState.conn then trapState.conn:Disconnect() trapState.conn = nil end
+            trapState.active = false
+            trapState.track = nil
+            trapState.ball = nil
+            return
+        end
+
+        if not trapState.ball or not trapState.ball.Parent then
+            if trapState.conn then trapState.conn:Disconnect() trapState.conn = nil end
+            trapState.active = false
+            trapState.track = nil
+            trapState.ball = nil
+            return
+        end
+
+        local cur = hrp.Position
+        local tgt = trapState.ball.Position - Vector3.new(0, 3, 0)
+        local dir = tgt - cur
+        local dist = dir.Magnitude
+
+        if dist > trapMaxDist or dist < 0.5 then
+            if trapState.conn then trapState.conn:Disconnect() trapState.conn = nil end
+            trapState.active = false
+            trapState.track = nil
+            trapState.ball = nil
+            return
+        end
+
+        local move = dir.Unit * (trapSpeed * dt)
+        hrp.CFrame = CFrame.new(cur + move) * hrp.CFrame.Rotation
+    end)
+
+    track.Stopped:Connect(function()
+        if trapState.conn then
+            trapState.conn:Disconnect()
+            trapState.conn = nil
+        end
+        trapState.active = false
+        trapState.track = nil
+        trapState.ball = nil
+    end)
+end
+
+local function hookTraps(char)
+    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    animator.AnimationPlayed:Connect(function(track)
+        if not trapState.enabled then return end
+        if not track.Animation then return end
+
+        local id = track.Animation.AnimationId
+        for _, animId in ipairs(trapAnims) do
+            if id == animId and os.clock() >= trapState.armTime then
+                trapState.detected = true
+
+                task.delay(0.05, function()
+                    if track.IsPlaying then
+                        local ball = findBall()
+                        if ball then
+                            startLerpToBall(hrp, ball, track)
+                        end
+                    end
+                end)
+
+                break
+            end
+        end
+    end)
+end
+
+local function setupCharacter(char)
+    hookTraps(char)
+end
+
+if player.Character then
+    setupCharacter(player.Character)
+end
+player.CharacterAdded:Connect(setupCharacter)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+
+    local code = input.KeyCode.Value
+    if code < Enum.KeyCode.One.Value or code > Enum.KeyCode.Five.Value then return end
+
+    if trapState.active then return end
+
+    trapState.armTime = os.clock()
+    trapState.detected = false
+
+    task.delay(armWindow, function()
+        if not trapState.detected then return end
+
+        local char = player.Character
+        if not char then return end
+
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        local ball = findBall()
+        if ball then
+            local tracks = char.Humanoid.Animator:GetPlayingAnimationTracks()
+            for _, track in ipairs(tracks) do
+                if track.Animation and table.find(trapAnims, track.Animation.AnimationId) then
+                    startLerpToBall(hrp, ball, track)
+                    break
+                end
+            end
+        end
+    end)
+end)
+
+th:Toggle("Trap Helper", function(state)
+    trapState.enabled = state
+    StarterGui:SetCore("SendNotification", {
+        Title = "Trap Helper",
+        Text = state and "Enabled." or "Disabled.",
+        Duration = 1
+    })
+end)
+
+th:Slider("Trap Helper Max Distance", 50, 50, 200, 1, function(v)
+    trapMaxDist = v
+end)
+
+th:Slider("Trap Helper Speed", 50, 50, 250, 1, function(v)
+    trapSpeed = v
+end)
+
 local d = maintab:Folder("Distance Move Buffs.", Color3.fromRGB(24, 255, 228), true)
 d:Label("Distance Move Buffs: Buffs Movement Based Moves.")
 
@@ -1793,7 +1975,6 @@ local function createDash(hrp, distance, durationEstimate, movingKey, cooldownKe
 end
 
 d:Label("Isagi Movement Buffs.")
-
 d:Slider("Naruhaya Footwork Distance", 0, 0, 200, 1, function(v)
 	distanceMovesState.distance = v
 end)
@@ -1811,7 +1992,10 @@ if player.Character then hookFootwork(player.Character) end
 player.CharacterAdded:Connect(hookFootwork)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.Two or distanceMovesState.distance <= 0 or distanceMovesState.moving or distanceMovesState.boostCooldown then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance <= 0 or distanceMovesState.moving or distanceMovesState.boostCooldown then return end
+	
 	distanceMovesState.armTime = os.clock()
 	distanceMovesState.animationDetected = false
 	task.delay(0.33, function()
@@ -1823,7 +2007,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Label("NEL Isagi Movement Buffs.")
-
 d:Slider("Raumdeuter Distance", 0, 0, 200, 1, function(v)
 	distanceMovesState.distance1 = v
 end)
@@ -1841,7 +2024,10 @@ if player.Character then hookRaum(player.Character) end
 player.CharacterAdded:Connect(hookRaum)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.Two or distanceMovesState.distance1 <= 0 or distanceMovesState.moving1 or distanceMovesState.boostCooldown1 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance1 <= 0 or distanceMovesState.moving1 or distanceMovesState.boostCooldown1 then return end
+	
 	distanceMovesState.armTime1 = os.clock()
 	distanceMovesState.animationDetected1 = false
 	task.delay(0.17, function()
@@ -1853,7 +2039,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Label("Shidou Movement Buffs.")
-
 d:Slider("Draconic Rush Distance", 0, 0, 200, 1, function(v)
 	distanceMovesState.distance2 = v
 end)
@@ -1871,7 +2056,10 @@ if player.Character then hookDraconic(player.Character) end
 player.CharacterAdded:Connect(hookDraconic)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.Three or distanceMovesState.distance2 <= 0 or distanceMovesState.moving2 or distanceMovesState.boostCooldown2 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance2 <= 0 or distanceMovesState.moving2 or distanceMovesState.boostCooldown2 then return end
+	
 	distanceMovesState.armTime2 = os.clock()
 	distanceMovesState.animationDetected2 = false
 	task.delay(0.17, function()
@@ -1883,7 +2071,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Label("Bachira Movement Buffs.")
-
 d:Slider("Step Overs Distance", 0, 0, 200, 1, function(v)
 	distanceMovesState.distance3 = v
 end)
@@ -1901,7 +2088,10 @@ if player.Character then hookStep(player.Character) end
 player.CharacterAdded:Connect(hookStep)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.One or distanceMovesState.distance3 <= 0 or distanceMovesState.moving3 or distanceMovesState.boostCooldown3 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance3 <= 0 or distanceMovesState.moving3 or distanceMovesState.boostCooldown3 then return end
+	
 	distanceMovesState.armTime3 = os.clock()
 	distanceMovesState.animationDetected3 = false
 	task.delay(1.275, function()
@@ -1913,7 +2103,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Label("Kaiser Movement Buffs.")
-
 d:Slider("Off The Ball Distance", 0, 0, 200, 1, function(v)
 	distanceMovesState.distance4 = v
 end)
@@ -1931,7 +2120,10 @@ if player.Character then hookKaiser(player.Character) end
 player.CharacterAdded:Connect(hookKaiser)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.Three or distanceMovesState.distance4 <= 0 or distanceMovesState.moving4 or distanceMovesState.boostCooldown4 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance4 <= 0 or distanceMovesState.moving4 or distanceMovesState.boostCooldown4 then return end
+	
 	distanceMovesState.armTime4 = os.clock()
 	distanceMovesState.animationDetected4 = false
 	task.delay(0.2, function()
@@ -1943,7 +2135,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Label("Rin Movement Buffs.")
-
 d:Slider("Occlusion Break Distance", 0, 0, 200, 1, function(v)
 	distanceMovesState.distance5 = v
 end)
@@ -1961,7 +2152,10 @@ if player.Character then hookOcclusion(player.Character) end
 player.CharacterAdded:Connect(hookOcclusion)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.One or distanceMovesState.distance5 <= 0 or distanceMovesState.moving5 or distanceMovesState.boostCooldown5 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance5 <= 0 or distanceMovesState.moving5 or distanceMovesState.boostCooldown5 then return end
+	
 	distanceMovesState.armTime5 = os.clock()
 	distanceMovesState.animationDetected5 = false
 	task.delay(0.2, function()
@@ -1973,7 +2167,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Label("Gagamaru Movement Buffs.")
-
 d:Slider("Diving Header Distance", 0, 0, 125, 1, function(v)
 	distanceMovesState.distance6 = v
 end)
@@ -1991,7 +2184,10 @@ if player.Character then hookDiving(player.Character) end
 player.CharacterAdded:Connect(hookDiving)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.Two or distanceMovesState.distance6 <= 0 or distanceMovesState.moving6 or distanceMovesState.boostCooldown6 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance6 <= 0 or distanceMovesState.moving6 or distanceMovesState.boostCooldown6 then return end
+	
 	distanceMovesState.armTime6 = os.clock()
 	distanceMovesState.animationDetected6 = false
 	task.delay(0.4, function()
@@ -2003,7 +2199,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Label("Aiku Movement Buffs.")
-
 d:Slider("Reflex Tackle Distance", 0, 0, 125, 1, function(v)
 	distanceMovesState.distance7 = v
 end)
@@ -2021,7 +2216,10 @@ if player.Character then hookReflex(player.Character) end
 player.CharacterAdded:Connect(hookReflex)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.Two or distanceMovesState.distance7 <= 0 or distanceMovesState.moving7 or distanceMovesState.boostCooldown7 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance7 <= 0 or distanceMovesState.moving7 or distanceMovesState.boostCooldown7 then return end
+	
 	distanceMovesState.armTime7 = os.clock()
 	distanceMovesState.animationDetected7 = false
 	task.delay(0.1, function()
@@ -2033,7 +2231,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Label("Yukimiya Movement Buffs.")
-
 d:Slider("Speed Dribble Distance", 0, 0, 200, 1, function(v)
 	distanceMovesState.distance9 = v
 end)
@@ -2051,7 +2248,10 @@ if player.Character then hookSpeed(player.Character) end
 player.CharacterAdded:Connect(hookSpeed)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.Three or distanceMovesState.distance9 <= 0 or distanceMovesState.moving9 or distanceMovesState.boostCooldown9 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance9 <= 0 or distanceMovesState.moving9 or distanceMovesState.boostCooldown9 then return end
+	
 	distanceMovesState.armTime9 = os.clock()
 	distanceMovesState.animationDetected9 = false
 	task.delay(0.2, function()
@@ -2079,7 +2279,10 @@ if player.Character then hookCut(player.Character) end
 player.CharacterAdded:Connect(hookCut)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.Two or distanceMovesState.distance10 <= 0 or distanceMovesState.moving10 or distanceMovesState.boostCooldown10 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance10 <= 0 or distanceMovesState.moving10 or distanceMovesState.boostCooldown10 then return end
+	
 	distanceMovesState.armTime10 = os.clock()
 	distanceMovesState.animationDetected10 = false
 	task.delay(0.2, function()
@@ -2091,7 +2294,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Label("Kunigami Movement Buffs.")
-
 d:Slider("Hero's Instinct Distance", 0, 0, 300, 1, function(v)
 	distanceMovesState.distance16 = v
 end)
@@ -2099,8 +2301,7 @@ end)
 local function hookInstinct(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == hero_instinct 
-		   and os.clock() >= distanceMovesState.armTime16 then
+		if track.Animation and track.Animation.AnimationId == hero_instinct and os.clock() >= distanceMovesState.armTime16 then
 			distanceMovesState.animationDetected16 = true
 		end
 	end)
@@ -2110,31 +2311,21 @@ if player.Character then hookInstinct(player.Character) end
 player.CharacterAdded:Connect(hookInstinct)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.One 
-	   or distanceMovesState.distance16 <= 0 
-	   or distanceMovesState.moving16 
-	   or distanceMovesState.boostCooldown16 then 
-		return 
-	end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance16 <= 0 or distanceMovesState.moving16 or distanceMovesState.boostCooldown16 then return end
 	
 	distanceMovesState.armTime16 = os.clock()
 	distanceMovesState.animationDetected16 = false
-	
 	task.delay(0.33, function()
-		if not distanceMovesState.animationDetected16 
-		   or distanceMovesState.boostCooldown16 then 
-			return 
-		end
-		
+		if not distanceMovesState.animationDetected16 or distanceMovesState.boostCooldown16 then return end
 		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
-		
 		createDash(hrp, distanceMovesState.distance16, 1.25, "moving16", "boostCooldown16")
 	end)
 end)
 
 d:Label("Kurona Movement Buffs.")
-
 d:Slider("Close Quarter Dribble Distance", 0, 0, 250, 1, function(v)
 	distanceMovesState.distance17 = v
 end)
@@ -2142,8 +2333,7 @@ end)
 local function hookQuarterDrib(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == close_quarter_dribble 
-		   and os.clock() >= distanceMovesState.armTime17 then
+		if track.Animation and track.Animation.AnimationId == close_quarter_dribble and os.clock() >= distanceMovesState.armTime17 then
 			distanceMovesState.animationDetected17 = true
 		end
 	end)
@@ -2153,31 +2343,21 @@ if player.Character then hookQuarterDrib(player.Character) end
 player.CharacterAdded:Connect(hookQuarterDrib)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.One 
-	   or distanceMovesState.distance17 <= 0 
-	   or distanceMovesState.moving17 
-	   or distanceMovesState.boostCooldown17 then 
-		return 
-	end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance17 <= 0 or distanceMovesState.moving17 or distanceMovesState.boostCooldown17 then return end
 	
 	distanceMovesState.armTime17 = os.clock()
 	distanceMovesState.animationDetected17 = false
-	
 	task.delay(0.33, function()
-		if not distanceMovesState.animationDetected17 
-		   or distanceMovesState.boostCooldown17 then 
-			return 
-		end
-		
+		if not distanceMovesState.animationDetected17 or distanceMovesState.boostCooldown17 then return end
 		local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
-		
 		createDash(hrp, distanceMovesState.distance17, 2.25, "moving17", "boostCooldown17")
 	end)
 end)
 
 d:Label("Don Lorenzo Movement Buffs.")
-
 d:Slider("Zombie Dribble Distance", 0, 0, 250, 1, function(v)
     distanceMovesState.distance14 = v
 end)
@@ -2195,7 +2375,10 @@ if player.Character then hookZombDrib(player.Character) end
 player.CharacterAdded:Connect(hookZombDrib)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe or input.KeyCode ~= Enum.KeyCode.One or distanceMovesState.distance14 <= 0 or distanceMovesState.moving14 or distanceMovesState.boostCooldown14 then return end
+    if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+    if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+    if distanceMovesState.distance14 <= 0 or distanceMovesState.moving14 or distanceMovesState.boostCooldown14 then return end
+    
     distanceMovesState.armTime14 = os.clock()
     distanceMovesState.animationDetected14 = false
     task.delay(0.1, function()
@@ -2207,7 +2390,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Label("Barou Movement Buffs.")
-
 d:Slider("King's Path Distance", 0, 0, 750, 1, function(v)
 	distanceMovesState.distance12 = v
 end)
@@ -2225,7 +2407,10 @@ if player.Character then hookKingsPath(player.Character) end
 player.CharacterAdded:Connect(hookKingsPath)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.Three or distanceMovesState.distance12 <= 0 or distanceMovesState.moving12 or distanceMovesState.boostCooldown12 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance12 <= 0 or distanceMovesState.moving12 or distanceMovesState.boostCooldown12 then return end
+	
 	distanceMovesState.armTime12 = os.clock()
 	distanceMovesState.animationDetected12 = false
 	task.delay(0.5, function()
@@ -2237,7 +2422,7 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Slider("Devour Distance", 0, 0, 500, 1, function(v)
-	distanceMovesState.maxDistance13 = v
+	distanceMovesState.maxDistance14 = v
 end)
 
 local function hookDevour(char)
@@ -2267,7 +2452,10 @@ if player.Character then hookDevour(player.Character) end
 player.CharacterAdded:Connect(hookDevour)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.Four or distanceMovesState.maxDistance13 <= 0 or distanceMovesState.isDashing13 or distanceMovesState.boostOnCooldown13 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.maxDistance14 <= 0 or distanceMovesState.isDashing13 or distanceMovesState.boostOnCooldown13 then return end
+	
 	distanceMovesState.armTime13 = os.clock()
 	distanceMovesState.animationArmed13 = false
 	task.delay(0.1, function()
@@ -2285,8 +2473,8 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 			if dir.Magnitude < 0.01 then dir = Vector3.new(0,0,1) end
 			local step = distanceMovesState.dashSpeed13 * dt
 			local wouldTravel = distanceTraveled + step
-			if wouldTravel >= distanceMovesState.maxDistance13 then
-				step = distanceMovesState.maxDistance13 - distanceTraveled
+			if wouldTravel >= distanceMovesState.maxDistance14 then
+				step = distanceMovesState.maxDistance14 - distanceTraveled
 				distanceMovesState.isDashing13 = false
 			end
 			local pos = hrp.Position + dir * step
@@ -2304,7 +2492,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
 end)
 
 d:Label("Chigiri Movement Buffs.")
-
 d:Slider("Mach Cut-In Distance", 0, 0, 200, 1, function(v)
 	distanceMovesState.distance8 = v
 end)
@@ -2322,7 +2509,10 @@ if player.Character then hookMach(player.Character) end
 player.CharacterAdded:Connect(hookMach)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.One or distanceMovesState.distance8 <= 0 or distanceMovesState.moving8 or distanceMovesState.boostCooldown8 then return end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.distance8 <= 0 or distanceMovesState.moving8 or distanceMovesState.boostCooldown8 then return end
+	
 	distanceMovesState.armTime8 = os.clock()
 	distanceMovesState.animationDetected8 = false
 	task.delay(0.5, function()
@@ -2340,8 +2530,7 @@ end)
 local function hookGolden(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == gold_zone 
-		   and os.clock() >= (distanceMovesState.armTime15 or 0) then
+		if track.Animation and track.Animation.AnimationId == gold_zone and os.clock() >= (distanceMovesState.armTime15 or 0) then
 			distanceMovesState.animationDetected15 = true
 		end
 	end)
@@ -2351,32 +2540,20 @@ if player.Character then hookGolden(player.Character) end
 player.CharacterAdded:Connect(hookGolden)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
-	if gpe or input.KeyCode ~= Enum.KeyCode.Five 
-	   or distanceMovesState.moving15 
-	   or distanceMovesState.boostCooldown15 then 
-		return 
-	end
+	if gpe or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+	if not (input.KeyCode.Value >= Enum.KeyCode.One.Value and input.KeyCode.Value <= Enum.KeyCode.Five.Value) then return end
+	if distanceMovesState.moving15 or distanceMovesState.boostCooldown15 then return end
 	
 	distanceMovesState.armTime15 = os.clock()
 	distanceMovesState.animationDetected15 = false
-	
 	task.delay(0.4, function()
-		if not distanceMovesState.animationDetected15 
-		   or distanceMovesState.boostCooldown15 then 
-			return 
-		end
-		
+		if not distanceMovesState.animationDetected15 or distanceMovesState.boostCooldown15 then return end
 		local char = player.Character
 		if not char then return end
-		
 		local hrp = char:FindFirstChild("HumanoidRootPart")
 		if not hrp then return end
-		
 		local ball = char:FindFirstChild("Ball")
-		if not ball or not ball:IsA("MeshPart") then 
-			return 
-		end
-		
+		if not ball or not ball:IsA("MeshPart") then return end
 		createDash(hrp, distanceMovesState.distance15, 2, "moving15", "boostCooldown15")
 	end)
 end)
