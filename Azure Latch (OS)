@@ -1727,7 +1727,8 @@ local trapAnims = {
     "rbxassetid://96593185131882",
     "rbxassetid://116422938520670",
     "rbxassetid://90734196141468",
-    "rbxassetid://85349589701503"
+    "rbxassetid://85349589701503",
+    "rbxassetid://120351399679118"
 }
 
 local trapState = {
