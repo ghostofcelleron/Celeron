@@ -1904,26 +1904,25 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 local distanceMovesState = {
-    distance = 0, moving = false, boostCooldown = false, animationDetected = false, armTime = 0,
-    distance1 = 0, moving1 = false, boostCooldown1 = false, animationDetected1 = false, armTime1 = 0,
-    distance2 = 0, moving2 = false, boostCooldown2 = false, animationDetected2 = false, armTime2 = 0,
-    distance3 = 0, moving3 = false, boostCooldown3 = false, animationDetected3 = false, armTime3 = 0,
-    distance4 = 0, moving4 = false, boostCooldown4 = false, animationDetected4 = false, armTime4 = 0,
-    distance5 = 0, moving5 = false, boostCooldown5 = false, animationDetected5 = false, armTime5 = 0,
-    distance6 = 0, moving6 = false, boostCooldown6 = false, animationDetected6 = false, armTime6 = 0,
-    distance7 = 0, moving7 = false, boostCooldown7 = false, animationDetected7 = false, armTime7 = 0,
-    distance8 = 0, moving8 = false, boostCooldown8 = false, animationDetected8 = false, armTime8 = 0,
-    distance9 = 0, moving9 = false, boostCooldown9 = false, animationDetected9 = false, armTime9 = 0,
-    distance10 = 0, moving10 = false, boostCooldown10 = false, animationDetected10 = false, armTime10 = 0,
-    distance12 = 0, moving12 = false, boostCooldown12 = false, animationDetected12 = false, armTime12 = 0,
-    distance13 = 0, moving13 = false, boostCooldown13 = false, animationDetected13 = false, armTime13 = 0,
-    distance14 = 0, moving14 = false, boostCooldown14 = false, animationDetected14 = false, armTime14 = 0,
+    distance = 0, moving = false, boostCooldown = false,
+    distance1 = 0, moving1 = false, boostCooldown1 = false,
+    distance2 = 0, moving2 = false, boostCooldown2 = false,
+    distance3 = 0, moving3 = false, boostCooldown3 = false,
+    distance4 = 0, moving4 = false, boostCooldown4 = false,
+    distance5 = 0, moving5 = false, boostCooldown5 = false,
+    distance6 = 0, moving6 = false, boostCooldown6 = false,
+    distance7 = 0, moving7 = false, boostCooldown7 = false,
+    distance8 = 0, moving8 = false, boostCooldown8 = false,
+    distance9 = 0, moving9 = false, boostCooldown9 = false,
+    distance10 = 0, moving10 = false, boostCooldown10 = false,
+    distance12 = 0, moving12 = false, boostCooldown12 = false,
+    distance14 = 0, moving14 = false, boostCooldown14 = false,
     maxDistance14 = 0, dashSpeed13 = 150,
-    isDashing13 = false, boostOnCooldown13 = false, animationArmed13 = false, armTime13 = 0,
+    isDashing13 = false, boostOnCooldown13 = false,
     currentDashConnection = nil, currentTrack = nil,
-    distance15 = 0, moving15 = false, boostCooldown15 = false, animationDetected15 = false, armTime15 = 0,
-    distance16 = 0, moving16 = false, boostCooldown16 = false, animationDetected16 = false, armTime16 = 0,
-    distance17 = 0, moving17 = false, boostCooldown17 = false, animationDetected17 = false, armTime17 = 0
+    distance15 = 0, moving15 = false, boostCooldown15 = false,
+    distance16 = 0, moving16 = false, boostCooldown16 = false,
+    distance17 = 0, moving17 = false, boostCooldown17 = false
 }
 
 local naru_anim = "rbxassetid://82240286756891"
@@ -1945,28 +1944,39 @@ local hero_instinct = "rbxassetid://82417661349987"
 local close_quarter_dribble = "rbxassetid://94171465685487"
 
 local function createDash(hrp, distance, durationEstimate, movingKey, cooldownKey)
-	distanceMovesState[movingKey] = true
-	distanceMovesState[cooldownKey] = true
-	local speed = distance / durationEstimate
-	local remaining = distance
-	local startY = hrp.Position.Y
-	local conn = RunService.RenderStepped:Connect(function(dt)
-		local step = math.min(speed * dt, remaining)
-		local look = hrp.CFrame.LookVector
-		local dir = Vector3.new(look.X, 0, look.Z)
-		if dir.Magnitude < 0.01 then dir = Vector3.new(0,0,1) end
-		dir = dir.Unit
-		local pos = hrp.Position + dir * step
-		hrp.CFrame = CFrame.new(pos.X, startY, pos.Z) * CFrame.lookAt(Vector3.zero, look)
-		remaining -= step
-		if remaining <= 0 then
-			conn:Disconnect()
-			distanceMovesState[movingKey] = false
-			task.delay(0.15, function()
-				distanceMovesState[cooldownKey] = false
-			end)
-		end
-	end)
+    distanceMovesState[movingKey] = true
+    distanceMovesState[cooldownKey] = true
+
+    local speed = distance / durationEstimate
+    local remaining = distance
+    local startY = hrp.Position.Y
+
+    local connection
+    connection = RunService.RenderStepped:Connect(function(dt)
+        if not connection then return end
+
+        local step = math.min(speed * dt, remaining)
+        local look = hrp.CFrame.LookVector
+        local dir = Vector3.new(look.X, 0, look.Z)
+        if dir.Magnitude < 0.01 then dir = Vector3.new(0,0,1) end
+        dir = dir.Unit
+
+        local pos = hrp.Position + dir * step
+        hrp.CFrame = CFrame.new(pos.X, startY, pos.Z) * CFrame.lookAt(Vector3.zero, look)
+
+        remaining -= step
+
+        if remaining <= 0 then
+            if connection then
+                connection:Disconnect()
+                connection = nil
+            end
+            distanceMovesState[movingKey] = false
+            task.delay(0.15, function()
+                distanceMovesState[cooldownKey] = false
+            end)
+        end
+    end)
 end
 
 d:Label("Isagi Movement Buffs.")
@@ -1977,13 +1987,9 @@ end)
 local function hookFootwork(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == naru_anim then
-			if distanceMovesState.distance > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance, 0.45, "moving", "boostCooldown")
-				end
-			end
+		if track.Animation and track.Animation.AnimationId == naru_anim and distanceMovesState.distance > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance, 0.45, "moving", "boostCooldown") end
 		end
 	end)
 end
@@ -1999,13 +2005,9 @@ end)
 local function hookRaum(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and raum_anims[track.Animation.AnimationId] then
-			if distanceMovesState.distance1 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance1, 0.625, "moving1", "boostCooldown1")
-				end
-			end
+		if track.Animation and raum_anims[track.Animation.AnimationId] and distanceMovesState.distance1 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance1, 0.625, "moving1", "boostCooldown1") end
 		end
 	end)
 end
@@ -2021,13 +2023,9 @@ end)
 local function hookDraconic(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == drac_anim then
-			if distanceMovesState.distance2 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance2, 0.75, "moving2", "boostCooldown2")
-				end
-			end
+		if track.Animation and track.Animation.AnimationId == drac_anim and distanceMovesState.distance2 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance2, 0.75, "moving2", "boostCooldown2") end
 		end
 	end)
 end
@@ -2043,13 +2041,9 @@ end)
 local function hookStep(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == step_anim then
-			if distanceMovesState.distance3 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance3, 0.25, "moving3", "boostCooldown3")
-				end
-			end
+		if track.Animation and track.Animation.AnimationId == step_anim and distanceMovesState.distance3 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance3, 0.25, "moving3", "boostCooldown3") end
 		end
 	end)
 end
@@ -2065,13 +2059,9 @@ end)
 local function hookKaiser(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == kaiser_anim then
-			if distanceMovesState.distance4 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance4, 0.55, "moving4", "boostCooldown4")
-				end
-			end
+		if track.Animation and track.Animation.AnimationId == kaiser_anim and distanceMovesState.distance4 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance4, 0.55, "moving4", "boostCooldown4") end
 		end
 	end)
 end
@@ -2087,13 +2077,9 @@ end)
 local function hookOcclusion(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == occlusion_anim then
-			if distanceMovesState.distance5 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance5, 1.0, "moving5", "boostCooldown5")
-				end
-			end
+		if track.Animation and track.Animation.AnimationId == occlusion_anim and distanceMovesState.distance5 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance5, 1.0, "moving5", "boostCooldown5") end
 		end
 	end)
 end
@@ -2109,13 +2095,9 @@ end)
 local function hookDiving(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == "rbxassetid://91506202951715" then
-			if distanceMovesState.distance6 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance6, 0.35, "moving6", "boostCooldown6")
-				end
-			end
+		if track.Animation and track.Animation.AnimationId == "rbxassetid://91506202951715" and distanceMovesState.distance6 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance6, 0.35, "moving6", "boostCooldown6") end
 		end
 	end)
 end
@@ -2131,13 +2113,9 @@ end)
 local function hookReflex(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == reflex_anim then
-			if distanceMovesState.distance7 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance7, 0.2, "moving7", "boostCooldown7")
-				end
-			end
+		if track.Animation and track.Animation.AnimationId == reflex_anim and distanceMovesState.distance7 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance7, 0.2, "moving7", "boostCooldown7") end
 		end
 	end)
 end
@@ -2153,13 +2131,9 @@ end)
 local function hookSpeed(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and (track.Animation.AnimationId == speed_anim1 or track.Animation.AnimationId == speed_anim2) then
-			if distanceMovesState.distance9 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance9, 1.15, "moving9", "boostCooldown9")
-				end
-			end
+		if track.Animation and (track.Animation.AnimationId == speed_anim1 or track.Animation.AnimationId == speed_anim2) and distanceMovesState.distance9 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance9, 1.15, "moving9", "boostCooldown9") end
 		end
 	end)
 end
@@ -2174,13 +2148,9 @@ end)
 local function hookCut(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and (track.Animation.AnimationId == "rbxassetid://133384553147918" or track.Animation.AnimationId == "rbxassetid://128936529440509") then
-			if distanceMovesState.distance10 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance10, 1.0, "moving10", "boostCooldown10")
-				end
-			end
+		if track.Animation and (track.Animation.AnimationId == "rbxassetid://133384553147918" or track.Animation.AnimationId == "rbxassetid://128936529440509") and distanceMovesState.distance10 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance10, 1.0, "moving10", "boostCooldown10") end
 		end
 	end)
 end
@@ -2196,13 +2166,9 @@ end)
 local function hookInstinct(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == hero_instinct then
-			if distanceMovesState.distance16 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance16, 1.25, "moving16", "boostCooldown16")
-				end
-			end
+		if track.Animation and track.Animation.AnimationId == hero_instinct and distanceMovesState.distance16 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance16, 1.25, "moving16", "boostCooldown16") end
 		end
 	end)
 end
@@ -2218,13 +2184,9 @@ end)
 local function hookQuarterDrib(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == close_quarter_dribble then
-			if distanceMovesState.distance17 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance17, 2.25, "moving17", "boostCooldown17")
-				end
-			end
+		if track.Animation and track.Animation.AnimationId == close_quarter_dribble and distanceMovesState.distance17 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance17, 2.25, "moving17", "boostCooldown17") end
 		end
 	end)
 end
@@ -2240,12 +2202,10 @@ end)
 local function hookZombDrib(char)
     local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
     animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and track.Animation.AnimationId == zomb_anim then
-            if distanceMovesState.distance14 > 0 then
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    createDash(hrp, distanceMovesState.distance14, 2sa, "moving14", "boostCooldown14")
-                end
+        if track.Animation and track.Animation.AnimationId == zomb_anim and distanceMovesState.distance14 > 0 then
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                createDash(hrp, distanceMovesState.distance14, 2, "moving14", "boostCooldown14")
             end
         end
     end)
@@ -2262,13 +2222,9 @@ end)
 local function hookKingsPath(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == kings_path_anim then
-			if distanceMovesState.distance12 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance12, 1.175, "moving12", "boostCooldown12")
-				end
-			end
+		if track.Animation and track.Animation.AnimationId == kings_path_anim and distanceMovesState.distance12 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance12, 1.175, "moving12", "boostCooldown12") end
 		end
 	end)
 end
@@ -2283,52 +2239,51 @@ end)
 local function hookDevour(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == devour_anim then
-			if distanceMovesState.maxDistance14 > 0 then
-				distanceMovesState.animationArmed13 = true
-				distanceMovesState.currentTrack = track
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					distanceMovesState.isDashing13 = true
-					distanceMovesState.boostOnCooldown13 = true
-					local distanceTraveled = 0
-					local startY = hrp.Position.Y
-					distanceMovesState.currentDashConnection = RunService.RenderStepped:Connect(function(dt)
-						if not distanceMovesState.isDashing13 then return end
-						local look = hrp.CFrame.LookVector
-						local dir = Vector3.new(look.X, 0, look.Z).Unit
-						if dir.Magnitude < 0.01 then dir = Vector3.new(0,0,1) end
-						local step = distanceMovesState.dashSpeed13 * dt
-						local wouldTravel = distanceTraveled + step
-						if wouldTravel >= distanceMovesState.maxDistance14 then
-							step = distanceMovesState.maxDistance14 - distanceTraveled
-							distanceMovesState.isDashing13 = false
-						end
-						local pos = hrp.Position + dir * step
-						hrp.CFrame = CFrame.new(pos.X, startY, pos.Z) * CFrame.lookAt(Vector3.zero, look)
-						distanceTraveled += step
-						if not distanceMovesState.isDashing13 then
+		if track.Animation and track.Animation.AnimationId == devour_anim and distanceMovesState.maxDistance14 > 0 then
+			distanceMovesState.currentTrack = track
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				distanceMovesState.isDashing13 = true
+				distanceMovesState.boostOnCooldown13 = true
+				local distanceTraveled = 0
+				local startY = hrp.Position.Y
+				distanceMovesState.currentDashConnection = RunService.RenderStepped:Connect(function(dt)
+					if not distanceMovesState.isDashing13 then return end
+					local look = hrp.CFrame.LookVector
+					local dir = Vector3.new(look.X, 0, look.Z).Unit
+					if dir.Magnitude < 0.01 then dir = Vector3.new(0,0,1) end
+					local step = distanceMovesState.dashSpeed13 * dt
+					local wouldTravel = distanceTraveled + step
+					if wouldTravel >= distanceMovesState.maxDistance14 then
+						step = distanceMovesState.maxDistance14 - distanceTraveled
+						distanceMovesState.isDashing13 = false
+					end
+					local pos = hrp.Position + dir * step
+					hrp.CFrame = CFrame.new(pos.X, startY, pos.Z) * CFrame.lookAt(Vector3.zero, look)
+					distanceTraveled += step
+					if not distanceMovesState.isDashing13 then
+						if distanceMovesState.currentDashConnection then
 							distanceMovesState.currentDashConnection:Disconnect()
 							distanceMovesState.currentDashConnection = nil
-							task.delay(0.15, function()
-								distanceMovesState.boostOnCooldown13 = false
-							end)
 						end
-					end)
-				end
-				local stoppedConn = track.Stopped:Connect(function()
-					if distanceMovesState.currentDashConnection then
-						distanceMovesState.currentDashConnection:Disconnect()
-						distanceMovesState.currentDashConnection = nil
+						task.delay(0.15, function()
+							distanceMovesState.boostOnCooldown13 = false
+						end)
 					end
-					distanceMovesState.isDashing13 = false
-					task.delay(0.15, function()
-						distanceMovesState.boostOnCooldown13 = false
-					end)
-					distanceMovesState.currentTrack = nil
-					stoppedConn:Disconnect()
 				end)
 			end
+			local stoppedConn = track.Stopped:Connect(function()
+				if distanceMovesState.currentDashConnection then
+					distanceMovesState.currentDashConnection:Disconnect()
+					distanceMovesState.currentDashConnection = nil
+				end
+				distanceMovesState.isDashing13 = false
+				task.delay(0.15, function()
+					distanceMovesState.boostOnCooldown13 = false
+				end)
+				distanceMovesState.currentTrack = nil
+				stoppedConn:Disconnect()
+			end)
 		end
 	end)
 end
@@ -2344,13 +2299,9 @@ end)
 local function hookMach(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and (track.Animation.AnimationId == mach_anim1 or track.Animation.AnimationId == mach_anim2) then
-			if distanceMovesState.distance8 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					createDash(hrp, distanceMovesState.distance8, 0.35, "moving8", "boostCooldown8")
-				end
-			end
+		if track.Animation and (track.Animation.AnimationId == mach_anim1 or track.Animation.AnimationId == mach_anim2) and distanceMovesState.distance8 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then createDash(hrp, distanceMovesState.distance8, 0.35, "moving8", "boostCooldown8") end
 		end
 	end)
 end
@@ -2365,14 +2316,12 @@ end)
 local function hookGolden(char)
 	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
 	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == gold_zone then
-			if distanceMovesState.distance15 > 0 then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if not hrp then return end
-				local ball = char:FindFirstChild("Ball")
-				if not ball or not ball:IsA("MeshPart") then return end
-				createDash(hrp, distanceMovesState.distance15, 2, "moving15", "boostCooldown15")
-			end
+		if track.Animation and track.Animation.AnimationId == gold_zone and distanceMovesState.distance15 > 0 then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if not hrp then return end
+			local ball = char:FindFirstChild("Ball")
+			if not ball or not ball:IsA("MeshPart") then return end
+			createDash(hrp, distanceMovesState.distance15, 2, "moving15", "boostCooldown15")
 		end
 	end)
 end
