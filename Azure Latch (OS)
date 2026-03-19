@@ -2385,7 +2385,7 @@ UserInputService.InputBegan:Connect(function(input, gpe)
         if not distanceMovesState.animationDetected14 or distanceMovesState.boostCooldown14 then return end
         local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
         if not hrp then return end
-        createDash(hrp, distanceMovesState.distance14, 4, "moving14", "boostCooldown14")
+        createDash(hrp, distanceMovesState.distance14, 2, "moving14", "boostCooldown14")
     end)
 end)
 
