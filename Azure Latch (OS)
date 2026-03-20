@@ -1738,7 +1738,8 @@ local trapState = {
     active = false,
     track = nil,
     ball = nil,
-    conn = nil
+    conn = nil,
+    alignOri = nil
 }
 
 local armWindow = 0.35
@@ -1753,6 +1754,20 @@ local function findBall()
     end
 end
 
+local function cleanupTrap()
+    if trapState.conn then 
+        trapState.conn:Disconnect() 
+        trapState.conn = nil 
+    end
+    trapState.active = false
+    trapState.track = nil
+    trapState.ball = nil
+    if trapState.alignOri then 
+        trapState.alignOri:Destroy() 
+        trapState.alignOri = nil 
+    end
+end
+
 local function startLerpToBall(hrp, ball, track)
     if (ball.Position - hrp.Position).Magnitude > trapMaxDist then return end
 
@@ -1760,22 +1775,27 @@ local function startLerpToBall(hrp, ball, track)
     trapState.track = track
     trapState.active = true
 
+    if trapState.alignOri then trapState.alignOri:Destroy() end
+    local ao = Instance.new("AlignOrientation")
+    ao.Name = "TrapFaceAlign"
+    ao.Mode = Enum.OrientationAlignmentMode.OneAttachment
+    ao.Attachment0 = hrp:FindFirstChild("RootAttachment") or Instance.new("Attachment", hrp)
+    ao.RigidityEnabled = false
+    ao.MaxTorque = 20000
+    ao.Responsiveness = 1000
+    ao.Parent = hrp
+    trapState.alignOri = ao
+
     if trapState.conn then trapState.conn:Disconnect() end
 
     trapState.conn = RunService.RenderStepped:Connect(function(dt)
         if not trapState.track or not trapState.track.IsPlaying then
-            if trapState.conn then trapState.conn:Disconnect() trapState.conn = nil end
-            trapState.active = false
-            trapState.track = nil
-            trapState.ball = nil
+            cleanupTrap()
             return
         end
 
         if not trapState.ball or not trapState.ball.Parent then
-            if trapState.conn then trapState.conn:Disconnect() trapState.conn = nil end
-            trapState.active = false
-            trapState.track = nil
-            trapState.ball = nil
+            cleanupTrap()
             return
         end
 
@@ -1785,25 +1805,21 @@ local function startLerpToBall(hrp, ball, track)
         local dist = dir.Magnitude
 
         if dist > trapMaxDist or dist < 0.5 then
-            if trapState.conn then trapState.conn:Disconnect() trapState.conn = nil end
-            trapState.active = false
-            trapState.track = nil
-            trapState.ball = nil
+            cleanupTrap()
             return
         end
 
         local move = dir.Unit * (trapSpeed * dt)
         hrp.CFrame = CFrame.new(cur + move) * hrp.CFrame.Rotation
+
+        local ballFlat = Vector3.new(trapState.ball.Position.X, hrp.Position.Y, trapState.ball.Position.Z)
+        if trapState.alignOri then
+            trapState.alignOri.CFrame = CFrame.lookAt(hrp.Position, ballFlat)
+        end
     end)
 
     track.Stopped:Connect(function()
-        if trapState.conn then
-            trapState.conn:Disconnect()
-            trapState.conn = nil
-        end
-        trapState.active = false
-        trapState.track = nil
-        trapState.ball = nil
+        cleanupTrap()
     end)
 end
 
@@ -1891,7 +1907,7 @@ th:Slider("Trap Helper Max Distance", 50, 50, 200, 1, function(v)
     trapMaxDist = v
 end)
 
-th:Slider("Trap Helper Speed", 50, 50, 250, 1, function(v)
+th:Slider("Trap Helper Speed", 50, 50, 1000, 1, function(v)
     trapSpeed = v
 end)
 
@@ -1902,432 +1918,344 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
+local rs = RunService
 
-local distanceMovesState = {
-    distance = 0, moving = false, boostCooldown = false,
-    distance1 = 0, moving1 = false, boostCooldown1 = false,
-    distance2 = 0, moving2 = false, boostCooldown2 = false,
-    distance3 = 0, moving3 = false, boostCooldown3 = false,
-    distance4 = 0, moving4 = false, boostCooldown4 = false,
-    distance5 = 0, moving5 = false, boostCooldown5 = false,
-    distance6 = 0, moving6 = false, boostCooldown6 = false,
-    distance7 = 0, moving7 = false, boostCooldown7 = false,
-    distance8 = 0, moving8 = false, boostCooldown8 = false,
-    distance9 = 0, moving9 = false, boostCooldown9 = false,
-    distance10 = 0, moving10 = false, boostCooldown10 = false,
-    distance12 = 0, moving12 = false, boostCooldown12 = false,
-    distance14 = 0, moving14 = false, boostCooldown14 = false,
-    maxDistance14 = 0, dashSpeed13 = 150,
-    isDashing13 = false, boostOnCooldown13 = false,
-    currentDashConnection = nil, currentTrack = nil,
-    distance15 = 0, moving15 = false, boostCooldown15 = false,
-    distance16 = 0, moving16 = false, boostCooldown16 = false,
-    distance17 = 0, moving17 = false, boostCooldown17 = false
+local DashConfigs = {
+    Naruhaya = {
+        animId = "rbxassetid://82240286756891",
+        sliderVar = "naruhayaDist",
+        duration = 0.45,
+        cooldown = 0.15,
+        wait = 0.05
+    },
+    Raumdeuter = {
+        animIds = {["rbxassetid://81582265162782"] = true},
+        sliderVar = "raumDist",
+        duration = 0.625,
+        cooldown = 0.15,
+        wait = 0.1
+    },
+    DraconicRush = {
+        animId = "rbxassetid://95359966795185",
+        sliderVar = "dracDist",
+        duration = 0.75,
+        cooldown = 0.15,
+        wait = 0.15
+    },
+    StepOvers = {
+        animId = "rbxassetid://84063609284472",
+        sliderVar = "stepDist",
+        duration = 0.25,
+        cooldown = 0.15,
+        wait = 0
+    },
+    KaiserOffBall = {
+        animId = "rbxassetid://110660551661470",
+        sliderVar = "kaiserDist",
+        duration = 0.55,
+        cooldown = 0.15,
+        wait = 0.08
+    },
+    OcclusionBreak = {
+        animId = "rbxassetid://116181317759538",
+        sliderVar = "occlusionDist",
+        duration = 1.0,
+        cooldown = 0.15,
+        wait = 0.2
+    },
+    DivingHeader = {
+        animId = "rbxassetid://91506202951715",
+        sliderVar = "divingDist",
+        duration = 0.35,
+        cooldown = 0.15,
+        wait = 0.05
+    },
+    ReflexTackle = {
+        animId = "rbxassetid://113088324958896",
+        sliderVar = "reflexDist",
+        duration = 0.2,
+        cooldown = 0.15,
+        wait = 0
+    },
+    SpeedDribble = {
+        animIds = {
+            ["rbxassetid://70397727954557"] = true,
+            ["rbxassetid://131196726012273"] = true
+        },
+        sliderVar = "speedDist",
+        duration = 1.15,
+        cooldown = 0.15,
+        wait = 0.1
+    },
+    CutIn = {
+        animIds = {
+            ["rbxassetid://133384553147918"] = true,
+            ["rbxassetid://128936529440509"] = true
+        },
+        sliderVar = "cutDist",
+        duration = 1.0,
+        cooldown = 0.15,
+        wait = 0.07
+    },
+    HeroInstinct = {
+        animId = "rbxassetid://82417661349987",
+        sliderVar = "instinctDist",
+        duration = 1.25,
+        cooldown = 0.15,
+        wait = 0.12
+    },
+    CloseQuarterDribble = {
+        animId = "rbxassetid://94171465685487",
+        sliderVar = "quarterDist",
+        duration = 2.25,
+        cooldown = 0.15,
+        wait = 0.18
+    },
+    ZombieDribble = {
+        animId = "rbxassetid://102294508090597",
+        sliderVar = "zombDist",
+        duration = 1.7,
+        cooldown = 0.15,
+        wait = 0.15
+    },
+    KingsPath = {
+        animId = "rbxassetid://73560885704292",
+        sliderVar = "kingsDist",
+        duration = 1.175,
+        cooldown = 0.15,
+        wait = 0.4
+    },
+    MachCutIn = {
+        animIds = {
+            ["rbxassetid://133945265328817"] = true,
+            ["rbxassetid://88448030655006"] = true
+        },
+        sliderVar = "machDist",
+        duration = 0.35,
+        cooldown = 0.15,
+        wait = 0
+    },
+    GoldenZone = {
+        animId = "rbxassetid://132426354821688",
+        sliderVar = "goldenDist",
+        duration = 2.0,
+        cooldown = 0.15,
+        requiresBall = true,
+        wait = 0.15
+    },
+    Devour = {
+        animId = "rbxassetid://117921992582675",
+        sliderVar = "devourMaxDist",
+        speed = 150,
+        cooldown = 0.15,
+        isUnlimited = true,
+        wait = 0.2
+    }
 }
 
-local naru_anim = "rbxassetid://82240286756891"
-local raum_anims = {["rbxassetid://81582265162782"] = true}
-local drac_anim = "rbxassetid://95359966795185"
-local step_anim = "rbxassetid://84063609284472"
-local kaiser_anim = "rbxassetid://110660551661470"
-local occlusion_anim = "rbxassetid://116181317759538"
-local mach_anim1 = "rbxassetid://133945265328817"
-local mach_anim2 = "rbxassetid://88448030655006"
-local reflex_anim = "rbxassetid://113088324958896"
-local speed_anim1 = "rbxassetid://70397727954557"
-local speed_anim2 = "rbxassetid://131196726012273"
-local kings_path_anim = "rbxassetid://73560885704292"
-local devour_anim = "rbxassetid://117921992582675"
-local zomb_anim = "rbxassetid://102294508090597"
-local gold_zone = "rbxassetid://132426354821688"
-local hero_instinct = "rbxassetid://82417661349987"
-local close_quarter_dribble = "rbxassetid://94171465685487"
+local Distances = {}
+for _, cfg in pairs(DashConfigs) do
+    Distances[cfg.sliderVar] = 0
+end
 
-local function createDash(hrp, distance, durationEstimate, movingKey, cooldownKey)
-    distanceMovesState[movingKey] = true
-    distanceMovesState[cooldownKey] = true
+local ActiveDashes = {}
+local cachedHRP = nil
 
-    local speed = distance / durationEstimate
-    local remaining = distance
-    local startY = hrp.Position.Y
+local function startDash(hrp, cfg, track)
+    local dist = Distances[cfg.sliderVar]
+    if dist <= 0 then return end
 
-    local connection
-    connection = RunService.RenderStepped:Connect(function(dt)
-        if not connection then return end
+    task.delay(cfg.wait or 0, function()
+        if not hrp or not hrp.Parent then return end
 
-        local step = math.min(speed * dt, remaining)
-        local look = hrp.CFrame.LookVector
-        local dir = Vector3.new(look.X, 0, look.Z)
+        local dash = {
+            hrp = hrp,
+            startY = hrp.Position.Y,
+            remaining = dist,
+            cfg = cfg
+        }
+
+        if cfg.isUnlimited then
+            dash.remaining = math.huge
+            dash.speed = cfg.speed
+
+            -- For Devour: stop when animation ends
+            if track then
+                local stoppedConn
+                stoppedConn = track.Stopped:Connect(function()
+                    dash.remaining = 0  -- force stop next frame
+                    if stoppedConn then
+                        stoppedConn:Disconnect()
+                    end
+                end)
+            end
+        else
+            dash.speed = dist / cfg.duration
+        end
+
+        table.insert(ActiveDashes, dash)
+    end)
+end
+
+local function onAnimationPlayed(track)
+    if not track.Animation then return end
+    local id = track.Animation.AnimationId
+
+    for _, cfg in pairs(DashConfigs) do
+        local match = false
+        if cfg.animId and id == cfg.animId then
+            match = true
+        elseif cfg.animIds and cfg.animIds[id] then
+            match = true
+        end
+
+        if match then
+            if cachedHRP and cachedHRP.Parent then
+                if cfg.requiresBall then
+                    local ball = cachedHRP.Parent:FindFirstChild("Ball")
+                    if not ball or not ball:IsA("MeshPart") then continue end
+                end
+                startDash(cachedHRP, cfg, track)   -- pass track for Devour
+            end
+        end
+    end
+end
+
+local renderConn = rs.RenderStepped:Connect(function(dt)
+    for i = #ActiveDashes, 1, -1 do
+        local dash = ActiveDashes[i]
+        local hrp = dash.hrp
+
+        if not hrp or not hrp.Parent then
+            table.remove(ActiveDashes, i)
+            continue
+        end
+
+        local step
+        if dash.cfg.isUnlimited then
+            step = dash.speed * dt
+            if dash.remaining < math.huge then
+                step = math.min(step, dash.remaining)
+            end
+        else
+            step = math.min(dash.speed * dt, dash.remaining)
+        end
+
+        local dir = Vector3.new(hrp.CFrame.LookVector.X, 0, hrp.CFrame.LookVector.Z)
         if dir.Magnitude < 0.01 then dir = Vector3.new(0,0,1) end
         dir = dir.Unit
 
         local pos = hrp.Position + dir * step
-        hrp.CFrame = CFrame.new(pos.X, startY, pos.Z) * CFrame.lookAt(Vector3.zero, look)
+        hrp.CFrame = CFrame.new(pos.X, dash.startY, pos.Z) * CFrame.new(Vector3.new(), dir)
 
-        remaining -= step
+        dash.remaining = dash.remaining - step
 
-        if remaining <= 0 then
-            if connection then
-                connection:Disconnect()
-                connection = nil
-            end
-            distanceMovesState[movingKey] = false
-            task.delay(0.15, function()
-                distanceMovesState[cooldownKey] = false
-            end)
+        if dash.remaining <= 0 then
+            table.remove(ActiveDashes, i)
+            task.delay(dash.cfg.cooldown, function() end)
         end
-    end)
+    end
+end)
+
+local function setupCharacter(char)
+    local hum = char:WaitForChild("Humanoid", 5)
+    if not hum then return end
+
+    local animator = hum:WaitForChild("Animator", 5)
+    if not animator then return end
+
+    cachedHRP = char:WaitForChild("HumanoidRootPart", 5)
+    if not cachedHRP then return end
+
+    animator.AnimationPlayed:Connect(onAnimationPlayed)
 end
 
-d:Label("Isagi Movement Buffs.")
+if player.Character then
+    setupCharacter(player.Character)
+end
+player.CharacterAdded:Connect(setupCharacter)
+
+d:Label("Isagi Movement Buffs")
 d:Slider("Naruhaya Footwork Distance", 0, 0, 200, 1, function(v)
-	distanceMovesState.distance = v
+    Distances.naruhayaDist = v
 end)
 
-local function hookFootwork(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == naru_anim and distanceMovesState.distance > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance, 0.45, "moving", "boostCooldown") end
-		end
-	end)
-end
-
-if player.Character then hookFootwork(player.Character) end
-player.CharacterAdded:Connect(hookFootwork)
-
-d:Label("NEL Isagi Movement Buffs.")
+d:Label("NEL Isagi Movement Buffs")
 d:Slider("Raumdeuter Distance", 0, 0, 200, 1, function(v)
-	distanceMovesState.distance1 = v
+    Distances.raumDist = v
 end)
 
-local function hookRaum(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and raum_anims[track.Animation.AnimationId] and distanceMovesState.distance1 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance1, 0.625, "moving1", "boostCooldown1") end
-		end
-	end)
-end
-
-if player.Character then hookRaum(player.Character) end
-player.CharacterAdded:Connect(hookRaum)
-
-d:Label("Shidou Movement Buffs.")
+d:Label("Shidou Movement Buffs")
 d:Slider("Draconic Rush Distance", 0, 0, 200, 1, function(v)
-	distanceMovesState.distance2 = v
+    Distances.dracDist = v
 end)
 
-local function hookDraconic(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == drac_anim and distanceMovesState.distance2 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance2, 0.75, "moving2", "boostCooldown2") end
-		end
-	end)
-end
-
-if player.Character then hookDraconic(player.Character) end
-player.CharacterAdded:Connect(hookDraconic)
-
-d:Label("Bachira Movement Buffs.")
+d:Label("Bachira Movement Buffs")
 d:Slider("Step Overs Distance", 0, 0, 200, 1, function(v)
-	distanceMovesState.distance3 = v
+    Distances.stepDist = v
 end)
 
-local function hookStep(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == step_anim and distanceMovesState.distance3 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance3, 0.25, "moving3", "boostCooldown3") end
-		end
-	end)
-end
-
-if player.Character then hookStep(player.Character) end
-player.CharacterAdded:Connect(hookStep)
-
-d:Label("Kaiser Movement Buffs.")
+d:Label("Kaiser Movement Buffs")
 d:Slider("Off The Ball Distance", 0, 0, 200, 1, function(v)
-	distanceMovesState.distance4 = v
+    Distances.kaiserDist = v
 end)
 
-local function hookKaiser(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == kaiser_anim and distanceMovesState.distance4 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance4, 0.55, "moving4", "boostCooldown4") end
-		end
-	end)
-end
-
-if player.Character then hookKaiser(player.Character) end
-player.CharacterAdded:Connect(hookKaiser)
-
-d:Label("Rin Movement Buffs.")
+d:Label("Rin Movement Buffs")
 d:Slider("Occlusion Break Distance", 0, 0, 200, 1, function(v)
-	distanceMovesState.distance5 = v
+    Distances.occlusionDist = v
 end)
 
-local function hookOcclusion(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == occlusion_anim and distanceMovesState.distance5 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance5, 1.0, "moving5", "boostCooldown5") end
-		end
-	end)
-end
-
-if player.Character then hookOcclusion(player.Character) end
-player.CharacterAdded:Connect(hookOcclusion)
-
-d:Label("Gagamaru Movement Buffs.")
+d:Label("Gagamaru Movement Buffs")
 d:Slider("Diving Header Distance", 0, 0, 125, 1, function(v)
-	distanceMovesState.distance6 = v
+    Distances.divingDist = v
 end)
 
-local function hookDiving(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == "rbxassetid://91506202951715" and distanceMovesState.distance6 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance6, 0.35, "moving6", "boostCooldown6") end
-		end
-	end)
-end
-
-if player.Character then hookDiving(player.Character) end
-player.CharacterAdded:Connect(hookDiving)
-
-d:Label("Aiku Movement Buffs.")
+d:Label("Aiku Movement Buffs")
 d:Slider("Reflex Tackle Distance", 0, 0, 125, 1, function(v)
-	distanceMovesState.distance7 = v
+    Distances.reflexDist = v
 end)
 
-local function hookReflex(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == reflex_anim and distanceMovesState.distance7 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance7, 0.2, "moving7", "boostCooldown7") end
-		end
-	end)
-end
-
-if player.Character then hookReflex(player.Character) end
-player.CharacterAdded:Connect(hookReflex)
-
-d:Label("Yukimiya Movement Buffs.")
+d:Label("Yukimiya Movement Buffs")
 d:Slider("Speed Dribble Distance", 0, 0, 200, 1, function(v)
-	distanceMovesState.distance9 = v
+    Distances.speedDist = v
 end)
-
-local function hookSpeed(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and (track.Animation.AnimationId == speed_anim1 or track.Animation.AnimationId == speed_anim2) and distanceMovesState.distance9 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance9, 1.15, "moving9", "boostCooldown9") end
-		end
-	end)
-end
-
-if player.Character then hookSpeed(player.Character) end
-player.CharacterAdded:Connect(hookSpeed)
 
 d:Slider("Cut In Distance", 0, 0, 200, 1, function(v)
-	distanceMovesState.distance10 = v
+    Distances.cutDist = v
 end)
 
-local function hookCut(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and (track.Animation.AnimationId == "rbxassetid://133384553147918" or track.Animation.AnimationId == "rbxassetid://128936529440509") and distanceMovesState.distance10 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance10, 1.0, "moving10", "boostCooldown10") end
-		end
-	end)
-end
-
-if player.Character then hookCut(player.Character) end
-player.CharacterAdded:Connect(hookCut)
-
-d:Label("Kunigami Movement Buffs.")
+d:Label("Kunigami Movement Buffs")
 d:Slider("Hero's Instinct Distance", 0, 0, 300, 1, function(v)
-	distanceMovesState.distance16 = v
+    Distances.instinctDist = v
 end)
 
-local function hookInstinct(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == hero_instinct and distanceMovesState.distance16 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance16, 1.25, "moving16", "boostCooldown16") end
-		end
-	end)
-end
-
-if player.Character then hookInstinct(player.Character) end
-player.CharacterAdded:Connect(hookInstinct)
-
-d:Label("Kurona Movement Buffs.")
+d:Label("Kurona Movement Buffs")
 d:Slider("Close Quarter Dribble Distance", 0, 0, 250, 1, function(v)
-	distanceMovesState.distance17 = v
+    Distances.quarterDist = v
 end)
 
-local function hookQuarterDrib(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == close_quarter_dribble and distanceMovesState.distance17 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance17, 2.25, "moving17", "boostCooldown17") end
-		end
-	end)
-end
-
-if player.Character then hookQuarterDrib(player.Character) end
-player.CharacterAdded:Connect(hookQuarterDrib)
-
-d:Label("Don Lorenzo Movement Buffs.")
+d:Label("Don Lorenzo Movement Buffs")
 d:Slider("Zombie Dribble Distance", 0, 0, 250, 1, function(v)
-    distanceMovesState.distance14 = v
+    Distances.zombDist = v
 end)
 
-local function hookZombDrib(char)
-    local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-    animator.AnimationPlayed:Connect(function(track)
-        if track.Animation and track.Animation.AnimationId == zomb_anim and distanceMovesState.distance14 > 0 then
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                createDash(hrp, distanceMovesState.distance14, 2, "moving14", "boostCooldown14")
-            end
-        end
-    end)
-end
-
-if player.Character then hookZombDrib(player.Character) end
-player.CharacterAdded:Connect(hookZombDrib)
-
-d:Label("Barou Movement Buffs.")
+d:Label("Barou Movement Buffs")
 d:Slider("King's Path Distance", 0, 0, 750, 1, function(v)
-	distanceMovesState.distance12 = v
+    Distances.kingsDist = v
 end)
 
-local function hookKingsPath(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == kings_path_anim and distanceMovesState.distance12 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance12, 1.175, "moving12", "boostCooldown12") end
-		end
-	end)
-end
-
-if player.Character then hookKingsPath(player.Character) end
-player.CharacterAdded:Connect(hookKingsPath)
-
-d:Slider("Devour Distance", 0, 0, 500, 1, function(v)
-	distanceMovesState.maxDistance14 = v
+d:Slider("DEVOUR. Distance", 0, 0, 500, 1, function(v)
+    Distances.devourMaxDist = v
 end)
 
-local function hookDevour(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == devour_anim and distanceMovesState.maxDistance14 > 0 then
-			distanceMovesState.currentTrack = track
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then
-				distanceMovesState.isDashing13 = true
-				distanceMovesState.boostOnCooldown13 = true
-				local distanceTraveled = 0
-				local startY = hrp.Position.Y
-				distanceMovesState.currentDashConnection = RunService.RenderStepped:Connect(function(dt)
-					if not distanceMovesState.isDashing13 then return end
-					local look = hrp.CFrame.LookVector
-					local dir = Vector3.new(look.X, 0, look.Z).Unit
-					if dir.Magnitude < 0.01 then dir = Vector3.new(0,0,1) end
-					local step = distanceMovesState.dashSpeed13 * dt
-					local wouldTravel = distanceTraveled + step
-					if wouldTravel >= distanceMovesState.maxDistance14 then
-						step = distanceMovesState.maxDistance14 - distanceTraveled
-						distanceMovesState.isDashing13 = false
-					end
-					local pos = hrp.Position + dir * step
-					hrp.CFrame = CFrame.new(pos.X, startY, pos.Z) * CFrame.lookAt(Vector3.zero, look)
-					distanceTraveled += step
-					if not distanceMovesState.isDashing13 then
-						if distanceMovesState.currentDashConnection then
-							distanceMovesState.currentDashConnection:Disconnect()
-							distanceMovesState.currentDashConnection = nil
-						end
-						task.delay(0.15, function()
-							distanceMovesState.boostOnCooldown13 = false
-						end)
-					end
-				end)
-			end
-			local stoppedConn = track.Stopped:Connect(function()
-				if distanceMovesState.currentDashConnection then
-					distanceMovesState.currentDashConnection:Disconnect()
-					distanceMovesState.currentDashConnection = nil
-				end
-				distanceMovesState.isDashing13 = false
-				task.delay(0.15, function()
-					distanceMovesState.boostOnCooldown13 = false
-				end)
-				distanceMovesState.currentTrack = nil
-				stoppedConn:Disconnect()
-			end)
-		end
-	end)
-end
-
-if player.Character then hookDevour(player.Character) end
-player.CharacterAdded:Connect(hookDevour)
-
-d:Label("Chigiri Movement Buffs.")
+d:Label("Chigiri Movement Buffs")
 d:Slider("Mach Cut-In Distance", 0, 0, 200, 1, function(v)
-	distanceMovesState.distance8 = v
+    Distances.machDist = v
 end)
-
-local function hookMach(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and (track.Animation.AnimationId == mach_anim1 or track.Animation.AnimationId == mach_anim2) and distanceMovesState.distance8 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if hrp then createDash(hrp, distanceMovesState.distance8, 0.35, "moving8", "boostCooldown8") end
-		end
-	end)
-end
-
-if player.Character then hookMach(player.Character) end
-player.CharacterAdded:Connect(hookMach)
 
 d:Slider("Golden Zone Distance (Req. Ball)", 0, 0, 400, 1, function(v)
-	distanceMovesState.distance15 = v
+    Distances.goldenDist = v
 end)
-
-local function hookGolden(char)
-	local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
-	animator.AnimationPlayed:Connect(function(track)
-		if track.Animation and track.Animation.AnimationId == gold_zone and distanceMovesState.distance15 > 0 then
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			if not hrp then return end
-			local ball = char:FindFirstChild("Ball")
-			if not ball or not ball:IsA("MeshPart") then return end
-			createDash(hrp, distanceMovesState.distance15, 2, "moving15", "boostCooldown15")
-		end
-	end)
-end
-
-if player.Character then hookGolden(player.Character) end
-player.CharacterAdded:Connect(hookGolden)
 
 local autoact = maintab2:Folder("Auto Activate Features.", Color3.fromRGB(24, 255, 228), true)
 autoact:Label("Auto Activate: Activates The Move When Ball Within Range.")
