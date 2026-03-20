@@ -1926,35 +1926,35 @@ local DashConfigs = {
         sliderVar = "naruhayaDist",
         duration = 0.45,
         cooldown = 0.15,
-        wait = 0.05
+        wait = 0.33
     },
     Raumdeuter = {
         animIds = {["rbxassetid://81582265162782"] = true},
         sliderVar = "raumDist",
-        duration = 0.625,
+        duration = 0.55,
         cooldown = 0.15,
         wait = 0.1
     },
     DraconicRush = {
         animId = "rbxassetid://95359966795185",
         sliderVar = "dracDist",
-        duration = 0.75,
+        duration = 0.625,
         cooldown = 0.15,
-        wait = 0.15
+        wait = 0.175
     },
     StepOvers = {
         animId = "rbxassetid://84063609284472",
         sliderVar = "stepDist",
-        duration = 0.25,
+        duration = 0.15,
         cooldown = 0.15,
-        wait = 0
+        wait = 1.275
     },
     KaiserOffBall = {
         animId = "rbxassetid://110660551661470",
         sliderVar = "kaiserDist",
         duration = 0.55,
         cooldown = 0.15,
-        wait = 0.08
+        wait = 0.15
     },
     OcclusionBreak = {
         animId = "rbxassetid://116181317759538",
@@ -1985,7 +1985,7 @@ local DashConfigs = {
         sliderVar = "speedDist",
         duration = 1.15,
         cooldown = 0.15,
-        wait = 0.1
+        wait = 0.2
     },
     CutIn = {
         animIds = {
@@ -1995,14 +1995,14 @@ local DashConfigs = {
         sliderVar = "cutDist",
         duration = 1.0,
         cooldown = 0.15,
-        wait = 0.07
+        wait = 0.2
     },
     HeroInstinct = {
         animId = "rbxassetid://82417661349987",
         sliderVar = "instinctDist",
         duration = 1.25,
         cooldown = 0.15,
-        wait = 0.12
+        wait = 0.33
     },
     CloseQuarterDribble = {
         animId = "rbxassetid://94171465685487",
@@ -2031,9 +2031,9 @@ local DashConfigs = {
             ["rbxassetid://88448030655006"] = true
         },
         sliderVar = "machDist",
-        duration = 0.35,
+        duration = 0.15,
         cooldown = 0.15,
-        wait = 0
+        wait = 0.625
     },
     GoldenZone = {
         animId = "rbxassetid://132426354821688",
@@ -2175,47 +2175,47 @@ if player.Character then
 end
 player.CharacterAdded:Connect(setupCharacter)
 
-d:Label("Isagi Movement Buffs")
+d:Label("Isagi Movement Buffs.")
 d:Slider("Naruhaya Footwork Distance", 0, 0, 200, 1, function(v)
     Distances.naruhayaDist = v
 end)
 
-d:Label("NEL Isagi Movement Buffs")
+d:Label("NEL Isagi Movement Buffs.")
 d:Slider("Raumdeuter Distance", 0, 0, 200, 1, function(v)
     Distances.raumDist = v
 end)
 
-d:Label("Shidou Movement Buffs")
+d:Label("Shidou Movement Buffs.")
 d:Slider("Draconic Rush Distance", 0, 0, 200, 1, function(v)
     Distances.dracDist = v
 end)
 
-d:Label("Bachira Movement Buffs")
+d:Label("Bachira Movement Buffs.")
 d:Slider("Step Overs Distance", 0, 0, 200, 1, function(v)
     Distances.stepDist = v
 end)
 
-d:Label("Kaiser Movement Buffs")
+d:Label("Kaiser Movement Buffs.")
 d:Slider("Off The Ball Distance", 0, 0, 200, 1, function(v)
     Distances.kaiserDist = v
 end)
 
-d:Label("Rin Movement Buffs")
+d:Label("Rin Movement Buffs.")
 d:Slider("Occlusion Break Distance", 0, 0, 200, 1, function(v)
     Distances.occlusionDist = v
 end)
 
-d:Label("Gagamaru Movement Buffs")
+d:Label("Gagamaru Movement Buffs.")
 d:Slider("Diving Header Distance", 0, 0, 125, 1, function(v)
     Distances.divingDist = v
 end)
 
-d:Label("Aiku Movement Buffs")
+d:Label("Aiku Movement Buffs.")
 d:Slider("Reflex Tackle Distance", 0, 0, 125, 1, function(v)
     Distances.reflexDist = v
 end)
 
-d:Label("Yukimiya Movement Buffs")
+d:Label("Yukimiya Movement Buffs.")
 d:Slider("Speed Dribble Distance", 0, 0, 200, 1, function(v)
     Distances.speedDist = v
 end)
@@ -2224,22 +2224,22 @@ d:Slider("Cut In Distance", 0, 0, 200, 1, function(v)
     Distances.cutDist = v
 end)
 
-d:Label("Kunigami Movement Buffs")
+d:Label("Kunigami Movement Buffs.")
 d:Slider("Hero's Instinct Distance", 0, 0, 300, 1, function(v)
     Distances.instinctDist = v
 end)
 
-d:Label("Kurona Movement Buffs")
+d:Label("Kurona Movement Buffs.")
 d:Slider("Close Quarter Dribble Distance", 0, 0, 250, 1, function(v)
     Distances.quarterDist = v
 end)
 
-d:Label("Don Lorenzo Movement Buffs")
+d:Label("Don Lorenzo Movement Buffs.")
 d:Slider("Zombie Dribble Distance", 0, 0, 250, 1, function(v)
     Distances.zombDist = v
 end)
 
-d:Label("Barou Movement Buffs")
+d:Label("Barou Movement Buffs.")
 d:Slider("King's Path Distance", 0, 0, 750, 1, function(v)
     Distances.kingsDist = v
 end)
@@ -2248,7 +2248,7 @@ d:Slider("DEVOUR. Distance", 0, 0, 500, 1, function(v)
     Distances.devourMaxDist = v
 end)
 
-d:Label("Chigiri Movement Buffs")
+d:Label("Chigiri Movement Buffs.")
 d:Slider("Mach Cut-In Distance", 0, 0, 200, 1, function(v)
     Distances.machDist = v
 end)
