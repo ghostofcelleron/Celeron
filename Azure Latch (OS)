@@ -2060,6 +2060,62 @@ end
 
 local ActiveDashes = {}
 local cachedHRP = nil
+local renderConn = nil
+
+local ZERO = Vector3.new()
+local DEFAULT_DIR = Vector3.new(0,0,1)
+
+local function updateDashes(dt)
+    for i = #ActiveDashes, 1, -1 do
+        local dash = ActiveDashes[i]
+        local hrp = dash.hrp
+
+        if not hrp or not hrp.Parent then
+            table.remove(ActiveDashes, i)
+            continue
+        end
+
+        local step
+        if dash.cfg.isUnlimited then
+            step = dash.speed * dt
+            if dash.remaining < math.huge then
+                step = math.min(step, dash.remaining)
+            end
+        else
+            step = math.min(dash.speed * dt, dash.remaining)
+        end
+
+        local look = hrp.CFrame.LookVector
+        local dir = Vector3.new(look.X, 0, look.Z)
+        local mag = dir.Magnitude
+        if mag > 0.01 then
+            dir = dir / mag
+        else
+            dir = DEFAULT_DIR
+        end
+
+        local pos = hrp.Position + dir * step
+        hrp.CFrame = CFrame.new(pos.X, dash.startY, pos.Z) * CFrame.new(ZERO, dir)
+
+        dash.remaining = dash.remaining - step
+
+        if dash.remaining <= 0 then
+            table.remove(ActiveDashes, i)
+            task.delay(dash.cfg.cooldown, function() end)
+        end
+    end
+
+    if #ActiveDashes == 0 and renderConn then
+        renderConn:Disconnect()
+        renderConn = nil
+    end
+end
+
+local function startUpdateIfNeeded()
+    if not renderConn and #ActiveDashes > 0 then
+        renderConn = rs.RenderStepped:Connect(updateDashes)
+    end
+end
 
 local function startDash(hrp, cfg, track)
     local dist = Distances[cfg.sliderVar]
@@ -2079,11 +2135,10 @@ local function startDash(hrp, cfg, track)
             dash.remaining = math.huge
             dash.speed = cfg.speed
 
-            -- For Devour: stop when animation ends
             if track then
                 local stoppedConn
                 stoppedConn = track.Stopped:Connect(function()
-                    dash.remaining = 0  -- force stop next frame
+                    dash.remaining = 0
                     if stoppedConn then
                         stoppedConn:Disconnect()
                     end
@@ -2094,6 +2149,7 @@ local function startDash(hrp, cfg, track)
         end
 
         table.insert(ActiveDashes, dash)
+        startUpdateIfNeeded()
     end)
 end
 
@@ -2115,47 +2171,11 @@ local function onAnimationPlayed(track)
                     local ball = cachedHRP.Parent:FindFirstChild("Ball")
                     if not ball or not ball:IsA("MeshPart") then continue end
                 end
-                startDash(cachedHRP, cfg, track)   -- pass track for Devour
+                startDash(cachedHRP, cfg, track)
             end
         end
     end
 end
-
-local renderConn = rs.RenderStepped:Connect(function(dt)
-    for i = #ActiveDashes, 1, -1 do
-        local dash = ActiveDashes[i]
-        local hrp = dash.hrp
-
-        if not hrp or not hrp.Parent then
-            table.remove(ActiveDashes, i)
-            continue
-        end
-
-        local step
-        if dash.cfg.isUnlimited then
-            step = dash.speed * dt
-            if dash.remaining < math.huge then
-                step = math.min(step, dash.remaining)
-            end
-        else
-            step = math.min(dash.speed * dt, dash.remaining)
-        end
-
-        local dir = Vector3.new(hrp.CFrame.LookVector.X, 0, hrp.CFrame.LookVector.Z)
-        if dir.Magnitude < 0.01 then dir = Vector3.new(0,0,1) end
-        dir = dir.Unit
-
-        local pos = hrp.Position + dir * step
-        hrp.CFrame = CFrame.new(pos.X, dash.startY, pos.Z) * CFrame.new(Vector3.new(), dir)
-
-        dash.remaining = dash.remaining - step
-
-        if dash.remaining <= 0 then
-            table.remove(ActiveDashes, i)
-            task.delay(dash.cfg.cooldown, function() end)
-        end
-    end
-end)
 
 local function setupCharacter(char)
     local hum = char:WaitForChild("Humanoid", 5)
