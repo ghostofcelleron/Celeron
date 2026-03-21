@@ -2142,33 +2142,22 @@ local function updateDashes(dt)
             continue
         end
 
-        local step
-        if dash.cfg.isUnlimited then
-            step = dash.speed * dt
-            if dash.remaining < math.huge then
-                step = math.min(step, dash.remaining)
-            end
-        else
-            step = math.min(dash.speed * dt, dash.remaining)
-        end
+        local step = dash.cfg.isUnlimited and (dash.speed * dt) or math.min(dash.speed * dt, dash.remaining)
 
         local look = hrp.CFrame.LookVector
-        local dir = Vector3.new(look.X, 0, look.Z)
-        local mag = dir.Magnitude
-        if mag > 0.01 then
-            dir = dir / mag
-        else
+        local dir = Vector3.new(look.X, 0, look.Z).Unit
+        if dir.Magnitude < 0.01 then
             dir = DEFAULT_DIR
         end
 
-        local pos = hrp.Position + dir * step
-        hrp.CFrame = CFrame.new(pos.X, dash.startY, pos.Z) * CFrame.new(ZERO, dir)
+        local newPos = hrp.Position + dir * step
+
+        hrp.CFrame = CFrame.new(newPos.X, hrp.Position.Y, newPos.Z) * CFrame.new(ZERO, dir)
 
         dash.remaining = dash.remaining - step
 
         if dash.remaining <= 0 then
             table.remove(ActiveDashes, i)
-            task.delay(dash.cfg.cooldown, function() end)
         end
     end
 
@@ -2180,7 +2169,7 @@ end
 
 local function startUpdateIfNeeded()
     if not renderConn and #ActiveDashes > 0 then
-        renderConn = rs.RenderStepped:Connect(updateDashes)
+        renderConn = game:GetService("RunService").RenderStepped:Connect(updateDashes)
     end
 end
 
@@ -2193,7 +2182,6 @@ local function startDash(hrp, cfg, track)
 
         local dash = {
             hrp = hrp,
-            startY = hrp.Position.Y,
             remaining = dist,
             cfg = cfg
         }
@@ -3877,8 +3865,8 @@ teleporttab:Button("Middle Field", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-540, 3, 1274)
 end)
 
-teleporttab:Button("Gallery Area", function()
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(109, 66, 3337)
+teleporttab:Button("Reporter Area", function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-6, 2, 3237)
 end)
 
 teleporttab:Button("Goal Box (A)", function()
