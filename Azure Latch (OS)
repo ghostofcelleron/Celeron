@@ -1967,6 +1967,27 @@ local player = Players.LocalPlayer
 local rs = RunService
 
 local DashConfigs = {
+    Tackle = {
+        animId = "rbxassetid://109744655458082",
+        sliderVar = "tackleDist",
+        duration = 0.4,
+        cooldown = 0.15,
+        wait = 0
+    },
+    Rush = {
+        animId = "rbxassetid://79394729551302",
+        sliderVar = "rushDist",
+        duration = 0.4,
+        cooldown = 0.15,
+        wait = 0.15
+    },
+    GKDash = {
+        animId = "rbxassetid://90537955276413",
+        sliderVar = "gkDist",
+        duration = 0.55,
+        cooldown = 0.15,
+        wait = 0.05
+    },
     Naruhaya = {
         animId = "rbxassetid://82240286756891",
         sliderVar = "naruhayaDist",
@@ -2240,6 +2261,19 @@ if player.Character then
     setupCharacter(player.Character)
 end
 player.CharacterAdded:Connect(setupCharacter)
+
+d:Label("Universal Movement Buffs.")
+d:Slider("Tackle Distance", 0, 0, 75, 1, function(v)
+    Distances.tackleDist = v
+end)
+
+d:Slider("Rush Distance", 0, 0, 75, 1, function(v)
+    Distances.rushDist = v
+end)
+
+d:Slider("GK Front Dive Distance", 0, 0, 75, 1, function(v)
+    Distances.gkDist = v
+end)
 
 d:Label("Isagi Movement Buffs.")
 d:Slider("Naruhaya Footwork Distance", 0, 0, 200, 1, function(v)
