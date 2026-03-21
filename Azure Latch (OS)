@@ -378,7 +378,7 @@ ballfolder:Button("Bring Ball", "Steals The Ball Then Teleports Back. Click Agai
 end)
 
 local nocd = maintab:Folder("No Cooldown Features.", Color3.fromRGB(24, 255, 228), true)
-nocd:Label("No Cooldown Features.")
+nocd:Label("No Cooldown Features. Please Note This Is Exclusive To PC.")
 
 local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
@@ -398,6 +398,10 @@ local dashState = {
     rootPart = nil
 }
 
+local FORWARD_ANIM_ID = "rbxassetid://79394729551302"
+local SIDE_RIGHT_ANIM_ID = "rbxassetid://114016332539655"
+local SIDE_LEFT_ANIM_ID  = "rbxassetid://100207093237932"
+
 local function updateCharacter()
     dashState.character = player.Character or player.CharacterAdded:Wait()
     dashState.humanoid = dashState.character:WaitForChild("Humanoid")
@@ -415,37 +419,68 @@ local function notify(title, text)
     })
 end
 
+local function isAnimationPlaying(animId)
+    if not dashState.humanoid then return false end
+    local tracks = dashState.humanoid:GetPlayingAnimationTracks()
+    for _, track in ipairs(tracks) do
+        if track.Animation and track.Animation.AnimationId == animId then
+            return true
+        end
+    end
+    return false
+end
+
+local function isAnySideDashPlaying()
+    return isAnimationPlaying(SIDE_RIGHT_ANIM_ID) or isAnimationPlaying(SIDE_LEFT_ANIM_ID)
+end
+
+local function clearPreviousDashForces()
+    if not dashState.rootPart then return end
+    for _, child in ipairs(dashState.rootPart:GetChildren()) do
+        if child:IsA("BodyVelocity") and child.Name:match("^DashBV_") then
+            child:Destroy()
+        end
+    end
+end
+
 local function forwardRush()
-    if dashState.rushing or not dashState.ForwardRushEnabled or not dashState.humanoid or not dashState.rootPart then return end
+    if not dashState.ForwardRushEnabled or not dashState.humanoid or not dashState.rootPart then return end
     if tick() - dashState.lastForwardRush < 0.75 then return end
+
+    if isAnimationPlaying(FORWARD_ANIM_ID) then
+        return
+    end
+
     dashState.lastForwardRush = tick()
     dashState.rushing = true
 
+    clearPreviousDashForces()
+
     local animator = dashState.humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", dashState.humanoid)
     local animation = Instance.new("Animation")
-    animation.AnimationId = "rbxassetid://79394729551302"
+    animation.AnimationId = FORWARD_ANIM_ID
     local animationTrack = animator:LoadAnimation(animation)
     animationTrack:Play()
 
-    task.delay(0.05, function()
-        if animationTrack.IsPlaying then
-            local sound = Instance.new("Sound")
-            sound.SoundId = "rbxassetid://105267293181745"
-            sound.Parent = dashState.rootPart
-            sound:Play()
-            sound.Ended:Connect(function() sound:Destroy() end)
-        end
+    task.delay(0, function()
+        local sound = Instance.new("Sound")
+        sound.SoundId = "rbxassetid://105267293181745"
+        sound.Parent = dashState.rootPart
+        sound:Play()
+        sound.Ended:Connect(function() sound:Destroy() end)
     end)
 
     local bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+    bv.Name = "DashBV_" .. tostring(os.clock())
+    bv.MaxForce = Vector3.new(2000000, 20000, 2000000)
+    bv.P = 1500
     bv.Parent = dashState.rootPart
 
     local dashId = "ForwardRush_" .. tostring(os.clock())
-    runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function()
-        if not dashState.rootPart or not dashState.rootPart.Parent then
+    runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value + 10, function()
+        if not dashState.rootPart or not dashState.rootPart.Parent or not bv or not bv.Parent then
             runService:UnbindFromRenderStep(dashId)
-            bv:Destroy()
+            if bv then bv:Destroy() end
             dashState.rushing = false
             return
         end
@@ -454,20 +489,29 @@ local function forwardRush()
 
     task.delay(0.5, function()
         runService:UnbindFromRenderStep(dashId)
-        bv:Destroy()
+        if bv then bv:Destroy() end
         dashState.rushing = false
     end)
 end
 
 local function sideDash(direction)
-    if dashState.sideDashing or not dashState.SideDashEnabled or not dashState.humanoid or not dashState.rootPart then return end
+    if not dashState.SideDashEnabled or not dashState.humanoid or not dashState.rootPart then return end
     if tick() - dashState.lastSideDash < 0.3 then return end
+
+    if isAnySideDashPlaying() then
+        return
+    end
+
     dashState.lastSideDash = tick()
     dashState.sideDashing = true
 
+    clearPreviousDashForces()
+
+    local targetAnimId = (direction == "right") and SIDE_RIGHT_ANIM_ID or SIDE_LEFT_ANIM_ID
+
     local animator = dashState.humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", dashState.humanoid)
     local animation = Instance.new("Animation")
-    animation.AnimationId = direction == "right" and "rbxassetid://114016332539655" or "rbxassetid://100207093237932"
+    animation.AnimationId = targetAnimId
     local animationTrack = animator:LoadAnimation(animation)
     animationTrack:Play()
 
@@ -478,14 +522,16 @@ local function sideDash(direction)
     sound.Ended:Connect(function() sound:Destroy() end)
 
     local bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+    bv.Name = "DashBV_" .. tostring(os.clock())
+    bv.MaxForce = Vector3.new(2000000, 20000, 2000000)
+    bv.P = 1500
     bv.Parent = dashState.rootPart
 
     local dashId = "SideDash_" .. tostring(os.clock())
-    runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value, function()
-        if not dashState.rootPart or not dashState.rootPart.Parent then
+    runService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value + 10, function()
+        if not dashState.rootPart or not dashState.rootPart.Parent or not bv or not bv.Parent then
             runService:UnbindFromRenderStep(dashId)
-            bv:Destroy()
+            if bv then bv:Destroy() end
             dashState.sideDashing = false
             return
         end
@@ -495,7 +541,7 @@ local function sideDash(direction)
 
     task.delay(0.4, function()
         runService:UnbindFromRenderStep(dashId)
-        bv:Destroy()
+        if bv then bv:Destroy() end
         dashState.sideDashing = false
     end)
 end
@@ -2349,6 +2395,7 @@ local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
@@ -2457,8 +2504,6 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
-local StarterGui = game:GetService("StarterGui")
-
 autoline:Toggle("Sae Line Ups", "Sae's Drive Shot Line Ups.", function(s)
 	if s then
 		StarterGui:SetCore("SendNotification", {
@@ -2467,29 +2512,43 @@ autoline:Toggle("Sae Line Ups", "Sae's Drive Shot Line Ups.", function(s)
 			Duration = 3
 		})
 
-		pad(Vector3.new(-454, -1, 1557), Color3.fromRGB(255, 0, 0))
-		target(Vector3.new(-514, 54, 1693), Color3.fromRGB(255, 0, 0))
+		local colors = {
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+		}
 
-		pad(Vector3.new(-362, -1, 1675), Color3.fromRGB(0, 255, 0))
-		target(Vector3.new(-424, 23, 1704), Color3.fromRGB(0, 255, 0))
+		local goalRelative = {
+			{pad = Vector3.new(80, -10, -162),  target = Vector3.new(20, 44, -26)},
+			{pad = Vector3.new(172, -10, -44),  target = Vector3.new(110, 13, -15)},
+			{pad = Vector3.new(0, -10, -211),   target = Vector3.new(32, 85, -14)},
+			{pad = Vector3.new(-78, -10, -133), target = Vector3.new(82, 41, -18)},
+			{pad = Vector3.new(-130, -9, 166),  target = Vector3.new(-50, 52, 16)},
+			{pad = Vector3.new(-190, -9, 66),   target = Vector3.new(-90, 30, 16)},
+			{pad = Vector3.new(72, -9, 164),    target = Vector3.new(-57, 56, 16)},
+			{pad = Vector3.new(-1, -9, 222),    target = Vector3.new(-6, 76, 55)},
+		}
 
-		pad(Vector3.new(-535, -1, 1508), Color3.fromRGB(255, 255, 0))
-		target(Vector3.new(-502, 95, 1705), Color3.fromRGB(255, 255, 0))
+		local map = Workspace:WaitForChild("map", 8)
+		if not map then return end
 
-		pad(Vector3.new(-613, -1, 1586), Color3.fromRGB(0, 0, 255))
-		target(Vector3.new(-452, 51, 1701), Color3.fromRGB(0, 0, 255))
+		local agoal = map:FindFirstChild("Agoal")
+		local bgoal = map:FindFirstChild("Bgoal")
 
-		pad(Vector3.new(-665, -1, 994), Color3.fromRGB(255, 0, 0))
-		target(Vector3.new(-585, 61, 844), Color3.fromRGB(255, 0, 0))
+		local agoalPos = agoal.Position
+		local bgoalPos = bgoal.Position
 
-		pad(Vector3.new(-725, -1, 894), Color3.fromRGB(0, 255, 0))
-		target(Vector3.new(-625, 39, 844), Color3.fromRGB(0, 255, 0))
+		for i = 1, 8 do
+			local entry = goalRelative[i]
+			if not entry then continue end
 
-		pad(Vector3.new(-462, -1, 992), Color3.fromRGB(255, 255, 0))
-		target(Vector3.new(-592, 65, 844), Color3.fromRGB(255, 255, 0))
+			local basePos = (i <= 4) and agoalPos or bgoalPos
+			local col = colors[(i - 1) % 4 + 1]
 
-		pad(Vector3.new(-536, -1, 1050), Color3.fromRGB(0, 0, 255))
-		target(Vector3.new(-541, 85, 883), Color3.fromRGB(0, 0, 255))
+			pad(basePos + entry.pad, col)
+			target(basePos + entry.target, col)
+		end
 
 	else
 		StarterGui:SetCore("SendNotification", {
@@ -2521,41 +2580,55 @@ autoline:Toggle("Kaiser Line Ups", "Kaiser's Impact Magnus Line Ups.", function(
 			Duration = 3
 		})
 
-		pad(Vector3.new(-538, -1, 1097), Color3.fromRGB(255, 0, 0))
-		target(Vector3.new(-526, 121, 844), Color3.fromRGB(255, 0, 0))
+		local colors = {
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(255, 0, 255),
+			Color3.fromRGB(255, 182, 193),
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(255, 0, 255),
+			Color3.fromRGB(255, 182, 193),
+		}
+	
+	    local goalRelative = {
+            {pad = Vector3.new(-3, -9, 263), target = Vector3.new(8, 112, 16)},
+            {pad = Vector3.new(120, -9, 221), target = Vector3.new(49, 75, 15)},
+            {pad = Vector3.new(230, -9, 68), target = Vector3.new(116, 39, 21)},
+            {pad = Vector3.new(207, -9, 15), target = Vector3.new(91, 29, -11)},
+            {pad = Vector3.new(39, -9, 117), target = Vector3.new(24, 10, 13)},
+            {pad = Vector3.new(-134, -9, 148), target = Vector3.new(87, 57, 19)},
+            {pad = Vector3.new(-1, -10, -250), target = Vector3.new(-12, 115, -13)},
+            {pad = Vector3.new(-231, -10, -60), target = Vector3.new(-142, 24, -22)},
+            {pad = Vector3.new(-120, -10, -215), target = Vector3.new(-53, 65, -18)},
+            {pad = Vector3.new(-212, -10, -15), target = Vector3.new(-89, 33, 12)},
+            {pad = Vector3.new(-48, -10, -116), target = Vector3.new(-24, 8, -13)},
+            {pad = Vector3.new(126, -10, -146), target = Vector3.new(-109, 60, -14)},
+        }
 
-		pad(Vector3.new(-414, -1, 1049), Color3.fromRGB(0, 255, 0))
-		target(Vector3.new(-485, 84, 843), Color3.fromRGB(0, 255, 0))
+		local map = Workspace:WaitForChild("map", 8)
+		if not map then return end
 
-		pad(Vector3.new(-304, -1, 896), Color3.fromRGB(255, 255, 0))
-		target(Vector3.new(-418, 48, 849), Color3.fromRGB(255, 255, 0))
+		local agoal = map:FindFirstChild("Agoal")
+		local bgoal = map:FindFirstChild("Bgoal")
 
-		pad(Vector3.new(-327, -1, 843), Color3.fromRGB(0, 0, 255))
-		target(Vector3.new(-443, 38, 816), Color3.fromRGB(0, 0, 255))
+		local agoalPos = agoal.Position
+		local bgoalPos = bgoal.Position
 
-		pad(Vector3.new(-495, -1, 945), Color3.fromRGB(255, 0, 255))
-		target(Vector3.new(-510, 19, 841), Color3.fromRGB(255, 0, 255))
+		for i = 1, 12 do
+			local entry = goalRelative[i]
+			if not entry then continue end
 
-		pad(Vector3.new(-669, -1, 976), Color3.fromRGB(255, 182, 193))
-		target(Vector3.new(-447, 66, 847), Color3.fromRGB(255, 182, 193))
+			local basePos = (i <= 6) and bgoalPos or agoalPos
+			local col = colors[i]
 
-		pad(Vector3.new(-536, -1, 1469), Color3.fromRGB(255, 0, 0))
-		target(Vector3.new(-547, 125, 1706), Color3.fromRGB(255, 0, 0))
-
-		pad(Vector3.new(-766, -1, 1659), Color3.fromRGB(0, 255, 0))
-		target(Vector3.new(-677, 34, 1697), Color3.fromRGB(0, 255, 0))
-
-		pad(Vector3.new(-655, -1, 1504), Color3.fromRGB(255, 255, 0))
-		target(Vector3.new(-588, 75, 1701), Color3.fromRGB(255, 255, 0))
-
-		pad(Vector3.new(-747, -1, 1704), Color3.fromRGB(0, 0, 255))
-		target(Vector3.new(-624, 43, 1732), Color3.fromRGB(0, 0, 255))
-
-		pad(Vector3.new(-583, -1, 1603), Color3.fromRGB(255, 0, 255))
-		target(Vector3.new(-559, 18, 1706), Color3.fromRGB(255, 0, 255))
-
-		pad(Vector3.new(-408, -1, 1573), Color3.fromRGB(255, 182, 193))
-		target(Vector3.new(-644, 70, 1705), Color3.fromRGB(255, 182, 193))
+			pad(basePos + entry.pad, col)
+			target(basePos + entry.target, col)
+		end
 
 	else
 		StarterGui:SetCore("SendNotification", {
@@ -2587,29 +2660,47 @@ autoline:Toggle("Yukimiya Line Ups", "Yukimiya's Gyro Shot Line Ups.", function(
 			Duration = 3
 		})
 
-    pad(Vector3.new(-536, -1, 1050), Color3.fromRGB(255, 0, 0))
-    target(Vector3.new(-592, 67, 841), Color3.fromRGB(255, 0, 0))
+		local colors = {
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+		}
 
-    pad(Vector3.new(-617, -1, 1010), Color3.fromRGB(255, 255, 0))
-    target(Vector3.new(-586, 83, 842), Color3.fromRGB(255, 255, 0))
+		local goalRelative = {
+			{pad = Vector3.new(-1, -9, 222), target = Vector3.new(-57, 58, 13)},
+			{pad = Vector3.new(-82, -9, 182), target = Vector3.new(-51, 74, 14)},
+			{pad = Vector3.new(130, -9, 136), target = Vector3.new(-114, 95, 13)},
+			{pad = Vector3.new(63, -9, 192), target = Vector3.new(-104, 128, 13)},
+			{pad = Vector3.new(6, -10, -206), target = Vector3.new(65, 124, -12)},
+			{pad = Vector3.new(-59, -10, -201), target = Vector3.new(123, 148, -12)},
+			{pad = Vector3.new(68, -10, -198), target = Vector3.new(61, 105, -12)},
+			{pad = Vector3.new(-134, -10, -113), target = Vector3.new(4, 55, -53)},
+		}
 
-    pad(Vector3.new(-404, -1, 964), Color3.fromRGB(0, 0, 255))
-    target(Vector3.new(-649, 104, 841), Color3.fromRGB(0, 0, 255))
+		local map = Workspace:WaitForChild("map", 8)
+		if not map then return end
 
-    pad(Vector3.new(-471, -1, 1020), Color3.fromRGB(0, 255, 0))
-    target(Vector3.new(-639, 137, 841), Color3.fromRGB(0, 255, 0))
+		local agoal = map:FindFirstChild("Agoal")
+		local bgoal = map:FindFirstChild("Bgoal")
 
-    pad(Vector3.new(-528, -1, 1513), Color3.fromRGB(255, 0, 0))
-    target(Vector3.new(-469, 134, 1707), Color3.fromRGB(255, 0, 0))
+		local agoalPos = agoal.Position
+		local bgoalPos = bgoal.Position
 
-    pad(Vector3.new(-594, -1, 1518), Color3.fromRGB(0, 255, 0))
-    target(Vector3.new(-411, 158, 1707), Color3.fromRGB(0, 255, 0))
+		for i = 1, 8 do
+			local entry = goalRelative[i]
+			if not entry then continue end
 
-    pad(Vector3.new(-466, -1, 1521), Color3.fromRGB(255, 255, 0))
-    target(Vector3.new(-473, 115, 1707), Color3.fromRGB(255, 255, 0))
+			local basePos = (i <= 4) and bgoalPos or agoalPos
+			local col = colors[i]
 
-    pad(Vector3.new(-669, -1, 1606), Color3.fromRGB(0, 0, 255))
-    target(Vector3.new(-530, 65, 1666), Color3.fromRGB(0, 0, 255))
+			pad(basePos + entry.pad, col)
+			target(basePos + entry.target, col)
+		end
 
 	else
 		StarterGui:SetCore("SendNotification", {
@@ -2641,29 +2732,47 @@ autoline:Toggle("Rin Line Ups", "Rin's Curve Shot Line Ups.", function(r)
 			Duration = 3
 		})
 
-    pad(Vector3.new(-461, -1, 1028), Color3.fromRGB(255, 0, 0))
-    target(Vector3.new(-529, 76, 882), Color3.fromRGB(255, 0, 0))
+		local colors = {
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+		}
 
-    pad(Vector3.new(-537, -1, 1043), Color3.fromRGB(0, 255, 0))
-    target(Vector3.new(-535, 97, 882), Color3.fromRGB(0, 255, 0))
+		local goalRelative = {
+			{pad = Vector3.new(73, -9, 200), target = Vector3.new(5, 67, 54)},
+			{pad = Vector3.new(-2, -9, 215), target = Vector3.new(0, 88, 54)},
+			{pad = Vector3.new(-84, -9, 160), target = Vector3.new(-29, 13, 26)},
+			{pad = Vector3.new(-169, -9, 105), target = Vector3.new(-29, 24, 26)},
+			{pad = Vector3.new(-1, -10, -213), target = Vector3.new(-1, 77, -53)},
+			{pad = Vector3.new(-70, -10, -196), target = Vector3.new(9, 71, -53)},
+			{pad = Vector3.new(81, -10, -114), target = Vector3.new(30, 11, -20)},
+			{pad = Vector3.new(163, -10, -91), target = Vector3.new(30, 26, -20)},
+		}
 
-    pad(Vector3.new(-619, -1, 988), Color3.fromRGB(255, 255, 0))
-    target(Vector3.new(-564, 22, 854), Color3.fromRGB(255, 255, 0))
+		local map = Workspace:WaitForChild("map", 8)
+		if not map then return end
 
-    pad(Vector3.new(-704, -1, 923), Color3.fromRGB(0, 0, 255))
-    target(Vector3.new(-564, 33, 854), Color3.fromRGB(0, 0, 255))
+		local agoal = map:FindFirstChild("Agoal")
+		local bgoal = map:FindFirstChild("Bgoal")
 
-    pad(Vector3.new(-536, -1, 1506), Color3.fromRGB(255, 0, 0))
-    target(Vector3.new(-536, 79, 1666), Color3.fromRGB(255, 0, 0))
+		local agoalPos = agoal.Position
+		local bgoalPos = bgoal.Position
 
-    pad(Vector3.new(-605, -1, 1523), Color3.fromRGB(0, 255, 0))
-    target(Vector3.new(-525, 81, 1666), Color3.fromRGB(0, 255, 0))
+		for i = 1, 8 do
+			local entry = goalRelative[i]
+			if not entry then continue end
 
-    pad(Vector3.new(-453, -1, 1605), Color3.fromRGB(255, 255, 0))
-    target(Vector3.new(-504, 21, 1699), Color3.fromRGB(255, 255, 0))
+			local basePos = (i <= 4) and bgoalPos or agoalPos
+			local col = colors[i]
 
-    pad(Vector3.new(-371, -1, 1628), Color3.fromRGB(0, 0, 255))
-    target(Vector3.new(-504, 36, 1699), Color3.fromRGB(0, 0, 255))
+			pad(basePos + entry.pad, col)
+			target(basePos + entry.target, col)
+		end
 
 	else
 		StarterGui:SetCore("SendNotification", {
@@ -2695,17 +2804,39 @@ autoline:Toggle("Rin Flow Line Ups", "Rin's Kill Shot Line Ups.", function(k)
 			Duration = 3
 		})
 
-    pad(Vector3.new(-376, -1, 1149), Color3.fromRGB(147, 112, 219))
-    target(Vector3.new(-547, 134, 882), Color3.fromRGB(147, 112, 219))
+		local colors = {
+			Color3.fromRGB(147, 112, 219),
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(147, 112, 219),
+			Color3.fromRGB(255, 0, 0),
+		}
 
-    pad(Vector3.new(-722, -1, 1118), Color3.fromRGB(255, 0, 0))
-    target(Vector3.new(-564, 92, 848), Color3.fromRGB(255, 0, 0))
+		local goalRelative = {
+			{pad = Vector3.new(158, -9, 321), target = Vector3.new(-12, 125, 54)},
+			{pad = Vector3.new(-187, -9, 290), target = Vector3.new(-29, 83, 20)},
+			{pad = Vector3.new(-117, -10, -320), target = Vector3.new(14, 96, -53)},
+			{pad = Vector3.new(198, -10, -265), target = Vector3.new(30, 90, -13)},
+		}
 
-    pad(Vector3.new(-652, -1, 1399), Color3.fromRGB(147, 112, 219))
-    target(Vector3.new(-520, 106, 1666), Color3.fromRGB(147, 112, 219))
+		local map = Workspace:WaitForChild("map", 8)
+		if not map then return end
 
-    pad(Vector3.new(-336, -1, 1445), Color3.fromRGB(255, 0, 0))
-    target(Vector3.new(-504, 100, 1706), Color3.fromRGB(255, 0, 0))
+		local agoal = map:FindFirstChild("Agoal")
+		local bgoal = map:FindFirstChild("Bgoal")
+
+		local agoalPos = agoal.Position
+		local bgoalPos = bgoal.Position
+
+		for i = 1, 4 do
+			local entry = goalRelative[i]
+			if not entry then continue end
+
+			local basePos = (i <= 2) and bgoalPos or agoalPos
+			local col = colors[i]
+
+			pad(basePos + entry.pad, col)
+			target(basePos + entry.target, col)
+		end
 
 	else
 		StarterGui:SetCore("SendNotification", {
@@ -3478,6 +3609,151 @@ othersil:Button("Fix Duplicate Ball", "I Don't Know If This Is Still An Issue Bu
         if obj:IsA("MeshPart") and obj.Name == "Ball" then
             obj:Destroy()
         end
+    end
+end)
+
+local mobile = maintab2:Folder("Mobile Silent Features.", Color3.fromRGB(24, 255, 228), true)
+mobile:Label("Mobile Silent Features: Silent Features Ported To Mobile.")
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Camera = workspace.CurrentCamera
+local UIS = game:GetService("UserInputService")
+local ByteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
+
+local mobform = {
+    gui = nil,
+    active = false
+}
+
+local function trigger()
+    if UIS.MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
+    local lp = Players.LocalPlayer
+    local char = lp.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum then return end
+
+    hum.AutoRotate = false
+    local camType = Camera.CameraType
+    local camSubject = Camera.CameraSubject
+    local camCF = Camera.CFrame
+    local flipped = camCF * CFrame.Angles(0, math.rad(180), 0)
+
+    Camera.CameraType = Enum.CameraType.Scriptable
+    Camera.CFrame = flipped
+
+    task.delay(0.1, function()
+        if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
+            Camera.CameraSubject = lp.Character:FindFirstChildOfClass("Humanoid")
+            Camera.CameraType = Enum.CameraType.Custom
+        else
+            Camera.CameraSubject = camSubject
+            Camera.CameraType = camType
+        end
+        if hum and hum.Parent then
+            hum.AutoRotate = true
+        end
+    end)
+
+    task.wait(0.15)
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://76587445975710"
+    local track = hum:LoadAnimation(anim)
+    track:Play()
+
+    local dir = hrp.CFrame.LookVector
+    local kickVec = Vector3.new(dir.X * 0.5, 1, dir.Z * 0.5)
+
+    remote:FireServer(buffer.fromstring(buffers["base"]), { { "kick", 25, false, kickVec } })
+    ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), { { "skill1" } })
+end
+
+local function makeDraggable(frame)
+    local dragging, dragInput, dragStart, startPos
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+local function show()
+    if mobform.gui then return end
+    local pg = Players.LocalPlayer:WaitForChild("PlayerGui")
+    local sg = Instance.new("ScreenGui")
+    sg.Name = "FormlessMobile"
+    sg.ResetOnSpawn = false
+    sg.Parent = pg
+    mobform.gui = sg
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 100, 0, 100)
+    btn.Position = UDim2.new(0.5, -50, 0.5, -50)
+    btn.AnchorPoint = Vector2.new(0.5, 0.5)
+    btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    btn.BorderSizePixel = 0
+    btn.Text = "Formless"
+    btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 20
+    btn.AutoButtonColor = true
+    btn.Parent = sg
+
+    local cr = Instance.new("UICorner")
+    cr.CornerRadius = UDim.new(0, 8)
+    cr.Parent = btn
+
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    end)
+
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    end)
+
+    btn.Activated:Connect(trigger)
+
+    makeDraggable(btn)
+end
+
+local function hide()
+    if mobform.gui then
+        mobform.gui:Destroy()
+        mobform.gui = nil
+    end
+end
+
+mobile:Button("Auto Formless (Mobile Button.)", "Click Again To Remove Button.", function()
+    mobform.active = not mobform.active
+    if mobform.active then
+        show()
+    else
+        hide()
     end
 end)
 
