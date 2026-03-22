@@ -420,6 +420,7 @@ end
 SetUp(plr.Character)
 
 plr.CharacterAdded:Connect(function(char)
+	if stopped then return end
 	task.wait(1)
 	SetUp(char)
 end)
@@ -431,7 +432,6 @@ local isag = {
 	["rbxassetid://114952862979282"] = true
 }
 
-local stopped = false
 local soundReplacementActive = true
 
 local function replaceSound(sound)
