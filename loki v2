@@ -177,9 +177,11 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local SoundService = game:GetService("SoundService")
+local TweenService = game:GetService("TweenService")
 
 local remote2 = ReplicatedStorage:WaitForChild("ByteNetReliable")
 local plr = Players.LocalPlayer
+local cam = workspace.CurrentCamera
 
 local function Skill2(char)
 	if IsMoveOnCD("skill2") then CancelMove() return end
@@ -198,6 +200,7 @@ local function Skill2(char)
 	end
 
 	CancelMove()
+
 	local startTime = tick()
 	local timeout = 1
 
@@ -213,48 +216,68 @@ local function Skill2(char)
 			return
 		end
 
-if HasBall() then
-	connection:Disconnect()
+		if HasBall() then
+			connection:Disconnect()
 
-	local anim = Instance.new("Animation")
-	anim.AnimationId = "rbxassetid://85295479301691"
-	local track = humanoid:LoadAnimation(anim)
+			local anim = Instance.new("Animation")
+			anim.AnimationId = "rbxassetid://85295479301691"
+			local track = humanoid:LoadAnimation(anim)
 
-	cam.FieldOfView = 30
-	game.TweenService:Create(cam, TweenInfo.new(0.6), {FieldOfView = 70}):Play()
+			cam.FieldOfView = 30
+			TweenService:Create(cam, TweenInfo.new(0.6), {FieldOfView = 70}):Play()
 
-	local sound = Instance.new("Sound")
-	sound.SoundId = "rbxassetid://106669508979055"
-	sound.Volume = 1
-	sound.Parent = SoundService
-	sound:Play()
+			local sound = Instance.new("Sound")
+			sound.SoundId = "rbxassetid://106669508979055"
+			sound.Volume = 1
+			sound.Parent = SoundService
+			sound:Play()
 
-	local camera = workspace.CurrentCamera
-	local originalCFrame = camera.CFrame
-	camera.CameraType = Enum.CameraType.Scriptable
-	camera.CFrame = CFrame.new(root.Position + root.CFrame.LookVector * 5 + Vector3.new(0,0.5,0), root.Position + Vector3.new(0,0.5,0))
+			local camera = workspace.CurrentCamera
+			local originalType = camera.CameraType
+			local originalSubject = camera.CameraSubject
 
-	local hold
-	hold = RunService.RenderStepped:Connect(function()
-		if not track.IsPlaying then
-			hold:Disconnect()
-			root.Anchored = false
-			camera.CameraType = Enum.CameraType.Custom
-			camera.CFrame = originalCFrame
+			root.Anchored = true
+			root.AssemblyLinearVelocity = Vector3.zero
+			humanoid.AutoRotate = false
+
+			camera.CameraType = Enum.CameraType.Scriptable
+			camera.CFrame = CFrame.new(
+				root.Position + root.CFrame.LookVector * 5 + Vector3.new(0,0.5,0),
+				root.Position + Vector3.new(0,0.5,0)
+			)
+
+			local hold
+			hold = RunService.RenderStepped:Connect(function()
+				if not track.IsPlaying then
+					hold:Disconnect()
+					root.Anchored = false
+					humanoid.AutoRotate = true
+					camera.CameraType = originalType
+					camera.CameraSubject = humanoid
+					return
+				end
+
+				root.AssemblyLinearVelocity = Vector3.zero
+
+				camera.CFrame = CFrame.new(
+					root.Position + root.CFrame.LookVector * 5 + Vector3.new(0,0.5,0),
+					root.Position + Vector3.new(0,0.5,0)
+				)
+			end)
+
+			track:Play()
 			return
 		end
 
-		root.Anchored = true
-		root.Velocity = Vector3.zero
-		root.AssemblyLinearVelocity = Vector3.zero
-	end)
-
-	track:Play()
-	return
-end
-
 		if (targetPart.Position - root.Position).Magnitude > 10 then
-			root.CFrame = CFrame.new(targetPart.Position - Vector3.new(0,4,0))
+			local pos = targetPart.Position
+			local correctedPos = Vector3.new(pos.X, pos.Y - 4, pos.Z)
+			local newCF = CFrame.new(correctedPos)
+
+			root.CFrame = newCF
+			RunService.RenderStepped:Wait()
+			root.CFrame = newCF
+
 			task.spawn(function()
 				remote2:FireServer(buffer.fromstring(buffers["grabball"]))
 			end)
