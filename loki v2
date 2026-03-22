@@ -189,7 +189,13 @@ local function Skill2(char)
 	local root = char:WaitForChild("HumanoidRootPart")
 	local humanoid = char:WaitForChild("Humanoid")
 	local targetPart = workspace.Terrain:FindFirstChild("Ball")
-	if not targetPart then return end
+	if not targetPart then return end	
+
+	local heightDiff = targetPart.Position.Y - root.Position.Y
+	if heightDiff < 15 then
+		CancelMove()
+		return
+	end
 
 	CancelMove()
 	local startTime = tick()
@@ -400,7 +406,7 @@ local function SetUp(char)
 
 	hotbar.Backpack.Hotbar.skill1.Base.Reuse.Text = "Ball"
 	hotbar.Backpack.Hotbar.skill2.Base.Reuse.Visible = true
-	hotbar.Backpack.Hotbar.skill2.Base.Reuse.Text = "Off The Ball"
+	hotbar.Backpack.Hotbar.skill2.Base.Reuse.Text = "Trap"
 	hotbar.Backpack.Hotbar.skill3.Base.Reuse.Text = "Movement"
 	hotbar.Backpack.Hotbar.skill4.Visible = false
 	hotbar.Backpack.Hotbar.skill5.Visible = false
