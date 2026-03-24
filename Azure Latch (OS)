@@ -25,6 +25,7 @@ teleporttab:Label("Map Teleports, No Prerequisites To Use!")
 misctab:Label("Miscellaneous Features, They Give No Advantages In-Game!")
 exploittab:Label("This Tab Comes With Useful Features.")
 
+--- IGNORE THESE
 local buffers = {}
 loadstring(game:HttpGet("https://pastebin.com/raw/8XJh7dzh"))()
 repeat
@@ -34,6 +35,16 @@ for _, val in ipairs(game.Lighting:FindFirstChild("BUFFERSTRINGS"):GetChildren()
     buffers[val.Name] = val.Value
 end
 game.Lighting:FindFirstChild("BUFFERSTRINGS"):Destroy()
+
+local role = game:GetService("ReplicatedStorage")
+    :WaitForChild("BytenetStorage")
+    :WaitForChild("Networking").Value
+    :match('"bytenet_selectRole"%s*:%s*(%d+)')
+
+role = role and tonumber(role)
+
+local pick = string.char(role)
+---
 
 helptab:Button("Copy Owner Discord Username", "Copies The Owner's Discord Username To Your Clipboard.", function()
     local StarterGui = game:GetService("StarterGui")
@@ -2906,8 +2917,8 @@ local function firePacketsIfNear()
 
     if (root.Position - Vector3.new(-371, 13, -1599)).Magnitude <= 15 or
        (root.Position - Vector3.new(-196, 13, -1599)).Magnitude <= 15 then
-        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000A"))
-        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000B"))
+        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000A"))
+        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000B"))
     end
 end
 
@@ -2917,8 +2928,8 @@ local function fireGKPackets()
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
-    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\005\001\000B"))
-    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\005\001\000A"))
+    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\005\001\000B"))
+    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\005\001\000A"))
 end
 
 autopos:Toggle("Auto Pick CF", "Automatically Picks Center Field Position On Respawn Or Enable.", function()
@@ -2932,7 +2943,7 @@ autopos:Toggle("Auto Pick CF", "Automatically Picks Center Field Position On Res
 
     if autoPositionState.CF then
         autoPositionState.CFConn = game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function()
-            task.wait(1)
+            task.wait(0.3)
             firePacketsIfNear()
         end)
 
@@ -2959,7 +2970,7 @@ autopos:Toggle("Auto Pick GK", "Automatically Picks Goalkeeper Position On Respa
 
     if autoPositionState.GK then
         autoPositionState.GKConn = game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function()
-            task.wait(1)
+            task.wait(0.3)
             fireGKPackets()
         end)
 
