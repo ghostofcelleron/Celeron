@@ -1630,7 +1630,7 @@ add:Button("Goalkeeper Anywhere (Rejoin To Disable.) (Credit: someone cool..)", 
     end)
 end)
 
-add:Button("Shachoko GK Catch (Req. GK Position)", "Makes It Almost Impossible To Be Scored On As GK And Does Shachoko Kick.", function()
+add:Button("Shachoko GK Catch (Req. GK Position.)", "Makes It Almost Impossible To Be Scored On As GK And Does Shachoko Kick.", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/Hr1HnK38"))()
 end)
 
