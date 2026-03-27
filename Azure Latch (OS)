@@ -1630,6 +1630,10 @@ add:Button("Goalkeeper Anywhere (Rejoin To Disable.) (Credit: someone cool..)", 
     end)
 end)
 
+add:Button("Shachoko GK Catch", "Makes It Impossible To Be Scored On And Does Shachoko Kick.", function()
+loadstring(game:HttpGet("https://pastebin.com/raw/Hr1HnK38"))()
+end)
+
 local oth = maintab:Folder("Other Blatant Features.", Color3.fromRGB(24, 255, 228), true)
 oth:Label("Other Blatant Features: It's In The Name.")
 
