@@ -1,0 +1,647 @@
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/daff"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (Bite By Night)",
+    ThemeColor = Color3.fromRGB(22, 22, 44),
+    ThemeGradient = Color3.fromRGB(255, 22, 22),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.GothamBold,
+    ToggledSideBar = true
+})
+
+local hometab = win:Tab("Home")
+local maintab = win:Tab("Main")
+local vistab = win:Tab("Visual")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+hometab:Label("Script Made By Celeron + Daffy!")
+hometab:Label("Join The Discord Server In Info For Updates / Suggestions.")
+maintab:Label("Character Movement Features.")
+vistab:Label("Visual Features.")
+misctab:Label("Other Features.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+if math.random(1,50) == 1 then
+    hometab:Banner("172512879", 385)
+else
+    hometab:Banner("172512879", 225)
+end
+
+local pp = Instance.new("Part")
+pp.Name = "pp"
+pp.Size = Vector3.new(50, 2, 50)
+pp.Position = Vector3.new(0, 1000, 0)
+pp.Anchored = true
+pp.CanCollide = true
+pp.Material = Enum.Material.ForceField
+pp.Color = Color3.fromRGB(0, 170, 255)
+pp.Transparency = 0.3
+pp.Parent = workspace
+
+local infiniteSprint = false
+local sprintConn = nil
+
+maintab:Toggle("Infinite Sprint", "Allows You To Sprint Forever.", function(state)
+    infiniteSprint = state
+
+    if state then
+        sprintConn = game:GetService("RunService").Heartbeat:Connect(function()
+            if not infiniteSprint then return end
+
+            local char = game.Players.LocalPlayer.Character
+            if not char then return end
+
+            local uis = game:GetService("UserInputService")
+
+            if uis:IsKeyDown(Enum.KeyCode.LeftShift) or uis:IsKeyDown(Enum.KeyCode.RightShift) then
+                char:SetAttribute("WalkSpeed", 25)
+            else
+                char:SetAttribute("WalkSpeed", 12)
+            end
+        end)
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Infinite Sprint",
+            Text = "Enabled.",
+            Duration = 2
+        })
+
+    else
+        if sprintConn then
+            sprintConn:Disconnect()
+            sprintConn = nil
+        end
+
+        local char = game.Players.LocalPlayer.Character
+        if char then
+            char:SetAttribute("WalkSpeed", 12)
+        end
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Infinite Sprint",
+            Text = "Disabled.",
+            Duration = 2
+        })
+    end
+end)
+
+local jumpBoost = false
+local jpLoop = nil
+local jpCA = nil
+
+maintab:Toggle("Allow Jumping", "Allows You To Jump.", function(state)
+    jumpBoost = state
+
+    if jumpBoost then
+        local function applyJumpPower()
+            local char = game.Players.LocalPlayer.Character
+            if not char then return end
+
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hum then return end
+
+            if hum.UseJumpPower then
+                hum.JumpPower = 1.5
+            else
+                hum.JumpHeight = 1.5
+            end
+        end
+
+        applyJumpPower()
+
+        if jpLoop then jpLoop:Disconnect() end
+        local currentHum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if currentHum then
+            jpLoop = currentHum:GetPropertyChangedSignal("JumpPower"):Connect(applyJumpPower)
+        end
+
+        if jpCA then jpCA:Disconnect() end
+        jpCA = game.Players.LocalPlayer.CharacterAdded:Connect(function(newChar)
+            local hum = newChar:WaitForChild("Humanoid")
+            applyJumpPower()
+
+            if jpLoop then jpLoop:Disconnect() end
+            jpLoop = hum:GetPropertyChangedSignal("JumpPower"):Connect(applyJumpPower)
+        end)
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Allow Jumping",
+            Text = "Enabled.",
+            Duration = 2
+        })
+
+    else
+        if jpLoop then
+            jpLoop:Disconnect()
+            jpLoop = nil
+        end
+        if jpCA then
+            jpCA:Disconnect()
+            jpCA = nil
+        end
+
+        local char = game.Players.LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                if hum.UseJumpPower then
+                    hum.JumpPower = 0
+                else
+                    hum.JumpHeight = 0
+                end
+            end
+        end
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Allow Jumping",
+            Text = "Disabled.",
+            Duration = 2
+        })
+    end
+end)
+
+local flying = false
+local flyConn = nil
+
+maintab:Toggle("Flight", "Allows You To Fly.", function(state)
+    flying = state
+
+    local Players = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+    local UserInputService = game:GetService("UserInputService")
+    local Camera = workspace.CurrentCamera
+
+    local plr = Players.LocalPlayer
+
+    if flying then
+        local char = plr.Character
+        if not char then return end
+
+        local root = char:FindFirstChild("HumanoidRootPart")
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not root or not hum then return end
+
+        hum.PlatformStand = true
+        root.Anchored = true
+
+        local function noCollide()
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+
+        noCollide()
+
+        flyConn = RunService.RenderStepped:Connect(function(dt)
+            if not flying or not root or not root.Parent then return end
+
+            noCollide()
+
+            local move = Vector3.zero
+            local speed = 125
+
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                move += Camera.CFrame.LookVector
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                move -= Camera.CFrame.LookVector
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                move -= Camera.CFrame.RightVector
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                move += Camera.CFrame.RightVector
+            end
+
+            if move.Magnitude > 0 then
+                local direction = move.Unit
+                local moveAmount = speed * dt
+
+                root.CFrame = root.CFrame + (direction * moveAmount)
+            end
+
+            root.CFrame = CFrame.new(root.Position, root.Position + Camera.CFrame.LookVector)
+        end)
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Flight",
+            Text = "Enabled.",
+            Duration = 2
+        })
+
+    else
+        if flyConn then
+            flyConn:Disconnect()
+            flyConn = nil
+        end
+
+        local char = plr.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.PlatformStand = false
+            end
+
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if root then
+                root.Anchored = false
+            end
+
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Flight",
+            Text = "Disabled.",
+            Duration = 2
+        })
+    end
+end)
+
+maintab:Label("Survivor Features.")
+
+local antiDeathEnabled = false
+local healthCheckConn = nil
+local lastSafePosition = nil
+
+maintab:Toggle("Anti Death", "Automatically Detects Health <30 And Teleports To A Safe Zone.", function(state)
+    antiDeathEnabled = state
+
+    if state then
+        healthCheckConn = game:GetService("RunService").Heartbeat:Connect(function()
+            local char = game.Players.LocalPlayer.Character
+            if not char then return end
+
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hum then return end
+
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+
+            if hum.Health < 30 and hum.Health > 0 then
+                if not lastSafePosition then
+                    lastSafePosition = root.CFrame
+                end
+                root.CFrame = pp.CFrame + Vector3.new(0, 5, 0)
+            elseif hum.Health >= 30 and lastSafePosition then
+                root.CFrame = lastSafePosition
+                lastSafePosition = nil
+            end
+        end)
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Anti Death",
+            Text = "Enabled.",
+            Duration = 2
+        })
+
+    else
+        if healthCheckConn then
+            healthCheckConn:Disconnect()
+            healthCheckConn = nil
+        end
+        lastSafePosition = nil
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Anti Death",
+            Text = "Disabled.",
+            Duration = 2
+        })
+    end
+end)
+
+local safeTeleport = false
+local lastPosition = nil
+
+maintab:Toggle("Safety Area", "Teleports To A Safe Area.", function(state)
+    safeTeleport = state
+
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    if state then
+        lastPosition = root.CFrame
+        root.CFrame = CFrame.new(0, 1003, 0)
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Safety Area",
+            Text = "Enabled.",
+            Duration = 2
+        })
+    else
+        if lastPosition then
+            root.CFrame = lastPosition
+            lastPosition = nil
+        end
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Safety Area",
+            Text = "Disabled.",
+            Duration = 2
+        })
+    end
+end)
+
+local espTable = {}
+
+vistab:Toggle("Survivor ESP", "Highlight All Survivors.", function(state)
+    if state then
+        espTable.Survivors = true
+
+        local function highlightSurvivor(char)
+            if espTable[char] then return end
+
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "SurvivorHighlight"
+            highlight.FillColor = Color3.fromRGB(80, 180, 255)
+            highlight.OutlineColor = Color3.fromRGB(120, 200, 255)
+            highlight.FillTransparency = 0.7
+            highlight.OutlineTransparency = 0.3
+            highlight.Adornee = char
+            highlight.Parent = char
+
+            espTable[char] = highlight
+        end
+
+        local function refreshSurvivors()
+            local aliveFolder = workspace.PLAYERS.ALIVE
+            if aliveFolder then
+                for _, char in ipairs(aliveFolder:GetChildren()) do
+                    if char:IsA("Model") then
+                        highlightSurvivor(char)
+                    end
+                end
+            end
+        end
+
+        refreshSurvivors()
+
+        espTable.SurvivorConnection = workspace.PLAYERS.ALIVE.ChildAdded:Connect(function(char)
+            if espTable.Survivors and char:IsA("Model") then
+                highlightSurvivor(char)
+            end
+        end)
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Survivor ESP",
+            Text = "Enabled.",
+            Duration = 2
+        })
+
+    else
+        espTable.Survivors = false
+
+        if espTable.SurvivorConnection then
+            espTable.SurvivorConnection:Disconnect()
+            espTable.SurvivorConnection = nil
+        end
+
+        for model, highlight in pairs(espTable) do
+            if typeof(model) == "Instance" and highlight and highlight.Parent and model:IsDescendantOf(workspace.PLAYERS.ALIVE) then
+                highlight:Destroy()
+                espTable[model] = nil
+            end
+        end
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Survivor ESP",
+            Text = "Disabled.",
+            Duration = 2
+        })
+    end
+end)
+
+vistab:Toggle("Killer ESP", "Highlights The Killer.", function(state)
+    if state then
+        espTable.Killer = true
+
+        local function highlightKiller(char)
+            if espTable[char] then return end
+
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "KillerHighlight"
+            highlight.FillColor = Color3.fromRGB(255, 80, 80)
+            highlight.OutlineColor = Color3.fromRGB(255, 120, 120)
+            highlight.FillTransparency = 0.7
+            highlight.OutlineTransparency = 0.3
+            highlight.Adornee = char
+            highlight.Parent = char
+
+            espTable[char] = highlight
+        end
+
+        local function refreshKillers()
+            local killerFolder = workspace.PLAYERS.KILLER
+            if killerFolder then
+                for _, char in ipairs(killerFolder:GetChildren()) do
+                    if char:IsA("Model") then
+                        highlightKiller(char)
+                    end
+                end
+            end
+        end
+
+        refreshKillers()
+
+        espTable.KillerConnection = workspace.PLAYERS.KILLER.ChildAdded:Connect(function(char)
+            if espTable.Killer and char:IsA("Model") then
+                highlightKiller(char)
+            end
+        end)
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Killer ESP",
+            Text = "Enabled.",
+            Duration = 2
+        })
+
+    else
+        espTable.Killer = false
+
+        if espTable.KillerConnection then
+            espTable.KillerConnection:Disconnect()
+            espTable.KillerConnection = nil
+        end
+
+        for model, highlight in pairs(espTable) do
+            if typeof(model) == "Instance" and highlight and highlight.Parent and model:IsDescendantOf(workspace.PLAYERS.KILLER) then
+                highlight:Destroy()
+                espTable[model] = nil
+            end
+        end
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Killer ESP",
+            Text = "Disabled.",
+            Duration = 2
+        })
+    end
+end)
+
+vistab:Toggle("Generator ESP", "Highlights All Generators.", function(state)
+    if state then
+        espTable.Generators = true
+
+        local function highlightGenerator(model)
+            if espTable[model] then return end
+
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "GeneratorHighlight"
+            highlight.FillColor = Color3.fromRGB(0, 255, 100)
+            highlight.OutlineColor = Color3.fromRGB(0, 255, 150)
+            highlight.FillTransparency = 0.7
+            highlight.OutlineTransparency = 0.3
+            highlight.Adornee = model
+            highlight.Parent = model
+
+            espTable[model] = highlight
+        end
+
+        local function refreshGenerators()
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("Model") and obj.Name == "Generator" then
+                    highlightGenerator(obj)
+                end
+            end
+        end
+
+        refreshGenerators()
+
+        espTable.GeneratorConnection = workspace.DescendantAdded:Connect(function(obj)
+            if espTable.Generators and obj:IsA("Model") and obj.Name == "Generator" then
+                highlightGenerator(obj)
+            end
+        end)
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Generator ESP",
+            Text = "Enabled.",
+            Duration = 2
+        })
+
+    else
+        espTable.Generators = false
+
+        if espTable.GeneratorConnection then
+            espTable.GeneratorConnection:Disconnect()
+            espTable.GeneratorConnection = nil
+        end
+
+        for model, highlight in pairs(espTable) do
+            if typeof(model) == "Instance" and highlight and highlight.Parent and model.Name == "Generator" then
+                highlight:Destroy()
+                espTable[model] = nil
+            end
+        end
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Generator ESP",
+            Text = "Disabled.",
+            Duration = 2
+        })
+    end
+end)
+
+vistab:Toggle("Door ESP", "Highlights All Doors.", function(state)
+    if state then
+        espTable.Doors = true
+
+        local function highlightDoor(door)
+            if espTable[door] then return end
+
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "DoorHighlight"
+            highlight.FillColor = Color3.fromRGB(139, 90, 43)
+            highlight.OutlineColor = Color3.fromRGB(160, 110, 60)
+            highlight.FillTransparency = 0.7
+            highlight.OutlineTransparency = 0.3
+            highlight.Adornee = door
+            highlight.Parent = door
+
+            espTable[door] = highlight
+        end
+
+        local function refreshDoors()
+            local doorsFolder = workspace.MAPS["GAME MAP"].Doors
+            if doorsFolder then
+                for _, door in ipairs(doorsFolder:GetDescendants()) do
+                    if door:IsA("BasePart") or door:IsA("Model") then
+                        highlightDoor(door)
+                    end
+                end
+            end
+        end
+
+        refreshDoors()
+
+        local doorsFolder = workspace.MAPS["GAME MAP"].Doors
+        espTable.DoorConnection = doorsFolder and doorsFolder.DescendantAdded:Connect(function(obj)
+            if espTable.Doors and (obj:IsA("BasePart") or obj:IsA("Model")) then
+                highlightDoor(obj)
+            end
+        end)
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Door ESP",
+            Text = "Enabled.",
+            Duration = 2
+        })
+
+    else
+        espTable.Doors = false
+
+        if espTable.DoorConnection then
+            espTable.DoorConnection:Disconnect()
+            espTable.DoorConnection = nil
+        end
+
+        for model, highlight in pairs(espTable) do
+            if typeof(model) == "Instance" and highlight and highlight.Parent and model:IsDescendantOf(workspace.MAPS["GAME MAP"].Doors) then
+                highlight:Destroy()
+                espTable[model] = nil
+            end
+        end
+
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Door ESP",
+            Text = "Disabled.",
+            Duration = 2
+        })
+    end
+end)
+
+misctab:Button("Infinite Yield", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Username",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("ghostofcelleron")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Invite",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("https://discord.gg/8stFYxJv4R")
+end)
