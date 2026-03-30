@@ -792,55 +792,39 @@ local esp = {
     generators = {}
 }
 
-local function newBox(obj,color)
-    local root = obj:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+local function newHighlight(obj,color)
+    if not obj then return end
 
-    local g = Instance.new("BillboardGui")
-    g.Name = "ESPBox"
-    g.Size = UDim2.new(4,0,6,0)
-    g.AlwaysOnTop = true
-    g.Adornee = root
-    g.Parent = root
+    local h = Instance.new("Highlight")
+    h.FillColor = color
+    h.FillTransparency = 0.5
+    h.OutlineColor = color
+    h.OutlineTransparency = 0
+    h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    h.Adornee = obj
+    h.Parent = obj
 
-    local t = Instance.new("Frame")
-    t.Size = UDim2.new(1,0,0,2)
-    t.BackgroundColor3 = color
-    t.BorderSizePixel = 0
-    t.Parent = g
-
-    local b = Instance.new("Frame")
-    b.Size = UDim2.new(1,0,0,2)
-    b.Position = UDim2.new(0,0,1,-2)
-    b.BackgroundColor3 = color
-    b.BorderSizePixel = 0
-    b.Parent = g
-
-    local l = Instance.new("Frame")
-    l.Size = UDim2.new(0,2,1,0)
-    l.BackgroundColor3 = color
-    l.BorderSizePixel = 0
-    l.Parent = g
-
-    local r = Instance.new("Frame")
-    r.Size = UDim2.new(0,2,1,0)
-    r.Position = UDim2.new(1,-2,0,0)
-    r.BackgroundColor3 = color
-    r.BorderSizePixel = 0
-    r.Parent = g
-
-    return g
+    return h
 end
 
 local function add(tbl,obj,color)
-    if not tbl[obj] and obj then
-        tbl[obj] = newBox(obj,color)
+    if obj and not tbl[obj] then
+        tbl[obj] = newHighlight(obj,color)
+    end
+end
+
+local function remove(tbl,obj)
+    if tbl[obj] then
+        tbl[obj]:Destroy()
+        tbl[obj] = nil
     end
 end
 
 local function clear(tbl)
-    for obj,b in pairs(tbl) do
-        if b then b:Destroy() end
+    for obj,h in pairs(tbl) do
+        if h then
+            h:Destroy()
+        end
         tbl[obj] = nil
     end
 end
@@ -850,19 +834,29 @@ vistab:Toggle("Survivor ESP","Highlight All Survivors.",function(state)
 
     if state then
         notify("Survivor ESP","Enabled.")
+
         for _,v in ipairs(alive:GetChildren()) do
             if v:IsA("Model") then
                 add(esp.survivors,v,Color3.fromRGB(80,180,255))
             end
         end
-        esp.survivorConn = alive.ChildAdded:Connect(function(v)
+
+        esp.survivorAdd = alive.ChildAdded:Connect(function(v)
             if v:IsA("Model") then
                 add(esp.survivors,v,Color3.fromRGB(80,180,255))
             end
         end)
+
+        esp.survivorRemove = alive.ChildRemoved:Connect(function(v)
+            remove(esp.survivors,v)
+        end)
+
     else
         notify("Survivor ESP","Disabled.")
-        if esp.survivorConn then esp.survivorConn:Disconnect() end
+
+        if esp.survivorAdd then esp.survivorAdd:Disconnect() end
+        if esp.survivorRemove then esp.survivorRemove:Disconnect() end
+
         clear(esp.survivors)
     end
 end)
@@ -872,44 +866,62 @@ vistab:Toggle("Killer ESP","Highlights The Killer.",function(state)
 
     if state then
         notify("Killer ESP","Enabled.")
+
         for _,v in ipairs(killers:GetChildren()) do
             if v:IsA("Model") then
                 add(esp.killers,v,Color3.fromRGB(255,80,80))
             end
         end
-        esp.killerConn = killers.ChildAdded:Connect(function(v)
+
+        esp.killerAdd = killers.ChildAdded:Connect(function(v)
             if v:IsA("Model") then
                 add(esp.killers,v,Color3.fromRGB(255,80,80))
             end
         end)
+
+        esp.killerRemove = killers.ChildRemoved:Connect(function(v)
+            remove(esp.killers,v)
+        end)
+
     else
         notify("Killer ESP","Disabled.")
-        if esp.killerConn then esp.killerConn:Disconnect() end
+
+        if esp.killerAdd then esp.killerAdd:Disconnect() end
+        if esp.killerRemove then esp.killerRemove:Disconnect() end
+
         clear(esp.killers)
     end
 end)
 
 vistab:Toggle("Generator ESP","Highlights All Generators.",function(state)
+
     if state then
         notify("Generator ESP","Enabled.")
-        task.spawn(function()
-            repeat task.wait() until workspace:FindFirstChild("MAPS")
 
-            for _,v in ipairs(workspace:GetDescendants()) do
-                if v:IsA("Model") and v.Name == "Generator" then
-                    add(esp.generators,v,Color3.fromRGB(0,255,100))
-                end
+        for _,v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("Model") and v.Name == "Generator" then
+                add(esp.generators,v,Color3.fromRGB(0,255,100))
             end
+        end
 
-            esp.genConn = workspace.DescendantAdded:Connect(function(v)
-                if v:IsA("Model") and v.Name == "Generator" then
-                    add(esp.generators,v,Color3.fromRGB(0,255,100))
-                end
-            end)
+        esp.genAdd = workspace.DescendantAdded:Connect(function(v)
+            if v:IsA("Model") and v.Name == "Generator" then
+                add(esp.generators,v,Color3.fromRGB(0,255,100))
+            end
         end)
+
+        esp.genRemove = workspace.DescendantRemoving:Connect(function(v)
+            if esp.generators[v] then
+                remove(esp.generators,v)
+            end
+        end)
+
     else
         notify("Generator ESP","Disabled.")
-        if esp.genConn then esp.genConn:Disconnect() end
+
+        if esp.genAdd then esp.genAdd:Disconnect() end
+        if esp.genRemove then esp.genRemove:Disconnect() end
+
         clear(esp.generators)
     end
 end)
