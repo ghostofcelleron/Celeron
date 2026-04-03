@@ -138,65 +138,6 @@ maintab:Toggle("Allow Jumping", "Allows You To Jump.", function(state)
     end
 end)
 
-local flying = false
-local flyConn = nil
-
-maintab:Toggle("Flight", "Allows You To Fly.", function(state)
-    flying = state
-    local Players = game:GetService("Players")
-    local RunService = game:GetService("RunService")
-    local UserInputService = game:GetService("UserInputService")
-    local Camera = workspace.CurrentCamera
-    local plr = Players.LocalPlayer
-    if flying then
-        local char = plr.Character
-        if not char then return end
-        local root = char:FindFirstChild("HumanoidRootPart")
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if not root or not hum then return end
-        hum.PlatformStand = true
-        root.Anchored = true
-        local function noCollide()
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
-            end
-        end
-        noCollide()
-        flyConn = RunService.RenderStepped:Connect(function(dt)
-            if not flying or not root or not root.Parent then return end
-            noCollide()
-            local move = Vector3.zero
-            local speed = 125
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then move += Camera.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then move -= Camera.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then move -= Camera.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then move += Camera.CFrame.RightVector end
-            if move.Magnitude > 0 then
-                local direction = move.Unit
-                local moveAmount = speed * dt
-                root.CFrame = root.CFrame + (direction * moveAmount)
-            end
-            root.CFrame = CFrame.new(root.Position, root.Position + Camera.CFrame.LookVector)
-        end)
-        notify2("Flight", "Enabled.")
-    else
-        if flyConn then flyConn:Disconnect() end
-        local char = plr.Character
-        if char then
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum then hum.PlatformStand = false end
-            local root = char:FindFirstChild("HumanoidRootPart")
-            if root then root.Anchored = false end
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then part.CanCollide = true end
-            end
-        end
-        notify2("Flight", "Disabled.")
-    end
-end)
-
 local noclipEnabled = false
 local noclipConn = nil
 
@@ -275,25 +216,76 @@ maintab:Toggle("Lock On", "Locks Your Camera Onto The Closest Player On M2 Click
     end
 end)
 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+
 local safeTeleport = false
-local lastPosition = nil
+local safePart = nil
+
+local speed = 25
+
+local function getRoot()
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char:WaitForChild("HumanoidRootPart")
+end
+
+local function lerpMove(targetCF)
+    local root = getRoot()
+    local startCF = root.CFrame
+    local dist = (startCF.Position - targetCF.Position).Magnitude
+    local duration = dist / speed
+
+    local t = 0
+
+    while t < duration do
+        t += RunService.Heartbeat:Wait()
+        local alpha = math.clamp(t / duration,0,1)
+        root.CFrame = startCF:Lerp(targetCF,alpha)
+    end
+
+    root.CFrame = targetCF
+end
 
 maintab:Toggle("Safety Area", "Teleports To A Safe Area.", function(state)
     safeTeleport = state
-    local char = game.Players.LocalPlayer.Character
+
+    local char = player.Character
     if not char then return end
+
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return end
+
     if state then
-        lastPosition = root.CFrame
-        root.CFrame = CFrame.new(0, 1003, 0)
-        notify2("Safety Area", "Enabled.")
+        local pos = root.Position
+
+        safePart = Instance.new("Part")
+        safePart.Size = Vector3.new(50,1,50)
+        safePart.Anchored = true
+        safePart.Position = pos - Vector3.new(0,100,0)
+        safePart.Name = "SafetyPlate"
+        safePart.Parent = workspace
+
+        task.spawn(function()
+            lerpMove(CFrame.new(pos - Vector3.new(0,95,0)))
+        end)
+
+        notify2("Safety Area","Enabled.")
+
     else
-        if lastPosition then
-            root.CFrame = lastPosition
-            lastPosition = nil
+        local pos = root.Position
+
+        if safePart then
+            safePart:Destroy()
+            safePart = nil
         end
-        notify2("Safety Area", "Disabled.")
+
+        task.spawn(function()
+            lerpMove(CFrame.new(pos + Vector3.new(0,100,0)))
+        end)
+
+        notify2("Safety Area","Disabled.")
     end
 end)
 
@@ -458,46 +450,131 @@ end)
 
 survivor:Label("Anti Death Features.")
 
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+
 local antiDeath = {
     enabled = false,
     threshold = 30,
     conn = nil,
     lastPos = nil,
     teleported = false,
-    debounce = false
+    debounce = false,
+    plate = nil
 }
 
+local speed = 25
+
+local function getRoot()
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char:WaitForChild("HumanoidRootPart")
+end
+
+local function lerpMove(targetCF)
+    local root = getRoot()
+    local startCF = root.CFrame
+    local dist = (startCF.Position - targetCF.Position).Magnitude
+    local duration = dist / speed
+
+    local t = 0
+
+    while t < duration do
+        t += RunService.Heartbeat:Wait()
+        local alpha = math.clamp(t/duration,0,1)
+        root.CFrame = startCF:Lerp(targetCF,alpha)
+    end
+
+    root.CFrame = targetCF
+end
+
+local function returnToLastPos()
+    if antiDeath.plate then
+        antiDeath.plate:Destroy()
+        antiDeath.plate = nil
+    end
+
+    if antiDeath.lastPos then
+        task.spawn(function()
+            lerpMove(antiDeath.lastPos)
+        end)
+    end
+
+    antiDeath.lastPos = nil
+    antiDeath.teleported = false
+end
+
 survivor:Toggle("Anti Death", "Automatically Detects Low Health And Teleports To A Safe Zone.", function(state)
+
     antiDeath.enabled = state
+
     if state then
-        antiDeath.conn = game:GetService("RunService").Heartbeat:Connect(function()
-            local char = game.Players.LocalPlayer.Character
+
+        antiDeath.conn = RunService.Heartbeat:Connect(function()
+
+            local char = player.Character
             if not char then return end
+
             local hum = char:FindFirstChildOfClass("Humanoid")
             if not hum then return end
+
             local root = char:FindFirstChild("HumanoidRootPart")
             if not root then return end
+
             if hum.Health < antiDeath.threshold and hum.Health > 0 and not antiDeath.teleported and not antiDeath.debounce then
+
                 antiDeath.debounce = true
                 antiDeath.teleported = true
                 antiDeath.lastPos = root.CFrame
-                root.CFrame = pp.CFrame + Vector3.new(0,5,0)
-                task.delay(1,function() antiDeath.debounce = false end)
+
+                local pos = root.Position
+
+                antiDeath.plate = Instance.new("Part")
+                antiDeath.plate.Size = Vector3.new(50,1,50)
+                antiDeath.plate.Anchored = true
+                antiDeath.plate.Position = pos - Vector3.new(0,100,0)
+                antiDeath.plate.Name = "AntiDeathPlate"
+                antiDeath.plate.Parent = workspace
+
+                task.spawn(function()
+                    lerpMove(CFrame.new(pos - Vector3.new(0,95,0)))
+                end)
+
+                task.delay(1,function()
+                    antiDeath.debounce = false
+                end)
+
             elseif hum.Health >= antiDeath.threshold and antiDeath.teleported and antiDeath.lastPos and not antiDeath.debounce then
+
                 antiDeath.debounce = true
-                root.CFrame = antiDeath.lastPos
-                antiDeath.lastPos = nil
-                antiDeath.teleported = false
-                task.delay(1,function() antiDeath.debounce = false end)
+
+                returnToLastPos()
+
+                task.delay(1,function()
+                    antiDeath.debounce = false
+                end)
+
             end
+
         end)
-        notify2("Anti Death", "Enabled.")
+
+        notify2("Anti Death","Enabled.")
+
     else
-        if antiDeath.conn then antiDeath.conn:Disconnect() end
-        antiDeath.lastPos = nil
-        antiDeath.teleported = false
+
+        if antiDeath.conn then
+            antiDeath.conn:Disconnect()
+        end
+
+        if antiDeath.teleported then
+            returnToLastPos()
+        end
+
         antiDeath.debounce = false
-        notify2("Anti Death", "Disabled.")
+
+        notify2("Anti Death","Disabled.")
+
     end
 end)
 
@@ -652,11 +729,58 @@ vistab:Toggle("Battery ESP", "Highlights All Batteries.", function(state)
 end)
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
+
+local speed = 25
+local lerping = false
+local currentTarget = nil
 
 local function getRoot()
     local char = player.Character or player.CharacterAdded:Wait()
     return char, char:WaitForChild("HumanoidRootPart")
+end
+
+local function lerpTo(targetCFrame)
+    local _, root = getRoot()
+    local targetPos = targetCFrame.Position
+
+    if currentTarget and (currentTarget - targetPos).Magnitude < 0.5 then
+        lerping = false
+        currentTarget = nil
+        return
+    end
+
+    currentTarget = targetPos
+    lerping = true
+
+    while lerping and root.Parent do
+        local currentPos = root.Position
+        local direction = (targetPos - currentPos)
+        local distance = direction.Magnitude
+        
+        if distance <= 0.5 then
+            break
+        end
+        
+        local step = math.min(speed * RunService.RenderStepped:Wait(), distance)
+        root.CFrame = CFrame.new(currentPos + direction.Unit * step, targetPos)
+    end
+
+    if lerping and root.Parent then
+        root.CFrame = CFrame.new(targetPos)
+    end
+
+    lerping = false
+    currentTarget = nil
+end
+
+local function TeleportTo(model)
+    if not model then return end
+    local part = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+    if not part then return end
+    local frontCFrame = part.CFrame * CFrame.new(0, 0, -5)
+    lerpTo(frontCFrame)
 end
 
 local function getOrderedGenerators()
@@ -678,58 +802,68 @@ local function getOrderedGenerators()
     return models
 end
 
-local function Teleport(model)
-    if not model then return end
-    local part = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
-    if not part then return end
-    local char,root = getRoot()
-    local front = part.CFrame.Position + part.CFrame.LookVector * 5
-    root.CFrame = CFrame.new(front)
-end
-
 local generatorIndex = 1
-
-tpstab:Button("Generator TP", "Teleports To A Generator.", function()
+tpstab:Button("Generator TP", "Teleports To A Generator. Click Again To Cancel.", function()
     local models = getOrderedGenerators()
-    if #models == 0 then notify2("error", "wait for match to start or wait for ur game to load fully.") return end
+    if #models == 0 then
+        notify2("error","wait for match to start or wait for ur game to load fully.")
+        return
+    end
+
     local model = models[generatorIndex]
-    Teleport(model)
+    if not model then return end
+
+    TeleportTo(model)
+    
     generatorIndex += 1
-    if generatorIndex > #models then generatorIndex = 1 end
+    if generatorIndex > #models then 
+        generatorIndex = 1 
+    end
 end)
 
 local batteryIndex = 1
+tpstab:Button("Battery TP", "Teleports To A Battery. Click Again To Cancel.", function()
+    local char = player.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
 
-tpstab:Button("Battery TP", "Teleports To A Battery.", function()
-    local char = player.Character or player.CharacterAdded:Wait()
-    local root = char:WaitForChild("HumanoidRootPart")
     local ignore = workspace:FindFirstChild("IGNORE")
-    if not ignore then 
-        notify2("error", "wait for match to start or wait for ur game to load fully.")
-        return 
+    if not ignore then
+        notify2("error","wait for match to start or wait for ur game to load fully. if loaded, there are no batteries.")
+        return
     end
+
     local batteries = {}
-    for _,v in ipairs(ignore:GetDescendants()) do
+    for _, v in ipairs(ignore:GetDescendants()) do
         if v:IsA("MeshPart") and v.Name == "Battery" then
-            table.insert(batteries,v)
+            table.insert(batteries, v)
         end
     end
-    if #batteries == 0 then 
-        notify2("error", "wait for match to start or wait for ur game to load fully.")
-        return 
+
+    if #batteries == 0 then
+        notify2("error","wait for match to start or wait for ur game to load fully. if loaded, there are no batteries.")
+        return
     end
-    for i,v in ipairs(batteries) do 
-        v:SetAttribute("Order", i) 
+
+    for i, v in ipairs(batteries) do
+        v:SetAttribute("Order", i)
     end
-    table.sort(batteries, function(a,b)
+    table.sort(batteries, function(a, b)
         return (a:GetAttribute("Order") or 0) < (b:GetAttribute("Order") or 0)
     end)
+
     local battery = batteries[batteryIndex]
-    if battery then
-        root.CFrame = battery.CFrame + Vector3.new(0, 3, 0)
-    end
+    if not battery then return end
+
+    local targetCFrame = battery.CFrame * CFrame.new(0, 3, 0)
+
+    lerpTo(targetCFrame)
+
     batteryIndex += 1
-    if batteryIndex > #batteries then batteryIndex = 1 end
+    if batteryIndex > #batteries then 
+        batteryIndex = 1 
+    end
 end)
 
 killer:Label("Killer Features.")
