@@ -137,6 +137,76 @@ maintab:Toggle("Allow Jumping", "Allows You To Jump.", function(state)
     end
 end)
 
+local aimlockEnabled = false
+local lockedTarget = nil
+
+local inputService = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local camera = workspace.CurrentCamera
+local player = game:GetService("Players").LocalPlayer
+
+local inputConn = nil
+local renderConn = nil
+
+maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking R.", function(state)
+    aimlockEnabled = state
+
+    if aimlockEnabled then
+        inputConn = inputService.InputBegan:Connect(function(input, gp)
+            if gp then return end
+            if input.KeyCode ~= Enum.KeyCode.R then return end
+
+            if lockedTarget then
+                lockedTarget = nil
+                return
+            end
+
+            local myChar = player.Character
+            if not myChar then return end
+            local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+            if not myRoot then return end
+
+            local closest = nil
+            local shortest = math.huge
+
+            for _, other in ipairs(game.Players:GetPlayers()) do
+                if other ~= player and other.Character then
+                    local root = other.Character:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        local dist = (myRoot.Position - root.Position).Magnitude
+                        if dist < shortest then
+                            shortest = dist
+                            closest = root
+                        end
+                    end
+                end
+            end
+
+            if closest then
+                lockedTarget = closest
+            end
+        end)
+
+        renderConn = runService.RenderStepped:Connect(function()
+            if lockedTarget and lockedTarget.Parent then
+                camera.CFrame = CFrame.new(camera.CFrame.Position, lockedTarget.Position)
+            else
+                lockedTarget = nil
+            end
+        end)
+    else
+        lockedTarget = nil
+        if inputConn then
+            inputConn:Disconnect()
+            inputConn = nil
+        end
+        if renderConn then
+            renderConn:Disconnect()
+            renderConn = nil
+        end
+    end
+end)
+
 local noclipEnabled = false
 local noclipConn = nil
 
