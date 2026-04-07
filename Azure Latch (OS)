@@ -65,7 +65,7 @@ helptab:Button("Copy Discord Server Invite", "Copies The Discord Invite To Your 
         Duration = 3,
         Button1 = "alright fella",
     })
-    setclipboard("https://discord.gg/8stFYxJv4R")
+    setclipboard("https://discord.gg/mFusYUmyry")
 end)
 
 if math.random(1,50) == 1 then
