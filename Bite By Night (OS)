@@ -1124,7 +1124,7 @@ end)
 helptab:Button("Copy Discord Server Invite", function()
     local StarterGui = game:GetService("StarterGui")
     StarterGui:SetCore("SendNotification", {Title = "Discord Invite", Text = "Copied to your clipboard!", Duration = 3, Button1 = "alright fella"})
-    setclipboard("https://discord.gg/8stFYxJv4R")
+    setclipboard("https://discord.gg/mFusYUmyry")
 end)
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/oldthingyep",true))()
