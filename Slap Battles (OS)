@@ -3432,7 +3432,7 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R")
+setclipboard("https://discord.gg/mFusYUmyry")
 end)
 
 elseif currentPlaceId == evilbarzil then
@@ -4053,7 +4053,7 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R")
+setclipboard("https://discord.gg/mFusYUmyry")
 end)
 
 elseif currentPlaceId == slaproyale then
@@ -5103,7 +5103,7 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R")
+setclipboard("https://discord.gg/mFusYUmyry")
 end)
 elseif currentPlaceId == eternalbob then
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
@@ -5771,7 +5771,7 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R")
+setclipboard("https://discord.gg/mFusYUmyry")
 end)
 
 elseif currentPlaceId == slapbattlesks then
@@ -6836,7 +6836,7 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R")
+setclipboard("https://discord.gg/mFusYUmyry")
 end)
 elseif currentPlaceId == slaproyalewaiting then
 local StarterGui = game:GetService("StarterGui")
@@ -6947,7 +6947,7 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R")
+setclipboard("https://discord.gg/mFusYUmyry")
 end)
 elseif currentPlaceId == egglerserver then
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
@@ -7024,7 +7024,7 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R")
+setclipboard("https://discord.gg/mFusYUmyry")
 end)
 elseif currentPlaceId == barzil then
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
@@ -7087,7 +7087,7 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R")
+setclipboard("https://discord.gg/mFusYUmyry")
 end)
 elseif currentPlaceId == suction then
 local StarterGui = game:GetService("StarterGui")
@@ -7326,7 +7326,7 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R")
+setclipboard("https://discord.gg/mFusYUmyry")
 end)
 elseif currentPlaceId == slender then
 local StarterGui = game:GetService("StarterGui")
@@ -7421,7 +7421,7 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("https://discord.gg/8stFYxJv4R")
+setclipboard("https://discord.gg/mFusYUmyry")
 end)
 elseif currentPlaceId == plate then
 local StarterGui = game:GetService("StarterGui")
