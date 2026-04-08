@@ -235,7 +235,7 @@ maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking Bind.", f
     end
 end)
 
-maintab:Textbox("Aimlock Bind", "Enter Key (Example: Z, X, C). Must Be Capitalized.", function(text)
+maintab:Textbox("Aimlock Bind", "Enter Key (Example: LeftAlt, MouseButton2). Must Be Capitalized.", function(text)
     if typeof(text) ~= "string" then
         aimlockBind = Enum.UserInputType.MouseButton2
         notify2("Aimlock Bind", "Invalid Input. Bind Is Now M2.")
@@ -691,10 +691,11 @@ end)
 survivor:Slider("Health Threshold", 30, 25, 80, 0.5, function(v)
     antiDeath.threshold = v
 end)
+local espMethod = "Highlight"
 
 local esp = { survivors = {}, killers = {}, generators = {} }
 
-local function newHighlight(obj,color)
+local function newHighlight(obj, color)
     if not obj then return end
     local h = Instance.new("Highlight")
     h.FillColor = color
@@ -707,96 +708,141 @@ local function newHighlight(obj,color)
     return h
 end
 
-local function add(tbl,obj,color)
-    if obj and not tbl[obj] then
-        tbl[obj] = newHighlight(obj,color)
+local function createDrawingBox()
+    local box = Drawing.new("Square")
+    box.Thickness = 2
+    box.Filled = false
+    box.Transparency = 1
+    return box
+end
+
+local function updateDrawingBox(box, obj)
+    if not box or not obj then return end
+    local root = obj:FindFirstChild("HumanoidRootPart") or obj.PrimaryPart
+    if not root then return end
+
+    local camera = workspace.CurrentCamera
+    local vector, onScreen = camera:WorldToViewportPoint(root.Position)
+    
+    if onScreen then
+        local size = (camera:WorldToViewportPoint(root.Position + Vector3.new(0, 3, 0)) - vector).Y * 2.5
+        box.Size = Vector2.new(size * 1.2, size)
+        box.Position = Vector2.new(vector.X - box.Size.X / 2, vector.Y - box.Size.Y / 2)
+        box.Visible = true
+    else
+        box.Visible = false
     end
 end
 
-local function remove(tbl,obj)
+local function add(tbl, obj, color)
+    if not obj or tbl[obj] then return end
+
+    if espMethod == "Highlight" then
+        tbl[obj] = newHighlight(obj, color)
+    else
+        local box = createDrawingBox()
+        box.Color = color
+        tbl[obj] = box
+    end
+end
+
+local function remove(tbl, obj)
     if tbl[obj] then
-        tbl[obj]:Destroy()
+        if typeof(tbl[obj]) == "Instance" then
+            tbl[obj]:Destroy()
+        else
+            tbl[obj]:Remove()
+        end
         tbl[obj] = nil
     end
 end
 
 local function clear(tbl)
-    for obj,h in pairs(tbl) do
-        if h then h:Destroy() end
+    for obj, v in pairs(tbl) do
+        if v then
+            if typeof(v) == "Instance" then
+                v:Destroy()
+            else
+                v:Remove()
+            end
+        end
         tbl[obj] = nil
     end
 end
 
-vistab:Toggle("Survivor ESP","Highlight All Survivors.",function(state)
+vistab:Dropdown("ESP Method", {"Highlight", "Drawing"}, function(selected)
+    espMethod = selected
+    notify2("ESP Method", "Changed to: " .. selected)
+end)
+
+vistab:Toggle("Survivor ESP", "Highlight All Survivors.", function(state)
     local playersFolder = workspace:FindFirstChild("PLAYERS")
     local alive = playersFolder and playersFolder:FindFirstChild("ALIVE")
     if not alive then notify2("error", "wait for match to start or wait for ur game to load fully.") return end
+
     if state then
-        notify2("Survivor ESP","Enabled.")
-        for _,v in ipairs(alive:GetChildren()) do
-            if v:IsA("Model") then add(esp.survivors,v,Color3.fromRGB(80,180,255)) end
+        notify2("Survivor ESP", "Enabled.")
+        for _, v in ipairs(alive:GetChildren()) do
+            if v:IsA("Model") then add(esp.survivors, v, Color3.fromRGB(80,180,255)) end
         end
         esp.survivorAdd = alive.ChildAdded:Connect(function(v)
-            if v:IsA("Model") then add(esp.survivors,v,Color3.fromRGB(80,180,255)) end
+            if v:IsA("Model") then add(esp.survivors, v, Color3.fromRGB(80,180,255)) end
         end)
-        esp.survivorRemove = alive.ChildRemoved:Connect(function(v) remove(esp.survivors,v) end)
+        esp.survivorRemove = alive.ChildRemoved:Connect(function(v) remove(esp.survivors, v) end)
     else
-        notify2("Survivor ESP","Disabled.")
+        notify2("Survivor ESP", "Disabled.")
         if esp.survivorAdd then esp.survivorAdd:Disconnect() end
         if esp.survivorRemove then esp.survivorRemove:Disconnect() end
         clear(esp.survivors)
     end
 end)
 
-vistab:Toggle("Killer ESP","Highlights The Killer.",function(state)
+vistab:Toggle("Killer ESP", "Highlights The Killer.", function(state)
     local playersFolder = workspace:FindFirstChild("PLAYERS")
     local killers = playersFolder and playersFolder:FindFirstChild("KILLER")
     if not killers then notify2("error", "wait for match to start or wait for ur game to load fully.") return end
+
     if state then
-        notify2("Killer ESP","Enabled.")
-        for _,v in ipairs(killers:GetChildren()) do
-            if v:IsA("Model") then add(esp.killers,v,Color3.fromRGB(255,80,80)) end
+        notify2("Killer ESP", "Enabled.")
+        for _, v in ipairs(killers:GetChildren()) do
+            if v:IsA("Model") then add(esp.killers, v, Color3.fromRGB(255,80,80)) end
         end
         esp.killerAdd = killers.ChildAdded:Connect(function(v)
-            if v:IsA("Model") then add(esp.killers,v,Color3.fromRGB(255,80,80)) end
+            if v:IsA("Model") then add(esp.killers, v, Color3.fromRGB(255,80,80)) end
         end)
-        esp.killerRemove = killers.ChildRemoved:Connect(function(v) remove(esp.killers,v) end)
+        esp.killerRemove = killers.ChildRemoved:Connect(function(v) remove(esp.killers, v) end)
     else
-        notify2("Killer ESP","Disabled.")
+        notify2("Killer ESP", "Disabled.")
         if esp.killerAdd then esp.killerAdd:Disconnect() end
         if esp.killerRemove then esp.killerRemove:Disconnect() end
         clear(esp.killers)
     end
 end)
 
-vistab:Toggle("Generator ESP","Highlights All Generators.",function(state)
+vistab:Toggle("Generator ESP", "Highlights All Generators.", function(state)
     if state then
-        notify2("Generator ESP","Enabled.")
-        for _,v in ipairs(workspace:GetDescendants()) do
+        notify2("Generator ESP", "Enabled.")
+        for _, v in ipairs(workspace:GetDescendants()) do
             if v:IsA("Model") and v.Name == "Generator" then
-                add(esp.generators,v,Color3.fromRGB(0,255,100))
+                add(esp.generators, v, Color3.fromRGB(0,255,100))
             end
         end
         esp.genAdd = workspace.DescendantAdded:Connect(function(v)
-            if v:IsA("Model") and v.Name == "Generator" then add(esp.generators,v,Color3.fromRGB(0,255,100)) end
+            if v:IsA("Model") and v.Name == "Generator" then add(esp.generators, v, Color3.fromRGB(0,255,100)) end
         end)
         esp.genRemove = workspace.DescendantRemoving:Connect(function(v)
-            if esp.generators[v] then remove(esp.generators,v) end
+            if esp.generators[v] then remove(esp.generators, v) end
         end)
     else
-        notify2("Generator ESP","Disabled.")
+        notify2("Generator ESP", "Disabled.")
         if esp.genAdd then esp.genAdd:Disconnect() end
         if esp.genRemove then esp.genRemove:Disconnect() end
         clear(esp.generators)
     end
 end)
 
-local batteryEspEnabled = false
 local batteryHighlights = {}
 local batteryConn = nil
-
-local fuseHighlights = {}
-local fuseConn = nil
 
 local function createBatteryHighlight(obj)
     if not obj or batteryHighlights[obj] then return end
@@ -811,6 +857,35 @@ local function createBatteryHighlight(obj)
     batteryHighlights[obj] = h
 end
 
+vistab:Toggle("Battery ESP", "Highlights All Batteries.", function(state)
+    if state then
+        notify2("Battery ESP", "Enabled.")
+        local ignore = workspace:FindFirstChild("IGNORE")
+        if ignore then
+            for _, v in ipairs(ignore:GetDescendants()) do
+                if v:IsA("MeshPart") and v.Name == "Battery" then
+                    createBatteryHighlight(v)
+                end
+            end
+        end
+        batteryConn = workspace.DescendantAdded:Connect(function(v)
+            if v:IsA("MeshPart") and v.Name == "Battery" then
+                createBatteryHighlight(v)
+            end
+        end)
+    else
+        notify2("Battery ESP", "Disabled.")
+        if batteryConn then batteryConn:Disconnect() batteryConn = nil end
+        for _, h in pairs(batteryHighlights) do
+            if h then h:Destroy() end
+        end
+        batteryHighlights = {}
+    end
+end)
+
+local fuseHighlights = {}
+local fuseConn = nil
+
 local function createFuseHighlight(obj)
     if not obj or fuseHighlights[obj] then return end
     local h = Instance.new("Highlight")
@@ -824,43 +899,9 @@ local function createFuseHighlight(obj)
     fuseHighlights[obj] = h
 end
 
-vistab:Toggle("Battery ESP", "Highlights All Batteries.", function(state)
-    batteryEspEnabled = state
-    if state then
-        notify2("Battery ESP", "Enabled.")
-
-        local ignore = workspace:FindFirstChild("IGNORE")
-        if ignore then
-            for _, v in ipairs(ignore:GetDescendants()) do
-                if v:IsA("MeshPart") and v.Name == "Battery" then
-                    createBatteryHighlight(v)
-                end
-            end
-        end
-
-        batteryConn = workspace.DescendantAdded:Connect(function(v)
-            if v:IsA("MeshPart") and v.Name == "Battery" then
-                createBatteryHighlight(v)
-            end
-        end)
-    else
-        notify2("Battery ESP", "Disabled.")
-        
-        if batteryConn then
-            batteryConn:Disconnect()
-            batteryConn = nil
-        end
-        for _, h in pairs(batteryHighlights) do
-            if h then h:Destroy() end
-        end
-        batteryHighlights = {}
-    end
-end)
-
 vistab:Toggle("Fuse Box ESP", "Highlights All Fuse Boxes.", function(v)
     if v then
         notify2("Fuse Box ESP", "Enabled.")
-        
         local mapsFolder = workspace:FindFirstChild("MAPS")
         if mapsFolder then
             local gameMap = mapsFolder:FindFirstChild("GAME MAP")
@@ -869,14 +910,11 @@ vistab:Toggle("Fuse Box ESP", "Highlights All Fuse Boxes.", function(v)
                 if fuseBoxes then
                     for _, fuseBox in ipairs(fuseBoxes:GetChildren()) do
                         local battery = fuseBox:FindFirstChild("Battery")
-                        if battery then
-                            createFuseHighlight(battery)
-                        end
+                        if battery then createFuseHighlight(battery) end
                     end
                 end
             end
         end
-
         fuseConn = workspace.DescendantAdded:Connect(function(v)
             if v:IsA("BasePart") and v.Name == "Battery" and v.Parent and v.Parent.Name == "FuseBox" then
                 task.wait(0.1)
@@ -885,11 +923,7 @@ vistab:Toggle("Fuse Box ESP", "Highlights All Fuse Boxes.", function(v)
         end)
     else
         notify2("Fuse Box ESP", "Disabled.")
-        
-        if fuseConn then
-            fuseConn:Disconnect()
-            fuseConn = nil
-        end
+        if fuseConn then fuseConn:Disconnect() fuseConn = nil end
         for _, h in pairs(fuseHighlights) do
             if h then h:Destroy() end
         end
@@ -915,31 +949,23 @@ end
 
 local function enableTrapESP()
     notify2("Trap ESP", "Enabled.")
-    
     local ignore = workspace:FindFirstChild("IGNORE")
     if ignore then
         for _, obj in ipairs(ignore:GetChildren()) do
             if obj:IsA("Model") and obj.Name == "Trap" then
                 createTrapHighlight(obj)
-                
                 for _, part in ipairs(obj:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        createTrapHighlight(part)
-                    end
+                    if part:IsA("BasePart") then createTrapHighlight(part) end
                 end
             end
         end
     end
-
     descendantConn = workspace.DescendantAdded:Connect(function(v)
         if v:IsA("Model") and v.Name == "Trap" then
             task.wait(0.1)
             createTrapHighlight(v)
-            
             for _, part in ipairs(v:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    createTrapHighlight(part)
-                end
+                if part:IsA("BasePart") then createTrapHighlight(part) end
             end
         end
     end)
@@ -947,12 +973,7 @@ end
 
 local function disableTrapESP()
     notify2("Trap ESP", "Disabled.")
-    
-    if descendantConn then
-        descendantConn:Disconnect()
-        descendantConn = nil
-    end
-    
+    if descendantConn then descendantConn:Disconnect() descendantConn = nil end
     for _, h in pairs(trapHighlights) do
         if h then h:Destroy() end
     end
@@ -986,7 +1007,6 @@ end
 vistab:Toggle("Minion ESP", "Highlights All Minions.", function(v)
     if v then
         notify2("Minion ESP", "Enabled.")
-
         local ignore = workspace:FindFirstChild("IGNORE")
         if ignore then
             for _, obj in ipairs(ignore:GetDescendants()) do
@@ -995,7 +1015,6 @@ vistab:Toggle("Minion ESP", "Highlights All Minions.", function(v)
                 end
             end
         end
-
         minionConn = workspace.DescendantAdded:Connect(function(obj)
             if obj:IsA("Model") and obj.Name == "Minion" then
                 createMinionHighlight(obj)
@@ -1003,16 +1022,23 @@ vistab:Toggle("Minion ESP", "Highlights All Minions.", function(v)
         end)
     else
         notify2("Minion ESP", "Disabled.")
-        
-        if minionConn then
-            minionConn:Disconnect()
-            minionConn = nil
-        end
-        
+        if minionConn then minionConn:Disconnect() minionConn = nil end
         for _, h in pairs(minionHighlights) do
             if h then h:Destroy() end
         end
         minionHighlights = {}
+    end
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if espMethod ~= "Drawing" then return end
+
+    for _, tbl in pairs({esp.survivors, esp.killers, esp.generators}) do
+        for obj, box in pairs(tbl) do
+            if box and typeof(box) ~= "Instance" then
+                updateDrawingBox(box, obj)
+            end
+        end
     end
 end)
 
