@@ -235,7 +235,7 @@ maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking Bind.", f
     end
 end)
 
-maintab:Textbox("Aimlock Bind", "Enter Key (Example: LeftAlt, MouseButton2). Must Be Capitalized.", function(text)
+maintab:Textbox("Aimlock Bind", "Enter Key (Example: Z, X, C). Must Be Capitalized.", function(text)
     if typeof(text) ~= "string" then
         aimlockBind = Enum.UserInputType.MouseButton2
         notify2("Aimlock Bind", "Invalid Input. Bind Is Now M2.")
