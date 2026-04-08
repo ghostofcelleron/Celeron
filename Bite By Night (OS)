@@ -148,18 +148,39 @@ local player = game:GetService("Players").LocalPlayer
 local inputConn = nil
 local renderConn = nil
 
-maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking R.", function(state)
-    aimlockEnabled = state
+local aimlockBind = Enum.UserInputType.MouseButton2
 
+local function getMyTeamFolder()
+    local char = player.Character
+    if not char then return nil end
+    local aliveFolder = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("ALIVE")
+    local killerFolder = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
+    
+    if aliveFolder and char.Parent == aliveFolder then
+        return "ALIVE"
+    elseif killerFolder and char.Parent == killerFolder then
+        return "KILLER"
+    end
+    return nil
+end
+
+maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking Bind.", function(state)
+    aimlockEnabled = state
+    
     if aimlockEnabled then
+        notify2("Aimlock", "Enabled.")
+
         inputConn = inputService.InputBegan:Connect(function(input, gp)
             if gp then return end
-            if input.KeyCode ~= Enum.KeyCode.R then return end
+            if input.UserInputType ~= aimlockBind and input.KeyCode ~= aimlockBind then return end
 
             if lockedTarget then
                 lockedTarget = nil
                 return
             end
+
+            local myTeam = getMyTeamFolder()
+            if not myTeam then return end
 
             local myChar = player.Character
             if not myChar then return end
@@ -169,8 +190,13 @@ maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking R.", func
             local closest = nil
             local shortest = math.huge
 
+            local targetFolderName = (myTeam == "ALIVE") and "KILLER" or "ALIVE"
+            local targetFolder = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild(targetFolderName)
+
+            if not targetFolder then return end
+
             for _, other in ipairs(game.Players:GetPlayers()) do
-                if other ~= player and other.Character then
+                if other ~= player and other.Character and other.Character.Parent == targetFolder then
                     local root = other.Character:FindFirstChild("HumanoidRootPart")
                     if root then
                         local dist = (myRoot.Position - root.Position).Magnitude
@@ -184,6 +210,9 @@ maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking R.", func
 
             if closest then
                 lockedTarget = closest
+                notify2("Aimlock", "Locked onto target.")
+            else
+                notify2("Aimlock", "No valid target found.")
             end
         end)
 
@@ -195,7 +224,9 @@ maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking R.", func
             end
         end)
     else
+        notify2("Aimlock", "Disabled.")
         lockedTarget = nil
+        
         if inputConn then
             inputConn:Disconnect()
             inputConn = nil
@@ -204,6 +235,38 @@ maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking R.", func
             renderConn:Disconnect()
             renderConn = nil
         end
+    end
+end)
+
+maintab:Textbox("Aimlock Bind", "Enter Key (Example: LeftAlt, MouseButton2, Z).", function(text)
+    if typeof(text) ~= "string" then
+        aimlockBind = Enum.UserInputType.MouseButton2
+        notify2("Aimlock Bind", "Invalid Input. Bind Is Now M2.")
+        return
+    end
+
+    local formatted = text:gsub("%s+", "")
+
+    local success, key = pcall(function()
+        return Enum.KeyCode[formatted]
+    end)
+
+    if success and key then
+        aimlockBind = key
+        notify2("Aimlock Bind", "Bind Set To: " .. key.Name)
+        return
+    end
+
+    local success2, inputType = pcall(function()
+        return Enum.UserInputType[formatted]
+    end)
+
+    if success2 and inputType then
+        aimlockBind = inputType
+        notify2("Aimlock Bind", "Bind Set To: " .. inputType.Name)
+    else
+        aimlockBind = Enum.UserInputType.MouseButton2
+        notify2("Aimlock Bind", "Invalid Input. Bind Is Now M2.")
     end
 end)
 
@@ -262,22 +325,54 @@ end)
 
 survivor:Label("Survivor Features.")
 
-local AutoGen = false
-local genConn
+local autogen = false
+local genconn = nil
+local firingconn = nil
+local lastfiretime = 0
 
 survivor:Toggle("Auto Generator", "Automatically Does Generator Tasks.", function(v)
-    AutoGen = v
-    if AutoGen then
+    autogen = v
+
+    if autogen then
         notify2("Auto Generator", "Enabled.")
-        genConn = game:GetService("RunService").RenderStepped:Connect(function()
+
+        genconn = game:GetService("RunService").Heartbeat:Connect(function()
             local plr = game:GetService("Players").LocalPlayer
-            if plr.PlayerGui:FindFirstChild("Gen") then
-                plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(true)
+            local gengui = plr.PlayerGui:FindFirstChild("Gen")
+
+            if gengui and not firingconn then
+                task.wait(3)
+
+                if gengui and gengui.Parent and autogen then
+                    firingconn = game:GetService("RunService").Heartbeat:Connect(function()
+                        local currenttime = tick()
+
+                        if plr.PlayerGui:FindFirstChild("Gen") and (currenttime - lastfiretime >= 3) then
+                            plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(true)
+                            lastfiretime = currenttime
+                        elseif not plr.PlayerGui:FindFirstChild("Gen") then
+                            if firingconn then
+                                firingconn:Disconnect()
+                                firingconn = nil
+                            end
+                        end
+                    end)
+                end
             end
         end)
+
     else
         notify2("Auto Generator", "Disabled.")
-        if genConn then genConn:Disconnect() end
+        
+        if genconn then
+            genconn:Disconnect()
+            genconn = nil
+        end
+        if firingconn then
+            firingconn:Disconnect()
+            firingconn = nil
+        end
+        lastfiretime = 0
     end
 end)
 
@@ -352,67 +447,6 @@ survivor:Toggle("Auto Barricade","Forces Barricading Dot In The Middle.",functio
     else
         if dotConn then dotConn:Disconnect() end
         notify2("Auto Barricade", "Disabled.")
-    end
-end)
-
-local antiTrap = false
-local connection = nil
-local lastTeleportTime = 0
-
-survivor:Toggle("Anti Bear Trap", "Teleports Past Traps When Going Near Them.", function(v)
-    antiTrap = v
-    
-    if antiTrap then
-        notify2("Anti Bear Trap", "Enabled.")
-        lastTeleportTime = 0
-        
-        connection = game:GetService("RunService").Heartbeat:Connect(function()
-            local ignore = workspace:FindFirstChild("IGNORE")
-            if not ignore then return end
-            
-            local trapFolder = ignore:FindFirstChild("Trap")
-            if not trapFolder then return end
-
-            local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if not root then return end
-
-            local currentTime = tick()
-            if currentTime - lastTeleportTime < 1 then
-                return
-            end
-
-            for _, trap in ipairs(trapFolder:GetChildren()) do
-                if trap:IsA("BasePart") and trap.Name == "Trap" then
-                    
-                    local distance = (trap.Position - root.Position).Magnitude
-                    
-                    if distance < 12 then
-                        local lookDir = root.CFrame.LookVector
-                        local teleportOffset = lookDir * 16
-                        local targetPos = root.Position + teleportOffset
-
-                        local rayParams = RaycastParams.new()
-                        rayParams.FilterDescendantsInstances = {root.Parent}
-                        rayParams.FilterType = Enum.RaycastFilterType.Exclude
-
-                        local rayResult = workspace:Raycast(root.Position, teleportOffset, rayParams)
-
-                        if not rayResult or (rayResult.Instance == trap) then
-                            root.CFrame = CFrame.new(targetPos)
-                            lastTeleportTime = currentTime
-                            break
-                        end
-                    end
-                end
-            end
-        end)
-    else
-        notify2("Anti Bear Trap", "Disabled.")
-        
-        if connection then
-            connection:Disconnect()
-            connection = nil
-        end
     end
 end)
 
@@ -762,7 +796,10 @@ end)
 
 local batteryEspEnabled = false
 local batteryHighlights = {}
-local batteryEspEnabledConn = nil
+local batteryConn = nil
+
+local fuseHighlights = {}
+local fuseConn = nil
 
 local function createBatteryHighlight(obj)
     if not obj or batteryHighlights[obj] then return end
@@ -777,38 +814,6 @@ local function createBatteryHighlight(obj)
     batteryHighlights[obj] = h
 end
 
-vistab:Toggle("Battery ESP", "Highlights All Batteries.", function(state)
-    batteryEspEnabled = state
-    if state then
-        notify2("Battery ESP", "Enabled.")
-        local ignore = workspace:FindFirstChild("IGNORE")
-        if ignore then
-            for _, v in ipairs(ignore:GetDescendants()) do
-                if v:IsA("MeshPart") and v.Name == "Battery" then
-                    createBatteryHighlight(v)
-                end
-            end
-        end
-        batteryEspEnabledConn = workspace.DescendantAdded:Connect(function(v)
-            if v:IsA("MeshPart") and v.Name == "Battery" then
-                createBatteryHighlight(v)
-            end
-        end)
-    else
-        notify2("Battery ESP", "Disabled.")
-        if batteryEspEnabledConn then
-            batteryEspEnabledConn:Disconnect()
-            batteryEspEnabledConn = nil
-        end
-        for obj, h in pairs(batteryHighlights) do
-            if h then h:Destroy() end
-        end
-        batteryHighlights = {}
-    end
-end)
-
-local fuseHighlights = {}
-
 local function createFuseHighlight(obj)
     if not obj or fuseHighlights[obj] then return end
     local h = Instance.new("Highlight")
@@ -821,6 +826,39 @@ local function createFuseHighlight(obj)
     h.Parent = obj
     fuseHighlights[obj] = h
 end
+
+vistab:Toggle("Battery ESP", "Highlights All Batteries.", function(state)
+    batteryEspEnabled = state
+    if state then
+        notify2("Battery ESP", "Enabled.")
+
+        local ignore = workspace:FindFirstChild("IGNORE")
+        if ignore then
+            for _, v in ipairs(ignore:GetDescendants()) do
+                if v:IsA("MeshPart") and v.Name == "Battery" then
+                    createBatteryHighlight(v)
+                end
+            end
+        end
+
+        batteryConn = workspace.DescendantAdded:Connect(function(v)
+            if v:IsA("MeshPart") and v.Name == "Battery" then
+                createBatteryHighlight(v)
+            end
+        end)
+    else
+        notify2("Battery ESP", "Disabled.")
+        
+        if batteryConn then
+            batteryConn:Disconnect()
+            batteryConn = nil
+        end
+        for _, h in pairs(batteryHighlights) do
+            if h then h:Destroy() end
+        end
+        batteryHighlights = {}
+    end
+end)
 
 vistab:Toggle("Fuse Box ESP", "Highlights All Fuse Boxes.", function(v)
     if v then
@@ -841,9 +879,20 @@ vistab:Toggle("Fuse Box ESP", "Highlights All Fuse Boxes.", function(v)
                 end
             end
         end
+
+        fuseConn = workspace.DescendantAdded:Connect(function(v)
+            if v:IsA("BasePart") and v.Name == "Battery" and v.Parent and v.Parent.Name == "FuseBox" then
+                task.wait(0.1)
+                createFuseHighlight(v)
+            end
+        end)
     else
         notify2("Fuse Box ESP", "Disabled.")
         
+        if fuseConn then
+            fuseConn:Disconnect()
+            fuseConn = nil
+        end
         for _, h in pairs(fuseHighlights) do
             if h then h:Destroy() end
         end
@@ -851,14 +900,8 @@ vistab:Toggle("Fuse Box ESP", "Highlights All Fuse Boxes.", function(v)
     end
 end)
 
-workspace.DescendantAdded:Connect(function(v)
-    if v:IsA("BasePart") and v.Name == "Battery" and v.Parent and v.Parent.Name == "FuseBox" then
-        task.wait(0.1)
-        createFuseHighlight(v)
-    end
-end)
-
 local trapHighlights = {}
+local descendantConn = nil
 
 local function createTrapHighlight(obj)
     if not obj or trapHighlights[obj] then return end
@@ -873,44 +916,106 @@ local function createTrapHighlight(obj)
     trapHighlights[obj] = h
 end
 
-vistab:Toggle("Bear Trap ESP", "Highlights All Bear Traps.", function(v)
-    if v then
-        notify2("Trap ESP", "Enabled.")
-        
-        local ignore = workspace:FindFirstChild("IGNORE")
-        if ignore then
-            for _, obj in ipairs(ignore:GetChildren()) do
-                if obj:IsA("Model") and obj.Name == "Trap" then
-                    createTrapHighlight(obj)
-                    
-                    for _, part in ipairs(obj:GetDescendants()) do
-                        if part:IsA("BasePart") then
-                            createTrapHighlight(part)
-                        end
+local function enableTrapESP()
+    notify2("Trap ESP", "Enabled.")
+    
+    local ignore = workspace:FindFirstChild("IGNORE")
+    if ignore then
+        for _, obj in ipairs(ignore:GetChildren()) do
+            if obj:IsA("Model") and obj.Name == "Trap" then
+                createTrapHighlight(obj)
+                
+                for _, part in ipairs(obj:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        createTrapHighlight(part)
                     end
                 end
             end
         end
-    else
-        notify2("Trap ESP", "Disabled.")
-        
-        for _, h in pairs(trapHighlights) do
-            if h then h:Destroy() end
+    end
+
+    descendantConn = workspace.DescendantAdded:Connect(function(v)
+        if v:IsA("Model") and v.Name == "Trap" then
+            task.wait(0.1)
+            createTrapHighlight(v)
+            
+            for _, part in ipairs(v:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    createTrapHighlight(part)
+                end
+            end
         end
-        trapHighlights = {}
+    end)
+end
+
+local function disableTrapESP()
+    notify2("Trap ESP", "Disabled.")
+    
+    if descendantConn then
+        descendantConn:Disconnect()
+        descendantConn = nil
+    end
+    
+    for _, h in pairs(trapHighlights) do
+        if h then h:Destroy() end
+    end
+    trapHighlights = {}
+end
+
+vistab:Toggle("Bear Trap ESP", "Highlights All Bear Traps.", function(v)
+    if v then
+        enableTrapESP()
+    else
+        disableTrapESP()
     end
 end)
 
-workspace.DescendantAdded:Connect(function(v)
-    if v:IsA("Model") and v.Name == "Trap" then
-        task.wait(0.1)
-        createTrapHighlight(v)
-        
-        for _, part in ipairs(v:GetDescendants()) do
-            if part:IsA("BasePart") then
-                createTrapHighlight(part)
+local minionHighlights = {}
+local minionConn = nil
+
+local function createMinionHighlight(obj)
+    if not obj or minionHighlights[obj] then return end
+    local h = Instance.new("Highlight")
+    h.FillColor = Color3.fromRGB(255, 165, 0)
+    h.FillTransparency = 0.4
+    h.OutlineColor = Color3.fromRGB(255, 140, 0)
+    h.OutlineTransparency = 0
+    h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    h.Adornee = obj
+    h.Parent = obj
+    minionHighlights[obj] = h
+end
+
+vistab:Toggle("Minion ESP", "Highlights All Minions.", function(v)
+    if v then
+        notify2("Minion ESP", "Enabled.")
+
+        local ignore = workspace:FindFirstChild("IGNORE")
+        if ignore then
+            for _, obj in ipairs(ignore:GetDescendants()) do
+                if obj:IsA("Model") and obj.Name == "Minion" then
+                    createMinionHighlight(obj)
+                end
             end
         end
+
+        minionConn = workspace.DescendantAdded:Connect(function(obj)
+            if obj:IsA("Model") and obj.Name == "Minion" then
+                createMinionHighlight(obj)
+            end
+        end)
+    else
+        notify2("Minion ESP", "Disabled.")
+        
+        if minionConn then
+            minionConn:Disconnect()
+            minionConn = nil
+        end
+        
+        for _, h in pairs(minionHighlights) do
+            if h then h:Destroy() end
+        end
+        minionHighlights = {}
     end
 end)
 
