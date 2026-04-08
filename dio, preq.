@@ -12,14 +12,12 @@ if not game:GetService("ReplicatedStorage").Resources.dio:FindFirstChild("Timest
 	local timestop = Instance.new("Model")
 	timestop.Name = "Timestop"
 	timestop.Parent = game:GetService("ReplicatedStorage").Resources.dio
-	print("made timestop model")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio.Timestop:FindFirstChild("Animations") then
 	local animations = Instance.new("Folder")
 	animations.Name = "Animations"
 	animations.Parent = game:GetService("ReplicatedStorage").Resources.dio.Timestop
-	print("made animations folder")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations:FindFirstChild("User") then
@@ -27,21 +25,18 @@ if not game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations:Fi
 	user.Name = "User"
 	user.AnimationId = "rbxassetid://94953424452407"
 	user.Parent = game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations
-	print("made user animation")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio:FindFirstChild("GreatestHigh") then
 	local gh = Instance.new("Folder")
 	gh.Name = "GreatestHigh"
 	gh.Parent = game:GetService("ReplicatedStorage").Resources.dio
-	print("made GreatestHigh folder")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh:FindFirstChild("Animations") then
 	local anims = Instance.new("Folder")
 	anims.Name = "Animations"
 	anims.Parent = game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh
-	print("made GreatestHigh.Animations folder")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh.Animations:FindFirstChild("Player") then
@@ -49,7 +44,6 @@ if not game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh.Animation
 	playerAnim.Name = "Player"
 	playerAnim.AnimationId = "rbxassetid://86535164377827"
 	playerAnim.Parent = game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh.Animations
-	print("made GreatestHigh.Animations.Player")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh.Animations:FindFirstChild("Stand") then
@@ -57,7 +51,6 @@ if not game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh.Animation
 	standAnim.Name = "Stand"
 	standAnim.AnimationId = "rbxassetid://126653138458150"
 	standAnim.Parent = game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh.Animations
-	print("made GreatestHigh.Animations.Stand")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations:FindFirstChild("Victim1") then
@@ -65,7 +58,6 @@ if not game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations:Fi
 	v1.Name = "Victim1"
 	v1.AnimationId = "rbxassetid://73212065097726"
 	v1.Parent = game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations
-	print("made Timestop.Animations.Victim1")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations:FindFirstChild("Victim2") then
@@ -73,7 +65,6 @@ if not game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations:Fi
 	v2.Name = "Victim2"
 	v2.AnimationId = "rbxassetid://117997011827734"
 	v2.Parent = game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations
-	print("made Timestop.Animations.Victim2")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations:FindFirstChild("Victim3") then
@@ -81,14 +72,12 @@ if not game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations:Fi
 	v3.Name = "Victim3"
 	v3.AnimationId = "rbxassetid://113894238529177"
 	v3.Parent = game:GetService("ReplicatedStorage").Resources.dio.Timestop.Animations
-	print("made Timestop.Animations.Victim3")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio:FindFirstChild("TP") then
 	local tp = Instance.new("Folder")
 	tp.Name = "TP"
 	tp.Parent = game:GetService("ReplicatedStorage").Resources.dio
-	print("made TP folder")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio.TP:FindFirstChild("Animation/On") then
@@ -96,7 +85,6 @@ if not game:GetService("ReplicatedStorage").Resources.dio.TP:FindFirstChild("Ani
 	animOn.Name = "Animation/On"
 	animOn.AnimationId = "rbxassetid://136840886262354"
 	animOn.Parent = game:GetService("ReplicatedStorage").Resources.dio.TP
-	print("made TP.Animation/On")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio.TP:FindFirstChild("Animation/Off") then
@@ -104,7 +92,6 @@ if not game:GetService("ReplicatedStorage").Resources.dio.TP:FindFirstChild("Ani
 	animOff.Name = "Animation/Off"
 	animOff.AnimationId = "rbxassetid://122013247495284"
 	animOff.Parent = game:GetService("ReplicatedStorage").Resources.dio.TP
-	print("made TP.Animation/Off")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio:FindFirstChild("Stand") then
@@ -139,7 +126,4 @@ if not game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh:FindFirst
 	sfx.Volume = 1
 	sfx.PlayOnRemove = false
 	sfx.Parent = game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh
-	print("made GreatestHigh.SFX")
-else
-	print("SFX already exists")
 end
