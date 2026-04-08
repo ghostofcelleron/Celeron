@@ -210,9 +210,6 @@ maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking Bind.", f
 
             if closest then
                 lockedTarget = closest
-                notify2("Aimlock", "Locked onto target.")
-            else
-                notify2("Aimlock", "No valid target found.")
             end
         end)
 
