@@ -5,7 +5,6 @@ if not game:GetService("ReplicatedStorage").Resources:FindFirstChild("dio") then
 	local dio = Instance.new("Folder")
 	dio.Name = "dio"
 	dio.Parent = game:GetService("ReplicatedStorage").Resources
-	print("made dio folder")
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio:FindFirstChild("Timestop") then
