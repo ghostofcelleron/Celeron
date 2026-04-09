@@ -235,7 +235,7 @@ maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking Bind.", f
     end
 end)
 
-maintab:Textbox("Aimlock Bind", "Enter Key (Example: LeftAlt, MouseButton2). Must Be Capitalized.", function(text)
+maintab:Textbox("Aimlock Bind", "Enter Key (Example: Z, X). Must Be Capitalized.", function(text)
     if typeof(text) ~= "string" then
         aimlockBind = Enum.UserInputType.MouseButton2
         notify2("Aimlock Bind", "Invalid Input. Bind Is Now M2.")
@@ -326,51 +326,71 @@ local autogen = false
 local genconn = nil
 local firingconn = nil
 local lastfiretime = 0
+local mode = "Blatant"
+
+survivor:Dropdown("Generator Mode", {"Blatant", "Silent"}, function(selected)
+	mode = selected
+	if autogen then
+		notify2("Auto Generator", "Current Mode: " .. mode)
+	end
+end)
 
 survivor:Toggle("Auto Generator", "Automatically Does Generator Tasks.", function(v)
-    autogen = v
-
-    if autogen then
-        notify2("Auto Generator", "Enabled.")
-
-        genconn = game:GetService("RunService").Heartbeat:Connect(function()
-            local plr = game:GetService("Players").LocalPlayer
-            local gengui = plr.PlayerGui:FindFirstChild("Gen")
-
-            if gengui and not firingconn then
-                task.wait(3)
-
-                if gengui and gengui.Parent and autogen then
-                    firingconn = game:GetService("RunService").Heartbeat:Connect(function()
-                        local currenttime = tick()
-
-                        if plr.PlayerGui:FindFirstChild("Gen") and (currenttime - lastfiretime >= 3) then
-                            plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(true)
-                            lastfiretime = currenttime
-                        elseif not plr.PlayerGui:FindFirstChild("Gen") then
-                            if firingconn then
-                                firingconn:Disconnect()
-                                firingconn = nil
-                            end
-                        end
-                    end)
-                end
-            end
-        end)
-
-    else
-        notify2("Auto Generator", "Disabled.")
-        
-        if genconn then
-            genconn:Disconnect()
-            genconn = nil
-        end
-        if firingconn then
-            firingconn:Disconnect()
-            firingconn = nil
-        end
-        lastfiretime = 0
-    end
+	autogen = v
+	
+	if autogen then
+		notify2("Auto Generator", "Enabled.")
+		
+		genconn = game:GetService("RunService").Heartbeat:Connect(function()
+			local plr = game:GetService("Players").LocalPlayer
+			local gengui = plr.PlayerGui:FindFirstChild("Gen")
+			
+			if gengui and not firingconn then
+				if mode == "Silent" then
+					task.wait(5)
+				end
+				
+				if gengui and gengui.Parent and autogen then
+					firingconn = game:GetService("RunService").Heartbeat:Connect(function()
+						if mode == "Blatant" then
+							if plr.PlayerGui:FindFirstChild("Gen") then
+								plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(true)
+							else
+								if firingconn then
+									firingconn:Disconnect()
+									firingconn = nil
+								end
+							end
+						else
+							local currenttime = tick()
+							if plr.PlayerGui:FindFirstChild("Gen") and (currenttime - lastfiretime >= 3) then
+								plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(true)
+								lastfiretime = currenttime
+							elseif not plr.PlayerGui:FindFirstChild("Gen") then
+								if firingconn then
+									firingconn:Disconnect()
+									firingconn = nil
+								end
+							end
+						end
+					end)
+				end
+			end
+		end)
+		
+	else
+		notify2("Auto Generator", "Disabled.")
+		
+		if genconn then
+			genconn:Disconnect()
+			genconn = nil
+		end
+		if firingconn then
+			firingconn:Disconnect()
+			firingconn = nil
+		end
+		lastfiretime = 0
+	end
 end)
 
 local autoEscape = false
