@@ -23,7 +23,7 @@ print("hello goku (v1.2)")
 local disabled = false
 
 local names = {
-    "Spin Kick",
+    "Strong Shot",
     "Dragon Combo",
     "Instant Transmission",
     "Ultra Instinct.",
@@ -80,16 +80,21 @@ UserInputService.InputBegan:Connect(function(input, gp)
             stun.Value = false
         end
         local anim = Instance.new("Animation")
-        anim.AnimationId = "rbxassetid://101036089852233"
+        anim.AnimationId = "rbxassetid://99029473795892"
         local track = hum:LoadAnimation(anim)
         track:Play()
-        track.TimePosition = 0.515
-        wait(0.1635)
+        wait(0.6)
         local forward = (root.CFrame - root.Position).LookVector
         ReplicatedStorage.ByteNetReliable:FireServer(
             buffer.fromstring(buffers["base"]),
             { { "kick", 100, false, vector.create(forward.X, forward.Y + 0.3, forward.Z) } }
         )
+		local sound = Instance.new("Sound")
+        sound.SoundId = "rbxassetid://140668097319606"
+        sound.Volume = 10
+        sound.Parent = root
+        sound:Play()
+        game.Debris:AddItem(sound, 2)
     end
 
     if input.KeyCode == Enum.KeyCode.Two then
