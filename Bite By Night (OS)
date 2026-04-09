@@ -363,7 +363,7 @@ survivor:Toggle("Auto Generator", "Automatically Does Generator Tasks.", functio
 							end
 						else
 							local currenttime = tick()
-							if plr.PlayerGui:FindFirstChild("Gen") and (currenttime - lastfiretime >= 3) then
+							if plr.PlayerGui:FindFirstChild("Gen") and (currenttime - lastfiretime >= 5) then
 								plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(true)
 								lastfiretime = currenttime
 							elseif not plr.PlayerGui:FindFirstChild("Gen") then
