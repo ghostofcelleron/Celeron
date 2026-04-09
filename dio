@@ -1,4 +1,3 @@
--- created by celeron :3
 print("recreated dio folder")
 print("fixed and brought back to azl by celeron! :3")
 
@@ -98,24 +97,17 @@ if not game:GetService("ReplicatedStorage").Resources.dio:FindFirstChild("Stand"
 	local dummy = game:GetService("ReplicatedStorage").allTypes.rig.dummy:Clone()
 	dummy.Name = "Stand"
 	dummy.Parent = game:GetService("ReplicatedStorage").Resources.dio
-
 	for _, obj in ipairs(dummy:GetChildren()) do
 		if obj:IsA("Accessory") then
 			obj:Destroy()
 		end
 	end
-
 	local torso = dummy:FindFirstChild("Torso")
-	if torso then
-		torso.Color = Color3.fromRGB(126, 104, 63)
-	end
-
+	if torso then torso.Color = Color3.fromRGB(126, 104, 63) end
 	local limbs = {"Head", "Right Arm", "Left Arm", "Left Leg", "Right Leg"}
 	for _, limbName in ipairs(limbs) do
 		local limb = dummy:FindFirstChild(limbName)
-		if limb then
-			limb.Color = Color3.fromRGB(193, 190, 66)
-		end
+		if limb then limb.Color = Color3.fromRGB(193, 190, 66) end
 	end
 end
 
@@ -161,7 +153,6 @@ if not game:GetService("ReplicatedStorage").Resources.dio.Timestop:FindFirstChil
 	local fovFolder = Instance.new("Folder")
 	fovFolder.Name = "FOV"
 	fovFolder.Parent = game:GetService("ReplicatedStorage").Resources.dio.Timestop
-
 	local values = {
 		10, 10.300664262455795, 10.587560379538532, 10.861115227057876, 11.121748958369805, 11.369875004376597, 11.605900073526838, 11.830224151815413, 12.043240502783515, 12.245335667518644,
 		12.436889464654598, 12.618274990371486, 12.789858618395714, 12.952, 13.105052064003361, 13.249361016771122, 13.385266342214909, 13.513100801792653, 13.633190434508595, 13.745854556913274,
@@ -181,7 +172,6 @@ if not game:GetService("ReplicatedStorage").Resources.dio.Timestop:FindFirstChil
 		29.97765702475862, 29.98205525972446, 29.985873328383164, 29.98918775983028, 29.992064988293045, 29.994562684733303, 29.99673091280015, 29.99861313230212, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
 		30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30
 	}
-
 	for i = 1, 350 do
 		local nv = Instance.new("NumberValue")
 		nv.Name = tostring(i)
@@ -190,12 +180,10 @@ if not game:GetService("ReplicatedStorage").Resources.dio.Timestop:FindFirstChil
 	end
 end
 
-local timestop = game:GetService("ReplicatedStorage").Resources.dio.Timestop
-
-if not timestop:FindFirstChild("Cam") then
+if not game:GetService("ReplicatedStorage").Resources.dio.Timestop:FindFirstChild("Cam") then
 	local camModel = Instance.new("Model")
 	camModel.Name = "Cam"
-	camModel.Parent = timestop
+	camModel.Parent = game:GetService("ReplicatedStorage").Resources.dio.Timestop
 
 	local fovFolder = Instance.new("Folder")
 	fovFolder.Name = "FieldOfView"
@@ -247,7 +235,6 @@ if not timestop:FindFirstChild("Cam") then
 end
 
 local timestop = game:GetService("ReplicatedStorage").Resources.dio.Timestop
-
 if not timestop:FindFirstChild("Aura") then
 	local aura = Instance.new("Model")
 	aura.Name = "Aura"
@@ -261,7 +248,7 @@ if not timestop:FindFirstChild("Aura") then
 	emitter.LightInfluence = 0
 	emitter.Lifetime = NumberRange.new(0.25, 0.5)
 	emitter.FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4
-	emitter.Texture = "rbxassetid://16860267787"
+	emitter.Texture = "rbxassetid://0"
 	emitter.LockedToPart = true
 	emitter.FlipbookBlendFrames = true
 	emitter.FlipbookSizeX = 1
@@ -271,18 +258,15 @@ if not timestop:FindFirstChild("Aura") then
 	emitter.FlipbookStartRandom = false
 	emitter.LightEmission = 0.5
 	emitter.WindAffectsDrag = false
-
 	emitter.Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 152, 65)),
 		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 152, 65))
 	})
-
 	emitter.Drag = 0
 	emitter.Orientation = Enum.ParticleOrientation.FacingCamera
 	emitter.Squash = NumberSequence.new(0, 0.25)
 	emitter.Speed = NumberRange.new(0.0003125, 0.0003125)
 	emitter.Brightness = 15
-
 	emitter.Size = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0),
 		NumberSequenceKeypoint.new(0.1, 0.25798),
@@ -296,7 +280,6 @@ if not timestop:FindFirstChild("Aura") then
 		NumberSequenceKeypoint.new(0.9, 0.936513),
 		NumberSequenceKeypoint.new(1, 0.9375)
 	})
-
 	emitter.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0),
 		NumberSequenceKeypoint.new(0.1, 0.00110505),
@@ -310,7 +293,6 @@ if not timestop:FindFirstChild("Aura") then
 		NumberSequenceKeypoint.new(0.9, 0.728742),
 		NumberSequenceKeypoint.new(1, 1)
 	})
-
 	emitter.Enabled = true
 	emitter.RotSpeed = NumberRange.new(0, 0)
 	emitter.ZOffset = -1
@@ -323,7 +305,6 @@ if not timestop:FindFirstChild("Aura") then
 	emitter.Rotation = NumberRange.new(0, 0)
 	emitter.Shape = Enum.ParticleEmitterShape.Box
 	emitter.Acceleration = Vector3.new(0, 0, 0)
-
 	emitter:SetAttribute("EmitDelay", 0)
 	emitter:SetAttribute("TimeScale_End", 1)
 	emitter:SetAttribute("TimeScale_Duration", 0.1)
@@ -340,7 +321,14 @@ if not vfx then
 	vfx = model
 end
 
-if not game:GetService("ReplicatedStorage").Resources.dio.Timestop.VFX:FindFirstChild("DistortionBall") then
+local folder = vfx:FindFirstChild("Folder")
+if not folder then
+	folder = Instance.new("Model")
+	folder.Name = "Folder"
+	folder.Parent = vfx
+end
+
+if not vfx:FindFirstChild("DistortionBall") then
 	local distortionBall = Instance.new("Part")
 	distortionBall.Name = "DistortionBall"
 	distortionBall.Anchored = true
@@ -348,20 +336,30 @@ if not game:GetService("ReplicatedStorage").Resources.dio.Timestop.VFX:FindFirst
 	distortionBall.Transparency = 1
 	distortionBall.Material = Enum.Material.Glass
 	distortionBall.Shape = Enum.PartType.Ball
-	distortionBall.Size = Vector3.new(0.1, 0.1, 0.1)
+	distortionBall.Size = Vector3.new(28.437, 28.437, 28.437)
 	distortionBall.Color = Color3.fromRGB(163, 162, 165)
 	distortionBall.CanTouch = false
 	distortionBall.CanQuery = false
 	distortionBall.CastShadow = false
 	distortionBall.Massless = false
-	distortionBall.Parent = game:GetService("ReplicatedStorage").Resources.dio.Timestop.VFX
+	distortionBall.Parent = vfx
 end
 
-local folder = vfx:FindFirstChild("Folder")
-if not folder then
-	folder = Instance.new("Model")
-	folder.Name = "Folder"
-	folder.Parent = vfx
+if not vfx:FindFirstChild("up2sum") then
+	local part = Instance.new("Part")
+	part.Name = "up2sum"
+	part.Anchored = true
+	part.CanCollide = false
+	part.Transparency = 1
+	part.Material = Enum.Material.Glass
+	part.Shape = Enum.PartType.Ball
+	part.Size = Vector3.new(0.1, 0.1, 0.1)
+	part.Color = Color3.fromRGB(163, 162, 165)
+	part.CanTouch = false
+	part.CanQuery = false
+	part.CastShadow = false
+	part.Massless = false
+	part.Parent = vfx
 end
 
 local smokeModel = folder:FindFirstChild("smoke")
@@ -389,10 +387,7 @@ for i = 1, 4 do
 		p.Lifetime = NumberRange.new(0.25, 2)
 		p.Rate = 25
 		p.Speed = NumberRange.new(-100, 100)
-		p.Texture = (i == 1 and "rbxassetid://110212434568766" or
-		             i == 2 and "rbxassetid://16172858603" or
-		             i == 3 and "rbxassetid://112656826514756" or
-		             "rbxassetid://135595638778407")
+		p.Texture = "rbxassetid://0"
 		p.Size = NumberSequence.new({
 			NumberSequenceKeypoint.new(0, 0),
 			NumberSequenceKeypoint.new(0.1, 2.1814),
@@ -421,9 +416,7 @@ for i = 1, 3 do
 		p.Lifetime = NumberRange.new(0.25, 2)
 		p.Rate = 25
 		p.Speed = NumberRange.new(0.002, 100)
-		p.Texture = (i == 1 and "rbxassetid://89247216145301" or
-		             i == 2 and "rbxassetid://18356309922" or
-		             "rbxassetid://15333808121")
+		p.Texture = "rbxassetid://0"
 		p.Size = NumberSequence.new({
 			NumberSequenceKeypoint.new(0, 0),
 			NumberSequenceKeypoint.new(0.1, 4.3628),
@@ -457,7 +450,7 @@ if not specs:FindFirstChild("ParticleEmitter") then
 	p1.Lifetime = NumberRange.new(0.25, 1)
 	p1.Rate = 15555
 	p1.Speed = NumberRange.new(-7.5, 7.5)
-	p1.Texture = "rbxassetid://18450653938"
+	p1.Texture = "rbxassetid://0"
 	p1.Size = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0),
 		NumberSequenceKeypoint.new(0.105568, 0.608695),
@@ -483,7 +476,7 @@ if not specs:FindFirstChild("ParticleEmitter2") then
 	p2.Lifetime = NumberRange.new(0.25, 1)
 	p2.Rate = 15555
 	p2.Speed = NumberRange.new(-7.5, 7.5)
-	p2.Texture = "rbxassetid://10205180639"
+	p2.Texture = "rbxassetid://0"
 	p2.Size = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0),
 		NumberSequenceKeypoint.new(0.105568, 0.608695),
@@ -509,7 +502,7 @@ if not specs:FindFirstChild("ParticleEmitter3") then
 	p3.Lifetime = NumberRange.new(0.25, 1)
 	p3.Rate = 100
 	p3.Speed = NumberRange.new(-15, 15)
-	p3.Texture = "rbxassetid://118962778719886"
+	p3.Texture = "rbxassetid://0"
 	p3.Size = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0),
 		NumberSequenceKeypoint.new(0.105568, 1.21739),
@@ -560,20 +553,20 @@ if not game:GetService("ReplicatedStorage").Resources.dio.TP:FindFirstChild("SFX
 end
 
 if not game:GetService("ReplicatedStorage").Resources.dio.TP:FindFirstChild("VFX") then
-	local vfx = Instance.new("Model")
-	vfx.Name = "VFX"
-	vfx.Parent = game:GetService("ReplicatedStorage").Resources.dio.TP
+	local tpvfx = Instance.new("Model")
+	tpvfx.Name = "VFX"
+	tpvfx.Parent = game:GetService("ReplicatedStorage").Resources.dio.TP
 end
 
-local vfx = game:GetService("ReplicatedStorage").Resources.dio.TP.VFX
+local tpvfx = game:GetService("ReplicatedStorage").Resources.dio.TP.VFX
 
-if not vfx:FindFirstChild("Model") then
+if not tpvfx:FindFirstChild("Model") then
 	local model = Instance.new("Model")
 	model.Name = "Model"
-	model.Parent = vfx
+	model.Parent = tpvfx
 end
 
-local model = vfx.Model
+local model = tpvfx.Model
 
 if not model:FindFirstChild("End") then
 	local part = Instance.new("Part")
@@ -589,7 +582,6 @@ if not model:FindFirstChild("End") then
 	part.CanQuery = false
 	part.CastShadow = false
 	part.Parent = model
-
 	local mesh = Instance.new("SpecialMesh")
 	mesh.MeshId = "rbxassetid://5671930987"
 	mesh.MeshType = Enum.MeshType.FileMesh
@@ -611,7 +603,6 @@ if not model:FindFirstChild("Start") then
 	part.CanQuery = false
 	part.CastShadow = false
 	part.Parent = model
-
 	local mesh = Instance.new("SpecialMesh")
 	mesh.MeshId = "rbxassetid://5671930987"
 	mesh.MeshType = Enum.MeshType.FileMesh
