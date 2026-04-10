@@ -1,0 +1,449 @@
+local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+local win = ui:Create({
+    Name = "Celeron's GUI (Azure Latch: Legacy)",
+    ThemeColor = Color3.fromRGB(100, 85, 174),
+    StartupSound = "rbxassetid://3320590485",
+    ThemeFont = Enum.Font.FredokaOne
+})
+
+local maintab = win:Tab("Main")
+local funtab = win:Tab("Movesets")
+local misctab = win:Tab("Misc")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+funtab:Label("Custom Movesets, Not Actual Unlocks.")
+misctab:Label("Some Miscellaneous Features.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+maintab:Toggle("Auto Goal", function(state)
+    _G.AUTO_GOAL = state
+    if state then
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Auto Goal",
+            Text = "Enabled.",
+            Duration = 5
+        })
+    else
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Auto Goal",
+            Text = "Disabled.",
+            Duration = 5
+        })
+    end
+end)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local MapFolder = workspace:WaitForChild("map")
+local AGoal = MapFolder:WaitForChild("Agoal")
+local BGoal = MapFolder:WaitForChild("Bgoal")
+
+local LocalPlayer = Players.LocalPlayer
+
+local function IsInGame()
+    local LocalCharacter = LocalPlayer.Character
+    if not LocalCharacter then return false end
+
+    local StateFolder = LocalCharacter:FindFirstChild("state")
+    if not StateFolder then return false end
+
+    local InGameValue = StateFolder:FindFirstChild("ingame")
+    if not InGameValue then return false end
+
+    return InGameValue.Value
+end
+
+local function DisableCollisionBoxes()
+    local MapFolder = workspace:FindFirstChild("map")
+    if not MapFolder then return end
+
+    local GkBarriar = MapFolder:FindFirstChild("gkbarriar")
+    local AGoal = MapFolder:FindFirstChild("Agoal")
+    local BGoal = MapFolder:FindFirstChild("Bgoal")
+
+    if GkBarriar then
+        local ABarriar = GkBarriar:FindFirstChild("A")
+        local BBarriar = GkBarriar:FindFirstChild("B")
+        if ABarriar then ABarriar.CanCollide = false end
+        if BBarriar then BBarriar.CanCollide = false end
+    end
+
+    if AGoal then AGoal.CanCollide = false end
+    if BGoal then BGoal.CanCollide = false end
+end
+
+local function StealBall()
+    local LocalCharacter = LocalPlayer.Character
+    local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+    local Football = workspace.Terrain:FindFirstChild("Ball")
+
+    if LocalHumanoidRootPart and Football then
+        LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position.X, 0, Football.Position.Z)
+    end
+    
+    for _, OtherPlayer in pairs(Players:GetPlayers()) do
+        if OtherPlayer.Name ~= LocalPlayer.Name then
+            local OtherCharacter = OtherPlayer.Character
+            local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+            local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+            if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Q, false, game)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
+            end
+        end
+    end
+end
+
+local function HasBall()
+    local LocalCharacter = LocalPlayer.Character
+    local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball")
+    return Football ~= nil
+end
+
+coroutine.resume(coroutine.create(function()
+    RunService.RenderStepped:Connect(function()
+        if not _G.AUTO_GOAL then return end
+        pcall(function()
+            if not IsInGame() then return end
+            DisableCollisionBoxes()
+            StealBall()
+            if HasBall() then
+                local LocalCharacter = LocalPlayer.Character
+                local LocalRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+                local Goal = LocalPlayer.Team.Name == "A" and BGoal or AGoal
+
+                if LocalRootPart then
+                    LocalRootPart.CFrame = Goal.CFrame
+                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+                    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+                end
+            end
+        end)
+    end)
+end))
+
+maintab:Toggle("Always Ball", function(state)
+    _G.ALWAYS_BALL_ACTIVE = state
+    if state then
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Always Ball",
+            Text = "Enabled.",
+            Duration = 5
+        })
+        workspace.Gravity = 0
+        spawn(function()
+            while _G.ALWAYS_BALL_ACTIVE do
+                local LocalCharacter = game.Players.LocalPlayer.Character
+                local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+                local Football = workspace.Terrain:FindFirstChild("Ball")
+                
+                if LocalHumanoidRootPart and Football then
+                    LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position.X, Football.Position.Y, Football.Position.Z)
+                end
+                for _, OtherPlayer in pairs(game.Players:GetPlayers()) do
+                    if OtherPlayer.Name ~= game.Players.LocalPlayer.Name then
+                        local OtherCharacter = OtherPlayer.Character
+                        local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+                        local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+                        if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                            LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Q, false, game)
+                            game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Q, false, game)
+                        end
+                    end
+                end
+                wait(0.1)
+            end
+            workspace.Gravity = 196.2
+        end)
+    else
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Always Ball",
+            Text = "Disabled.",
+            Duration = 5
+        })
+        workspace.Gravity = 196.2
+    end
+end)
+
+maintab:Button("Steal Ball", function()
+    local LocalPlayer = game.Players.LocalPlayer
+    local function HasBall()
+        local LocalCharacter = LocalPlayer.Character
+        local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball")
+        return Football ~= nil
+    end
+    local function StealBall()
+        while not HasBall() do
+            local LocalCharacter = LocalPlayer.Character
+            local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+            local Football = workspace.Terrain:FindFirstChild("Ball")
+            if LocalHumanoidRootPart and Football then
+                LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position.X, Football.Position.Y, Football.Position.Z)
+            end
+            for _, OtherPlayer in pairs(game.Players:GetPlayers()) do
+                if OtherPlayer.Name ~= LocalPlayer.Name then
+                    local OtherCharacter = OtherPlayer.Character
+                    local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+                    local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+                    if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                        LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                        game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Q, false, game)
+                        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Q, false, game)
+                    end
+                end
+            end
+            wait(0.2)
+        end
+    end
+    spawn(function()
+        StealBall()
+    end)
+end)
+
+maintab:Button("Bring Ball", function()
+    local LocalPlayer = game.Players.LocalPlayer
+    local function HasBall()
+        local LocalCharacter = LocalPlayer.Character
+        local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball")
+        return Football ~= nil
+    end
+    local function StealBall()
+        while not HasBall() do
+            local LocalCharacter = LocalPlayer.Character
+            local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+            local Football = workspace.Terrain:FindFirstChild("Ball")
+            if LocalHumanoidRootPart and Football then
+                LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position.X, Football.Position.Y, Football.Position.Z)
+            end
+            for _, OtherPlayer in pairs(game.Players:GetPlayers()) do
+                if OtherPlayer.Name ~= LocalPlayer.Name then
+                    local OtherCharacter = OtherPlayer.Character
+                    local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+                    local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+                    if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                        LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                        game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Q, false, game)
+                        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Q, false, game)
+                    end
+                end
+            end
+            wait(0.2)
+        end
+    end
+    spawn(function()
+        local LocalCharacter = LocalPlayer.Character
+        local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+        local Football = workspace.Terrain:FindFirstChild("Ball")
+        if LocalHumanoidRootPart and Football then
+            local originalPosition = LocalHumanoidRootPart.CFrame
+            LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position)
+            StealBall()
+            wait(0.3)
+            LocalHumanoidRootPart.CFrame = originalPosition
+        end
+    end)
+end)
+
+maintab:Button("Break Ball (Player Method, Req. Ball.)", function()
+    local baseplatePosition = Vector3.new(-190, 14864566, 492)
+    local partSize = Vector3.new(10, 1, 10)
+    local gap = 0
+    for x = 0, 2 do
+        for z = 0, 2 do
+            local part = Instance.new("Part")
+            part.Size = partSize
+            part.Anchored = true
+            part.Position = baseplatePosition + Vector3.new(x * (partSize.X + gap), 0, z * (partSize.Z + gap))
+            part.Parent = workspace
+        end
+    end
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(baseplatePosition + Vector3.new(0, 100000000000000, 0))
+end)
+
+maintab:Button("Manual Score", function()
+    local coordinateA = Vector3.new(303, 3, -1369)
+    local coordinateB = Vector3.new(179, 3, -1830)
+    local function teleportToPosition(position)
+        local LocalCharacter = game.Players.LocalPlayer.Character
+        local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+        if LocalHumanoidRootPart then
+            LocalHumanoidRootPart.CFrame = CFrame.new(position)
+        end
+    end
+    local function checkTeamAndTeleport()
+        local teamName = game.Players.LocalPlayer.Team and game.Players.LocalPlayer.Team.Name
+        if teamName == "A" then
+            teleportToPosition(coordinateB)
+        elseif teamName == "B" then
+            teleportToPosition(coordinateA)
+        end
+    end
+    checkTeamAndTeleport()
+end)
+
+funtab:Button("Don Lorenzo (Nagi)", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Credits",
+        Text = "brought to you by celeron!",
+        Duration = 5,
+        Button1 = "OK",
+    })
+
+    local Players = game:GetService("Players")
+    local UserInputService = game:GetService("UserInputService")
+    local VirtualInputManager = game:GetService("VirtualInputManager")
+    local Debris = game:GetService("Debris")
+
+    local plr = Players.LocalPlayer
+    local currentChar, currentHum, currentRoot = nil, nil, nil
+
+    local dribbleTrack, controlJumpTrack, controlLandTrack, passTrack = nil, nil, nil, nil
+    local s1db, s2db, s3db = false, false, false
+
+    local function setupCharacter(char)
+        if not char then return end
+        currentChar = char
+        currentHum = char:WaitForChild("Humanoid")
+        currentRoot = char:WaitForChild("HumanoidRootPart")
+
+        local skill1Anim = Instance.new("Animation")
+        skill1Anim.AnimationId = "rbxassetid://102294508090597"
+        dribbleTrack = currentHum:LoadAnimation(skill1Anim)
+        dribbleTrack.Priority = Enum.AnimationPriority.Action2
+
+        local skill2Anim = Instance.new("Animation")
+        skill2Anim.AnimationId = "rbxassetid://90734196141468"
+        controlJumpTrack = currentHum:LoadAnimation(skill2Anim)
+        controlJumpTrack.Priority = Enum.AnimationPriority.Action2
+
+        local skill2AnimVAR = Instance.new("Animation")
+        skill2AnimVAR.AnimationId = "rbxassetid://82371642989185"
+        controlLandTrack = currentHum:LoadAnimation(skill2AnimVAR)
+        controlLandTrack.Priority = Enum.AnimationPriority.Action3
+
+        local skill3Anim = Instance.new("Animation")
+        skill3Anim.AnimationId = "rbxassetid://85862104307480"
+        passTrack = currentHum:LoadAnimation(skill3Anim)
+        passTrack.Priority = Enum.AnimationPriority.Action2
+    end
+
+    if plr.Character then
+        setupCharacter(plr.Character)
+    end
+    plr.CharacterAdded:Connect(setupCharacter)
+
+    local function haveBall()
+        if not currentChar then return false end
+        local Football = currentChar:FindFirstChild("Ball")
+        return Football ~= nil
+    end
+
+    local function onKeyPress(inputObject, gameProcessedEvent)
+        if gameProcessedEvent then return end
+        if not currentHum or not currentRoot then return end
+
+        if inputObject.KeyCode == Enum.KeyCode.One then
+            if not haveBall() or s1db then return end
+            s1db = true
+            dribbleTrack:Play()
+
+            local vel = Instance.new("BodyVelocity")
+            vel.MaxForce = Vector3.new(1, 0, 1) * 30000
+            vel.Velocity = currentRoot.CFrame.LookVector * 40
+            vel.Parent = currentRoot
+            Debris:AddItem(vel, 2.4)
+
+            repeat
+                task.wait()
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                if vel.Parent then vel.Velocity = currentRoot.CFrame.LookVector * 40 end
+            until not vel.Parent
+
+            task.wait(21.6)
+            s1db = false
+
+        elseif inputObject.KeyCode == Enum.KeyCode.Two then
+            if haveBall() or s2db then return end
+            s2db = true
+            controlJumpTrack:Play()
+
+            local did = false
+            for i = 1, 2, 0.1 do
+                if game.Workspace.CurrentCamera.CameraType == Enum.CameraType.Scriptable then
+                    did = true
+                    break
+                end
+                task.wait(0.1)
+            end
+
+            if did then
+                controlJumpTrack:Stop()
+                controlLandTrack:Play()
+                task.wait(0.85)
+                controlLandTrack:Stop()
+            end
+
+            task.wait(20)
+            s2db = false
+
+        elseif inputObject.KeyCode == Enum.KeyCode.Three then
+            if not haveBall() or s3db then return end
+            s3db = true
+            passTrack:Play()
+            task.wait(25)
+            s3db = false
+        end
+    end
+
+    print("loaded don lorenzo script")
+    UserInputService.InputBegan:Connect(onKeyPress)
+end)
+
+funtab:Button("Trolling Moveset", function()
+    local char = game.Players.LocalPlayer.Character
+    char.Animate.run.RunAnim.AnimationId = "rbxassetid://75407325346911"
+    char.Animate.walk.WalkAnim.AnimationId = "rbxassetid://75407325346911"
+end)
+
+misctab:Button("Infinite Yield", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Gallery Area (secret)", function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(109, 66, 3337)
+end)
+
+misctab:Button("Middle Field", function()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(241, 3, -1600)
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Username",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("celeronistuff")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Invite",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("https://discord.gg/mFusYUmyry")
+end)
