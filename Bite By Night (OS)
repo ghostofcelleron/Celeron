@@ -660,11 +660,11 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
     end
 end)
 
-survivor:Slider("Main Attacks", 30, 15, 50, 1, function(v)
+survivor:Slider("Main Attacks", 30, 10, 50, 1, function(v)
     getgenv().BasicAttackRange = v
 end)
 
-survivor:Slider("Ennard Pull Attack", 50, 15, 75, 1, function(v)
+survivor:Slider("Ennard Pull Attack", 50, 10, 75, 1, function(v)
     getgenv().PullAttackRange = v
 end)
 
