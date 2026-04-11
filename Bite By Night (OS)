@@ -608,8 +608,7 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
 
     local function getParryRange(track)
         if not track or not track.Animation then return 30 end
-        local id = track.Animation.AnimationId
-        if id == "rbxassetid://133752270724243" then
+        if track.Animation.AnimationId == "rbxassetid://133752270724243" then
             return getgenv().PullAttackRange or 50
         end
         return getgenv().BasicAttackRange or 30
@@ -620,6 +619,7 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
 
         connection = game:GetService("RunService").Heartbeat:Connect(function()
             if not enabled then return end
+
             local lp = game.Players.LocalPlayer
             local char = lp.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -664,8 +664,8 @@ survivor:Slider("Main Attacks", 25, 15, 50, 1, function(v)
     getgenv().BasicAttackRange = v
 end)
 
-survivor:Slider("Ennard Pull Attack", 50, 15, 75, 1, function(b)
-    getgenv().PullAttackRange = b
+survivor:Slider("Ennard Pull Attack", 50, 15, 75, 1, function(v)
+    getgenv().PullAttackRange = v
 end)
 
 survivor:Label("Anti Death Features.")
