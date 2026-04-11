@@ -580,8 +580,10 @@ end)
 
 survivor:Label("Auto Parry Features.")
 
+getgenv().AutoParryEnabled = false
+
 survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.", function(v)
-    local enabled = v
+    getgenv().AutoParryEnabled = v
 
     local attackAnimIds = {
         "rbxassetid://70869035406359",
@@ -599,9 +601,7 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
         if not track or not track.Animation then return false end
         local id = track.Animation.AnimationId
         for _, aid in ipairs(attackAnimIds) do
-            if id == aid then
-                return true
-            end
+            if id == aid then return true end
         end
         return false
     end
@@ -614,11 +614,11 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
         return getgenv().BasicAttackRange or 30
     end
 
-    if enabled then
+    if getgenv().AutoParryEnabled then
         notify2("Auto Parry", "Enabled.")
 
         connection = game:GetService("RunService").Heartbeat:Connect(function()
-            if not enabled then return end
+            if not getgenv().AutoParryEnabled then return end
 
             local lp = game.Players.LocalPlayer
             local char = lp.Character
@@ -660,7 +660,7 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
     end
 end)
 
-survivor:Slider("Main Attacks", 25, 15, 50, 1, function(v)
+survivor:Slider("Main Attacks", 30, 15, 50, 1, function(v)
     getgenv().BasicAttackRange = v
 end)
 
