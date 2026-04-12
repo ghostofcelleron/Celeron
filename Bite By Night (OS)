@@ -366,7 +366,7 @@ survivor:Toggle("Auto Generator", "Automatically Does Generator Tasks.", functio
 			
 			if gengui and not firingconn then
 				if mode == "Silent" then
-					task.wait(10)
+					task.wait(7.5)
 				end
 				
 				if gengui and gengui.Parent and autogen then
@@ -387,7 +387,7 @@ survivor:Toggle("Auto Generator", "Automatically Does Generator Tasks.", functio
 							end
 						else
 							local currenttime = tick()
-							if plr.PlayerGui:FindFirstChild("Gen") and (currenttime - lastfiretime >= 5) then
+							if plr.PlayerGui:FindFirstChild("Gen") and (currenttime - lastfiretime >= 7.5) then
 								local args = {{
 									Wires = true,
 									Switches = true,
@@ -654,11 +654,13 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
             local lp = game.Players.LocalPlayer
             local char = lp.Character
             if not char then return end
+
             local myRoot = char:FindFirstChild("HumanoidRootPart")
             if not myRoot then return end
 
             for _, plr in ipairs(game.Players:GetPlayers()) do
                 if plr == lp then continue end
+
                 local pchar = plr.Character
                 if not pchar then continue end
 
@@ -666,39 +668,36 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
                 if not attackerRoot then continue end
 
                 local diff = attackerRoot.Position - myRoot.Position
+                local distSq = diff:Dot(diff)
 
                 local defaultRange = getgenv().BasicAttackRange or 30
-                if diff:Dot(diff) > defaultRange * defaultRange then continue end
+                if distSq > defaultRange * defaultRange then continue end
 
                 local hum = pchar:FindFirstChildOfClass("Humanoid")
                 if not hum then continue end
+
                 local animator = hum:FindFirstChildOfClass("Animator")
                 if not animator then continue end
 
                 for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                    if track.IsPlaying and isAttackAnimation(track) then
-                        local actualRange = getParryRange(track)
+                    if not track.IsPlaying then continue end
+                    if not isAttackAnimation(track) then continue end
 
-                        if diff:Dot(diff) > actualRange * actualRange then continue end
+                    local actualRange = getParryRange(track)
 
-                        local directionToMe = diff.Unit
-                        if attackerRoot.CFrame.LookVector:Dot(directionToMe) < 0.5 then
-                            continue
-                        end
+                    if distSq > actualRange * actualRange then continue end
 
-                        local args = {
-                            buffer.fromstring("\a"),
-                            buffer.fromstring("\254\001\000\254\002\000\006\aAbility\001\002")
-                        }
-                        game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Warp"):WaitForChild("Index"):WaitForChild("Event"):WaitForChild("Reliable"):FireServer(unpack(args))
-                        break
-                    end
+                    local args = {
+                        buffer.fromstring("\a"),
+                        buffer.fromstring("\254\001\000\254\002\000\006\aAbility\001\002")
+                    }
+                    game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Warp"):WaitForChild("Index"):WaitForChild("Event"):WaitForChild("Reliable"):FireServer(unpack(args))
+                    break
                 end
             end
         end)
     else
         notify2("Auto Parry", "Disabled.")
-
         if connection then
             connection:Disconnect()
             connection = nil
