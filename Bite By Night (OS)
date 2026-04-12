@@ -607,7 +607,6 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
     end
 
     local function getParryRange(track)
-        if not track or not track.Animation then return 30 end
         if track.Animation.AnimationId == "rbxassetid://133752270724243" then
             return getgenv().PullAttackRange or 50
         end
@@ -622,13 +621,22 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
 
             local lp = game.Players.LocalPlayer
             local char = lp.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            local root = char.HumanoidRootPart
+            if not char then return end
+            local myRoot = char:FindFirstChild("HumanoidRootPart")
+            if not myRoot then return end
 
             for _, plr in ipairs(game.Players:GetPlayers()) do
                 if plr == lp then continue end
                 local pchar = plr.Character
-                if not pchar or not pchar:FindFirstChild("HumanoidRootPart") then continue end
+                if not pchar then continue end
+
+                local attackerRoot = pchar:FindFirstChild("HumanoidRootPart")
+                if not attackerRoot then continue end
+
+                -- Fast squared distance check (faster than .Magnitude in many cases)
+                local diff = attackerRoot.Position - myRoot.Position
+                local range = getParryRange(nil) -- placeholder, we'll get real range later
+                if diff:Dot(diff) > range * range then continue end   -- early out
 
                 local hum = pchar:FindFirstChildOfClass("Humanoid")
                 if not hum then continue end
@@ -637,14 +645,22 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
 
                 for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
                     if track.IsPlaying and isAttackAnimation(track) then
-                        local range = getParryRange(track)
-                        if (pchar.HumanoidRootPart.Position - root.Position).Magnitude > range then continue end
+                        local actualRange = getParryRange(track)
+                        if diff:Dot(diff) > actualRange * actualRange then continue end
+
+                        -- Facing check (you can raise 0.5 to 0.6~0.7 if too many false positives)
+                        local directionToMe = diff.Unit
+                        if attackerRoot.CFrame.LookVector:Dot(directionToMe) < 0.5 then
+                            continue
+                        end
 
                         local args = {
                             buffer.fromstring("\a"),
                             buffer.fromstring("\254\001\000\254\002\000\006\aAbility\001\002")
                         }
-                        game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Warp"):WaitForChild("Index"):WaitForChild("Event"):WaitForChild("Reliable"):FireServer(unpack(args))
+                        game:GetService("ReplicatedStorage"):WaitForChild("Modules")
+                            :WaitForChild("Warp"):WaitForChild("Index")
+                            :WaitForChild("Event"):WaitForChild("Reliable"):FireServer(unpack(args))
                         break
                     end
                 end
