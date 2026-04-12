@@ -58,11 +58,24 @@ local isMobile = UserInputService.TouchEnabled and not UserInputService.Keyboard
 
 maintab:Toggle("Infinite Sprint", "Allows You To Sprint Forever.", function(state)
     infiniteSprint = state
+
     if state then
+        notify2("Infinite Sprint", "Enabled.")
+
         sprintConn = game:GetService("RunService").Heartbeat:Connect(function()
             if not infiniteSprint then return end
+
             local char = game.Players.LocalPlayer.Character
             if not char then return end
+
+            if workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("LOBBY") then
+                local lobbyFolder = workspace.PLAYERS.LOBBY
+                if char.Parent == lobbyFolder then
+                    char:SetAttribute("WalkSpeed", 12)
+                    return
+                end
+            end
+
             if isMobile then
                 local hum = char:FindFirstChildOfClass("Humanoid")
                 if hum and hum.MoveDirection.Magnitude > 0 then
@@ -78,12 +91,18 @@ maintab:Toggle("Infinite Sprint", "Allows You To Sprint Forever.", function(stat
                 end
             end
         end)
-        notify2("Infinite Sprint", "Enabled.")
     else
-        if sprintConn then sprintConn:Disconnect() end
-        local char = game.Players.LocalPlayer.Character
-        if char then char:SetAttribute("WalkSpeed", 12) end
         notify2("Infinite Sprint", "Disabled.")
+
+        if sprintConn then
+            sprintConn:Disconnect()
+            sprintConn = nil
+        end
+
+        local char = game.Players.LocalPlayer.Character
+        if char then
+            char:SetAttribute("WalkSpeed", 12)
+        end
     end
 end)
 
@@ -617,6 +636,9 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
     end
 
     local function getParryRange(track)
+        if not track or not track.Animation then 
+            return getgenv().BasicAttackRange or 30 
+        end
         if track.Animation.AnimationId == "rbxassetid://133752270724243" then
             return getgenv().PullAttackRange or 50
         end
@@ -643,10 +665,10 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
                 local attackerRoot = pchar:FindFirstChild("HumanoidRootPart")
                 if not attackerRoot then continue end
 
-                -- Fast squared distance check (faster than .Magnitude in many cases)
                 local diff = attackerRoot.Position - myRoot.Position
-                local range = getParryRange(nil) -- placeholder, we'll get real range later
-                if diff:Dot(diff) > range * range then continue end   -- early out
+
+                local defaultRange = getgenv().BasicAttackRange or 30
+                if diff:Dot(diff) > defaultRange * defaultRange then continue end
 
                 local hum = pchar:FindFirstChildOfClass("Humanoid")
                 if not hum then continue end
@@ -656,9 +678,9 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
                 for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
                     if track.IsPlaying and isAttackAnimation(track) then
                         local actualRange = getParryRange(track)
+
                         if diff:Dot(diff) > actualRange * actualRange then continue end
 
-                        -- Facing check (you can raise 0.5 to 0.6~0.7 if too many false positives)
                         local directionToMe = diff.Unit
                         if attackerRoot.CFrame.LookVector:Dot(directionToMe) < 0.5 then
                             continue
@@ -668,9 +690,7 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
                             buffer.fromstring("\a"),
                             buffer.fromstring("\254\001\000\254\002\000\006\aAbility\001\002")
                         }
-                        game:GetService("ReplicatedStorage"):WaitForChild("Modules")
-                            :WaitForChild("Warp"):WaitForChild("Index")
-                            :WaitForChild("Event"):WaitForChild("Reliable"):FireServer(unpack(args))
+                        game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Warp"):WaitForChild("Index"):WaitForChild("Event"):WaitForChild("Reliable"):FireServer(unpack(args))
                         break
                     end
                 end
