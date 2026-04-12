@@ -633,10 +633,9 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
                 local attackerRoot = pchar:FindFirstChild("HumanoidRootPart")
                 if not attackerRoot then continue end
 
-                -- Fast squared distance check (faster than .Magnitude in many cases)
                 local diff = attackerRoot.Position - myRoot.Position
-                local range = getParryRange(nil) -- placeholder, we'll get real range later
-                if diff:Dot(diff) > range * range then continue end   -- early out
+                local range = getParryRange(nil)
+                if diff:Dot(diff) > range * range then continue end
 
                 local hum = pchar:FindFirstChildOfClass("Humanoid")
                 if not hum then continue end
@@ -648,7 +647,6 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
                         local actualRange = getParryRange(track)
                         if diff:Dot(diff) > actualRange * actualRange then continue end
 
-                        -- Facing check (you can raise 0.5 to 0.6~0.7 if too many false positives)
                         local directionToMe = diff.Unit
                         if attackerRoot.CFrame.LookVector:Dot(directionToMe) < 0.5 then
                             continue
