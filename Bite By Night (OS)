@@ -342,19 +342,24 @@ survivor:Toggle("Auto Generator", "Automatically Does Generator Tasks.", functio
 		notify2("Auto Generator", "Enabled.")
 		
 		genconn = game:GetService("RunService").Heartbeat:Connect(function()
-			local plr = game:GetService("Players").LocalPlayer
+			local plr = game.Players.LocalPlayer
 			local gengui = plr.PlayerGui:FindFirstChild("Gen")
 			
 			if gengui and not firingconn then
 				if mode == "Silent" then
-					task.wait(5)
+					task.wait(10)
 				end
 				
 				if gengui and gengui.Parent and autogen then
 					firingconn = game:GetService("RunService").Heartbeat:Connect(function()
 						if mode == "Blatant" then
 							if plr.PlayerGui:FindFirstChild("Gen") then
-								plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(true)
+								local args = {{
+									Wires = true,
+									Switches = true,
+									Lever = true
+								}}
+								plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(unpack(args))
 							else
 								if firingconn then
 									firingconn:Disconnect()
@@ -364,7 +369,12 @@ survivor:Toggle("Auto Generator", "Automatically Does Generator Tasks.", functio
 						else
 							local currenttime = tick()
 							if plr.PlayerGui:FindFirstChild("Gen") and (currenttime - lastfiretime >= 5) then
-								plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(true)
+								local args = {{
+									Wires = true,
+									Switches = true,
+									Lever = true
+								}}
+								plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(unpack(args))
 								lastfiretime = currenttime
 							elseif not plr.PlayerGui:FindFirstChild("Gen") then
 								if firingconn then
@@ -633,9 +643,10 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
                 local attackerRoot = pchar:FindFirstChild("HumanoidRootPart")
                 if not attackerRoot then continue end
 
+                -- Fast squared distance check (faster than .Magnitude in many cases)
                 local diff = attackerRoot.Position - myRoot.Position
-                local range = getParryRange(nil)
-                if diff:Dot(diff) > range * range then continue end
+                local range = getParryRange(nil) -- placeholder, we'll get real range later
+                if diff:Dot(diff) > range * range then continue end   -- early out
 
                 local hum = pchar:FindFirstChildOfClass("Humanoid")
                 if not hum then continue end
@@ -647,6 +658,7 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
                         local actualRange = getParryRange(track)
                         if diff:Dot(diff) > actualRange * actualRange then continue end
 
+                        -- Facing check (you can raise 0.5 to 0.6~0.7 if too many false positives)
                         local directionToMe = diff.Unit
                         if attackerRoot.CFrame.LookVector:Dot(directionToMe) < 0.5 then
                             continue
