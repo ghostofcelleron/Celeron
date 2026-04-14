@@ -9,7 +9,7 @@ local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footag
 
 local Window = WindUI:CreateWindow({
     Title = "Celeron's GUI (Azure Latch) - WindUI Edition",
-    Folder = "AzureLatchUI",
+    Folder = "CeleronIsSoCute",
     Icon = "solar:folder-2-bold-duotone",
     NewElements = true,
     OpenButton = {
@@ -191,7 +191,6 @@ local InfoTab = Window:Tab({
     IconColor = Blue,
     IconShape = "Square",
 })
-
 
 local ConfigTab = Window:Tab({
     Title = "Config",
@@ -421,6 +420,17 @@ do
             })
         end,
     })
+
+    InfoSection:Space()
+
+    InfoSection:Keybind({
+        Title = "Toggle GUI",
+        Value = "RightAlt",
+        Callback = function()
+            Window:Toggle()
+        end,
+    })
+
 end
 
 do
