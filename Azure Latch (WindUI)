@@ -1,0 +1,3879 @@
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+    Title = "Celeron's GUI (Azure Latch) - WindUI Edition",
+    Folder = "AzureLatchUI",
+    Icon = "solar:folder-2-bold-duotone",
+    NewElements = true,
+    OpenButton = {
+        Title = "Open Azure Latch GUI",
+        CornerRadius = UDim.new(1, 0),
+        StrokeThickness = 3,
+        Enabled = true,
+        Draggable = true,
+        Scale = 0.5,
+        Color = ColorSequence.new(
+            Color3.fromHex("#30FF6A"),
+            Color3.fromHex("#e7ff2f")
+        ),
+    },
+    Topbar = {
+        Height = 44,
+        ButtonsType = "Mac",
+    },
+})
+
+local Purple = Color3.fromHex("#7775F2")
+local Yellow = Color3.fromHex("#ECA201")
+local Green = Color3.fromHex("#10C550")
+local Grey = Color3.fromHex("#83889E")
+local Blue = Color3.fromHex("#257AF7")
+local Red = Color3.fromHex("#EF4F1D")
+local Cyan = Color3.fromHex("#1FBAD6")
+local ButtonGrey = Color3.fromHex("#5a5a5a")
+
+local buffers = {}
+loadstring(game:HttpGet("https://pastebin.com/raw/8XJh7dzh"))()
+repeat
+    task.wait()
+until game.Lighting:FindFirstChild("BUFFERSTRINGS")
+for _, val in ipairs(game.Lighting:FindFirstChild("BUFFERSTRINGS"):GetChildren()) do
+    buffers[val.Name] = val.Value
+end
+game.Lighting:FindFirstChild("BUFFERSTRINGS"):Destroy()
+
+local role = game:GetService("ReplicatedStorage")
+    :WaitForChild("BytenetStorage")
+    :WaitForChild("Networking").Value
+    :match('"bytenet_selectRole"%s*:%s*(%d+)')
+
+role = role and tonumber(role)
+local pick = string.char(role)
+
+local vector = vector or {
+    create = function(x, y, z)
+        return Vector3.new(x, y, z)
+    end
+}
+
+local ConfigManager = Window.ConfigManager
+local CurrentConfigName = "default"
+
+local Settings = {
+    autoGoalEnabled = false,
+    alwaysBallEnabled = false,
+    
+    noRushCDEnabled = false,
+    noSideCDEnabled = false,
+    
+    ballMagnetEnabled = false,
+    ballMagnetM2Enabled = false,
+    ballMagnetRadius = 1,
+    ballMagnetHitboxEnabled = false,
+    ballMagnetRadiusHitboxEnabled = false,
+    
+    autoDribbleKeybindsEnabled = false,
+    autoCounterMove1Enabled = false,
+    autoCounterMove2Enabled = false,
+    autoCounterMove3Enabled = false,
+    autoCounterMove4Enabled = false,
+    autoCounterMove5Enabled = false,
+    
+    autoActivateEnabled = false,
+    autoActivateMoveNumber = 1,
+    autoActivateDistance = 10,
+    
+    trapHelperEnabled = false,
+    trapHelperMaxDistance = 50,
+    trapHelperSpeed = 50,
+    
+    tackleDist = 0,
+    rushDist = 0,
+    gkDist = 0,
+    naruhayaDist = 0,
+    raumDist = 0,
+    dracDist = 0,
+    stepDist = 0,
+    kaiserDist = 0,
+    occlusionDist = 0,
+    divingDist = 0,
+    reflexDist = 0,
+    speedDist = 0,
+    cutDist = 0,
+    instinctDist = 0,
+    quarterDist = 0,
+    zombDist = 0,
+    kingsDist = 0,
+    machDist = 0,
+    goldenDist = 0,
+    devourMaxDist = 0,
+    
+    blatantModeEnabled = false,
+    
+    noStunEnabled = false,
+    
+    instantDisconnectEnabled = false,
+    instantDisconnectLimit = 1,
+    
+    autoPickCFEnabled = false,
+    autoPickGKEnabled = false,
+    
+    goalFarmEnabled = false,
+    goalFarmTarget = 6767,
+}
+
+local HomeTab = Window:Tab({
+    Title = "Home",
+    Icon = "solar:home-2-bold",
+    IconColor = Grey,
+    IconShape = "Square",
+})
+
+local BlatantTab = Window:Tab({
+    Title = "Blatant",
+    Icon = "solar:bolt-bold",
+    IconColor = Red,
+    IconShape = "Square",
+})
+
+local SilentTab = Window:Tab({
+    Title = "Silent",
+    Icon = "solar:eye-bold",
+    IconColor = Purple,
+    IconShape = "Square",
+})
+
+local DistanceTab = Window:Tab({
+    Title = "Distance",
+    Icon = "solar:arrow-right-bold",
+    IconColor = Cyan,
+    IconShape = "Square",
+})
+
+local MovesetsTab = Window:Tab({
+    Title = "Movesets",
+    Icon = "solar:play-bold",
+    IconColor = Yellow,
+    IconShape = "Square",
+})
+
+local TeleportTab = Window:Tab({
+    Title = "Teleports",
+    Icon = "solar:map-bold",
+    IconColor = Blue,
+    IconShape = "Square",
+})
+
+local ExploitsTab = Window:Tab({
+    Title = "Exploits",
+    Icon = "solar:shield-bold",
+    IconColor = Red,
+    IconShape = "Square",
+})
+
+local OthersTab = Window:Tab({
+    Title = "Others",
+    Icon = "solar:settings-bold",
+    IconColor = Grey,
+    IconShape = "Square",
+})
+
+local InfoTab = Window:Tab({
+    Title = "Info",
+    Icon = "solar:info-square-bold",
+    IconColor = Blue,
+    IconShape = "Square",
+})
+
+
+local ConfigTab = Window:Tab({
+    Title = "Config",
+    Icon = "solar:folder-with-files-bold",
+    IconColor = Cyan,
+    IconShape = "Square",
+})
+
+do
+    local ConfigSection = ConfigTab:Section({
+        Title = "Configuration Manager",
+        Opened = true,
+    })
+
+    local ConfigNameInput = ConfigSection:Input({
+        Flag = "ConfigName",
+        Title = "Config Name",
+        Placeholder = "Enter config name",
+        Value = "default",
+        Callback = function(value)
+            CurrentConfigName = value
+        end,
+    })
+
+    ConfigSection:Space()
+
+    local AllConfigs = ConfigManager:AllConfigs()
+    local DefaultValue = table.find(AllConfigs, CurrentConfigName) and CurrentConfigName or nil
+
+    local AllConfigsDropdown = ConfigSection:Dropdown({
+        Flag = "AllConfigsList",
+        Title = "Load Existing Config",
+        Values = AllConfigs,
+        Value = DefaultValue,
+        Callback = function(value)
+            CurrentConfigName = value
+            ConfigNameInput:Set(value)
+        end,
+    })
+
+    ConfigSection:Space()
+
+    ConfigSection:Button({
+        Title = "Save Current Config",
+        Color = ButtonGrey,
+        Justify = "Center",
+        Callback = function()
+            Window.CurrentConfig = ConfigManager:Config(CurrentConfigName)
+            if Window.CurrentConfig:Save() then
+                WindUI:Notify({
+                    Title = "Config Saved",
+                    Content = "Config '" .. CurrentConfigName .. "' saved successfully.",
+                    Duration = 3,
+                    Icon = "check",
+                })
+                AllConfigsDropdown:Refresh(ConfigManager:AllConfigs())
+            else
+                WindUI:Notify({
+                    Title = "Save Failed",
+                    Content = "Failed to save config.",
+                    Duration = 3,
+                })
+            end
+        end,
+    })
+
+    ConfigSection:Space()
+
+    ConfigSection:Button({
+        Title = "Load Selected Config",
+        Color = ButtonGrey,
+        Justify = "Center",
+        Callback = function()
+            Window.CurrentConfig = ConfigManager:CreateConfig(CurrentConfigName)
+            if Window.CurrentConfig:Load() then
+                WindUI:Notify({
+                    Title = "Config Loaded",
+                    Content = "Config '" .. CurrentConfigName .. "' loaded successfully.",
+                    Duration = 3,
+                    Icon = "refresh-cw",
+                })
+            else
+                WindUI:Notify({
+                    Title = "Load Failed",
+                    Content = "Failed to load config.",
+                    Duration = 3,
+                })
+            end
+        end,
+    })
+
+    ConfigSection:Space()
+
+    ConfigSection:Button({
+        Title = "Delete Config",
+        Color = ButtonGrey,
+        Justify = "Center",
+        Callback = function()
+            local configs = ConfigManager:AllConfigs()
+            for i, config in ipairs(configs) do
+                if config == CurrentConfigName then
+                    table.remove(configs, i)
+                    break
+                end
+            end
+            WindUI:Notify({
+                Title = "Config Deleted",
+                Content = "Config '" .. CurrentConfigName .. "' deleted.",
+                Duration = 3,
+            })
+            AllConfigsDropdown:Refresh(ConfigManager:AllConfigs())
+        end,
+    })
+
+    ConfigSection:Space()
+
+    local SettingsSection = ConfigTab:Section({
+        Title = "Export Settings",
+        Opened = true,
+    })
+
+    local function tableToJSON(tbl)
+        local function serialize(obj)
+            local lua = type(obj) == "number" and tostring(obj) or
+                       type(obj) == "string" and string.format("%q", obj) or
+                       type(obj) == "boolean" and tostring(obj) or
+                       type(obj) == "table" and (function()
+                           local res = "{"
+                           for k, v in pairs(obj) do
+                               res = res .. "[" .. serialize(k) .. "]=" .. serialize(v) .. ","
+                           end
+                           return res .. "}"
+                       end)() or
+                       "nil"
+            return lua
+        end
+        return serialize(tbl)
+    end
+
+    SettingsSection:Button({
+        Title = "Copy Settings to Clipboard",
+        Color = ButtonGrey,
+        Justify = "Center",
+        Callback = function()
+            local settingsJSON = tableToJSON(Settings)
+            setclipboard(settingsJSON)
+            WindUI:Notify({
+                Title = "Copied",
+                Content = "Settings copied to clipboard.",
+                Duration = 3,
+            })
+        end,
+    })
+end
+
+do
+    local HomeSection = HomeTab:Section({
+        Title = "Welcome",
+        Opened = true,
+    })
+    
+    HomeSection:Section({
+        Title = "Script Made By Celeron.",
+        TextSize = 18,
+        FontWeight = Enum.FontWeight.SemiBold,
+    })
+
+    HomeSection:Section({
+        Title = "Join The Discord Server In The Info Tab.",
+        TextSize = 18,
+        FontWeight = Enum.FontWeight.SemiBold,
+    })
+    
+    HomeSection:Space()
+    
+    HomeSection:Space()
+    
+    if math.random(1,50) == 1 then
+        HomeSection:Image({
+            Image = "rbxassetid://17327779381",
+            AspectRatio = "16:9",
+            Radius = 9,
+        })
+    else
+        HomeSection:Image({
+            Image = "rbxassetid://13308582899",
+            AspectRatio = "16:9",
+            Radius = 9,
+        })
+    end
+end
+
+do
+    local InfoSection = InfoTab:Section({
+        Title = "Information",
+        Opened = true,
+    })
+    
+    InfoSection:Space()
+    
+    InfoSection:Button({
+        Title = "Copy Owner Discord Username",
+        Color = ButtonGrey,
+        Justify = "Center",
+        Callback = function()
+            setclipboard("celeronistuff")
+            WindUI:Notify({
+                Title = "Discord Username",
+                Content = "Copied to your clipboard.",
+                Duration = 3,
+            })
+        end,
+    })
+    
+    InfoSection:Space()
+    
+    InfoSection:Button({
+        Title = "Copy Discord Server Invite",
+        Color = ButtonGrey,
+        Justify = "Center",
+        Callback = function()
+            setclipboard("https://discord.gg/mFusYUmyry")
+            WindUI:Notify({
+                Title = "Discord Invite",
+                Content = "Copied to your clipboard.",
+                Duration = 3,
+            })
+        end,
+    })
+end
+
+do
+    local MetaSection = BlatantTab:Section({
+        Title = "Metavision Features",
+        Opened = true,
+    })
+    
+    MetaSection:Button({
+        Title = "Metavision V1",
+        Color = ButtonGrey,
+        Callback = function()
+            loadstring(game:HttpGet("https://pastebin.com/raw/FVgs7bQw"))()
+        end,
+    })
+    
+    MetaSection:Space()
+    
+    MetaSection:Button({
+        Title = "Metavision V2",
+        Color = ButtonGrey,
+        Callback = function()
+            loadstring(game:HttpGet("https://pastebin.com/raw/HfpQBAsF"))()
+        end,
+    })
+end
+
+do
+    local BallSection = BlatantTab:Section({
+        Title = "Ball Features",
+        Opened = true,
+    })
+    
+    local autoGoalState = {
+        enabled = false,
+        conn = nil
+    }
+    
+    BallSection:Toggle({
+        Flag = "AutoGoal",
+        Title = "Auto Goal",
+        Value = Settings.autoGoalEnabled,
+        Callback = function(v)
+            Settings.autoGoalEnabled = v
+            autoGoalState.enabled = v
+            if autoGoalState.enabled then
+                local players = game:GetService("Players")
+                local runservice = game:GetService("RunService")
+                local replicatedstorage = game:GetService("ReplicatedStorage")
+                local map = workspace:WaitForChild("map")
+                local agoal, bgoal = map:WaitForChild("Agoal"), map:WaitForChild("Bgoal")
+                local localplayer = players.LocalPlayer
+                
+                local function ingame()
+                    local state = localplayer.Character and localplayer.Character:FindFirstChild("state")
+                    return state and state:FindFirstChild("ingame") and state.ingame.Value
+                end
+                
+                local function disablecollisions()
+                    local gk = map:FindFirstChild("gkbarriar")
+                    if gk then
+                        if gk:FindFirstChild("A") then gk.A.CanCollide = false end
+                        if gk:FindFirstChild("B") then gk.B.CanCollide = false end
+                    end
+                    if agoal then agoal.CanCollide = false end
+                    if bgoal then bgoal.CanCollide = false end
+                end
+                
+                local function stealball()
+                    local root = localplayer.Character and localplayer.Character:FindFirstChild("HumanoidRootPart")
+                    local ball = workspace.Terrain:FindFirstChild("Ball")
+                    if root and ball then
+                        root.CFrame = CFrame.new(ball.Position.X, 0, ball.Position.Z)
+                    end
+                    for _, plr in pairs(players:GetPlayers()) do
+                        if plr ~= localplayer and plr.Character then
+                            local otherball = plr.Character:FindFirstChild("Ball")
+                            local otherroot = plr.Character:FindFirstChild("HumanoidRootPart")
+                            local localroot = localplayer.Character:FindFirstChild("HumanoidRootPart")
+                            if otherball and otherroot and localroot then
+                                localroot.CFrame = otherball.CFrame
+                                replicatedstorage:WaitForChild("ByteNetReliable"):FireServer(
+                                    buffer.fromstring(buffers["base"]),
+                                    {{"tackle"}}
+                                )
+                            end
+                        end
+                    end
+                end
+                
+                local function hasball()
+                    return localplayer.Character and localplayer.Character:FindFirstChild("Ball") ~= nil
+                end
+                
+                autoGoalState.conn = runservice.RenderStepped:Connect(function()
+                    if not autoGoalState.enabled then return end
+                    pcall(function()
+                        if not ingame() then return end
+                        disablecollisions()
+                        stealball()
+                        if hasball() then
+                            local root = localplayer.Character and localplayer.Character:FindFirstChild("HumanoidRootPart")
+                            local goal = localplayer.Team.Name == "A" and bgoal or agoal
+                            if root and goal then
+                                root.CFrame = goal.CFrame
+                                task.wait(0.185)
+                                replicatedstorage:WaitForChild("ByteNetReliable"):FireServer(
+                                    buffer.fromstring(buffers["base"]),
+                                    {{"kick", 20, false, vector.create(0, 1, 0)}}
+                                )
+                            end
+                        end
+                    end)
+                end)
+                WindUI:Notify({
+                    Title = "Auto Goal",
+                    Content = "Enabled.",
+                    Duration = 2,
+                })
+            else
+                if autoGoalState.conn then
+                    autoGoalState.conn:Disconnect()
+                    autoGoalState.conn = nil
+                end
+                WindUI:Notify({
+                    Title = "Auto Goal",
+                    Content = "Disabled.",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+    
+    BallSection:Space()
+    
+    local alwaysBallState = {
+        enabled = false,
+        conn = nil
+    }
+    
+    BallSection:Toggle({
+        Flag = "AlwaysBall",
+        Title = "Always Ball",
+        Value = Settings.alwaysBallEnabled,
+        Callback = function(v)
+            Settings.alwaysBallEnabled = v
+            alwaysBallState.enabled = v
+            if alwaysBallState.enabled then
+                workspace.Gravity = 0
+                alwaysBallState.conn = coroutine.wrap(function()
+                    while alwaysBallState.enabled do
+                        local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        local ball = workspace.Terrain:FindFirstChild("Ball")
+                        if root and ball then
+                            root.CFrame = CFrame.new(ball.Position)
+                        end
+                        for _, plr in pairs(game.Players:GetPlayers()) do
+                            if plr ~= game.Players.LocalPlayer and plr.Character then
+                                local otherball = plr.Character:FindFirstChild("Ball")
+                                local otherroot = plr.Character:FindFirstChild("HumanoidRootPart")
+                                if otherball and otherroot and root then
+                                    root.CFrame = otherball.CFrame
+                                    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(
+                                        buffer.fromstring(buffers["base"]),
+                                        {{"tackle"}}
+                                    )
+                                end
+                            end
+                        end
+                        task.wait(0.1)
+                    end
+                end)()
+                WindUI:Notify({
+                    Title = "Always Ball",
+                    Content = "Enabled.",
+                    Duration = 2,
+                })
+            else
+                workspace.Gravity = 196.2
+                if alwaysBallState.conn then
+                    alwaysBallState.conn = nil
+                end
+                WindUI:Notify({
+                    Title = "Always Ball",
+                    Content = "Disabled.",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+    
+    BallSection:Space()
+    
+    local stealActive = false
+    
+    BallSection:Button({
+        Title = "Steal Ball",
+        Color = ButtonGrey,
+        Callback = function()
+            local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character.HumanoidRootPart
+            if not hrp then return end
+
+            if stealActive then
+                stealActive = false
+                WindUI:Notify({
+                    Title = "Steal Ball",
+                    Content = "Stopped.",
+                    Duration = 1,
+                })
+                return
+            end
+
+            stealActive = true
+            WindUI:Notify({
+                Title = "Steal Ball",
+                Content = "Started.",
+                Duration = 1,
+            })
+
+            task.spawn(function()
+                while stealActive and hrp and hrp.Parent and not game.Players.LocalPlayer.Character:FindFirstChild("Ball") do
+                    local ball = workspace.Terrain:FindFirstChild("Ball")
+                    if ball then
+                        hrp.CFrame = CFrame.new(ball.Position)
+                    end
+
+                    for _, p in game.Players:GetPlayers() do
+                        if not stealActive then break end
+                        if p ~= game.Players.LocalPlayer then
+                            local b = p.Character and p.Character:FindFirstChild("Ball")
+                            if b then
+                                hrp.CFrame = b.CFrame
+                                game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(buffers["base"]), {{"tackle"}})
+                            end
+                        end
+                    end
+
+                    task.wait(0.05)
+                end
+
+                stealActive = false
+            end)
+        end,
+    })
+    
+    BallSection:Space()
+    
+    BallSection:Button({
+        Title = "Bring Ball",
+        Color = ButtonGrey,
+        Callback = function()
+            local hrp = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character.HumanoidRootPart
+            if not hrp then return end
+
+            if stealActive then
+                stealActive = false
+                WindUI:Notify({
+                    Title = "Bring Ball",
+                    Content = "Stopped.",
+                    Duration = 1,
+                })
+                return
+            end
+
+            stealActive = true
+            WindUI:Notify({
+                Title = "Bring Ball",
+                Content = "Started.",
+                Duration = 1,
+            })
+
+            task.spawn(function()
+                local orig = hrp.CFrame
+
+                while stealActive and hrp and hrp.Parent and not game.Players.LocalPlayer.Character:FindFirstChild("Ball") do
+                    local ball = workspace.Terrain:FindFirstChild("Ball")
+                    if ball then
+                        hrp.CFrame = CFrame.new(ball.Position)
+                    end
+
+                    for _, p in game.Players:GetPlayers() do
+                        if not stealActive then break end
+                        if p ~= game.Players.LocalPlayer then
+                            local ob = p.Character and p.Character:FindFirstChild("Ball")
+                            if ob then
+                                hrp.CFrame = ob.CFrame
+                                game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(buffers["base"]), {{"tackle"}})
+                            end
+                        end
+                    end
+
+                    task.wait(0.05)
+                end
+
+                if stealActive and hrp and hrp.Parent and game.Players.LocalPlayer.Character:FindFirstChild("Ball") then
+                    hrp.CFrame = orig
+                end
+
+                stealActive = false
+            end)
+        end,
+    })
+end
+
+do
+    local FlowSection = BlatantTab:Section({
+        Title = "Flow Features",
+        Opened = true,
+    })
+
+    local flowPartData = {
+        LocalPlayer = game:GetService("Players").LocalPlayer,
+        ByteNetReliable = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"),
+        flowPart = nil,
+        flowActive = false,
+        flowConnection = nil,
+        originalCFrame = nil
+    }
+
+    flowPartData.flowPart = Instance.new("Part")
+    flowPartData.flowPart.Size = Vector3.new(30, 1, 30)
+    flowPartData.flowPart.Anchored = true
+    flowPartData.flowPart.CanCollide = true
+    flowPartData.flowPart.Position = Vector3.new(100, 1000, 100)
+    flowPartData.flowPart.Parent = workspace
+
+    FlowSection:Button({
+        Title = "Get Flow (Req. Ball)",
+        Color = ButtonGrey,
+        Callback = function()
+            local char = flowPartData.LocalPlayer.Character
+            if not char then return end
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+
+            if flowPartData.flowActive then
+                flowPartData.flowActive = false
+
+                if flowPartData.flowConnection then
+                    task.cancel(flowPartData.flowConnection)
+                    flowPartData.flowConnection = nil
+                end
+
+                if flowPartData.originalCFrame then
+                    root.CFrame = flowPartData.originalCFrame
+                end
+
+                WindUI:Notify({
+                    Title = "Get Flow",
+                    Content = "Stopped.",
+                    Duration = 1,
+                })
+                return
+            end
+
+            flowPartData.flowActive = true
+            flowPartData.originalCFrame = root.CFrame
+
+            root.CFrame = flowPartData.flowPart.CFrame + Vector3.new(0, 5, 0)
+
+            WindUI:Notify({
+                Title = "Get Flow",
+                Content = "Started.",
+                Duration = 1,
+            })
+
+            task.wait(0.67)
+
+            flowPartData.flowConnection = task.spawn(function()
+                local flow = workspace:WaitForChild("characters"):WaitForChild(flowPartData.LocalPlayer.Name):WaitForChild("state"):WaitForChild("flow")
+
+                while flowPartData.flowActive and flow.Value < 100 do
+                    flowPartData.ByteNetReliable:FireServer(
+                        buffer.fromstring(buffers["base"]),
+                        { { "kick", 1, false, vector.create(0, 1, 0) } }
+                    )
+                    task.wait(0.01)
+                end
+
+                task.wait(0.9)
+
+                if flowPartData.flowActive and root and root.Parent and flowPartData.originalCFrame then
+                    root.CFrame = flowPartData.originalCFrame
+                end
+
+                flowPartData.flowActive = false
+                flowPartData.flowConnection = nil
+            end)
+        end,
+    })
+end
+
+do
+    local NoCDSection = BlatantTab:Section({
+        Title = "No Cooldown Features",
+        Opened = true,
+    })
+    
+    local dashState = {
+        ForwardRushEnabled = false,
+        SideDashEnabled = false,
+        rushing = false,
+        sideDashing = false,
+        dashBindsSetup = false,
+        lastForwardRush = 0,
+        lastSideDash = 0,
+        character = nil,
+        humanoid = nil,
+        rootPart = nil
+    }
+
+    local FORWARD_ANIM_ID = "rbxassetid://79394729551302"
+    local SIDE_RIGHT_ANIM_ID = "rbxassetid://114016332539655"
+    local SIDE_LEFT_ANIM_ID = "rbxassetid://100207093237932"
+
+    local function updateCharacter()
+        dashState.character = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait()
+        dashState.humanoid = dashState.character:WaitForChild("Humanoid")
+        dashState.rootPart = dashState.character:WaitForChild("HumanoidRootPart")
+    end
+
+    updateCharacter()
+    Players.LocalPlayer.CharacterAdded:Connect(updateCharacter)
+
+    local function isAnimationPlaying(animId)
+        if not dashState.humanoid then return false end
+        local tracks = dashState.humanoid:GetPlayingAnimationTracks()
+        for _, track in ipairs(tracks) do
+            if track.Animation and track.Animation.AnimationId == animId then
+                return true
+            end
+        end
+        return false
+    end
+
+    local function isAnySideDashPlaying()
+        return isAnimationPlaying(SIDE_RIGHT_ANIM_ID) or isAnimationPlaying(SIDE_LEFT_ANIM_ID)
+    end
+
+    local function clearPreviousDashForces()
+        if not dashState.rootPart then return end
+        for _, child in ipairs(dashState.rootPart:GetChildren()) do
+            if child:IsA("BodyVelocity") and child.Name:match("^DashBV_") then
+                child:Destroy()
+            end
+        end
+    end
+
+    local function forwardRush()
+        if not dashState.ForwardRushEnabled or not dashState.humanoid or not dashState.rootPart then return end
+        if tick() - dashState.lastForwardRush < 0.75 then return end
+
+        if isAnimationPlaying(FORWARD_ANIM_ID) then
+            return
+        end
+
+        dashState.lastForwardRush = tick()
+        dashState.rushing = true
+
+        clearPreviousDashForces()
+
+        local animator = dashState.humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", dashState.humanoid)
+        local animation = Instance.new("Animation")
+        animation.AnimationId = FORWARD_ANIM_ID
+        local animationTrack = animator:LoadAnimation(animation)
+        animationTrack:Play()
+
+        task.delay(0, function()
+            local sound = Instance.new("Sound")
+            sound.SoundId = "rbxassetid://105267293181745"
+            sound.Parent = dashState.rootPart
+            sound:Play()
+            sound.Ended:Connect(function() sound:Destroy() end)
+        end)
+
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "DashBV_" .. tostring(os.clock())
+        bv.MaxForce = Vector3.new(2000000, 20000, 2000000)
+        bv.P = 1500
+        bv.Parent = dashState.rootPart
+
+        local dashId = "ForwardRush_" .. tostring(os.clock())
+        RunService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value + 10, function()
+            if not dashState.rootPart or not dashState.rootPart.Parent or not bv or not bv.Parent then
+                RunService:UnbindFromRenderStep(dashId)
+                if bv then bv:Destroy() end
+                dashState.rushing = false
+                return
+            end
+            bv.Velocity = dashState.rootPart.CFrame.LookVector * 100
+        end)
+
+        task.delay(0.5, function()
+            RunService:UnbindFromRenderStep(dashId)
+            if bv then bv:Destroy() end
+            dashState.rushing = false
+        end)
+    end
+
+    local function sideDash(direction)
+        if not dashState.SideDashEnabled or not dashState.humanoid or not dashState.rootPart then return end
+        if tick() - dashState.lastSideDash < 0.3 then return end
+
+        if isAnySideDashPlaying() then
+            return
+        end
+
+        dashState.lastSideDash = tick()
+        dashState.sideDashing = true
+
+        clearPreviousDashForces()
+
+        local targetAnimId = (direction == "right") and SIDE_RIGHT_ANIM_ID or SIDE_LEFT_ANIM_ID
+
+        local animator = dashState.humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", dashState.humanoid)
+        local animation = Instance.new("Animation")
+        animation.AnimationId = targetAnimId
+        local animationTrack = animator:LoadAnimation(animation)
+        animationTrack:Play()
+
+        local sound = Instance.new("Sound")
+        sound.SoundId = "rbxassetid://71212694698006"
+        sound.Parent = dashState.rootPart
+        sound:Play()
+        sound.Ended:Connect(function() sound:Destroy() end)
+
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "DashBV_" .. tostring(os.clock())
+        bv.MaxForce = Vector3.new(2000000, 20000, 2000000)
+        bv.P = 1500
+        bv.Parent = dashState.rootPart
+
+        local dashId = "SideDash_" .. tostring(os.clock())
+        RunService:BindToRenderStep(dashId, Enum.RenderPriority.Character.Value + 10, function()
+            if not dashState.rootPart or not dashState.rootPart.Parent or not bv or not bv.Parent then
+                RunService:UnbindFromRenderStep(dashId)
+                if bv then bv:Destroy() end
+                dashState.sideDashing = false
+                return
+            end
+            local rightVec = dashState.rootPart.CFrame.RightVector
+            bv.Velocity = rightVec * (direction == "right" and 75 or -75)
+        end)
+
+        task.delay(0.4, function()
+            RunService:UnbindFromRenderStep(dashId)
+            if bv then bv:Destroy() end
+            dashState.sideDashing = false
+        end)
+    end
+
+    NoCDSection:Toggle({
+        Flag = "NoRushCD",
+        Title = "No Rush Cooldown",
+        Value = Settings.noRushCDEnabled,
+        Callback = function(v)
+            Settings.noRushCDEnabled = v
+            dashState.ForwardRushEnabled = v
+            WindUI:Notify({
+                Title = "No Rush CD",
+                Content = v and "Enabled." or "Disabled.",
+                Duration = 1,
+            })
+        end,
+    })
+
+    NoCDSection:Space()
+
+    NoCDSection:Toggle({
+        Flag = "NoSideCD",
+        Title = "No Side Dash Cooldown",
+        Value = Settings.noSideCDEnabled,
+        Callback = function(v)
+            Settings.noSideCDEnabled = v
+            dashState.SideDashEnabled = v
+            WindUI:Notify({
+                Title = "No Side Dash CD",
+                Content = v and "Enabled." or "Disabled.",
+                Duration = 1,
+            })
+        end,
+    })
+
+    if not dashState.dashBindsSetup then
+        dashState.dashBindsSetup = true
+
+        UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if gameProcessed then return end
+
+            if input.KeyCode == Enum.KeyCode.F then
+                forwardRush()
+            elseif input.KeyCode == Enum.KeyCode.Q then
+                local isA = UserInputService:IsKeyDown(Enum.KeyCode.A)
+                local isD = UserInputService:IsKeyDown(Enum.KeyCode.D)
+                if isD then
+                    sideDash("right")
+                elseif isA then
+                    sideDash("left")
+                end
+            end
+        end)
+    end
+end
+
+do
+    local BreakBallSection = BlatantTab:Section({
+        Title = "Break Ball Features",
+        Opened = true,
+    })
+    
+    BreakBallSection:Button({
+        Title = "Break Ball (Player Method, Req. Ball)",
+        Color = ButtonGrey,
+        Callback = function()
+            local baseplatePosition = Vector3.new(-190, 14864566, 492)
+            local partSize = Vector3.new(10, 1, 10)
+            local gap = 0
+
+            for x = 0, 2 do
+                for z = 0, 2 do
+                    local part = Instance.new("Part")
+                    part.Size = partSize
+                    part.Anchored = true
+                    part.Position = baseplatePosition + Vector3.new(x * (partSize.X + gap), 0, z * (partSize.Z + gap))
+                    part.Parent = workspace
+                end
+            end
+
+            local lplr = game.Players.LocalPlayer
+            local character = lplr.Character or lplr.CharacterAdded:Wait()
+
+            character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(baseplatePosition + Vector3.new(0, 100000000000000, 0))
+            
+            WindUI:Notify({
+                Title = "Break Ball",
+                Content = "Ball broken via player method.",
+                Duration = 2,
+            })
+        end,
+    })
+    
+    BreakBallSection:Space()
+    
+    BreakBallSection:Button({
+        Title = "Break Ball (Ball Method, Req. Ball)",
+        Color = ButtonGrey,
+        Callback = function()
+            local lplr = game.Players.LocalPlayer
+            local character = lplr.Character or lplr.CharacterAdded:Wait()
+            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+            local virtualInputManager = game:GetService("VirtualInputManager")
+
+            if humanoidRootPart then
+                local originalPosition = humanoidRootPart.Position
+                humanoidRootPart.CFrame = CFrame.new(Vector3.new(-390, 475, 354))
+                task.wait(0.3)
+                virtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                task.wait(0.1)
+                virtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+                task.wait(0.3)
+                humanoidRootPart.CFrame = CFrame.new(originalPosition)
+                
+                WindUI:Notify({
+                    Title = "Break Ball",
+                    Content = "Ball broken via ball method.",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+    
+    BreakBallSection:Space()
+    
+    BreakBallSection:Button({
+        Title = "Permanent Break Ball (Req. Ball)",
+        Color = ButtonGrey,
+        Callback = function()
+            workspace.FallenPartsDestroyHeight = -50000
+            game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(1, -49999, 1))
+            
+            WindUI:Notify({
+                Title = "Break Ball",
+                Content = "Ball permanently broken.",
+                Duration = 2,
+            })
+        end,
+    })
+end
+
+
+do
+    local AutoGoalSection = BlatantTab:Section({
+        Title = "Auto Goal Features",
+        Opened = true,
+    })
+
+    AutoGoalSection:Button({
+        Title = "Isagi U-20 Goal",
+        Color = ButtonGrey,
+        Callback = function()
+            local plr = game.Players.LocalPlayer
+            if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = plr.Character.HumanoidRootPart
+                
+                if plr.Team == game.Teams:FindFirstChild("A") then
+                    hrp.CFrame = CFrame.new(-536, 3, 999)
+                elseif plr.Team == game.Teams:FindFirstChild("B") then
+                    hrp.CFrame = CFrame.new(-537, 3, 1549)
+                end
+                task.wait(0.2)
+                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(
+                    buffer.fromstring(buffers["base"]),
+                    { { "skill3"} }
+                )
+                WindUI:Notify({
+                    Title = "Isagi U-20 Goal",
+                    Content = "Goal attempt started.",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+
+    AutoGoalSection:Space()
+
+    AutoGoalSection:Button({
+        Title = "Barou Devour Goal",
+        Color = ButtonGrey,
+        Callback = function()
+            local plr = game.Players.LocalPlayer
+
+            local function countEnemyTeamMembers()
+                local op = game.Teams:FindFirstChild("A")
+                if plr.Team == game.Teams:FindFirstChild("A") then
+                    op = game.Teams:FindFirstChild("B")
+                end
+                local count = 0
+                for _, player in ipairs(game.Players:GetPlayers()) do
+                    if player.Team == op then
+                        count += 1
+                    end
+                end
+                return count
+            end
+            
+            local function getTwoRandomEnemies()
+                local enemies = {}
+                local op = game.Teams:FindFirstChild("A")
+                if plr.Team == game.Teams:FindFirstChild("A") then
+                    op = game.Teams:FindFirstChild("B")
+                end
+                
+                for _, player in ipairs(game.Players:GetPlayers()) do
+                    if player ~= plr and player.Team == op then
+                        table.insert(enemies, player)
+                    end
+                end
+                
+                for i = #enemies, 2, -1 do
+                    local j = math.random(1, i)
+                    enemies[i], enemies[j] = enemies[j], enemies[i]
+                end
+
+                return enemies[1], enemies[2]
+            end
+            
+            if countEnemyTeamMembers() >= 2 then
+                local p1, p2 = getTwoRandomEnemies()
+                if not p1 or not p2 then 
+                    WindUI:Notify({
+                        Title = "Barou Devour Goal",
+                        Content = "Not enough enemies.",
+                        Duration = 2,
+                    })
+                    return 
+                end
+
+                local function tpToPlayer(targetPlayer)
+                    local char = plr.Character or plr.CharacterAdded:Wait()
+                    local root = char:WaitForChild("HumanoidRootPart")
+                    local targetRoot = targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+                    if root and targetRoot then
+                        root.CFrame = targetRoot.CFrame
+                    end
+                end
+
+                tpToPlayer(p1)
+                task.wait(0.3)
+                tpToPlayer(p2)
+                
+                task.wait(0.3)
+                
+                if plr.Team == game.Teams:FindFirstChild("A") then
+                    plr.Character.HumanoidRootPart.Position = Vector3.new(-625, 3, 925)
+                elseif plr.Team == game.Teams:FindFirstChild("B") then
+                    plr.Character.HumanoidRootPart.Position = Vector3.new(-588, 3, 1643)
+                end
+                
+                WindUI:Notify({
+                    Title = "Barou Devour Goal",
+                    Content = "Goal attempt started.",
+                    Duration = 2,
+                })
+            else
+                WindUI:Notify({
+                    Title = "Barou Devour Goal",
+                    Content = "Not enough enemies.",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+
+    AutoGoalSection:Space()
+
+    AutoGoalSection:Button({
+        Title = "Nagi Dream Goal",
+        Color = ButtonGrey,
+        Callback = function()
+            local plr = game.Players.LocalPlayer
+            if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = plr.Character.HumanoidRootPart
+                
+                if plr.Team == game.Teams:FindFirstChild("A") then
+                    hrp.CFrame = CFrame.new(-459, 3, 862)
+                elseif plr.Team == game.Teams:FindFirstChild("B") then
+                    hrp.CFrame = CFrame.new(-611, 3, 1682) * CFrame.Angles(0, math.rad(180), 0)
+                end
+                task.wait(0.2)
+                if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+                    plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+                task.wait(0.2)
+                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(
+                    buffer.fromstring(buffers["base"]),
+                    { { "skill2", true } }
+                )
+                WindUI:Notify({
+                    Title = "Nagi Dream Goal",
+                    Content = "Goal attempt started.",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+end
+
+do
+    local BlatantModeSection = BlatantTab:Section({
+        Title = "Blatant Mode",
+        Opened = true,
+    })
+
+    local blatantState = {
+        enabled = false,
+        loopConnection = nil
+    }
+
+    local rs = game:GetService("RunService")
+    local sg = game:GetService("StarterGui")
+    local ws = game:GetService("Workspace")
+
+    local function setCollide(state)
+        local a = ws.map.gkbarriar.Abarriar
+        local b = ws.map.gkbarriar.Bbarriar
+        local ag = ws.map.Agoal
+        local bg = ws.map.Bgoal
+
+        if a then a.CanCollide = state end
+        if b then b.CanCollide = state end
+        if ag then ag.CanCollide = state end
+        if bg then bg.CanCollide = state end
+    end
+
+    BlatantModeSection:Toggle({
+        Flag = "BlatantMode",
+        Title = "Blatant Mode",
+        Value = Settings.blatantModeEnabled,
+        Callback = function(v)
+            Settings.blatantModeEnabled = v
+            blatantState.enabled = v
+            if blatantState.enabled then
+                blatantState.loopConnection = rs.Heartbeat:Connect(function() setCollide(false) end)
+                WindUI:Notify({
+                    Title = "Blatant Mode",
+                    Content = "Enabled.",
+                    Duration = 2
+                })
+            else
+                if blatantState.loopConnection then blatantState.loopConnection:Disconnect() blatantState.loopConnection = nil end
+                setCollide(true)
+                WindUI:Notify({
+                    Title = "Blatant Mode",
+                    Content = "Disabled.",
+                    Duration = 2
+                })
+            end
+        end,
+    })
+end
+
+do
+    local BallMagnetSection = SilentTab:Section({
+        Title = "Ball Magnet Features",
+        Opened = true,
+    })
+    
+    local ballMagnetState = {
+        active = false,
+        conn = nil
+    }
+
+    BallMagnetSection:Toggle({
+        Flag = "BallMagnet",
+        Title = "Ball Magnet",
+        Value = Settings.ballMagnetEnabled,
+        Callback = function(v)
+            Settings.ballMagnetEnabled = v
+            local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+            ballMagnetState.active = v
+
+            if ballMagnetState.active then
+                if ballMagnetState.conn then
+                    ballMagnetState.conn:Disconnect()
+                end
+
+                ballMagnetState.conn = task.spawn(function()
+                    while ballMagnetState.active do
+                        pcall(function()
+                            remote:FireServer(buffer.fromstring(buffers["grabball"]))
+                        end)
+                        task.wait()
+                    end
+                end)
+                
+                WindUI:Notify({
+                    Title = "Ball Magnet",
+                    Content = "Enabled.",
+                    Duration = 2,
+                })
+            else
+                if ballMagnetState.conn then
+                    ballMagnetState.conn = nil
+                end
+                WindUI:Notify({
+                    Title = "Ball Magnet",
+                    Content = "Disabled.",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+
+    BallMagnetSection:Space()
+
+    local magnetHoldState = {
+        enabled = false,
+        holding = false,
+        beganConnection = nil,
+        endedConnection = nil
+    }
+
+    local userInputService2 = game:GetService("UserInputService")
+    local remote2 = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+
+    BallMagnetSection:Toggle({
+        Flag = "BallMagnetM2",
+        Title = "Ball Magnet (M2 Hold)",
+        Value = Settings.ballMagnetM2Enabled,
+        Callback = function(v)
+            Settings.ballMagnetM2Enabled = v
+            if not magnetHoldState.enabled then
+                magnetHoldState.enabled = true
+
+                magnetHoldState.beganConnection = userInputService2.InputBegan:Connect(function(input, gameProcessed)
+                    if gameProcessed then return end
+                    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                        magnetHoldState.holding = true
+                        task.spawn(function()
+                            while magnetHoldState.holding do
+                                remote2:FireServer(buffer.fromstring(buffers["grabball"]))
+                                task.wait(0.05)
+                            end
+                        end)
+                    end
+                end)
+
+                magnetHoldState.endedConnection = userInputService2.InputEnded:Connect(function(input, gameProcessed)
+                    if gameProcessed then return end
+                    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+                        magnetHoldState.holding = false
+                    end
+                end)
+
+                WindUI:Notify({
+                    Title = "Ball Magnet (M2 Hold)",
+                    Content = "Enabled.",
+                    Duration = 2
+                })
+            else
+                magnetHoldState.enabled = false
+                magnetHoldState.holding = false
+
+                if magnetHoldState.beganConnection then magnetHoldState.beganConnection:Disconnect() magnetHoldState.beganConnection = nil end
+                if magnetHoldState.endedConnection then magnetHoldState.endedConnection:Disconnect() magnetHoldState.endedConnection = nil end
+
+                WindUI:Notify({
+                    Title = "Ball Magnet (M2 Hold)",
+                    Content = "Disabled.",
+                    Duration = 2
+                })
+            end
+        end,
+    })
+
+    BallMagnetSection:Space()
+
+    local ballHitboxState = {
+        active = false,
+        hitbox = nil,
+        loop = nil
+    }
+
+    BallMagnetSection:Toggle({
+        Flag = "BallMagnetHitbox",
+        Title = "Ball Magnet Hitbox",
+        Value = Settings.ballMagnetHitboxEnabled,
+        Callback = function(v)
+            Settings.ballMagnetHitboxEnabled = v
+            ballHitboxState.active = v
+
+            local RunService = game:GetService("RunService")
+
+            local function removeHitbox()
+                if ballHitboxState.hitbox then
+                    ballHitboxState.hitbox:Destroy()
+                    ballHitboxState.hitbox = nil
+                end
+            end
+
+            local function stopLoop()
+                if ballHitboxState.loop then
+                    ballHitboxState.loop:Disconnect()
+                    ballHitboxState.loop = nil
+                end
+            end
+
+            if not ballHitboxState.active then
+                stopLoop()
+                removeHitbox()
+                return
+            end
+
+            stopLoop()
+
+            ballHitboxState.loop = RunService.Heartbeat:Connect(function()
+                if not ballHitboxState.active then
+                    stopLoop()
+                    removeHitbox()
+                    return
+                end
+
+                local terrain = workspace:FindFirstChild("Terrain")
+                local ball = terrain and terrain:FindFirstChild("Ball")
+
+                if not ball or not ball:IsA("BasePart") then
+                    removeHitbox()
+                    return
+                end
+
+                if not ballHitboxState.hitbox then
+                    local hitbox = Instance.new("Part")
+                    hitbox.Name = "BallMagnetHitbox"
+                    hitbox.Shape = Enum.PartType.Ball
+                    hitbox.Size = Vector3.new(25, 25, 25)
+                    hitbox.Material = Enum.Material.Neon
+                    hitbox.Color = Color3.fromRGB(15, 155, 155)
+                    hitbox.Transparency = 0.9
+                    hitbox.CanCollide = false
+                    hitbox.CanTouch = false
+                    hitbox.CanQuery = false
+                    hitbox.Anchored = false
+                    hitbox.Massless = true
+                    hitbox.CFrame = ball.CFrame
+                    hitbox.Parent = ball
+
+                    local weld = Instance.new("WeldConstraint")
+                    weld.Part0 = ball
+                    weld.Part1 = hitbox
+                    weld.Parent = hitbox
+
+                    ballHitboxState.hitbox = hitbox
+                end
+            end)
+        end,
+    })
+
+    BallMagnetSection:Space()
+
+    local ballRadiusState = {
+        radius = 1,
+        conn = nil,
+        lastFire = 0,
+        FIRE_INTERVAL = 0.1,
+        hrp = nil
+    }
+
+    BallMagnetSection:Slider({
+        Flag = "BallMagnetRadius",
+        Title = "Ball Magnet Radius",
+        Step = 0.5,
+        Value = {
+            Min = 1,
+            Max = 25,
+            Default = Settings.ballMagnetRadius,
+        },
+        Callback = function(v)
+            Settings.ballMagnetRadius = v
+            ballRadiusState.radius = v
+        end,
+    })
+
+    local function setupCharacter(char)
+        ballRadiusState.hrp = char:WaitForChild("HumanoidRootPart", 10)
+    end
+
+    if game.Players.LocalPlayer.Character then
+        setupCharacter(game.Players.LocalPlayer.Character)
+    end
+
+    game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
+        setupCharacter(char)
+    end)
+
+    if ballRadiusState.conn then
+        ballRadiusState.conn:Disconnect()
+    end
+
+    local remote3 = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+
+    ballRadiusState.conn = game:GetService("RunService").Heartbeat:Connect(function()
+        local radius = ballRadiusState.radius or 1
+        if radius < 2 then return end
+
+        local ball = workspace.Terrain:FindFirstChild("Ball")
+        if not ball then return end
+
+        if ballRadiusState.hrp then
+            local dist = (ballRadiusState.hrp.Position - ball.Position).Magnitude
+            if dist <= radius and (time() - ballRadiusState.lastFire) >= ballRadiusState.FIRE_INTERVAL then
+                ballRadiusState.lastFire = time()
+                pcall(function()
+                    remote3:FireServer(buffer.fromstring(buffers["grabball"]))
+                end)
+            end
+        end
+    end)
+
+    BallMagnetSection:Space()
+
+    local ballRangeVizState = {
+        enabled = false,
+        hitbox = nil,
+        loop = nil
+    }
+
+    BallMagnetSection:Toggle({
+        Flag = "BallMagnetRadiusHitbox",
+        Title = "Ball Magnet Radius Hitbox",
+        Value = Settings.ballMagnetRadiusHitboxEnabled,
+        Callback = function(v)
+            Settings.ballMagnetRadiusHitboxEnabled = v
+            ballRangeVizState.enabled = v
+
+            local RunService = game:GetService("RunService")
+
+            local function removeHitbox()
+                if ballRangeVizState.hitbox then
+                    ballRangeVizState.hitbox:Destroy()
+                    ballRangeVizState.hitbox = nil
+                end
+            end
+
+            local function stopLoop()
+                if ballRangeVizState.loop then
+                    ballRangeVizState.loop:Disconnect()
+                    ballRangeVizState.loop = nil
+                end
+            end
+
+            if not ballRangeVizState.enabled then
+                stopLoop()
+                removeHitbox()
+                return
+            end
+
+            stopLoop()
+
+            ballRangeVizState.loop = RunService.Heartbeat:Connect(function()
+                if not ballRangeVizState.enabled then
+                    stopLoop()
+                    removeHitbox()
+                    return
+                end
+
+                local terrain = workspace:FindFirstChild("Terrain")
+                local ball = terrain and terrain:FindFirstChild("Ball")
+                if not ball or not ball:IsA("MeshPart") then
+                    removeHitbox()
+                    return
+                end
+
+                local radius = ballRadiusState.radius or 1
+                if radius < 2 then
+                    removeHitbox()
+                    return
+                end
+
+                if not ballRangeVizState.hitbox then
+                    local hitbox = Instance.new("Part")
+                    hitbox.Name = "BallMagnetRange"
+                    hitbox.Shape = Enum.PartType.Ball
+                    hitbox.Material = Enum.Material.Neon
+                    hitbox.Color = Color3.fromRGB(15, 155, 155)
+                    hitbox.Transparency = 0.9
+                    hitbox.CanCollide = false
+                    hitbox.CanTouch = false
+                    hitbox.CanQuery = false
+                    hitbox.Anchored = true
+                    hitbox.Massless = true
+                    hitbox.Parent = workspace
+                    ballRangeVizState.hitbox = hitbox
+                end
+
+                local d = radius * 2
+                local hitbox = ballRangeVizState.hitbox
+                hitbox.Size = Vector3.new(d, d, d)
+                hitbox.CFrame = ball.CFrame
+            end)
+        end,
+    })
+end
+
+do
+    local AutoDribbleSection = SilentTab:Section({
+        Title = "Auto Dribble / Counter Features",
+        Opened = true,
+    })
+
+    local autoSkillState = {
+        suppressNotifs = false,
+        autoSkills = {
+            ["toggleDetection"] = "dribble",
+            ["toggleCounter1"] = "skill1",
+            ["toggleCounter2"] = "skill2",
+            ["toggleCounter3"] = "skill3",
+            ["toggleCounter4"] = "skill4",
+            ["toggleCounter5"] = "skill5"
+        },
+        toggleDetection = false,
+        toggleCounter1 = false,
+        toggleCounter2 = false,
+        toggleCounter3 = false,
+        toggleCounter4 = false,
+        toggleCounter5 = false,
+        keybindsEnabled = false,
+        keybindSetup = false,
+        cooldowns = {}
+    }
+
+    buffer = buffer or {
+        fromstring = function(str)
+            return str
+        end
+    }
+
+    local ANIMATION_ID = "rbxassetid://109744655458082"
+
+    local function notifySkill(title, text, duration)
+        WindUI:Notify({
+            Title = title,
+            Content = text,
+            Duration = duration or 2
+        })
+    end
+
+    RunService.Stepped:Connect(function()
+        local char = game.Players.LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        local ball = char:FindFirstChild("Ball")
+        if not ball or not ball:IsA("MeshPart") then
+            return
+        end
+
+        for _, target in ipairs(Players:GetPlayers()) do
+            if target ~= game.Players.LocalPlayer and target.Character and target.Team ~= game.Players.LocalPlayer.Team then
+                local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
+                local targetHumanoid = target.Character:FindFirstChild("Humanoid")
+                local animator = targetHumanoid and targetHumanoid:FindFirstChildOfClass("Animator")
+
+                if targetHRP and animator then
+                    local distance = (root.Position - targetHRP.Position).Magnitude
+                    if distance <= 40 then
+                        local now = tick()
+                        local last = autoSkillState.cooldowns[target] or 0
+                        if now - last >= 0.5 then
+                            for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                                if track.Animation.AnimationId == ANIMATION_ID then
+                                    autoSkillState.cooldowns[target] = now
+
+                                    for _, toggleKey in ipairs({
+                                        "toggleDetection",
+                                        "toggleCounter1",
+                                        "toggleCounter2",
+                                        "toggleCounter3",
+                                        "toggleCounter4",
+                                        "toggleCounter5"
+                                    }) do
+                                        local skillName = autoSkillState.autoSkills[toggleKey]
+                                        if autoSkillState[toggleKey] and skillName then
+                                            local args
+                                            if skillName == "dribble" then
+                                                args = {
+                                                    buffer.fromstring(buffers["base"]),
+                                                    { { skillName, false } }
+                                                }
+                                            else
+                                                args = {
+                                                    buffer.fromstring(buffers["base"]),
+                                                    { { skillName } }
+                                                }
+                                            end
+                                            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                                        end
+                                    end
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    AutoDribbleSection:Button({
+        Title = "Show Keybinds",
+        Color = ButtonGrey,
+        Callback = function()
+            WindUI:Notify({
+                Title = "Keybinds",
+                Content = "Z = Auto-Dribble\nX = Move One\nC = Move Two\nV = Move Three\nN = Move Four\nM = Move Five",
+                Duration = 5,
+            })
+        end,
+    })
+
+    AutoDribbleSection:Space()
+
+    AutoDribbleSection:Toggle({
+        Flag = "AutoDribbleKeybinds",
+        Title = "Toggle Keybinds",
+        Value = Settings.autoDribbleKeybindsEnabled,
+        Callback = function(v)
+            Settings.autoDribbleKeybindsEnabled = v
+            autoSkillState.keybindsEnabled = v
+            notifySkill("Keybinds", v and "Enabled." or "Disabled.", 2)
+        end,
+    })
+
+    AutoDribbleSection:Space()
+
+    AutoDribbleSection:Toggle({
+        Flag = "AutoDribble",
+        Title = "Auto Dribble",
+        Value = Settings.autoCounterMove1Enabled,
+        Callback = function(v)
+            Settings.autoCounterMove1Enabled = v
+            autoSkillState.toggleDetection = v
+            notifySkill("Auto Dribble", v and "Enabled." or "Disabled.", 2)
+        end,
+    })
+
+    AutoDribbleSection:Space()
+
+    AutoDribbleSection:Toggle({
+        Flag = "AutoCounterMove1",
+        Title = "Auto Counter (Move One)",
+        Value = Settings.autoCounterMove1Enabled,
+        Callback = function(v)
+            Settings.autoCounterMove1Enabled = v
+            autoSkillState.toggleCounter1 = v
+            notifySkill("Auto Counter (Move One)", v and "Enabled." or "Disabled.", 2)
+        end,
+    })
+
+    AutoDribbleSection:Space()
+
+    AutoDribbleSection:Toggle({
+        Flag = "AutoCounterMove2",
+        Title = "Auto Counter (Move Two)",
+        Value = Settings.autoCounterMove2Enabled,
+        Callback = function(v)
+            Settings.autoCounterMove2Enabled = v
+            autoSkillState.toggleCounter2 = v
+            notifySkill("Auto Counter (Move Two)", v and "Enabled." or "Disabled.", 2)
+        end,
+    })
+
+    AutoDribbleSection:Space()
+
+    AutoDribbleSection:Toggle({
+        Flag = "AutoCounterMove3",
+        Title = "Auto Counter (Move Three)",
+        Value = Settings.autoCounterMove3Enabled,
+        Callback = function(v)
+            Settings.autoCounterMove3Enabled = v
+            autoSkillState.toggleCounter3 = v
+            notifySkill("Auto Counter (Move Three)", v and "Enabled." or "Disabled.", 2)
+        end,
+    })
+
+    AutoDribbleSection:Space()
+
+    AutoDribbleSection:Toggle({
+        Flag = "AutoCounterMove4",
+        Title = "Auto Counter (Move Four)",
+        Value = Settings.autoCounterMove4Enabled,
+        Callback = function(v)
+            Settings.autoCounterMove4Enabled = v
+            autoSkillState.toggleCounter4 = v
+            notifySkill("Auto Counter (Move Four)", v and "Enabled." or "Disabled.", 2)
+        end,
+    })
+
+    AutoDribbleSection:Space()
+
+    AutoDribbleSection:Toggle({
+        Flag = "AutoCounterMove5",
+        Title = "Auto Counter (Move Five)",
+        Value = Settings.autoCounterMove5Enabled,
+        Callback = function(v)
+            Settings.autoCounterMove5Enabled = v
+            autoSkillState.toggleCounter5 = v
+            notifySkill("Auto Counter (Move Five)", v and "Enabled." or "Disabled.", 2)
+        end,
+    })
+
+    if not autoSkillState.keybindSetup then
+        autoSkillState.keybindSetup = true
+
+        UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if gameProcessed or not autoSkillState.keybindsEnabled then return end
+
+            local keyMap = {
+                [Enum.KeyCode.Z] = {"toggleDetection", "Auto-Dribble"},
+                [Enum.KeyCode.X] = {"toggleCounter1", "Auto-Counter (Move One)"},
+                [Enum.KeyCode.C] = {"toggleCounter2", "Auto-Counter (Move Two)"},
+                [Enum.KeyCode.V] = {"toggleCounter3", "Auto-Counter (Move Three)"},
+                [Enum.KeyCode.N] = {"toggleCounter4", "Auto-Counter (Move Four)"},
+                [Enum.KeyCode.M] = {"toggleCounter5", "Auto-Counter (Move Five)"}
+            }
+
+            local mapping = keyMap[input.KeyCode]
+            if mapping then
+                local toggleKey, label = unpack(mapping)
+                autoSkillState[toggleKey] = not (autoSkillState[toggleKey] or false)
+                notifySkill(label, autoSkillState[toggleKey] and "Enabled." or "Disabled.", 2)
+            end
+        end)
+    end
+end
+
+do
+    local AutoActivateSection = SilentTab:Section({
+        Title = "Auto Activate Features",
+        Opened = true,
+    })
+
+    local autoActivateState = {
+        distance = 10,
+        toggleState = false,
+        moveNumber = 1,
+        db = true
+    }
+
+    AutoActivateSection:Input({
+        Flag = "AutoActivateMoveNumber",
+        Title = "Auto Activate Move Number",
+        Placeholder = "Example: 1, 2, 3, 4, 5",
+        Value = "1",
+        Callback = function(v)
+            local nsdv = tonumber(v)
+            if nsdv and nsdv <= 5 and nsdv > 0 then
+                Settings.autoActivateMoveNumber = nsdv
+                autoActivateState.moveNumber = nsdv
+                WindUI:Notify({
+                    Title = "Move Set",
+                    Content = "Move " .. nsdv .. " selected",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+
+    AutoActivateSection:Space()
+
+    AutoActivateSection:Slider({
+        Flag = "AutoActivateDistance",
+        Title = "Auto Activate Distance",
+        Step = 0.5,
+        Value = {
+            Min = 3,
+            Max = 70,
+            Default = Settings.autoActivateDistance,
+        },
+        Callback = function(v)
+            Settings.autoActivateDistance = v
+            autoActivateState.distance = v
+        end,
+    })
+
+    AutoActivateSection:Space()
+
+    AutoActivateSection:Toggle({
+        Flag = "AutoActivate",
+        Title = "Auto Activate Toggle",
+        Value = Settings.autoActivateEnabled,
+        Callback = function(v)
+            Settings.autoActivateEnabled = v
+            autoActivateState.toggleState = v
+            WindUI:Notify({
+                Title = "Auto Activate",
+                Content = v and "Enabled." or "Disabled.",
+                Duration = 2,
+            })
+        end,
+    })
+
+    UserInputService.InputBegan:Connect(function(input, bg)
+        if bg then return end
+        if input.UserInputType == Enum.UserInputType.MouseButton2 then
+            autoActivateState.db = false
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input, bg)
+        if bg then return end
+        if input.UserInputType == Enum.UserInputType.MouseButton2 then
+            autoActivateState.db = true
+        end
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        if not autoActivateState.toggleState then return end
+
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        local playerPos = hrp.Position
+        
+        if game.Workspace.Terrain:FindFirstChild("Ball") then
+            local ballPos = game.Workspace.Terrain:FindFirstChild("Ball").Position
+            local distance = (playerPos - ballPos).Magnitude
+
+            if distance <= autoActivateState.distance and not autoActivateState.db then
+                local args = {
+                    buffer.fromstring(buffers["base"]),
+                    {
+                        { "skill" .. autoActivateState.moveNumber }
+                    }
+                }
+
+                game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+            end
+        end
+    end)
+end
+
+do
+    local TrapHelperSection = SilentTab:Section({
+        Title = "Trap Helper",
+        Opened = true,
+    })
+
+    local trapAnims = {
+        "rbxassetid://73387016994281",
+        "rbxassetid://101043441232233",
+        "rbxassetid://96593185131882",
+        "rbxassetid://116422938520670",
+        "rbxassetid://90734196141468",
+        "rbxassetid://85349589701503",
+        "rbxassetid://120351399679118"
+    }
+
+    local trapState = {
+        enabled = false,
+        detected = false,
+        armTime = 0,
+        active = false,
+        track = nil,
+        ball = nil,
+        conn = nil,
+        alignOri = nil
+    }
+
+    local armWindow = 0.35
+    local trapMaxDist = 50
+    local trapSpeed = 50
+
+    local function findBall()
+        local terrain = workspace.Terrain
+        if terrain then
+            local b = terrain:FindFirstChild("Ball")
+            if b and b:IsA("BasePart") then return b end
+        end
+    end
+
+    local function cleanupTrap()
+        if trapState.conn then 
+            trapState.conn:Disconnect() 
+            trapState.conn = nil 
+        end
+        trapState.active = false
+        trapState.track = nil
+        trapState.ball = nil
+        if trapState.alignOri then 
+            trapState.alignOri:Destroy() 
+            trapState.alignOri = nil 
+        end
+    end
+
+    local function startLerpToBall(hrp, ball, track)
+        if (ball.Position - hrp.Position).Magnitude > trapMaxDist then return end
+
+        trapState.ball = ball
+        trapState.track = track
+        trapState.active = true
+
+        if trapState.alignOri then trapState.alignOri:Destroy() end
+        local ao = Instance.new("AlignOrientation")
+        ao.Name = "TrapFaceAlign"
+        ao.Mode = Enum.OrientationAlignmentMode.OneAttachment
+        ao.Attachment0 = hrp:FindFirstChild("RootAttachment") or Instance.new("Attachment", hrp)
+        ao.RigidityEnabled = false
+        ao.MaxTorque = 20000
+        ao.Responsiveness = 1000
+        ao.Parent = hrp
+        trapState.alignOri = ao
+
+        if trapState.conn then trapState.conn:Disconnect() end
+
+        trapState.conn = RunService.RenderStepped:Connect(function(dt)
+            if not trapState.track or not trapState.track.IsPlaying then
+                cleanupTrap()
+                return
+            end
+
+            if not trapState.ball or not trapState.ball.Parent then
+                cleanupTrap()
+                return
+            end
+
+            local cur = hrp.Position
+            local tgt = trapState.ball.Position - Vector3.new(0, 3, 0)
+            local dir = tgt - cur
+            local dist = dir.Magnitude
+
+            if dist > trapMaxDist or dist < 0.5 then
+                cleanupTrap()
+                return
+            end
+
+            local move = dir.Unit * (trapSpeed * dt)
+            hrp.CFrame = CFrame.new(cur + move) * hrp.CFrame.Rotation
+
+            local ballFlat = Vector3.new(trapState.ball.Position.X, hrp.Position.Y, trapState.ball.Position.Z)
+            if trapState.alignOri then
+                trapState.alignOri.CFrame = CFrame.lookAt(hrp.Position, ballFlat)
+            end
+        end)
+
+        track.Stopped:Connect(function()
+            cleanupTrap()
+        end)
+    end
+
+    local function hookTraps(char)
+        local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+        local hrp = char:WaitForChild("HumanoidRootPart")
+
+        animator.AnimationPlayed:Connect(function(track)
+            if not trapState.enabled then return end
+            if not track.Animation then return end
+
+            local id = track.Animation.AnimationId
+            for _, animId in ipairs(trapAnims) do
+                if id == animId and os.clock() >= trapState.armTime then
+                    trapState.detected = true
+
+                    task.delay(0.05, function()
+                        if track.IsPlaying then
+                            local ball = findBall()
+                            if ball then
+                                startLerpToBall(hrp, ball, track)
+                            end
+                        end
+                    end)
+
+                    break
+                end
+            end
+        end)
+    end
+
+    local function setupCharacter(char)
+        hookTraps(char)
+    end
+
+    if game.Players.LocalPlayer.Character then
+        setupCharacter(game.Players.LocalPlayer.Character)
+    end
+    game.Players.LocalPlayer.CharacterAdded:Connect(setupCharacter)
+
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+
+        local code = input.KeyCode.Value
+        if code < Enum.KeyCode.One.Value or code > Enum.KeyCode.Five.Value then return end
+
+        if trapState.active then return end
+
+        trapState.armTime = os.clock()
+        trapState.detected = false
+
+        task.delay(armWindow, function()
+            if not trapState.detected then return end
+
+            local char = game.Players.LocalPlayer.Character
+            if not char then return end
+
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+
+            local ball = findBall()
+            if ball then
+                local tracks = char.Humanoid.Animator:GetPlayingAnimationTracks()
+                for _, track in ipairs(tracks) do
+                    if track.Animation and table.find(trapAnims, track.Animation.AnimationId) then
+                        startLerpToBall(hrp, ball, track)
+                        break
+                    end
+                end
+            end
+        end)
+    end)
+
+    TrapHelperSection:Toggle({
+        Flag = "TrapHelper",
+        Title = "Trap Helper",
+        Value = Settings.trapHelperEnabled,
+        Callback = function(v)
+            Settings.trapHelperEnabled = v
+            trapState.enabled = v
+            WindUI:Notify({
+                Title = "Trap Helper",
+                Content = v and "Enabled." or "Disabled.",
+                Duration = 1
+            })
+        end,
+    })
+
+    TrapHelperSection:Space()
+
+    TrapHelperSection:Slider({
+        Flag = "TrapHelperMaxDistance",
+        Title = "Trap Helper Max Distance",
+        Step = 1,
+        Value = {
+            Min = 50,
+            Max = 200,
+            Default = Settings.trapHelperMaxDistance,
+        },
+        Callback = function(v)
+            Settings.trapHelperMaxDistance = v
+            trapMaxDist = v
+        end,
+    })
+
+    TrapHelperSection:Space()
+
+    TrapHelperSection:Slider({
+        Flag = "TrapHelperSpeed",
+        Title = "Trap Helper Speed",
+        Step = 1,
+        Value = {
+            Min = 50,
+            Max = 1000,
+            Default = Settings.trapHelperSpeed,
+        },
+        Callback = function(v)
+            Settings.trapHelperSpeed = v
+            trapSpeed = v
+        end,
+    })
+end
+
+do
+    local TeleportSection = TeleportTab:Section({
+        Title = "Map Teleports",
+        Opened = true,
+    })
+    
+    TeleportSection:Button({
+        Title = "Spawn Area",
+        Color = ButtonGrey,
+        Callback = function()
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-269, 4, -1599)
+            WindUI:Notify({
+                Title = "Spawn Area",
+                Content = "Teleported.",
+                Duration = 1,
+            })
+        end,
+    })
+    
+    TeleportSection:Space()
+    
+    TeleportSection:Button({
+        Title = "Middle Field",
+        Color = ButtonGrey,
+        Callback = function()
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-540, 3, 1274)
+            WindUI:Notify({
+                Title = "Middle Field",
+                Content = "Teleported.",
+                Duration = 1,
+            })
+        end,
+    })
+    
+    TeleportSection:Space()
+    
+    TeleportSection:Button({
+        Title = "Reporter Area",
+        Color = ButtonGrey,
+        Callback = function()
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-6, 2, 3237)
+            WindUI:Notify({
+                Title = "Reporter Area",
+                Content = "Teleported.",
+                Duration = 1,
+            })
+        end,
+    })
+    
+    TeleportSection:Space()
+    
+    TeleportSection:Button({
+        Title = "Goal Box (A)",
+        Color = ButtonGrey,
+        Callback = function()
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-537, 3, 1575)
+            WindUI:Notify({
+                Title = "Goal Box (A)",
+                Content = "Teleported.",
+                Duration = 1,
+            })
+        end,
+    })
+    
+    TeleportSection:Space()
+    
+    TeleportSection:Button({
+        Title = "Goal Box (B)",
+        Color = ButtonGrey,
+        Callback = function()
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-534, 3, 974)
+            WindUI:Notify({
+                Title = "Goal Box (B)",
+                Content = "Teleported.",
+                Duration = 1,
+            })
+        end,
+    })
+end
+
+do
+    local Distances = {
+        tackleDist = 0,
+        rushDist = 0,
+        gkDist = 0,
+        naruhayaDist = 0,
+        raumDist = 0,
+        dracDist = 0,
+        stepDist = 0,
+        kaiserDist = 0,
+        occlusionDist = 0,
+        divingDist = 0,
+        reflexDist = 0,
+        speedDist = 0,
+        cutDist = 0,
+        instinctDist = 0,
+        quarterDist = 0,
+        zombDist = 0,
+        kingsDist = 0,
+        machDist = 0,
+        goldenDist = 0,
+        devourMaxDist = 0
+    }
+
+    local DashConfigs = {
+        Tackle = {
+            animId = "rbxassetid://109744655458082",
+            sliderVar = "tackleDist",
+            duration = 0.4,
+            cooldown = 0.15,
+            wait = 0
+        },
+        Rush = {
+            animId = "rbxassetid://79394729551302",
+            sliderVar = "rushDist",
+            duration = 0.4,
+            cooldown = 0.15,
+            wait = 0.15
+        },
+        GKDash = {
+            animId = "rbxassetid://90537955276413",
+            sliderVar = "gkDist",
+            duration = 0.55,
+            cooldown = 0.15,
+            wait = 0.05
+        },
+        Naruhaya = {
+            animId = "rbxassetid://82240286756891",
+            sliderVar = "naruhayaDist",
+            duration = 0.45,
+            cooldown = 0.15,
+            wait = 0.33
+        },
+        Raumdeuter = {
+            animIds = {["rbxassetid://81582265162782"] = true},
+            sliderVar = "raumDist",
+            duration = 0.55,
+            cooldown = 0.15,
+            wait = 0.1
+        },
+        DraconicRush = {
+            animId = "rbxassetid://95359966795185",
+            sliderVar = "dracDist",
+            duration = 0.625,
+            cooldown = 0.15,
+            wait = 0.175
+        },
+        StepOvers = {
+            animId = "rbxassetid://84063609284472",
+            sliderVar = "stepDist",
+            duration = 0.15,
+            cooldown = 0.15,
+            wait = 1.275
+        },
+        KaiserOffBall = {
+            animId = "rbxassetid://110660551661470",
+            sliderVar = "kaiserDist",
+            duration = 0.55,
+            cooldown = 0.15,
+            wait = 0.15
+        },
+        OcclusionBreak = {
+            animId = "rbxassetid://116181317759538",
+            sliderVar = "occlusionDist",
+            duration = 1.0,
+            cooldown = 0.15,
+            wait = 0.2
+        },
+        DivingHeader = {
+            animId = "rbxassetid://91506202951715",
+            sliderVar = "divingDist",
+            duration = 0.35,
+            cooldown = 0.15,
+            wait = 0.05
+        },
+        ReflexTackle = {
+            animId = "rbxassetid://113088324958896",
+            sliderVar = "reflexDist",
+            duration = 0.2,
+            cooldown = 0.15,
+            wait = 0
+        },
+        SpeedDribble = {
+            animIds = {
+                ["rbxassetid://70397727954557"] = true,
+                ["rbxassetid://131196726012273"] = true
+            },
+            sliderVar = "speedDist",
+            duration = 1.15,
+            cooldown = 0.15,
+            wait = 0.2
+        },
+        CutIn = {
+            animIds = {
+                ["rbxassetid://133384553147918"] = true,
+                ["rbxassetid://128936529440509"] = true
+            },
+            sliderVar = "cutDist",
+            duration = 1.0,
+            cooldown = 0.15,
+            wait = 0.2
+        },
+        HeroInstinct = {
+            animId = "rbxassetid://82417661349987",
+            sliderVar = "instinctDist",
+            duration = 1.25,
+            cooldown = 0.15,
+            wait = 0.33
+        },
+        CloseQuarterDribble = {
+            animId = "rbxassetid://94171465685487",
+            sliderVar = "quarterDist",
+            duration = 2.25,
+            cooldown = 0.15,
+            wait = 0.18
+        },
+        ZombieDribble = {
+            animId = "rbxassetid://102294508090597",
+            sliderVar = "zombDist",
+            duration = 1.7,
+            cooldown = 0.15,
+            wait = 0.15
+        },
+        KingsPath = {
+            animId = "rbxassetid://73560885704292",
+            sliderVar = "kingsDist",
+            duration = 1.175,
+            cooldown = 0.15,
+            wait = 0.4
+        },
+        MachCutIn = {
+            animIds = {
+                ["rbxassetid://133945265328817"] = true,
+                ["rbxassetid://88448030655006"] = true
+            },
+            sliderVar = "machDist",
+            duration = 0.15,
+            cooldown = 0.15,
+            wait = 0.625
+        },
+        GoldenZone = {
+            animId = "rbxassetid://132426354821688",
+            sliderVar = "goldenDist",
+            duration = 2.0,
+            cooldown = 0.15,
+            requiresBall = true,
+            wait = 0.15
+        },
+        Devour = {
+            animId = "rbxassetid://117921992582675",
+            sliderVar = "devourMaxDist",
+            speed = 150,
+            cooldown = 0.15,
+            isUnlimited = true,
+            wait = 0.2
+        }
+    }
+
+    local ActiveDashes = {}
+    local cachedHRP = nil
+    local renderConn = nil
+
+    local ZERO = Vector3.new()
+    local DEFAULT_DIR = Vector3.new(0,0,1)
+
+    local function updateDashes(dt)
+        for i = #ActiveDashes, 1, -1 do
+            local dash = ActiveDashes[i]
+            local hrp = dash.hrp
+
+            if not hrp or not hrp.Parent then
+                table.remove(ActiveDashes, i)
+                continue
+            end
+
+            local step = dash.cfg.isUnlimited and (dash.speed * dt) or math.min(dash.speed * dt, dash.remaining)
+
+            local look = hrp.CFrame.LookVector
+            local dir = Vector3.new(look.X, 0, look.Z).Unit
+            if dir.Magnitude < 0.01 then
+                dir = DEFAULT_DIR
+            end
+
+            local newPos = hrp.Position + dir * step
+            hrp.CFrame = CFrame.new(newPos.X, hrp.Position.Y, newPos.Z) * CFrame.new(ZERO, dir)
+
+            dash.remaining = dash.remaining - step
+
+            if dash.remaining <= 0 then
+                table.remove(ActiveDashes, i)
+            end
+        end
+
+        if #ActiveDashes == 0 and renderConn then
+            renderConn:Disconnect()
+            renderConn = nil
+        end
+    end
+
+    local function startUpdateIfNeeded()
+        if not renderConn and #ActiveDashes > 0 then
+            renderConn = game:GetService("RunService").RenderStepped:Connect(updateDashes)
+        end
+    end
+
+    local function startDash(hrp, cfg, track)
+        local dist = Distances[cfg.sliderVar]
+        if dist <= 0 then return end
+
+        task.delay(cfg.wait or 0, function()
+            if not hrp or not hrp.Parent then return end
+
+            local dash = {
+                hrp = hrp,
+                remaining = dist,
+                cfg = cfg
+            }
+
+            if cfg.isUnlimited then
+                dash.remaining = math.huge
+                dash.speed = cfg.speed
+
+                if track then
+                    local stoppedConn
+                    stoppedConn = track.Stopped:Connect(function()
+                        dash.remaining = 0
+                        if stoppedConn then
+                            stoppedConn:Disconnect()
+                        end
+                    end)
+                end
+            else
+                dash.speed = dist / cfg.duration
+            end
+
+            table.insert(ActiveDashes, dash)
+            startUpdateIfNeeded()
+        end)
+    end
+
+    local function onAnimationPlayed(track)
+        if not track.Animation then return end
+        local id = track.Animation.AnimationId
+
+        for _, cfg in pairs(DashConfigs) do
+            local match = false
+            if cfg.animId and id == cfg.animId then
+                match = true
+            elseif cfg.animIds and cfg.animIds[id] then
+                match = true
+            end
+
+            if match then
+                if cachedHRP and cachedHRP.Parent then
+                    if cfg.requiresBall then
+                        local ball = cachedHRP.Parent:FindFirstChild("Ball")
+                        if not ball or not ball:IsA("MeshPart") then continue end
+                    end
+                    startDash(cachedHRP, cfg, track)
+                end
+            end
+        end
+    end
+
+    local function setupCharacter(char)
+        local hum = char:WaitForChild("Humanoid", 5)
+        if not hum then return end
+
+        local animator = hum:WaitForChild("Animator", 5)
+        if not animator then return end
+
+        cachedHRP = char:WaitForChild("HumanoidRootPart", 5)
+        if not cachedHRP then return end
+
+        animator.AnimationPlayed:Connect(onAnimationPlayed)
+    end
+
+    if game.Players.LocalPlayer.Character then
+        setupCharacter(game.Players.LocalPlayer.Character)
+    end
+    game.Players.LocalPlayer.CharacterAdded:Connect(setupCharacter)
+
+    local UniversalSection = DistanceTab:Section({
+        Title = "Universal Movement Buffs",
+        Opened = true,
+    })
+
+    UniversalSection:Slider({
+        Flag = "TackleDist",
+        Title = "Tackle Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 75,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.tackleDist = v
+        end,
+    })
+
+    UniversalSection:Space()
+
+    UniversalSection:Slider({
+        Flag = "RushDist",
+        Title = "Rush Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 75,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.rushDist = v
+        end,
+    })
+
+    UniversalSection:Space()
+
+    UniversalSection:Slider({
+        Flag = "GKDist",
+        Title = "GK Front Dive Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 75,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.gkDist = v
+        end,
+    })
+
+    local IsagiSection = DistanceTab:Section({
+        Title = "Isagi Movement Buffs",
+        Opened = true,
+    })
+
+    IsagiSection:Slider({
+        Flag = "NaruhayaDist",
+        Title = "Naruhaya Footwork Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 200,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.naruhayaDist = v
+        end,
+    })
+
+    local NELIsagiSection = DistanceTab:Section({
+        Title = "NEL Isagi Movement Buffs",
+        Opened = true,
+    })
+
+    NELIsagiSection:Slider({
+        Flag = "RaumDist",
+        Title = "Raumdeuter Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 200,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.raumDist = v
+        end,
+    })
+
+    local ShidouSection = DistanceTab:Section({
+        Title = "Shidou Movement Buffs",
+        Opened = true,
+    })
+
+    ShidouSection:Slider({
+        Flag = "DracDist",
+        Title = "Draconic Rush Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 200,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.dracDist = v
+        end,
+    })
+
+    local BachiraSection = DistanceTab:Section({
+        Title = "Bachira Movement Buffs",
+        Opened = true,
+    })
+
+    BachiraSection:Slider({
+        Flag = "StepDist",
+        Title = "Step Overs Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 200,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.stepDist = v
+        end,
+    })
+
+    local KaiserSection = DistanceTab:Section({
+        Title = "Kaiser Movement Buffs",
+        Opened = true,
+    })
+
+    KaiserSection:Slider({
+        Flag = "KaiserDist",
+        Title = "Off The Ball Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 200,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.kaiserDist = v
+        end,
+    })
+
+    local RinSection = DistanceTab:Section({
+        Title = "Rin Movement Buffs",
+        Opened = true,
+    })
+
+    RinSection:Slider({
+        Flag = "OcclusionDist",
+        Title = "Occlusion Break Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 200,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.occlusionDist = v
+        end,
+    })
+
+    local GagamaruSection = DistanceTab:Section({
+        Title = "Gagamaru Movement Buffs",
+        Opened = true,
+    })
+
+    GagamaruSection:Slider({
+        Flag = "DivingDist",
+        Title = "Diving Header Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 125,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.divingDist = v
+        end,
+    })
+
+    local AikuSection = DistanceTab:Section({
+        Title = "Aiku Movement Buffs",
+        Opened = true,
+    })
+
+    AikuSection:Slider({
+        Flag = "ReflexDist",
+        Title = "Reflex Tackle Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 125,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.reflexDist = v
+        end,
+    })
+
+    local YukimiyaSection = DistanceTab:Section({
+        Title = "Yukimiya Movement Buffs",
+        Opened = true,
+    })
+
+    YukimiyaSection:Slider({
+        Flag = "SpeedDist",
+        Title = "Speed Dribble Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 200,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.speedDist = v
+        end,
+    })
+
+    YukimiyaSection:Space()
+
+    YukimiyaSection:Slider({
+        Flag = "CutDist",
+        Title = "Cut In Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 200,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.cutDist = v
+        end,
+    })
+
+    local KunigamiSection = DistanceTab:Section({
+        Title = "Kunigami Movement Buffs",
+        Opened = true,
+    })
+
+    KunigamiSection:Slider({
+        Flag = "InstinctDist",
+        Title = "Hero's Instinct Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 300,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.instinctDist = v
+        end,
+    })
+
+    local KuronaSection = DistanceTab:Section({
+        Title = "Kurona Movement Buffs",
+        Opened = true,
+    })
+
+    KuronaSection:Slider({
+        Flag = "QuarterDist",
+        Title = "Close Quarter Dribble Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 250,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.quarterDist = v
+        end,
+    })
+
+    local LorenzoSection = DistanceTab:Section({
+        Title = "Don Lorenzo Movement Buffs",
+        Opened = true,
+    })
+
+    LorenzoSection:Slider({
+        Flag = "ZombDist",
+        Title = "Zombie Dribble Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 250,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.zombDist = v
+        end,
+    })
+
+    local BarouSection = DistanceTab:Section({
+        Title = "Barou Movement Buffs",
+        Opened = true,
+    })
+
+    BarouSection:Slider({
+        Flag = "KingsDist",
+        Title = "King's Path Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 750,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.kingsDist = v
+        end,
+    })
+
+    BarouSection:Space()
+
+    BarouSection:Slider({
+        Flag = "DevourDist",
+        Title = "DEVOUR Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 500,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.devourMaxDist = v
+        end,
+    })
+
+    local ChigiriSection = DistanceTab:Section({
+        Title = "Chigiri Movement Buffs",
+        Opened = true,
+    })
+
+    ChigiriSection:Slider({
+        Flag = "MachDist",
+        Title = "Mach Cut-In Distance",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 200,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.machDist = v
+        end,
+    })
+
+    ChigiriSection:Space()
+
+    ChigiriSection:Slider({
+        Flag = "GoldenDist",
+        Title = "Golden Zone Distance (Req. Ball)",
+        Step = 1,
+        Value = {
+            Min = 0,
+            Max = 400,
+            Default = 0,
+        },
+        Callback = function(v)
+            Distances.goldenDist = v
+        end,
+    })
+end
+
+do
+    local MiscSection = OthersTab:Section({
+        Title = "Miscellaneous",
+        Opened = true,
+    })
+    
+    MiscSection:Button({
+        Title = "Infinite Yield",
+        Color = ButtonGrey,
+        Callback = function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+        end,
+    })
+    
+    MiscSection:Space()
+    
+    MiscSection:Button({
+        Title = "Upgrade UI",
+        Color = ButtonGrey,
+        Callback = function()
+            loadstring(game:HttpGet("https://pastebin.com/raw/QDNYsgxQ"))()
+        end,
+    })
+end
+
+do
+    local OtherBlatantSection = OthersTab:Section({
+        Title = "Other Blatant Features",
+        Opened = true,
+    })
+
+    local nostunState = {
+        enabled = false
+    }
+
+    local nostunPlayer = game.Players.LocalPlayer
+
+    local function applyNoStun()
+        if not nostunState.enabled then return end
+        local c = nostunPlayer.Character
+        if not c then return end
+        local h = c:FindFirstChild("Humanoid")
+        if h then
+            h.WalkSpeed = 40
+        end
+    end
+
+    local function setupCharacter(char)
+        if nostunState.enabled then
+            applyNoStun()
+        end
+    end
+
+    nostunPlayer.CharacterAdded:Connect(setupCharacter)
+
+    if nostunPlayer.Character then
+        setupCharacter(nostunPlayer.Character)
+    end
+
+    OtherBlatantSection:Toggle({
+        Flag = "NoStun",
+        Title = "No Stun",
+        Callback = function(v)
+            nostunState.enabled = v
+            if v then
+                WindUI:Notify({
+                    Title = "No Stun",
+                    Content = "Enabled.",
+                    Duration = 2,
+                })
+                applyNoStun()
+            else
+                WindUI:Notify({
+                    Title = "No Stun",
+                    Content = "Disabled.",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+
+    OtherBlatantSection:Space()
+
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if nostunState.enabled then
+            applyNoStun()
+        end
+    end)
+
+    local brickSpamState = {
+        running = false
+    }
+
+    OtherBlatantSection:Toggle({
+        Flag = "BrickSpam",
+        Title = "Spam Brick Sound (5v5 + GK Only)",
+        Callback = function(state)
+            brickSpamState.running = state
+
+            if brickSpamState.running then
+                WindUI:Notify({
+                    Title = "Brick Spam",
+                    Content = "Enabled.",
+                    Duration = 2,
+                })
+
+                task.spawn(function()
+                    local char = game.Players.LocalPlayer.Character
+                    local root = char:WaitForChild("HumanoidRootPart")
+
+                    local team = game.Players.LocalPlayer.Team and game.Players.LocalPlayer.Team.Name
+                    local targetPos
+
+                    if team == "A" then
+                        targetPos = Vector3.new(-510, 3, 1706)
+                    elseif team == "B" then
+                        targetPos = Vector3.new(-559, 3, 843)
+                    end
+
+                    if targetPos then
+                        while brickSpamState.running do
+                            root.CFrame = CFrame.new(targetPos)
+                            task.wait(0.1)
+
+                            local args = {
+                                buffer.fromstring(buffers["base"]),
+                                {
+                                    {
+                                        "kick",
+                                        27,
+                                        false,
+                                        vector.create(0, 1, 0)
+                                    }
+                                }
+                            }
+                            game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+
+                            task.wait(0.05)
+                        end
+                    end
+                end)
+            else
+                WindUI:Notify({
+                    Title = "Brick Spam",
+                    Content = "Disabled.",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+end
+
+do
+    local EmoteSection = OthersTab:Section({
+        Title = "Emotes",
+        Opened = true,
+    })
+    
+    local emoteStates = {
+        toosie = false,
+        sae = false,
+        assumptions = false
+    }
+    
+    EmoteSection:Toggle({
+        Title = "Toosie Slide",
+        Callback = function(v)
+            emoteStates.toosie = v
+            local animationId = "rbxassetid://95959941666543"
+            local soundId = "rbxassetid://1845341094"
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            
+            local animation = Instance.new("Animation")
+            animation.AnimationId = animationId
+            local animationTrack = animator:LoadAnimation(animation)
+            
+            if v then
+                animationTrack:Play()
+                local sound = Instance.new("Sound")
+                sound.Name = "Toosie Slide"
+                sound.SoundId = soundId
+                sound.Looped = true
+                sound.Parent = game.SoundService
+                sound:Play()
+                WindUI:Notify({
+                    Title = "Toosie Slide",
+                    Content = "Playing.",
+                    Duration = 1,
+                })
+            else
+                for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                    track:Stop()
+                end
+                local existingSound = game.SoundService:FindFirstChild("Toosie Slide")
+                if existingSound then
+                    existingSound:Stop()
+                    existingSound:Destroy()
+                end
+                WindUI:Notify({
+                    Title = "Toosie Slide",
+                    Content = "Stopped.",
+                    Duration = 1,
+                })
+            end
+        end,
+    })
+    
+    EmoteSection:Space()
+    
+    EmoteSection:Toggle({
+        Title = "Sae Pose",
+        Callback = function(v)
+            emoteStates.sae = v
+            local animationId = "rbxassetid://136812327261825"
+            local soundId = "rbxassetid://1843404009"
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            
+            local animation = Instance.new("Animation")
+            animation.AnimationId = animationId
+            local animationTrack = animator:LoadAnimation(animation)
+            
+            if v then
+                animationTrack:Play()
+                local sound = Instance.new("Sound")
+                sound.Name = "Sae Pose"
+                sound.SoundId = soundId
+                sound.Volume = 1
+                sound.Looped = true
+                sound.Parent = game.SoundService
+                sound:Play()
+                WindUI:Notify({
+                    Title = "Sae Pose",
+                    Content = "Playing.",
+                    Duration = 1,
+                })
+            else
+                for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                    track:Stop()
+                end
+                local existingSound = game.SoundService:FindFirstChild("Sae Pose")
+                if existingSound then
+                    existingSound:Stop()
+                    existingSound:Destroy()
+                end
+                WindUI:Notify({
+                    Title = "Sae Pose",
+                    Content = "Stopped.",
+                    Duration = 1,
+                })
+            end
+        end,
+    })
+    
+    EmoteSection:Space()
+
+    EmoteSection:Toggle({
+        Title = "Assumptions",
+        Callback = function(v)
+            emoteStates.assumptions = v
+            local animationId = "rbxassetid://108778663919542"
+            local soundId = "rbxassetid://137023124734348"
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            
+            local animation = Instance.new("Animation")
+            animation.AnimationId = animationId
+            local animationTrack = animator:LoadAnimation(animation)
+            
+            if v then
+                animationTrack:Play()
+                local sound = Instance.new("Sound")
+                sound.Name = "Assumptions"
+                sound.SoundId = soundId
+                sound.PlaybackSpeed = 0.17
+                sound.Volume = 0.6
+                sound.Looped = true
+                sound.Parent = game.SoundService
+
+                local eq = Instance.new("EqualizerSoundEffect")
+                eq.LowGain = 10
+                eq.MidGain = 0
+                eq.HighGain = 4
+                eq.Parent = sound
+
+                sound:Play()
+                WindUI:Notify({
+                    Title = "Assumptions",
+                    Content = "Playing.",
+                    Duration = 1,
+                })
+            else
+                for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                    track:Stop()
+                end
+                local existingSound = game.SoundService:FindFirstChild("Assumptions")
+                if existingSound then
+                    existingSound:Stop()
+                    existingSound:Destroy()
+                end
+                WindUI:Notify({
+                    Title = "Assumptions",
+                    Content = "Stopped.",
+                    Duration = 1,
+                })
+            end
+        end,
+    })
+    
+    EmoteSection:Space()
+    
+    EmoteSection:Button({
+        Title = "Akuma Taunt",
+        Color = ButtonGrey,
+        Callback = function()
+            local animationId = "rbxassetid://111005363990501"
+            local soundId = "rbxassetid://133370927301258"
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            
+            local animation = Instance.new("Animation")
+            animation.AnimationId = animationId
+            local animationTrack = animator:LoadAnimation(animation)
+            
+            local sound = Instance.new("Sound")
+            sound.Name = "Akuma Taunt"
+            sound.SoundId = soundId
+            sound.Volume = 10
+            sound.Parent = game.SoundService
+            
+            animationTrack:Play()
+            sound:Play()
+            
+            sound.Ended:Connect(function()
+                sound:Destroy()
+            end)
+            
+            WindUI:Notify({
+                Title = "Akuma Taunt",
+                Content = "Playing.",
+                Duration = 1,
+            })
+        end,
+    })
+
+    EmoteSection:Space()
+
+    EmoteSection:Button({
+        Title = "Cartoon Fall",
+        Color = ButtonGrey,
+        Callback = function()
+            local animationId = "rbxassetid://98064370044269"
+            local soundIds = { "rbxassetid://8663054927", "rbxassetid://4979513906" }
+
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+
+            local animation = Instance.new("Animation")
+            animation.AnimationId = animationId
+
+            local animationTrack = animator:LoadAnimation(animation)
+
+            local sound = Instance.new("Sound")
+            sound.Name = "Ragdoll"
+            sound.Volume = 10
+            sound.Parent = game.SoundService
+
+            local currentIndex = 1
+
+            local function playNextSound()
+                if currentIndex <= #soundIds then
+                    sound.SoundId = soundIds[currentIndex]
+                    sound:Play()
+
+                    sound.Ended:Connect(function()
+                        currentIndex = currentIndex + 1
+                        playNextSound()
+                    end)
+                else
+                    sound:Destroy()
+                end
+            end
+            animationTrack:Play()
+            playNextSound()
+            
+            WindUI:Notify({
+                Title = "Cartoon Fall",
+                Content = "Playing.",
+                Duration = 1,
+            })
+        end,
+    })
+
+    EmoteSection:Space()
+
+    EmoteSection:Button({
+        Title = "Spit",
+        Color = ButtonGrey,
+        Callback = function()
+            local animationId = "rbxassetid://97257010665720"
+            local soundId = "rbxassetid://18111052648"
+
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+
+            local animation = Instance.new("Animation")
+            animation.AnimationId = animationId
+
+            local animationTrack = animator:LoadAnimation(animation)
+
+            local sound = Instance.new("Sound")
+            sound.Name = "Spit"
+            sound.SoundId = soundId
+            sound.Volume = 2
+            sound.Parent = game.SoundService
+
+            animationTrack:Play()
+            sound:Play()
+
+            sound.Ended:Connect(function()
+                sound:Destroy()
+            end)
+            
+            WindUI:Notify({
+                Title = "Spit",
+                Content = "Playing.",
+                Duration = 1,
+            })
+        end,
+    })
+end
+
+
+do
+    local CeleronSection = MovesetsTab:Section({
+        Title = "Celeron's Movesets",
+        Opened = true,
+    })
+    
+    CeleronSection:Button({
+        Title = "Goku Moveset (Req. Isagi)",
+        Color = ButtonGrey,
+        Callback = function()
+            WindUI:Notify({
+                Title = "Credits",
+                Content = "brought to you by celeron.",
+                Duration = 3,
+            })
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/goku%20moveset%20(azl)",true))()
+        end,
+    })
+    
+    CeleronSection:Space()
+    
+    CeleronSection:Button({
+        Title = "Aizen Moveset (Req. Isagi)",
+        Color = ButtonGrey,
+        Callback = function()
+            WindUI:Notify({
+                Title = "Credits",
+                Content = "brought to you by celeron.",
+                Duration = 3,
+            })
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/aizen%20moveset",true))()
+        end,
+    })
+    
+    CeleronSection:Space()
+    
+    CeleronSection:Button({
+        Title = "Loki Moveset V2 (Req. Isagi)",
+        Color = ButtonGrey,
+        Callback = function()
+            WindUI:Notify({
+                Title = "Credits",
+                Content = "brought to you by celeron.",
+                Duration = 3,
+            })
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/loki%20v2"))()
+        end,
+    })
+    
+    CeleronSection:Space()
+    
+    CeleronSection:Button({
+        Title = "Ronaldo Moveset V3 (Req. Shidou)",
+        Color = ButtonGrey,
+        Callback = function()
+            WindUI:Notify({
+                Title = "Credits",
+                Content = "brought to you by celeron.",
+                Duration = 3,
+            })
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/ronaldov3"))()
+        end,
+    })
+    
+    local DaffySection = MovesetsTab:Section({
+        Title = "Daffy's Movesets",
+        Opened = true,
+    })
+    
+    DaffySection:Button({
+        Title = "Gojo Moveset (Req. Isagi)",
+        Color = ButtonGrey,
+        Callback = function()
+            WindUI:Notify({
+                Title = "Credits",
+                Content = "brought to you by daffy.",
+                Duration = 3,
+            })
+            loadstring(game:HttpGet("https://pastebin.com/raw/TH8xDy9X"))()
+        end,
+    })
+    
+    DaffySection:Space()
+    
+    DaffySection:Button({
+        Title = "Hugo Moveset (Req. Kunigami)",
+        Color = ButtonGrey,
+        Callback = function()
+            WindUI:Notify({
+                Title = "Credits",
+                Content = "brought to you by daffy.",
+                Duration = 3,
+            })
+            loadstring(game:HttpGet("https://pastebin.com/raw/ND6yrPyk"))()
+        end,
+    })
+    
+    DaffySection:Space()
+    
+    DaffySection:Button({
+        Title = "Naoya Moveset (Req. Sae)",
+        Color = ButtonGrey,
+        Callback = function()
+            WindUI:Notify({
+                Title = "Credits",
+                Content = "brought to you by daffy.",
+                Duration = 3,
+            })
+            loadstring(game:HttpGet("https://pastebin.com/raw/PDwm0ZcF"))()
+        end,
+    })
+
+    DaffySection:Space()
+
+    DaffySection:Button({
+        Title = "Lore Sae Moveset (Req. Sae)",
+        Color = ButtonGrey,
+        Callback = function()
+            WindUI:Notify({
+                Title = "Credits",
+                Content = "brought to you by daffy.",
+                Duration = 3,
+            })
+            loadstring(game:HttpGet("https://pastebin.com/raw/kMQ0v88u"))()
+        end,
+    })
+end
+
+do
+    local SemiPrivateSection = ExploitsTab:Section({
+        Title = "Semi-Private Server",
+        Opened = true,
+    })
+    
+    SemiPrivateSection:Button({
+        Title = "Semi-Private Server Info",
+        Color = ButtonGrey,
+        Callback = function()
+            WindUI:Notify({
+                Title = "Semi-Private Server Info",
+                Content = "If you end up in a server with another player, block someone. After blocking a player in that server, run the feature to create a server again.",
+                Duration = 5,
+            })
+        end,
+    })
+
+    SemiPrivateSection:Space()
+
+    SemiPrivateSection:Button({
+        Title = "Semi-Private Server (11v11)",
+        Color = ButtonGrey,
+        Callback = function()
+            game:GetService("TeleportService"):Teleport(85946466968831, game.Players.LocalPlayer)
+            WindUI:Notify({
+                Title = "Semi-Private",
+                Content = "Teleporting to 11v11 server...",
+                Duration = 2,
+            })
+        end,
+    })
+end
+
+do
+    local DisconnectSection = ExploitsTab:Section({
+        Title = "Instant Disconnect",
+        Opened = true,
+    })
+
+    local disconnectState = {
+        limit = nil,
+        enabled = false
+    }
+
+    DisconnectSection:Input({
+        Flag = "InstantDisconnectLimit",
+        Title = "Player Limit",
+        Placeholder = "Please enter max players.",
+        Value = "1",
+        Callback = function(v)
+            local n = tonumber(v)
+            if n then
+                disconnectState.limit = n
+                WindUI:Notify({
+                    Title = "Disconnect Limit",
+                    Content = "Set to " .. n .. " players.",
+                    Duration = 2,
+                })
+            else
+                disconnectState.limit = nil
+            end
+        end,
+    })
+
+    DisconnectSection:Space()
+
+    DisconnectSection:Toggle({
+        Flag = "InstantDisconnect",
+        Title = "Enable Instant Disconnect",
+        Callback = function(v)
+            disconnectState.enabled = v
+            if v then
+                WindUI:Notify({
+                    Title = "Instant Disconnect",
+                    Content = "Enabled.",
+                    Duration = 2,
+                })
+            else
+                WindUI:Notify({
+                    Title = "Instant Disconnect",
+                    Content = "Disabled.",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if disconnectState.enabled and disconnectState.limit and #game.Players:GetPlayers() > disconnectState.limit then
+            game.Players.LocalPlayer:Kick("Instant Disconnect has been triggered.")
+        end
+    end)
+end
+
+do
+    local GoalFarmSection = ExploitsTab:Section({
+        Title = "Goal Farming",
+        Opened = true,
+    })
+
+    local goalFarmState = {
+        Enabled = false,
+        CFConn = nil,
+        RenderConn = nil,
+        StopAt = nil,
+        goal = 0,
+        desc = "not-started"
+    }
+
+    local GoalPlayers = game:GetService("Players")
+    local GoalRunService = game:GetService("RunService")
+    local GoalReplicatedStorage = game:GetService("ReplicatedStorage")
+
+    local GoalMapFolder = workspace:WaitForChild("map")
+    local GoalAGoal = GoalMapFolder:WaitForChild("Agoal")
+    local GoalBGoal = GoalMapFolder:WaitForChild("Bgoal")
+    local GoalLocalPlayer = GoalPlayers.LocalPlayer
+
+    local function firePacketsIfNearGoal()
+        local char = GoalLocalPlayer.Character
+        if not char then return end
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        if (root.Position - Vector3.new(-371, 13, -1599)).Magnitude <= 15 or
+           (root.Position - Vector3.new(-196, 13, -1599)).Magnitude <= 15 then
+            GoalReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000A"))
+            GoalReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring("\006\001\001\000B"))
+        end
+    end
+
+    local function IsInGame()
+        local LocalCharacter = GoalLocalPlayer.Character
+        if not LocalCharacter then return false end
+        local StateFolder = LocalCharacter:FindFirstChild("state")
+        if not StateFolder then return false end
+        local InGameValue = StateFolder:FindFirstChild("ingame")
+        if not InGameValue then return false end
+        return InGameValue.Value
+    end
+
+    local function DisableCollisionBoxes()
+        local MapFolder = workspace:FindFirstChild("map")
+        if not MapFolder then return end
+        local GkBarriar = MapFolder:FindFirstChild("gkbarriar")
+        local AGoal = MapFolder:FindFirstChild("Agoal")
+        local BGoal = MapFolder:FindFirstChild("Bgoal")
+        if GkBarriar then
+            local ABarriar = GkBarriar:FindFirstChild("A")
+            local BBarriar = GkBarriar:FindFirstChild("B")
+            if ABarriar then ABarriar.CanCollide = false end
+            if BBarriar then BBarriar.CanCollide = false end
+        end
+        if AGoal then AGoal.CanCollide = false end
+        if BGoal then BGoal.CanCollide = false end
+    end
+
+    local function StealBall()
+        local LocalCharacter = GoalLocalPlayer.Character
+        local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+        local Football = workspace.Terrain:FindFirstChild("Ball")
+        if LocalHumanoidRootPart and Football then
+            task.wait(0.5)
+            LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position.X, 0, Football.Position.Z)
+        end
+        for _, OtherPlayer in pairs(GoalPlayers:GetPlayers()) do
+            if OtherPlayer ~= GoalLocalPlayer then
+                local OtherCharacter = OtherPlayer.Character
+                local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
+                local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
+                if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+                    task.wait(0.5)
+                    LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
+                    local args = {
+                        buffer.fromstring(buffers["base"]),
+                        {
+                            {
+                                "tackle"
+                            }
+                        }
+                    }
+                    GoalReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                end
+            end
+        end
+    end
+
+    local function HasBall()
+        local LocalCharacter = GoalLocalPlayer.Character
+        local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball")
+        return Football ~= nil
+    end
+
+    local function stopGoalFarm()
+        if not goalFarmState.Enabled then return end
+        goalFarmState.Enabled = false
+
+        if goalFarmState.CFConn then
+            goalFarmState.CFConn:Disconnect()
+            goalFarmState.CFConn = nil
+        end
+        if goalFarmState.RenderConn then
+            goalFarmState.RenderConn:Disconnect()
+            goalFarmState.RenderConn = nil
+        end
+
+        WindUI:Notify({
+            Title = "Goal Farm",
+            Content = "Target Reached.",
+            Duration = 2,
+        })
+    end
+
+    local function trackGoalsLoop()
+        task.spawn(function()
+            local goals = GoalLocalPlayer:WaitForChild("leaderstats"):WaitForChild("goals")
+            while goalFarmState.Enabled do
+                task.wait(1)
+                local count = goals.Value
+                if goalFarmState.StopAt and count >= goalFarmState.StopAt then
+                    stopGoalFarm()
+                    return
+                end
+            end
+        end)
+    end
+
+    GoalFarmSection:Toggle({
+        Flag = "GoalFarm",
+        Title = "Goal Farm",
+        Callback = function()
+            goalFarmState.Enabled = not goalFarmState.Enabled
+            WindUI:Notify({
+                Title = "Goal Farm",
+                Content = goalFarmState.Enabled and "Enabled." or "Disabled.",
+                Duration = 1,
+            })
+            if goalFarmState.Enabled then
+                goalFarmState.CFConn = GoalLocalPlayer.CharacterAdded:Connect(function()
+                    task.wait(1)
+                    if goalFarmState.Enabled then
+                        firePacketsIfNearGoal()
+                    end
+                end)
+                task.spawn(function()
+                    repeat task.wait() until GoalLocalPlayer.Character and GoalLocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if goalFarmState.Enabled then
+                        firePacketsIfNearGoal()
+                    end
+                end)
+                goalFarmState.RenderConn = GoalRunService.RenderStepped:Connect(function()
+                    if not goalFarmState.Enabled then return end
+                    pcall(function()
+                        if not IsInGame() then return end
+                        DisableCollisionBoxes()
+                        StealBall()
+                        if HasBall() then
+                            local LocalCharacter = GoalLocalPlayer.Character
+                            local LocalRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
+                            local Goal = GoalLocalPlayer.Team.Name == "A" and GoalBGoal or GoalAGoal
+                            if LocalRootPart and Goal then
+                                task.wait(0.5)
+                                LocalRootPart.CFrame = Goal.CFrame
+                                task.wait(0.185)
+                                local args = {
+                                    buffer.fromstring(buffers["base"]),
+                                    {
+                                        {
+                                            "kick",
+                                            20,
+                                            false,
+                                            vector.create(0, 1, 0)
+                                        }
+                                    }
+                                }
+                                GoalReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                            end
+                        end
+                    end)
+                end)
+                trackGoalsLoop()
+            else
+                stopGoalFarm()
+            end
+        end,
+    })
+
+    GoalFarmSection:Space()
+
+    GoalFarmSection:Input({
+        Flag = "GoalTarget",
+        Title = "Goal Target",
+        Placeholder = "Enter goal farm target.",
+        Value = "100",
+        Callback = function(v)
+            local num = tonumber(v)
+            if num then
+                goalFarmState.StopAt = num
+                WindUI:Notify({
+                    Title = "Goal Target",
+                    Content = "Set to " .. num .. " goals.",
+                    Duration = 2,
+                })
+            else
+                goalFarmState.StopAt = math.huge
+                WindUI:Notify({
+                    Title = "Goal Target",
+                    Content = "Invalid. Farm Set To Infinite.",
+                    Duration = 2,
+                })
+            end
+        end,
+    })
+end
+
+pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/oldthingyep",true))()
+end)
+
+pcall(function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/rQMS2B9R",true))()
+end)
