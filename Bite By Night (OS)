@@ -422,6 +422,31 @@ survivor:Toggle("Auto Generator", "Automatically Does Generator Tasks.", functio
 	end
 end)
 
+local speed = 25
+
+local function getRoot(char)
+    if not char then return nil end
+    return char:FindFirstChild("HumanoidRootPart")
+end
+
+local function lerpMove(root, targetCF)
+    if not root then return end
+    local startCF = root.CFrame
+    local dist = (startCF.Position - targetCF.Position).Magnitude
+    if dist < 1 then 
+        root.CFrame = targetCF
+        return 
+    end
+    local duration = dist / speed
+    local t = 0
+    while t < duration do
+        t += game:GetService("RunService").Heartbeat:Wait()
+        local alpha = math.clamp(t / duration, 0, 1)
+        root.CFrame = startCF:Lerp(targetCF, alpha)
+    end
+    root.CFrame = targetCF
+end
+
 local autoEscape = false
 local autoEscapeConn
 
@@ -429,12 +454,14 @@ survivor:Toggle("Auto Escape", "Automatically Escapes The Map.", function(state)
     autoEscape = state
     local player = game.Players.LocalPlayer
     if state then
-        notify2("Auto Escape", "Enabled.")
+        notify2("Auto Escape", "Enabled (Smooth Movement)")
         local teleported = false
         autoEscapeConn = game:GetService("RunService").RenderStepped:Connect(function()
             if teleported or not autoEscape then return end
             local char = player.Character
             if not char then return end
+            local root = getRoot(char)
+            if not root then return end
             if not workspace.GAME.CAN_ESCAPE.Value then return end
             local playersFolder = workspace:FindFirstChild("PLAYERS")
             if not playersFolder or char.Parent ~= playersFolder:FindFirstChild("ALIVE") then return end
@@ -442,24 +469,29 @@ survivor:Toggle("Auto Escape", "Automatically Escapes The Map.", function(state)
             if not gameMap then return end
             local escapes = gameMap:FindFirstChild("Escapes")
             if not escapes then return end
-            for _,part in pairs(escapes:GetChildren()) do
+            for _, part in pairs(escapes:GetChildren()) do
                 if part:IsA("BasePart") and part:GetAttribute("Enabled") then
                     local highlight = part:FindFirstChildOfClass("Highlight")
                     if highlight and highlight.Enabled then
-                        local root = char:FindFirstChild("HumanoidRootPart")
-                        if root then
-                            teleported = true
-                            root.Anchored = true
-                            char.PrimaryPart.CFrame = part.CFrame
-                            task.delay(1.5,function() if root then root.Anchored = false end end)
-                            task.delay(10,function() teleported = false end)
-                        end
+                        teleported = true
+                        root.Anchored = true
+                        lerpMove(root, part.CFrame)
+                        task.delay(0.5, function()
+                            if root then root.Anchored = false end
+                        end)
+                        task.delay(10, function()
+                            teleported = false
+                        end)
+                        return
                     end
                 end
             end
         end)
     else
-        if autoEscapeConn then autoEscapeConn:Disconnect() end
+        if autoEscapeConn then 
+            autoEscapeConn:Disconnect() 
+            autoEscapeConn = nil
+        end
         notify2("Auto Escape", "Disabled.")
     end
 end)
