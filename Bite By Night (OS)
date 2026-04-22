@@ -56,10 +56,10 @@ local sprintConn = nil
 local UserInputService = game:GetService("UserInputService")
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
-maintab:Toggle("Infinite Sprint", "Allows You To Sprint Forever.", function(state)
-    infiniteSprint = state
+maintab:Toggle("Infinite Sprint", "Allows You To Sprint Forever.", function(s)
+    infiniteSprint = s
 
-    if state then
+    if s then
         notify2("Infinite Sprint", "Enabled.")
 
         sprintConn = game:GetService("RunService").Heartbeat:Connect(function()
@@ -110,8 +110,8 @@ local jumpBoost = false
 local jpLoop = nil
 local jpCA = nil
 
-maintab:Toggle("Allow Jumping", "Allows You To Jump.", function(state)
-    jumpBoost = state
+maintab:Toggle("Allow Jumping", "Allows You To Jump.", function(s)
+    jumpBoost = s
     if jumpBoost then
         local function applyJumpPower()
             local char = game.Players.LocalPlayer.Character
@@ -183,8 +183,8 @@ local function getMyTeamFolder()
     return nil
 end
 
-maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking Bind.", function(state)
-    aimlockEnabled = state
+maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking Bind.", function(s)
+    aimlockEnabled = s
     
     if aimlockEnabled then
         notify2("Aimlock", "Enabled.")
@@ -289,9 +289,9 @@ end)
 local noclipEnabled = false
 local noclipConn = nil
 
-maintab:Toggle("Noclip", "Allows You To Clip Through Walls.", function(state)
-    noclipEnabled = state
-    if state then
+maintab:Toggle("Noclip", "Allows You To Clip Through Walls.", function(s)
+    noclipEnabled = s
+    if s then
         noclipConn = game:GetService("RunService").Stepped:Connect(function()
             if not noclipEnabled then return end
             local char = game.Players.LocalPlayer.Character
@@ -315,9 +315,9 @@ end)
 
 local oldLighting = {}
 
-maintab:Toggle("Full Bright", "WHO TURNED ON THE LIGHTS?!!", function(state)
+maintab:Toggle("Full Bright", "WHO TURNED ON THE LIGHTS?!!", function(s)
     local lighting = game:GetService("Lighting")
-    if state then
+    if s then
         oldLighting.Brightness = lighting.Brightness
         oldLighting.ClockTime = lighting.ClockTime
         oldLighting.FogEnd = lighting.FogEnd
@@ -346,80 +346,71 @@ local genconn = nil
 local firingconn = nil
 local lastfiretime = 0
 local mode = "Blatant"
+local customdelay = 3
 
-survivor:Dropdown("Generator Mode", {"Blatant", "Silent"}, function(selected)
-	mode = selected
-	if autogen then
-		notify2("Auto Generator", "Current Mode: " .. mode)
-	end
+survivor:Dropdown("Generator Mode", {"Blatant", "Silent", "Custom"}, function(se)
+    mode = se
+    if autogen then
+        notify2("Auto Generator", "Current Mode: " .. mode)
+    end
+end)
+
+survivor:Textbox("Auto Generator Delay", "Custom Mode Delay (Seconds).", function(v)
+    customdelay = tonumber(v) or 3
+    if customdelay < 0 then customdelay = 0 end
 end)
 
 survivor:Toggle("Auto Generator", "Automatically Does Generator Tasks.", function(v)
-	autogen = v
-	
-	if autogen then
-		notify2("Auto Generator", "Enabled.")
-		
-		genconn = game:GetService("RunService").Heartbeat:Connect(function()
-			local plr = game.Players.LocalPlayer
-			local gengui = plr.PlayerGui:FindFirstChild("Gen")
-			
-			if gengui and not firingconn then
-				if mode == "Silent" then
-					task.wait(7.5)
-				end
-				
-				if gengui and gengui.Parent and autogen then
-					firingconn = game:GetService("RunService").Heartbeat:Connect(function()
-						if mode == "Blatant" then
-							if plr.PlayerGui:FindFirstChild("Gen") then
-								local args = {{
-									Wires = true,
-									Switches = true,
-									Lever = true
-								}}
-								plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(unpack(args))
-							else
-								if firingconn then
-									firingconn:Disconnect()
-									firingconn = nil
-								end
-							end
-						else
-							local currenttime = tick()
-							if plr.PlayerGui:FindFirstChild("Gen") and (currenttime - lastfiretime >= 7.5) then
-								local args = {{
-									Wires = true,
-									Switches = true,
-									Lever = true
-								}}
-								plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(unpack(args))
-								lastfiretime = currenttime
-							elseif not plr.PlayerGui:FindFirstChild("Gen") then
-								if firingconn then
-									firingconn:Disconnect()
-									firingconn = nil
-								end
-							end
-						end
-					end)
-				end
-			end
-		end)
-		
-	else
-		notify2("Auto Generator", "Disabled.")
-		
-		if genconn then
-			genconn:Disconnect()
-			genconn = nil
-		end
-		if firingconn then
-			firingconn:Disconnect()
-			firingconn = nil
-		end
-		lastfiretime = 0
-	end
+    autogen = v
+   
+    if autogen then
+        notify2("Auto Generator", "Enabled.")
+       
+        genconn = game:GetService("RunService").Heartbeat:Connect(function()
+            local plr = game.Players.LocalPlayer
+            local gengui = plr.PlayerGui:FindFirstChild("Gen")
+           
+            if gengui then
+                if not firingconn then
+                    lastfiretime = tick()
+                    
+                    firingconn = game:GetService("RunService").Heartbeat:Connect(function()
+                        if not autogen then return end
+                        
+                        local currenttime = tick()
+                        local delay = (mode == "Blatant") and 0 
+                                   or (mode == "Silent") and 7 
+                                   or customdelay
+                        
+                        if currenttime - lastfiretime >= delay then
+                            local args = {{ Wires = true, Switches = true, Lever = true }}
+                            plr.PlayerGui.Gen.GeneratorMain.Event:FireServer(unpack(args))
+                            lastfiretime = currenttime
+                        end
+                    end)
+                end
+            else
+                if firingconn then
+                    firingconn:Disconnect()
+                    firingconn = nil
+                end
+                lastfiretime = 0
+            end
+        end)
+       
+    else
+        notify2("Auto Generator", "Disabled.")
+       
+        if genconn then
+            genconn:Disconnect()
+            genconn = nil
+        end
+        if firingconn then
+            firingconn:Disconnect()
+            firingconn = nil
+        end
+        lastfiretime = 0
+    end
 end)
 
 local speed = 25
@@ -450,10 +441,10 @@ end
 local autoEscape = false
 local autoEscapeConn
 
-survivor:Toggle("Auto Escape", "Automatically Escapes The Map.", function(state)
-    autoEscape = state
+survivor:Toggle("Auto Escape", "Automatically Escapes The Map.", function(s)
+    autoEscape = s
     local player = game.Players.LocalPlayer
-    if state then
+    if s then
         notify2("Auto Escape", "Enabled (Smooth Movement)")
         local teleported = false
         autoEscapeConn = game:GetService("RunService").RenderStepped:Connect(function()
@@ -499,11 +490,11 @@ end)
 local dotEnabled = false
 local dotConn
 
-survivor:Toggle("Auto Barricade","Forces Barricading Dot In The Middle.",function(state)
-    dotEnabled = state
+survivor:Toggle("Auto Barricade","Forces Barricading Dot In The Middle.",function(s)
+    dotEnabled = s
     local player = game:GetService("Players").LocalPlayer
     local gui = player:WaitForChild("PlayerGui")
-    if state then
+    if s then
         dotConn = game:GetService("RunService").RenderStepped:Connect(function()
             local dot = gui:FindFirstChild("Dot")
             if dot and dot:IsA("ScreenGui") then
@@ -525,6 +516,50 @@ survivor:Toggle("Auto Barricade","Forces Barricading Dot In The Middle.",functio
     else
         if dotConn then dotConn:Disconnect() end
         notify2("Auto Barricade", "Disabled.")
+    end
+end)
+
+local instantInteract = false
+local promptConnections = {}
+
+survivor:Toggle("Instant Interact", "Instantly Interact With Generators / Batteries.", function(v)
+    instantInteract = v
+    
+    if instantInteract then
+        notify2("Instant Interact", "Enabled.")
+        
+        local function applyToPrompts(obj)
+            for _, prompt in ipairs(obj:GetDescendants()) do
+                if prompt:IsA("ProximityPrompt") then
+                    prompt.HoldDuration = 0
+                end
+            end
+        end
+        
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if (obj.Name == "Generator" and obj:IsA("Model")) or (obj.Name == "Battery" and obj:IsA("MeshPart")) then
+                applyToPrompts(obj)
+            end
+        end
+        
+        promptConnections[#promptConnections + 1] = workspace.DescendantAdded:Connect(function(desc)
+            if desc:IsA("ProximityPrompt") then
+                local ancestor = desc:FindFirstAncestor("Generator") or desc:FindFirstAncestor("Battery")
+                if ancestor then
+                    desc.HoldDuration = 0
+                end
+            end
+        end)
+        
+    else
+        notify2("Instant Interact", "Disabled.")
+        
+        for _, conn in ipairs(promptConnections) do
+            if conn then
+                conn:Disconnect()
+            end
+        end
+        promptConnections = {}
     end
 end)
 
@@ -560,8 +595,8 @@ local function lerpMove(targetCF)
     root.CFrame = targetCF
 end
 
-survivor:Toggle("Safety Area", "Teleports To A Safe Area.", function(state)
-    safeTeleport = state
+survivor:Toggle("Safety Area", "Teleports To A Safe Area.", function(s)
+    safeTeleport = s
 
     local char = player.Character
     if not char then return end
@@ -569,7 +604,7 @@ survivor:Toggle("Safety Area", "Teleports To A Safe Area.", function(state)
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
-    if state then
+    if s then
         local pos = root.Position
 
         safePart = Instance.new("Part")
@@ -605,11 +640,11 @@ local viewKiller = false
 local killerAddedConn
 local killerRemovedConn
 
-survivor:Toggle("View Killer","Views The Killer.",function(state)
-    viewKiller = state
+survivor:Toggle("View Killer","Views The Killer.",function(s)
+    viewKiller = s
     local camera = workspace.CurrentCamera
     local player = game:GetService("Players").LocalPlayer
-    if state then
+    if s then
         local function setKillerCamera(killerChar)
             local hum = killerChar:FindFirstChildOfClass("Humanoid")
             if hum then camera.CameraSubject = hum end
@@ -646,14 +681,11 @@ getgenv().AutoParryEnabled = false
 survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.", function(v)
     getgenv().AutoParryEnabled = v
 
-    local attackAnimIds = {
-        "rbxassetid://70869035406359",
+    local attack = {
         "rbxassetid://106673226682917",
         "rbxassetid://112503015929213",
         "rbxassetid://120428956410756",
-        "rbxassetid://102810363618918",
         "rbxassetid://133752270724243",
-        "rbxassetid://71147082224885"
     }
 
     local connection
@@ -661,7 +693,7 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
     local function isAttackAnimation(track)
         if not track or not track.Animation then return false end
         local id = track.Animation.AnimationId
-        for _, aid in ipairs(attackAnimIds) do
+        for _, aid in ipairs(attack) do
             if id == aid then return true end
         end
         return false
@@ -720,10 +752,11 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
                     if distSq > actualRange * actualRange then continue end
 
                     local args = {
-                        buffer.fromstring("\a"),
-                        buffer.fromstring("\254\001\000\254\002\000\006\aAbility\001\002")
+	                    buffer.fromstring("\001"),
+	                    buffer.fromstring("\254\001\000\254\002\000\006\aAbility\001\002")
                     }
                     game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Warp"):WaitForChild("Index"):WaitForChild("Event"):WaitForChild("Reliable"):FireServer(unpack(args))
+
                     break
                 end
             end
@@ -802,11 +835,11 @@ local function returnToLastPos()
     antiDeath.teleported = false
 end
 
-survivor:Toggle("Anti Death", "Automatically Detects Low Health And Teleports To A Safe Zone.", function(state)
+survivor:Toggle("Anti Death", "Automatically Detects Low Health And Teleports To A Safe Zone.", function(s)
 
-    antiDeath.enabled = state
+    antiDeath.enabled = s
 
-    if state then
+    if s then
 
         antiDeath.conn = RunService.Heartbeat:Connect(function()
 
@@ -887,7 +920,9 @@ local fuseHighlights = {}
 local trapHighlights = {}
 local minionHighlights = {}
 
-local healthLabels = {}
+local playerLabels = {}
+
+local LocalPlayer = game:GetService("Players").LocalPlayer
 
 local function newHighlight(obj, color)
     if not obj then return end
@@ -926,57 +961,118 @@ local function updateDrawingBox(box, obj)
     end
 end
 
-local function createHealthLabel(char)
-    if not char or healthLabels[char] then return end
+local function createPlayerLabels(char, showHealth)
+    if not char or playerLabels[char] then return end
+    if char == LocalPlayer.Character then return end
 
     local humanoid = char:FindFirstChild("Humanoid")
     if not humanoid then return end
 
     local labelGui = Instance.new("BillboardGui")
     labelGui.Adornee = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
-    labelGui.Size = UDim2.new(3, 0, 1, 0)
-    labelGui.StudsOffset = Vector3.new(0, 3, 0)
+    labelGui.Size = UDim2.new(4, 0, 2, 0)
+    labelGui.StudsOffset = Vector3.new(0, 4, 0)
     labelGui.AlwaysOnTop = true
     labelGui.LightInfluence = 0
     labelGui.Parent = char
 
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    textLabel.TextStrokeTransparency = 0
-    textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    textLabel.Font = Enum.Font.GothamBold
-    textLabel.TextSize = 16
-    textLabel.Text = "100 / 100"
-    textLabel.Parent = labelGui
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundTransparency = 1
+    frame.Parent = labelGui
 
-    healthLabels[char] = {
+    local healthLabel, staminaLabel
+
+    if showHealth then
+        healthLabel = Instance.new("TextLabel")
+        healthLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        healthLabel.Position = UDim2.new(0, 0, 0, 0)
+        healthLabel.BackgroundTransparency = 1
+        healthLabel.TextStrokeTransparency = 0
+        healthLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        healthLabel.Font = Enum.Font.GothamBold
+        healthLabel.TextSize = 16
+        healthLabel.Text = "100 / 100"
+        healthLabel.Parent = frame
+
+        staminaLabel = Instance.new("TextLabel")
+        staminaLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        staminaLabel.Position = UDim2.new(0, 0, 0.5, 0)
+        staminaLabel.BackgroundTransparency = 1
+        staminaLabel.TextColor3 = Color3.fromRGB(0, 150, 255)
+        staminaLabel.TextStrokeTransparency = 0
+        staminaLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        staminaLabel.Font = Enum.Font.GothamBold
+        staminaLabel.TextSize = 16
+        staminaLabel.Text = "100 / 100"
+        staminaLabel.Parent = frame
+    else
+        staminaLabel = Instance.new("TextLabel")
+        staminaLabel.Size = UDim2.new(1, 0, 1, 0)
+        staminaLabel.Position = UDim2.new(0, 0, 0, 0)
+        staminaLabel.BackgroundTransparency = 1
+        staminaLabel.TextColor3 = Color3.fromRGB(0, 150, 255)
+        staminaLabel.TextStrokeTransparency = 0
+        staminaLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        staminaLabel.Font = Enum.Font.GothamBold
+        staminaLabel.TextSize = 16
+        staminaLabel.Text = "100 / 100"
+        staminaLabel.Parent = frame
+    end
+
+    playerLabels[char] = {
         gui = labelGui,
-        text = textLabel,
+        healthText = healthLabel,
+        staminaText = staminaLabel,
         humanoid = humanoid,
-        connection = nil
+        healthConn = nil,
+        staminaConn = nil
     }
 
-    local conn = humanoid.HealthChanged:Connect(function()
-        if not healthLabels[char] then 
-            conn:Disconnect()
-            return 
-        end
-        local hp = math.floor(humanoid.Health)
-        local maxHp = math.floor(humanoid.MaxHealth)
-        healthLabels[char].text.Text = hp .. " / " .. maxHp
+    if showHealth and healthLabel then
+        playerLabels[char].healthConn = humanoid.HealthChanged:Connect(function()
+            if not playerLabels[char] then return end
+            local hp = math.floor(humanoid.Health)
+            local maxHp = math.floor(humanoid.MaxHealth)
+            playerLabels[char].healthText.Text = hp .. " / " .. maxHp
+
+            if hp >= 75 then
+                playerLabels[char].healthText.TextColor3 = Color3.fromRGB(0, 255, 0)
+            elseif hp >= 41 then
+                playerLabels[char].healthText.TextColor3 = Color3.fromRGB(255, 255, 0)
+            else
+                playerLabels[char].healthText.TextColor3 = Color3.fromRGB(255, 0, 0)
+            end
+        end)
+    end
+
+    playerLabels[char].staminaConn = char:GetAttributeChangedSignal("Stamina"):Connect(function()
+        if not playerLabels[char] or not playerLabels[char].staminaText then return end
+        local stamina = math.floor(char:GetAttribute("Stamina") or 0)
+        local maxStamina = math.floor(char:GetAttribute("MaxStamina") or 100)
+        playerLabels[char].staminaText.Text = stamina .. " / " .. maxStamina
     end)
 
-    healthLabels[char].connection = conn
+    if showHealth and healthLabel then
+        healthLabel.Text = math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
+        local initialHp = math.floor(humanoid.Health)
+        if initialHp >= 75 then
+            healthLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+        elseif initialHp >= 41 then
+            healthLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+        else
+            healthLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+        end
+    end
 
-    local hp = math.floor(humanoid.Health)
-    local maxHp = math.floor(humanoid.MaxHealth)
-    textLabel.Text = hp .. " / " .. maxHp
+    local initialStamina = math.floor(char:GetAttribute("Stamina") or 0)
+    local initialMax = math.floor(char:GetAttribute("MaxStamina") or 100)
+    staminaLabel.Text = initialStamina .. " / " .. initialMax
 end
 
 local function add(tbl, obj, color)
     if not obj or tbl[obj] then return end
+    if obj == LocalPlayer.Character then return end
 
     if espMethod == "Dual" then
         tbl[obj] = {
@@ -993,7 +1089,9 @@ local function add(tbl, obj, color)
     end
 
     if tbl == esp.survivors then
-        createHealthLabel(obj)
+        createPlayerLabels(obj, true)
+    elseif tbl == esp.killers then
+        createPlayerLabels(obj, false)
     end
 end
 
@@ -1010,14 +1108,11 @@ local function remove(tbl, obj)
         tbl[obj] = nil
     end
 
-    if healthLabels[obj] then
-        if healthLabels[obj].connection then
-            healthLabels[obj].connection:Disconnect()
-        end
-        if healthLabels[obj].gui then
-            healthLabels[obj].gui:Destroy()
-        end
-        healthLabels[obj] = nil
+    if playerLabels[obj] then
+        if playerLabels[obj].healthConn then playerLabels[obj].healthConn:Disconnect() end
+        if playerLabels[obj].staminaConn then playerLabels[obj].staminaConn:Disconnect() end
+        if playerLabels[obj].gui then playerLabels[obj].gui:Destroy() end
+        playerLabels[obj] = nil
     end
 end
 
@@ -1035,28 +1130,25 @@ local function clear(tbl)
         end
         tbl[obj] = nil
 
-        if healthLabels[obj] then
-            if healthLabels[obj].connection then
-                healthLabels[obj].connection:Disconnect()
-            end
-            if healthLabels[obj].gui then
-                healthLabels[obj].gui:Destroy()
-            end
-            healthLabels[obj] = nil
+        if playerLabels[obj] then
+            if playerLabels[obj].healthConn then playerLabels[obj].healthConn:Disconnect() end
+            if playerLabels[obj].staminaConn then playerLabels[obj].staminaConn:Disconnect() end
+            if playerLabels[obj].gui then playerLabels[obj].gui:Destroy() end
+            playerLabels[obj] = nil
         end
     end
 end
 
-vistab:Dropdown("ESP Method", {"Highlight", "Drawing", "Dual"}, function(selected)
-    espMethod = selected
-    notify2("ESP Method", "Changed to: " .. selected)
+vistab:Dropdown("ESP Method", {"Highlight", "Drawing", "Dual"}, function(sel)
+    espMethod = sel
+    notify2("ESP Method", "Method: " .. sel)
 end)
 
-vistab:Toggle("Survivor ESP", "Highlight All Survivors.", function(state)
+vistab:Toggle("Survivor ESP", "Highlight All Survivors.", function(s)
     local playersFolder = workspace:FindFirstChild("PLAYERS")
     local alive = playersFolder and playersFolder:FindFirstChild("ALIVE")
     if not alive then notify2("error", "wait for match to start or wait for ur game to load fully.") return end
-    if state then
+    if s then
         notify2("Survivor ESP", "Enabled.")
         for _, v in ipairs(alive:GetChildren()) do
             if v:IsA("Model") then add(esp.survivors, v, Color3.fromRGB(80,180,255)) end
@@ -1073,11 +1165,11 @@ vistab:Toggle("Survivor ESP", "Highlight All Survivors.", function(state)
     end
 end)
 
-vistab:Toggle("Killer ESP", "Highlights The Killer.", function(state)
+vistab:Toggle("Killer ESP", "Highlights The Killer.", function(s)
     local playersFolder = workspace:FindFirstChild("PLAYERS")
     local killers = playersFolder and playersFolder:FindFirstChild("KILLER")
     if not killers then notify2("error", "wait for match to start or wait for ur game to load fully.") return end
-    if state then
+    if s then
         notify2("Killer ESP", "Enabled.")
         for _, v in ipairs(killers:GetChildren()) do
             if v:IsA("Model") then add(esp.killers, v, Color3.fromRGB(255,80,80)) end
@@ -1094,8 +1186,8 @@ vistab:Toggle("Killer ESP", "Highlights The Killer.", function(state)
     end
 end)
 
-vistab:Toggle("Generator ESP", "Highlights All Generators.", function(state)
-    if state then
+vistab:Toggle("Generator ESP", "Highlights All Generators.", function(s)
+    if s then
         notify2("Generator ESP", "Enabled.")
         for _, v in ipairs(workspace:GetDescendants()) do
             if v:IsA("Model") and v.Name == "Generator" then
@@ -1116,8 +1208,8 @@ vistab:Toggle("Generator ESP", "Highlights All Generators.", function(state)
     end
 end)
 
-vistab:Toggle("Battery ESP", "Highlights All Batteries.", function(state)
-    if state then
+vistab:Toggle("Battery ESP", "Highlights All Batteries.", function(s)
+    if s then
         notify2("Battery ESP", "Enabled.")
         local ignore = workspace:FindFirstChild("IGNORE")
         if ignore then
@@ -1142,8 +1234,8 @@ vistab:Toggle("Battery ESP", "Highlights All Batteries.", function(state)
     end
 end)
 
-vistab:Toggle("Fuse Box ESP", "Highlights All Fuse Boxes.", function(state)
-    if state then
+vistab:Toggle("Fuse Box ESP", "Highlights All Fuse Boxes.", function(s)
+    if s then
         notify2("Fuse Box ESP", "Enabled.")
         local mapsFolder = workspace:FindFirstChild("MAPS")
         if mapsFolder then
@@ -1176,8 +1268,8 @@ vistab:Toggle("Fuse Box ESP", "Highlights All Fuse Boxes.", function(state)
     end
 end)
 
-vistab:Toggle("Bear Trap ESP", "Highlights All Bear Traps.", function(state)
-    if state then
+vistab:Toggle("Bear Trap ESP", "Highlights All Bear Traps.", function(s)
+    if s then
         notify2("Trap ESP", "Enabled.")
         local ignore = workspace:FindFirstChild("IGNORE")
         if ignore then
@@ -1203,8 +1295,8 @@ vistab:Toggle("Bear Trap ESP", "Highlights All Bear Traps.", function(state)
     end
 end)
 
-vistab:Toggle("Minion ESP", "Highlights All Minions.", function(state)
-    if state then
+vistab:Toggle("Minion ESP", "Highlights All Minions.", function(s)
+    if s then
         notify2("Minion ESP", "Enabled.")
         local ignore = workspace:FindFirstChild("IGNORE")
         if ignore then
