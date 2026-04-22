@@ -752,10 +752,11 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
                     if distSq > actualRange * actualRange then continue end
 
                     local args = {
-	                    buffer.fromstring("\001"),
+	                    buffer.fromstring("\a"),
 	                    buffer.fromstring("\254\001\000\254\002\000\006\aAbility\001\002")
                     }
                     game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Warp"):WaitForChild("Index"):WaitForChild("Event"):WaitForChild("Reliable"):FireServer(unpack(args))
+
 
                     break
                 end
