@@ -12,7 +12,7 @@ local farmtab = win:Tab("Farms")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
-maintab:Label("Script Made By Celeron + Daffy!")
+maintab:Label("Script Made By Celeron!")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
