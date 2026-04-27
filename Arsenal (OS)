@@ -14,7 +14,7 @@ local modtab = win:Tab("Mods")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
-maintab:Label("Script Made By Celeron + Daffy!")
+maintab:Label("Script Made By Celeron!")
 modtab:Label("Gun Modifiers! Rejoin To Disable Mods.")
 vistab:Label("Visual Settings.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
