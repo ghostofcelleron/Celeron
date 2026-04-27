@@ -2,7 +2,7 @@ if game.PlaceId == 139609232261520 then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/hgghhghghhgg"))()
 else
 
-local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/ui"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
@@ -22,7 +22,7 @@ local exploittab = win:Tab("Exploits")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
-hometab:Label("Script Made By Celeron + Daffy!")
+hometab:Label("Script Made By Celeron! Check Info For Additional Credits.")
 hometab:Label("Join The Discord Server In Info For Updates / Suggestions.")
 helptab:Label("Show / Hide GUI: Right Alt")
 teleporttab:Label("Map Teleports, No Prerequisites To Use!")
@@ -71,6 +71,12 @@ helptab:Button("Copy Discord Server Invite", "Copies The Discord Invite To Your 
     })
     setclipboard("https://discord.gg/mFusYUmyry")
 end)
+
+helptab:Label("Script Credits.")
+
+helptab:Label("Main Scripter: Celeron.")
+helptab:Label("Custom UI + Small Features: Daffy.")
+helptab:Label("Auto Config: Serlicia.")
 
 if math.random(1,50) == 1 then
     hometab:Banner("17327779381", 385)
