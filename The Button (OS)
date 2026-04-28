@@ -314,5 +314,5 @@ helptab:Label("Script Credits.")
 
 helptab:Label("Main Scripter: Celeron.")
 helptab:Label("Script Inspiration: Bac0nH1ckOff.")
-helptab:Label("Custom UI + Small Features: Daffy.")
+helptab:Label("Custom UI: Daffy.")
 helptab:Label("Auto Config: Serlicia.")
