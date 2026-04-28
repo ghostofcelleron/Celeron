@@ -13,7 +13,7 @@ local siltab = win:Tab("Silent")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
-maintab:Label("Script Made By Celeron + Daffy!")
+maintab:Label("Script Made By Celeron!")
 siltab:Label("Silent Features.")
 misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
