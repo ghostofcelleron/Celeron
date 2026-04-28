@@ -1,0 +1,318 @@
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/ui"))()
+local win = ui:Create({
+    Name = "Celeron GUI (The Button)",
+    ThemeColor = Color3.fromRGB(55, 55, 55),
+    ThemeGradient = Color3.fromRGB(255, 255, 255),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.GothamBold,
+    ToggledSideBar = true
+})
+
+local maintab = win:Tab("Main")
+local itemtab = win:Tab("Item")
+local vistab = win:Tab("Visual")
+local protab = win:Tab("Exploits")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+itemtab:Label("Item Features.")
+vistab:Label("Visual Features.")
+protab:Label("Useful Features.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+
+local plr = Players.LocalPlayer
+local char = plr.Character or plr.CharacterAdded:Wait()
+local hum = char:FindFirstChildWhichIsA("Humanoid")
+
+local tpwalk = nil
+local playerESPUpdate = nil
+local infJump = nil
+local infJumpDebounce = false
+local lastPos
+
+local autoCollectEnabled = false
+local speedMultiplier = 1.25
+local itemESPEnabled = false
+
+local function notify(title, text, duration)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = duration or 2
+    })
+end
+
+local function clearESP()
+    for _, item in pairs(workspace:GetDescendants()) do
+        if item.Name == "ESP_Folder" then item:Destroy() end
+    end
+end
+
+local function createESP(obj)
+    if not obj:GetAttribute("ToolType") then return end
+    if obj:FindFirstChild("ESP_Folder") then return end
+
+    local folder = Instance.new("Folder")
+    folder.Name = "ESP_Folder"
+    folder.Parent = obj
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ItemHighlight"
+    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.FillTransparency = 0.6
+    highlight.OutlineTransparency = 0
+    highlight.Adornee = obj
+    highlight.Parent = folder
+
+    local bgui = Instance.new("BillboardGui")
+    bgui.Name = "NameESP"
+    bgui.Size = UDim2.new(0, 150, 0, 40)
+    bgui.StudsOffset = Vector3.new(0, 3, 0)
+    bgui.AlwaysOnTop = true
+    bgui.Adornee = obj
+    bgui.Parent = folder
+
+    local text = Instance.new("TextLabel")
+    text.Size = UDim2.new(1, 0, 1, 0)
+    text.BackgroundTransparency = 1
+    text.TextColor3 = Color3.fromRGB(255, 255, 255)
+    text.TextStrokeTransparency = 0
+    text.Text = obj.Name
+    text.Font = Enum.Font.GothamBold
+    text.TextSize = 14
+    text.Parent = bgui
+end
+
+local function clearPlayerESP()
+    for _, esp in pairs(workspace:GetDescendants()) do
+        if esp.Name == "PlayerESP_Folder" then esp:Destroy() end
+    end
+end
+
+local function createPlayerESP(player)
+    if not player.Character or player == plr then return end
+    if player.Character:FindFirstChild("PlayerESP_Folder") then return end
+
+    local folder = Instance.new("Folder")
+    folder.Name = "PlayerESP_Folder"
+    folder.Parent = player.Character
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "PlayerHighlight"
+    highlight.FillColor = Color3.fromRGB(255, 255, 255)
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.FillTransparency = 0.75
+    highlight.OutlineTransparency = 0
+    highlight.Adornee = player.Character
+    highlight.Parent = folder
+end
+
+local function getItems()
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    lastPos = root.CFrame
+
+    for _, item in pairs(workspace:GetChildren()) do
+        if item:GetAttribute("ToolType") then
+            for _, trigger in pairs(item:GetDescendants()) do
+                if trigger:IsA("ProximityPrompt") and trigger.Name == "DropPrompt" then
+                    root.CFrame = trigger.Parent.CFrame + Vector3.new(0, 3, 0)
+                    task.wait(0.5)
+                    fireproximityprompt(trigger, trigger.MaxActivationDistance)
+                    task.wait(0.5)
+                end
+            end
+        end
+    end
+    root.CFrame = lastPos
+end
+
+maintab:Slider("Speed Boost Multiplier", 1, 1, 10, 0.1, function(value)
+    speedMultiplier = value
+end)
+
+maintab:Toggle("Speed Boost", function(v)
+    if v then
+        notify("Speed Boost", "Enabled.", 2)
+        tpwalk = RunService.Heartbeat:Connect(function(delta)
+            local character = plr.Character
+            if not character then return end
+            local humanoid = character:FindFirstChildWhichIsA("Humanoid")
+            if not humanoid or humanoid.MoveDirection.Magnitude == 0 then return end
+            character:TranslateBy(humanoid.MoveDirection * speedMultiplier * delta * 10)
+        end)
+    else
+        if tpwalk then tpwalk:Disconnect() end
+        notify("Speed Boost", "Disabled.", 2)
+    end
+end)
+
+maintab:Toggle("Infinite Jump", function(v)
+    if v then
+        notify("Infinite Jump", "Enabled.", 2)
+        if infJump then infJump:Disconnect() end
+        infJumpDebounce = false
+        infJump = UserInputService.JumpRequest:Connect(function()
+            if infJumpDebounce then return end
+            infJumpDebounce = true
+            local humanoid = plr.Character and plr.Character:FindFirstChildWhichIsA("Humanoid")
+            if humanoid then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+            task.wait()
+            infJumpDebounce = false
+        end)
+    else
+        if infJump then infJump:Disconnect() end
+        infJumpDebounce = false
+        notify("Infinite Jump", "Disabled.", 2)
+    end
+end)
+
+itemtab:Toggle("Auto Collect Items", function(v)
+    autoCollectEnabled = v
+    if v then
+        notify("Auto Collect Items", "Enabled.", 2)
+        task.spawn(function()
+            while autoCollectEnabled do
+                getItems()
+                task.wait(1)
+            end
+        end)
+    else
+        notify("Auto Collect Items", "Disabled.", 2)
+    end
+end)
+
+itemtab:Button("Grab All Items", function()
+    getItems()
+end)
+
+vistab:Toggle("Player ESP", function(v)
+    if v then
+        notify("Player ESP", "Enabled.", 2)
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= plr and player.Character then
+                createPlayerESP(player)
+            end
+        end
+        if not playerESPUpdate then
+            playerESPUpdate = RunService.Heartbeat:Connect(function()
+                for _, player in pairs(Players:GetPlayers()) do
+                    if player ~= plr and player.Character then
+                        if not player.Character:FindFirstChild("PlayerESP_Folder") then
+                            createPlayerESP(player)
+                        end
+                    end
+                end
+            end)
+        end
+    else
+        notify("Player ESP", "Disabled.", 2)
+        clearPlayerESP()
+        if playerESPUpdate then
+            playerESPUpdate:Disconnect()
+            playerESPUpdate = nil
+        end
+    end
+end)
+
+vistab:Toggle("Item ESP", function(v)
+    itemESPEnabled = v
+    if v then
+        notify("Item ESP", "Enabled.", 2)
+        for _, item in pairs(workspace:GetChildren()) do
+            createESP(item)
+        end
+    else
+        notify("Item ESP", "Disabled.", 2)
+        clearESP()
+    end
+end)
+
+vistab:Button("Full Bright", function()
+    local lighting = game:GetService("Lighting")
+    lighting.Brightness = 2
+    lighting.ClockTime = 14
+    lighting.FogEnd = 100000
+    lighting.GlobalShadows = false
+    lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+end)
+
+protab:Toggle("Remove Hit Cooldown", function(v)
+    notify("Remove Hit Cooldown", v and "Enabled." or "Disabled.", 2)
+    if v and hum then
+        hum:GetAttributeChangedSignal("HitCooldown"):Connect(function()
+            if v then
+                hum:SetAttribute("HitCooldown", false)
+            end
+        end)
+    end
+end)
+
+protab:Toggle("Remove Fall Damage", function(v)
+    notify("Remove Fall Damage", v and "Enabled." or "Disabled.", 2)
+    local fallDamage = char:FindFirstChild("FallDamage")
+    if fallDamage then fallDamage.Enabled = not v end
+end)
+
+protab:Button("Infinite Stamina", function()
+    if hum then
+        hum:SetAttribute("MaxStamina", math.huge)
+        hum:SetAttribute("Stamina", math.huge)
+    end
+end)
+
+protab:Button("Reveal Landmines", function()
+    local mineField = workspace:FindFirstChild("Minefield")
+    if mineField then
+        for _, part in pairs(mineField:GetChildren()) do
+            if part.Name == "Landmine" then
+                part.Transparency = 0.3
+                part.Color = Color3.fromRGB(255, 0, 0)
+            end
+        end
+    end
+end)
+
+workspace.ChildAdded:Connect(function(obj)
+    if itemESPEnabled then
+        createESP(obj)
+    end
+end)
+
+helptab:Button("Copy Owner Discord Username", "Copies The Owner's Discord Username To Your Clipboard.", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Username",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("celeronistuff")
+end)
+
+helptab:Button("Copy Discord Server Invite", "Copies The Discord Invite To Your Clipboard.", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Invite",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("https://discord.gg/mFusYUmyry")
+end)
+
+helptab:Label("Script Credits.")
+
+helptab:Label("Main Scripter: Celeron.")
+helptab:Label("Script Inspiration: Bac0nH1ckOff.")
+helptab:Label("Custom UI + Small Features: Daffy.")
+helptab:Label("Auto Config: Serlicia.")
