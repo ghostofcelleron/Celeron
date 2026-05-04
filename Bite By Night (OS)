@@ -413,84 +413,10 @@ survivor:Toggle("Auto Generator", "Automatically Does Generator Tasks.", functio
     end
 end)
 
-local speed = 25
-
-local function getRoot(char)
-    if not char then return nil end
-    return char:FindFirstChild("HumanoidRootPart")
-end
-
-local function lerpMove(root, targetCF)
-    if not root then return end
-    local startCF = root.CFrame
-    local dist = (startCF.Position - targetCF.Position).Magnitude
-    if dist < 1 then 
-        root.CFrame = targetCF
-        return 
-    end
-    local duration = dist / speed
-    local t = 0
-    while t < duration do
-        t += game:GetService("RunService").Heartbeat:Wait()
-        local alpha = math.clamp(t / duration, 0, 1)
-        root.CFrame = startCF:Lerp(targetCF, alpha)
-    end
-    root.CFrame = targetCF
-end
-
-local autoEscape = false
-local autoEscapeConn
-
-survivor:Toggle("Auto Escape", "Automatically Escapes The Map.", function(s)
-    autoEscape = s
-    local player = game.Players.LocalPlayer
-    if s then
-        notify2("Auto Escape", "Enabled (Smooth Movement)")
-        local teleported = false
-        autoEscapeConn = game:GetService("RunService").RenderStepped:Connect(function()
-            if teleported or not autoEscape then return end
-            local char = player.Character
-            if not char then return end
-            local root = getRoot(char)
-            if not root then return end
-            if not workspace.GAME.CAN_ESCAPE.Value then return end
-            local playersFolder = workspace:FindFirstChild("PLAYERS")
-            if not playersFolder or char.Parent ~= playersFolder:FindFirstChild("ALIVE") then return end
-            local gameMap = workspace.MAPS:FindFirstChild("GAME MAP")
-            if not gameMap then return end
-            local escapes = gameMap:FindFirstChild("Escapes")
-            if not escapes then return end
-            for _, part in pairs(escapes:GetChildren()) do
-                if part:IsA("BasePart") and part:GetAttribute("Enabled") then
-                    local highlight = part:FindFirstChildOfClass("Highlight")
-                    if highlight and highlight.Enabled then
-                        teleported = true
-                        root.Anchored = true
-                        lerpMove(root, part.CFrame)
-                        task.delay(0.5, function()
-                            if root then root.Anchored = false end
-                        end)
-                        task.delay(10, function()
-                            teleported = false
-                        end)
-                        return
-                    end
-                end
-            end
-        end)
-    else
-        if autoEscapeConn then 
-            autoEscapeConn:Disconnect() 
-            autoEscapeConn = nil
-        end
-        notify2("Auto Escape", "Disabled.")
-    end
-end)
-
 local dotEnabled = false
 local dotConn
 
-survivor:Toggle("Auto Barricade","Forces Barricading Dot In The Middle.",function(s)
+survivor:Toggle("Auto Barricade", "Forces Barricading Dot In The Middle.",function(s)
     dotEnabled = s
     local player = game:GetService("Players").LocalPlayer
     local gui = player:WaitForChild("PlayerGui")
@@ -519,10 +445,12 @@ survivor:Toggle("Auto Barricade","Forces Barricading Dot In The Middle.",functio
     end
 end)
 
+local RunService = game:GetService("RunService")
+
 local instantInteract = false
 local promptConnections = {}
 
-survivor:Toggle("Instant Interact", "Instantly Interact With Generators / Batteries.", function(v)
+survivor:Toggle("Instant Interact", "Instantly Interact With Generator / Battery Tasks.", function(v)
     instantInteract = v
     
     if instantInteract then
@@ -531,22 +459,59 @@ survivor:Toggle("Instant Interact", "Instantly Interact With Generators / Batter
         local function applyToPrompts(obj)
             for _, prompt in ipairs(obj:GetDescendants()) do
                 if prompt:IsA("ProximityPrompt") then
-                    prompt.HoldDuration = 0
+                    if obj.Name == "FuseBox" then
+                        prompt.HoldDuration = 0.05
+                    else
+                        prompt.HoldDuration = 0
+                    end
                 end
             end
         end
         
         for _, obj in ipairs(workspace:GetDescendants()) do
-            if (obj.Name == "Generator" and obj:IsA("Model")) or (obj.Name == "Battery" and obj:IsA("MeshPart")) then
+            if (obj.Name == "Generator" and obj:IsA("Model")) or 
+               (obj.Name == "Battery" and obj:IsA("MeshPart")) or
+               (obj.Name == "FuseBox" and obj:IsA("Model")) then
                 applyToPrompts(obj)
             end
         end
         
         promptConnections[#promptConnections + 1] = workspace.DescendantAdded:Connect(function(desc)
+            if not instantInteract then return end
+            
             if desc:IsA("ProximityPrompt") then
-                local ancestor = desc:FindFirstAncestor("Generator") or desc:FindFirstAncestor("Battery")
+                local ancestor = desc:FindFirstAncestor("Generator") or 
+                                 desc:FindFirstAncestor("Battery") or 
+                                 desc:FindFirstAncestor("FuseBox")
                 if ancestor then
-                    desc.HoldDuration = 0
+                    if ancestor.Name == "FuseBox" then
+                        desc.HoldDuration = 0.75
+                    else
+                        desc.HoldDuration = 0
+                    end
+                end
+            end
+        end)
+        
+        local lastCheck = 0
+        promptConnections[#promptConnections + 1] = RunService.Heartbeat:Connect(function()
+            if not instantInteract then return end
+            if tick() - lastCheck < 0.8 then return end
+            lastCheck = tick()
+            
+            local mapsFolder = workspace:FindFirstChild("MAPS")
+            if not mapsFolder then return end
+            local gameMap = mapsFolder:FindFirstChild("GAME MAP")
+            if not gameMap then return end
+            local tasks = gameMap:FindFirstChild("Tasks")
+            if not tasks then return end
+            
+            local fuseBoxes = tasks:FindFirstChild("FuseBoxes")
+            if fuseBoxes then
+                for _, fb in ipairs(fuseBoxes:GetChildren()) do
+                    if fb.Name == "FuseBox" then
+                        applyToPrompts(fb)
+                    end
                 end
             end
         end)
@@ -555,9 +520,7 @@ survivor:Toggle("Instant Interact", "Instantly Interact With Generators / Batter
         notify2("Instant Interact", "Disabled.")
         
         for _, conn in ipairs(promptConnections) do
-            if conn then
-                conn:Disconnect()
-            end
+            if conn then conn:Disconnect() end
         end
         promptConnections = {}
     end
@@ -571,7 +534,7 @@ local player = Players.LocalPlayer
 local safeTeleport = false
 local safePart = nil
 
-local speed = 25
+local speed = 20
 
 local function getRoot()
     local char = player.Character or player.CharacterAdded:Wait()
@@ -618,7 +581,7 @@ survivor:Toggle("Safety Area", "Teleports To A Safe Area.", function(s)
             lerpMove(CFrame.new(pos - Vector3.new(0,95,0)))
         end)
 
-        notify2("Safety Area","Enabled.")
+        notify2("Safety Area", "Enabled.")
 
     else
         local pos = root.Position
@@ -632,7 +595,7 @@ survivor:Toggle("Safety Area", "Teleports To A Safe Area.", function(s)
             lerpMove(CFrame.new(pos + Vector3.new(0,100,0)))
         end)
 
-        notify2("Safety Area","Disabled.")
+        notify2("Safety Area", "Disabled.")
     end
 end)
 
@@ -640,7 +603,7 @@ local viewKiller = false
 local killerAddedConn
 local killerRemovedConn
 
-survivor:Toggle("View Killer","Views The Killer.",function(s)
+survivor:Toggle("View Killer", "Views The Killer.",function(s)
     viewKiller = s
     local camera = workspace.CurrentCamera
     local player = game:GetService("Players").LocalPlayer
@@ -751,12 +714,10 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
 
                     if distSq > actualRange * actualRange then continue end
 
-                    local args = {
-	                    buffer.fromstring("\a"),
-	                    buffer.fromstring("\254\001\000\254\002\000\006\aAbility\001\002")
-                    }
-                    game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Warp"):WaitForChild("Index"):WaitForChild("Event"):WaitForChild("Reliable"):FireServer(unpack(args))
-
+                    local vim = game:GetService("VirtualInputManager")
+                    vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                    task.wait()
+                    vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
 
                     break
                 end
@@ -796,7 +757,7 @@ local antiDeath = {
     plate = nil
 }
 
-local speed = 25
+local speed = 20
 
 local function getRoot()
     local char = player.Character or player.CharacterAdded:Wait()
@@ -890,7 +851,7 @@ survivor:Toggle("Anti Death", "Automatically Detects Low Health And Teleports To
 
         end)
 
-        notify2("Anti Death","Enabled.")
+        notify2("Anti Death", "Enabled.")
 
     else
 
@@ -904,7 +865,7 @@ survivor:Toggle("Anti Death", "Automatically Detects Low Health And Teleports To
 
         antiDeath.debounce = false
 
-        notify2("Anti Death","Disabled.")
+        notify2("Anti Death", "Disabled.")
 
     end
 end)
@@ -1294,14 +1255,14 @@ vistab:Toggle("Bear Trap ESP", "Highlights All Bear Traps.", function(s)
         local ignore = workspace:FindFirstChild("IGNORE")
         if ignore then
             for _, obj in ipairs(ignore:GetChildren()) do
-                if obj:IsA("Model") and obj.Name == "Trap" then
+                if obj:IsA("Model") and obj.Name:lower():find("trap") then
                     local h = newHighlight(obj, Color3.fromRGB(255, 100, 0))
                     if h then trapHighlights[obj] = h end
                 end
             end
         end
         descendantConn = workspace.DescendantAdded:Connect(function(v)
-            if v:IsA("Model") and v.Name == "Trap" then
+            if v:IsA("Model") and v.Name:lower():find("trap") then
                 task.wait(0.1)
                 local h = newHighlight(v, Color3.fromRGB(255, 100, 0))
                 if h then trapHighlights[v] = h end
@@ -1358,7 +1319,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
-local speed = 25
+local speed = 20
 local lerping = false
 local currentTarget = nil
 
@@ -1467,7 +1428,7 @@ tpstab:Button("Battery TP", "Teleports To A Battery. Click Again To Cancel.", fu
 
     local ignore = workspace:FindFirstChild("IGNORE")
     if not ignore then
-        notify2("error","wait for match to start or wait for ur game to load fully. if loaded, there are no batteries.")
+        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there are no batteries.")
         return
     end
 
@@ -1479,7 +1440,7 @@ tpstab:Button("Battery TP", "Teleports To A Battery. Click Again To Cancel.", fu
     end
 
     if #batteries == 0 then
-        notify2("error","wait for match to start or wait for ur game to load fully. if loaded, there are no batteries.")
+        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there are no batteries.")
         return
     end
 
@@ -1513,25 +1474,25 @@ tpstab:Button("Fuse Box TP", "Teleports To A Fuse Box. Click Again To Cancel.", 
 
     local mapsFolder = workspace:FindFirstChild("MAPS")
     if not mapsFolder then
-        notify2("error","wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
+        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
         return
     end
 
     local gameMap = mapsFolder:FindFirstChild("GAME MAP")
     if not gameMap then
-        notify2("error","wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
+        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
         return
     end
 
     local tasksFolder = gameMap:FindFirstChild("Tasks")
     if not tasksFolder then
-        notify2("error","wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
+        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
         return
     end
 
     local fuseBoxes = tasksFolder:FindFirstChild("FuseBoxes")
     if not fuseBoxes then
-        notify2("error","wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
+        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
         return
     end
 
@@ -1544,7 +1505,7 @@ tpstab:Button("Fuse Box TP", "Teleports To A Fuse Box. Click Again To Cancel.", 
     end
 
     if #batteries == 0 then
-        notify2("error","wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
+        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
         return
     end
 
