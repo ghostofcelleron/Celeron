@@ -1238,33 +1238,52 @@ end)
 vistab:Toggle("Fuse Box ESP", "Highlights All Fuse Boxes.", function(s)
     if s then
         notify2("Fuse Box ESP", "Enabled.")
+        
         local mapsFolder = workspace:FindFirstChild("MAPS")
         if mapsFolder then
             local gameMap = mapsFolder:FindFirstChild("GAME MAP")
             if gameMap then
-                local fuseBoxes = gameMap:FindFirstChild("FuseBoxes")
-                if fuseBoxes then
-                    for _, fuseBox in ipairs(fuseBoxes:GetChildren()) do
-                        local battery = fuseBox:FindFirstChild("Battery")
-                        if battery then
-                            local h = newHighlight(battery, Color3.fromRGB(0, 255, 255))
-                            if h then fuseHighlights[battery] = h end
+                local tasksFolder = gameMap:FindFirstChild("Tasks")
+                if tasksFolder then
+                    local fuseBoxesFolder = tasksFolder:FindFirstChild("FuseBoxes")
+                    if fuseBoxesFolder then
+                        for _, fuseBox in ipairs(fuseBoxesFolder:GetChildren()) do
+                            if fuseBox:IsA("Model") and fuseBox.Name == "FuseBox" then
+                                local h = newHighlight(fuseBox, Color3.fromRGB(0, 255, 255))
+                                if h then 
+                                    fuseHighlights[fuseBox] = h 
+                                end
+                            end
                         end
                     end
                 end
             end
         end
+
         fuseConn = workspace.DescendantAdded:Connect(function(v)
-            if v:IsA("BasePart") and v.Name == "Battery" and v.Parent and v.Parent.Name == "FuseBox" then
-                task.wait(0.1)
-                local h = newHighlight(v, Color3.fromRGB(0, 255, 255))
-                if h then fuseHighlights[v] = h end
+            if v:IsA("BasePart") and v.Name == "Battery" then
+                local fuseBox = v:FindFirstAncestor("FuseBox")
+                if fuseBox and fuseBox:IsA("Model") then
+                    task.wait(0.1)
+                    if not fuseHighlights[fuseBox] then
+                        local h = newHighlight(fuseBox, Color3.fromRGB(0, 255, 255))
+                        if h then 
+                            fuseHighlights[fuseBox] = h 
+                        end
+                    end
+                end
             end
         end)
+
     else
         notify2("Fuse Box ESP", "Disabled.")
-        if fuseConn then fuseConn:Disconnect() fuseConn = nil end
-        for _, h in pairs(fuseHighlights) do if h then h:Destroy() end end
+        if fuseConn then 
+            fuseConn:Disconnect() 
+            fuseConn = nil 
+        end
+        for _, h in pairs(fuseHighlights) do 
+            if h then h:Destroy() end 
+        end
         fuseHighlights = {}
     end
 end)
@@ -1393,27 +1412,38 @@ end
 local function getOrderedGenerators()
     local mapsFolder = workspace:FindFirstChild("MAPS")
     if not mapsFolder then return {} end
+    
     local gameMap = mapsFolder:FindFirstChild("GAME MAP")
     if not gameMap then return {} end
-    local generators = gameMap:FindFirstChild("Generators")
+    
+    local tasksFolder = gameMap:FindFirstChild("Tasks")
+    if not tasksFolder then return {} end
+    
+    local generators = tasksFolder:FindFirstChild("Generators")
     if not generators then return {} end
+
     local models = {}
-    for _,v in ipairs(generators:GetChildren()) do
-        if v:IsA("Model") then table.insert(models,v) end
+    for _, v in ipairs(generators:GetChildren()) do
+        if v:IsA("Model") then 
+            table.insert(models, v) 
+        end
     end
-    table.sort(models,function(a,b)
+
+    table.sort(models, function(a, b)
         local ao = a:GetAttribute("Order") or 0
         local bo = b:GetAttribute("Order") or 0
         return ao < bo
     end)
+
     return models
 end
 
 local generatorIndex = 1
+
 tpstab:Button("Generator TP", "Teleports To A Generator. Click Again To Cancel.", function()
     local models = getOrderedGenerators()
     if #models == 0 then
-        notify2("error","wait for match to start or wait for ur game to load fully.")
+        notify2("error", "wait for match to start or wait for ur game to load fully.")
         return
     end
 
@@ -1493,7 +1523,13 @@ tpstab:Button("Fuse Box TP", "Teleports To A Fuse Box. Click Again To Cancel.", 
         return
     end
 
-    local fuseBoxes = gameMap:FindFirstChild("FuseBoxes")
+    local tasksFolder = gameMap:FindFirstChild("Tasks")
+    if not tasksFolder then
+        notify2("error","wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
+        return
+    end
+
+    local fuseBoxes = tasksFolder:FindFirstChild("FuseBoxes")
     if not fuseBoxes then
         notify2("error","wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
         return
@@ -1501,7 +1537,7 @@ tpstab:Button("Fuse Box TP", "Teleports To A Fuse Box. Click Again To Cancel.", 
 
     local batteries = {}
     for _, fuseBox in ipairs(fuseBoxes:GetChildren()) do
-        local battery = fuseBox:FindFirstChild("Battery")
+        local battery = fuseBox:FindFirstChild("Battery") or fuseBox:FindFirstChildWhichIsA("BasePart", true)
         if battery and battery:IsA("BasePart") then
             table.insert(batteries, battery)
         end
