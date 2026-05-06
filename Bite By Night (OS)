@@ -1,4 +1,4 @@
-local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/ui"))()
 
 local win = ui:Create({
     Name = "Celeron's GUI (Bite By Night)",
@@ -156,136 +156,6 @@ maintab:Toggle("Allow Jumping", "Allows You To Jump.", function(s)
     end
 end)
 
-local aimlockEnabled = false
-local lockedTarget = nil
-
-local inputService = game:GetService("UserInputService")
-local runService = game:GetService("RunService")
-local camera = workspace.CurrentCamera
-local player = game:GetService("Players").LocalPlayer
-
-local inputConn = nil
-local renderConn = nil
-
-local aimlockBind = Enum.UserInputType.MouseButton2
-
-local function getMyTeamFolder()
-    local char = player.Character
-    if not char then return nil end
-    local aliveFolder = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("ALIVE")
-    local killerFolder = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
-    
-    if aliveFolder and char.Parent == aliveFolder then
-        return "ALIVE"
-    elseif killerFolder and char.Parent == killerFolder then
-        return "KILLER"
-    end
-    return nil
-end
-
-maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking Bind.", function(s)
-    aimlockEnabled = s
-    
-    if aimlockEnabled then
-        notify2("Aimlock", "Enabled.")
-
-        inputConn = inputService.InputBegan:Connect(function(input, gp)
-            if gp then return end
-            if input.UserInputType ~= aimlockBind and input.KeyCode ~= aimlockBind then return end
-
-            if lockedTarget then
-                lockedTarget = nil
-                return
-            end
-
-            local myTeam = getMyTeamFolder()
-            if not myTeam then return end
-
-            local myChar = player.Character
-            if not myChar then return end
-            local myRoot = myChar:FindFirstChild("HumanoidRootPart")
-            if not myRoot then return end
-
-            local closest = nil
-            local shortest = math.huge
-
-            local targetFolderName = (myTeam == "ALIVE") and "KILLER" or "ALIVE"
-            local targetFolder = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild(targetFolderName)
-
-            if not targetFolder then return end
-
-            for _, other in ipairs(game.Players:GetPlayers()) do
-                if other ~= player and other.Character and other.Character.Parent == targetFolder then
-                    local root = other.Character:FindFirstChild("HumanoidRootPart")
-                    if root then
-                        local dist = (myRoot.Position - root.Position).Magnitude
-                        if dist < shortest then
-                            shortest = dist
-                            closest = root
-                        end
-                    end
-                end
-            end
-
-            if closest then
-                lockedTarget = closest
-            end
-        end)
-
-        renderConn = runService.RenderStepped:Connect(function()
-            if lockedTarget and lockedTarget.Parent then
-                camera.CFrame = CFrame.new(camera.CFrame.Position, lockedTarget.Position)
-            else
-                lockedTarget = nil
-            end
-        end)
-    else
-        notify2("Aimlock", "Disabled.")
-        lockedTarget = nil
-        
-        if inputConn then
-            inputConn:Disconnect()
-            inputConn = nil
-        end
-        if renderConn then
-            renderConn:Disconnect()
-            renderConn = nil
-        end
-    end
-end)
-
-maintab:Textbox("Aimlock Bind", "Enter Key (Example: Z, X). Must Be Capitalized.", function(text)
-    if typeof(text) ~= "string" then
-        aimlockBind = Enum.UserInputType.MouseButton2
-        notify2("Aimlock Bind", "Invalid Input. Bind Is Now M2.")
-        return
-    end
-
-    local formatted = text:gsub("%s+", "")
-
-    local success, key = pcall(function()
-        return Enum.KeyCode[formatted]
-    end)
-
-    if success and key then
-        aimlockBind = key
-        notify2("Aimlock Bind", "Bind Set To: " .. key.Name)
-        return
-    end
-
-    local success2, inputType = pcall(function()
-        return Enum.UserInputType[formatted]
-    end)
-
-    if success2 and inputType then
-        aimlockBind = inputType
-        notify2("Aimlock Bind", "Bind Set To: " .. inputType.Name)
-    else
-        aimlockBind = Enum.UserInputType.MouseButton2
-        notify2("Aimlock Bind", "Invalid Input. Bind Is Now M2.")
-    end
-end)
-
 local noclipEnabled = false
 local noclipConn = nil
 
@@ -337,6 +207,184 @@ maintab:Toggle("Full Bright", "WHO TURNED ON THE LIGHTS?!!", function(s)
             lighting.Ambient = oldLighting.Ambient
         end
     end
+end)
+
+maintab:Label("Aimlock Features.")
+
+local aimlockEnabled = false
+local lockedTarget = nil
+local lastTargetPos = nil
+local lastUpdateTime = nil
+
+local inputService = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local camera = workspace.CurrentCamera
+local player = game:GetService("Players").LocalPlayer
+
+local inputConn = nil
+local renderConn = nil
+
+local aimlockBind = Enum.UserInputType.MouseButton3
+local predict = 0.65
+local smooth = 0.25
+
+local function getMyTeamFolder()
+    local char = player.Character
+    if not char then return nil end
+    local aliveFolder = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("ALIVE")
+    local killerFolder = workspace:FindFirstChild("PLAYERS") and workspace.PLAYERS:FindFirstChild("KILLER")
+    
+    if aliveFolder and char.Parent == aliveFolder then
+        return "ALIVE"
+    elseif killerFolder and char.Parent == killerFolder then
+        return "KILLER"
+    end
+    return nil
+end
+
+maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking Bind.", function(s)
+    aimlockEnabled = s
+    
+    if aimlockEnabled then
+        notify2("Aimlock", "Enabled.")
+
+        lastTargetPos = nil
+        lastUpdateTime = nil
+
+        inputConn = inputService.InputBegan:Connect(function(input, gp)
+            if gp then return end
+            if input.UserInputType ~= aimlockBind and input.KeyCode ~= aimlockBind then return end
+
+            if lockedTarget then
+                lockedTarget = nil
+                lastTargetPos = nil
+                lastUpdateTime = nil
+                return
+            end
+
+            local myTeam = getMyTeamFolder()
+            if not myTeam then return end
+
+            local myChar = player.Character
+            if not myChar then return end
+            local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+            if not myRoot then return end
+
+            local closest = nil
+            local shortest = math.huge
+
+            local targetFolderName = (myTeam == "ALIVE") and "KILLER" or "ALIVE"
+            local targetFolder = workspace.PLAYERS and workspace.PLAYERS:FindFirstChild(targetFolderName)
+
+            if not targetFolder then return end
+
+            for _, other in ipairs(game.Players:GetPlayers()) do
+                if other ~= player and other.Character and other.Character.Parent == targetFolder then
+                    local root = other.Character:FindFirsWtChild("HumanoidRootPart")
+                    if root then
+                        local dist = (myRoot.Position - root.Position).Magnitude
+                        if dist < shortest then
+                            shortest = dist
+                            closest = root
+                        end
+                    end
+                end
+            end
+
+            if closest then
+                lockedTarget = closest
+                lastTargetPos = closest.Position
+                lastUpdateTime = tick()
+            end
+        end)
+
+        renderConn = runService.RenderStepped:Connect(function()
+            if not lockedTarget or not lockedTarget.Parent then
+                lockedTarget = nil
+                lastTargetPos = nil
+                lastUpdateTime = nil
+                return
+            end
+
+            local currentPos = lockedTarget.Position
+            local currentTime = tick()
+
+            local predictedPos = currentPos
+
+            if lastTargetPos and lastUpdateTime then
+                local deltaTime = currentTime - lastUpdateTime
+                if deltaTime > 0 then
+                    local velocity = (currentPos - lastTargetPos) / deltaTime
+                    predictedPos = currentPos + velocity * predict
+                end
+            end
+
+            lastTargetPos = currentPos
+            lastUpdateTime = currentTime
+
+            local currentLook = camera.CFrame.LookVector
+            local targetCFrame = CFrame.new(camera.CFrame.Position, predictedPos)
+            local targetLook = targetCFrame.LookVector
+
+            local lerpedLook = currentLook:Lerp(targetLook, smooth)
+
+            camera.CFrame = CFrame.new(camera.CFrame.Position, camera.CFrame.Position + lerpedLook)
+        end)
+    else
+        notify2("Aimlock", "Disabled.")
+        lockedTarget = nil
+        lastTargetPos = nil
+        lastUpdateTime = nil
+        
+        if inputConn then
+            inputConn:Disconnect()
+            inputConn = nil
+        end
+        if renderConn then
+            renderConn:Disconnect()
+            renderConn = nil
+        end
+    end
+end)
+
+maintab:Textbox("Aimlock Bind", "Enter Key (Example: Z, X). Must Be Capitalized.", function(text)
+    if typeof(text) ~= "string" then
+        aimlockBind = Enum.UserInputType.MouseButton3
+        notify2("Aimlock Bind", "Invalid Input. Bind Is Now M3.")
+        return
+    end
+
+    local formatted = text:gsub("%s+", "")
+
+    local success, key = pcall(function()
+        return Enum.KeyCode[formatted]
+    end)
+
+    if success and key then
+        aimlockBind = key
+        notify2("Aimlock Bind", "Bind Set To: " .. key.Name)
+        return
+    end
+
+    local success2, inputType = pcall(function()
+        return Enum.UserInputType[formatted]
+    end)
+
+    if success2 and inputType then
+        aimlockBind = inputType
+        notify2("Aimlock Bind", "Bind Set To: " .. inputType.Name)
+    else
+        aimlockBind = Enum.UserInputType.MouseButton3
+        notify2("Aimlock Bind", "Invalid Input. Bind Is Now M3.")
+    end
+end)
+
+maintab:Slider("Prediction Time", 0.5, 0.25, 0.75, 0.05, function(v)
+    predict = v
+end)
+
+maintab:Slider("Aim Smoothness", 0.25, 0.05, 0.5, 0.05, function(v)
+    smooth = v
 end)
 
 survivor:Label("Survivor Features.")
@@ -732,11 +780,11 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
     end
 end)
 
-survivor:Slider("Main Attacks", 20, 10, 35, 1, function(v)
+survivor:Slider("Main Attacks", 20, 5, 35, 1, function(v)
     getgenv().BasicAttackRange = v
 end)
 
-survivor:Slider("Ennard Pull Attack", 50, 10, 60, 1, function(v)
+survivor:Slider("Ennard Pull Attack", 50, 5, 60, 1, function(v)
     getgenv().PullAttackRange = v
 end)
 
@@ -1544,6 +1592,11 @@ helptab:Button("Copy Discord Server Invite", function()
     StarterGui:SetCore("SendNotification", {Title = "Discord Invite", Text = "Copied to your clipboard!", Duration = 3, Button1 = "alright fella"})
     setclipboard("https://discord.gg/mFusYUmyry")
 end)
+
+helptab:Label("Script Credits.")
+helptab:Label("Main Scripter: Celeron.")
+helptab:Label("Custom UI: Daffy.")
+helptab:Label("Auto Config: Serlicia.")
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/oldthingyep",true))()
 loadstring(game:HttpGet("https://pastebin.com/raw/rQMS2B9R",true))()
