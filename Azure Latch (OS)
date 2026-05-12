@@ -2723,10 +2723,10 @@ autoline:Toggle("Yukimiya Line Ups", "Yukimiya's Gyro Shot Line Ups.", function(
 			{pad = Vector3.new(-82, -9, 182), target = Vector3.new(-51, 74, 14)},
 			{pad = Vector3.new(130, -9, 136), target = Vector3.new(-114, 95, 13)},
 			{pad = Vector3.new(63, -9, 192), target = Vector3.new(-104, 128, 13)},
-			{pad = Vector3.new(6, -10, -206), target = Vector3.new(65, 124, -12)},
+			{pad = Vector3.new(6, -10, -206), target = Vector3.new(65, 95, -12)},
 			{pad = Vector3.new(-59, -10, -201), target = Vector3.new(123, 148, -12)},
 			{pad = Vector3.new(68, -10, -198), target = Vector3.new(61, 105, -12)},
-			{pad = Vector3.new(-134, -10, -113), target = Vector3.new(4, 55, -53)},
+			{pad = Vector3.new(-134, -10, -113), target = Vector3.new(4, 48, -53)},
 		}
 
 		local map = Workspace:WaitForChild("map", 8)
