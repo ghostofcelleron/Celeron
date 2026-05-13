@@ -280,7 +280,7 @@ maintab:Toggle("Aimlock", "Locks Onto The Closest Player When Clicking Bind.", f
 
             for _, other in ipairs(game.Players:GetPlayers()) do
                 if other ~= player and other.Character and other.Character.Parent == targetFolder then
-                    local root = other.Character:FindFirsWtChild("HumanoidRootPart")
+                    local root = other.Character:FindFirstChild("HumanoidRootPart")
                     if root then
                         local dist = (myRoot.Position - root.Position).Magnitude
                         if dist < shortest then
