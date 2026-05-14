@@ -2859,9 +2859,9 @@ autoline:Toggle("Rin Flow Line Ups", "Rin's Kill Shot Line Ups.", function(k)
 		}
 
 		local goalRelative = {
-			{pad = Vector3.new(158, -9, 321), target = Vector3.new(-12, 125, 54)},
+			{pad = Vector3.new(158, -9, 321), target = Vector3.new(-12, 80, 54)},
 			{pad = Vector3.new(-187, -9, 290), target = Vector3.new(-29, 83, 20)},
-			{pad = Vector3.new(-117, -10, -320), target = Vector3.new(14, 96, -53)},
+			{pad = Vector3.new(-117, -10, -320), target = Vector3.new(14, 80, -53)},
 			{pad = Vector3.new(198, -10, -265), target = Vector3.new(30, 90, -13)},
 		}
 
