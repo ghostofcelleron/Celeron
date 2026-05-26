@@ -2103,12 +2103,40 @@ local DashConfigs = {
         cooldown = 0.15,
         wait = 0.18
     },
+	SpeedyTurn = {
+        animId = "rbxassetid://109145068926350",
+        sliderVar = "speedyDist",
+        duration = 0.7,
+        cooldown = 0.15,
+        wait = 0.05
+    },
+	Fetch = {
+        animId = "rbxassetid://110734304480469",
+        sliderVar = "fetchDist",
+        duration = 0.525,
+        cooldown = 0.15,
+        wait = 0.125
+    },
     ZombieDribble = {
         animId = "rbxassetid://102294508090597",
         sliderVar = "zombDist",
         duration = 1.7,
         cooldown = 0.15,
         wait = 0.15
+    },
+	NutmegReflex = {
+        animId = "rbxassetid://73266865968554",
+        sliderVar = "reflexNutmegDist",
+        duration = 0.25,
+        cooldown = 0.15,
+        wait = 0.05
+    },
+	TwinSteps = {
+        animId = "rbxassetid://106299517516303",
+        sliderVar = "twinStepsDist",
+        duration = 0.15,
+        cooldown = 0.15,
+        wait = 1.75
     },
     KingsPath = {
         animId = "rbxassetid://73560885704292",
@@ -2347,9 +2375,27 @@ d:Slider("Close Quarter Dribble Distance", 0, 0, 250, 1, function(v)
     Distances.quarterDist = v
 end)
 
+d:Slider("Speedy Turn Distance", 0, 0, 250, 1, function(v)
+    Distances.speedyDist = v
+end)
+
+d:Slider("Fetch Distance", 0, 0, 100, 1, function(v)
+    Distances.fetchDist = v
+end)
+
 d:Label("Don Lorenzo Movement Buffs.")
 d:Slider("Zombie Dribble Distance", 0, 0, 250, 1, function(v)
     Distances.zombDist = v
+end)
+
+d:Label("Sae Movement Buffs.")
+d:Slider("Off The Ball (Nutmeg: Reflex) Distance", 0, 0, 100, 1, function(v)
+    Distances.reflexNutmegDist = v
+end)
+
+d:Label("Reo Movement Buffs.")
+d:Slider("Twin Steps Distance", 0, 0, 75, 1, function(v)
+    Distances.twinStepsDist = v
 end)
 
 d:Label("Barou Movement Buffs.")
