@@ -2138,6 +2138,23 @@ local DashConfigs = {
         cooldown = 0.15,
         wait = 0.15
     },
+	Creative = {
+        animId = "rbxassetid://77926234700416",
+        sliderVar = "creativeDist",
+        duration = 0.2,
+        cooldown = 0.15,
+        wait = 0.85
+    },
+	Beautiful = {
+        animIds = {
+            ["rbxassetid://132788854309681"] = true,
+            ["rbxassetid://138985718053619"] = true
+        },
+        sliderVar = "beautifulDist",
+        duration = 0.3,
+        cooldown = 0.15,
+        wait = 0
+    },
 	NutmegReflex = {
         animId = "rbxassetid://73266865968554",
         sliderVar = "reflexNutmegDist",
@@ -2411,7 +2428,16 @@ d:Slider("Zombie Dribble Distance", 0, 0, 250, 1, function(v)
 end)
 
 d:Label("Sae Movement Buffs.")
-d:Slider("Nutmeg: Reflex Distance", 0, 0, 100, 1, function(v)
+
+d:Slider("Beautiful Destruction Distance", 0, 0, 33, 1, function(v)
+    Distances.beautifulDist = v
+end)
+
+d:Slider("Beautiful Destruction: Side Variant Distance", 0, 0, 25, 1, function(v)
+    Distances.creativeDist = v
+end)
+
+d:Slider("Nutmeg: Reflex Distance", 0, 0, 50, 1, function(v)
     Distances.reflexNutmegDist = v
 end)
 
