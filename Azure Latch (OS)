@@ -2473,7 +2473,7 @@ end)
 
 d:Label("Hiori Movement Buffs.")
 
-d:Slider("Glacial Cut (Variant: Forward) Distance", 0, 0, 100, 1, function(v)
+d:Slider("Glacial Cut (Variant: Forward) Distance", 0, 0, 175, 1, function(v)
     Distances.glacialDist = v
 end)
 
