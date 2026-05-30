@@ -2145,6 +2145,13 @@ local DashConfigs = {
         cooldown = 0.15,
         wait = 0.85
     },
+	GlacialCut = {
+        animId = "rbxassetid://116769918041530",
+        sliderVar = "glacialDist",
+        duration = 0.5,
+        cooldown = 0.15,
+        wait = 0.425
+    },
 	Beautiful = {
         animIds = {
             ["rbxassetid://132788854309681"] = true,
@@ -2441,11 +2448,6 @@ d:Slider("Nutmeg: Reflex Distance", 0, 0, 50, 1, function(v)
     Distances.reflexNutmegDist = v
 end)
 
-d:Label("Reo Movement Buffs.")
-d:Slider("Twin Steps Distance", 0, 0, 75, 1, function(v)
-    Distances.twinStepsDist = v
-end)
-
 d:Label("Barou Movement Buffs.")
 d:Slider("King's Path Distance", 0, 0, 750, 1, function(v)
     Distances.kingsDist = v
@@ -2462,6 +2464,17 @@ end)
 
 d:Slider("Golden Zone Distance (Req. Ball)", 0, 0, 400, 1, function(v)
     Distances.goldenDist = v
+end)
+
+d:Label("Reo Movement Buffs.")
+d:Slider("Twin Steps Distance", 0, 0, 75, 1, function(v)
+    Distances.twinStepsDist = v
+end)
+
+d:Label("Hiori Movement Buffs.")
+
+d:Slider("Glacial Cut (Variant: Forward) Distance", 0, 0, 100, 1, function(v)
+    Distances.glacialDist = v
 end)
 
 local autoact = maintab2:Folder("Auto Activate Features.", Color3.fromRGB(24, 255, 228), true)
