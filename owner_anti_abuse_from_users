@@ -1,0 +1,31 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local whitelist = {
+    [8013242476] = true,
+    [9328672326] = true
+}
+
+local blocks = {}
+
+local success, data = pcall(function()
+    return game:HttpGet("https://pastebin.com/raw/1SW78EjW")
+end)
+
+if success then
+    for line in data:gmatch("[^\r\n]+") do
+        line = line:match("^%s*(.-)%s*$")
+        if line ~= "" then
+            blocks[line] = true
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(3) do
+        if not whitelist[LocalPlayer.UserId]
+        and blocks[game.JobId] then
+            game:Shutdown()
+        end
+    end
+end)
