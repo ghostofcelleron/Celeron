@@ -1709,44 +1709,62 @@ add:Toggle("Infinite Range Passing", "Pass To The Closest Teammate To Your Mouse
 end)
 
 add:Toggle("Auto Break Server (Demon's Contract)", "When Using Demon's Contract With Kunigami, It Will Automatically Reset.", function(v)
-    getgenv().AutoBreakServer = v
+    local Players = game:GetService("Players")
+    local StarterGui = game:GetService("StarterGui")
 
-    game:GetService("StarterGui"):SetCore("SendNotification", {
+    getgenv().AutoBreakServerEnabled = v
+
+    StarterGui:SetCore("SendNotification", {
         Title = "Auto Break Server",
         Text = v and "Enabled." or "Disabled.",
         Duration = 3
     })
 
-    if getgenv().AutoBreakServer then
-        getgenv().AutoBreakServer:Disconnect()
-        getgenv().AutoBreakServer = nil
+    if getgenv().AutoBreakServerConnection then
+        getgenv().AutoBreakServerConnection:Disconnect()
+        getgenv().AutoBreakServerConnection = nil
     end
 
-    getgenv().DemonContract = false
+    getgenv().DemonContractActive = false
 
-    if not v then
-        return
+    if not v then return end
+
+    local function hookCharacter(char)
+        local humanoid = char:WaitForChild("Humanoid")
+        local animator = humanoid:WaitForChild("Animator")
+
+        if getgenv().AutoBreakServerConnection then
+            getgenv().AutoBreakServerConnection:Disconnect()
+        end
+
+        getgenv().AutoBreakServerConnection = animator.AnimationPlayed:Connect(function(track)
+            if not getgenv().AutoBreakServerEnabled or getgenv().DemonContractActive then
+                return
+            end
+
+            if track.Animation and track.Animation.AnimationId == "rbxassetid://91509980165830" then
+                getgenv().DemonContractActive = true
+
+                task.delay(2, function()
+                    getgenv().DemonContractActive = false
+
+                    local charNow = Players.LocalPlayer.Character
+                    if getgenv().AutoBreakServerEnabled and charNow then
+                        local hum = charNow:FindFirstChildOfClass("Humanoid")
+                        if hum then
+                            hum.Health = 0
+                        end
+                    end
+                end)
+            end
+        end)
     end
 
-    getgenv().AutoBreakServer = game:GetService("Players").LocalPlayer.Character:WaitForChild("Humanoid"):WaitForChild("Animator").AnimationPlayed:Connect(function(track)
-        if not getgenv().AutoBreakServer or getgenv().DemonContract then
-            return
-        end
+    if Players.LocalPlayer.Character then
+        hookCharacter(Players.LocalPlayer.Character)
+    end
 
-        if track.Animation and track.Animation.AnimationId == "rbxassetid://91509980165830" then
-            getgenv().DemonContract = true
-
-            task.delay(2, function()
-                getgenv().DemonContract = false
-
-                if getgenv().AutoBreakServer
-                and game:GetService("Players").LocalPlayer.Character
-                and game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-                    game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 0
-                end
-            end)
-        end
-    end)
+    Players.LocalPlayer.CharacterAdded:Connect(hookCharacter)
 end)
 
 add:Button("Steal Screen Time (funny)", "Click Z To Disable, Steals Screen Time.", function()
