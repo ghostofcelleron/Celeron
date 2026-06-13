@@ -3707,7 +3707,7 @@ local airDribbleState = {
     lastKick = 0
 }
 
-local cooldown = 0.75
+local cooldown = 0.5
 
 local function notify(text)
     game:GetService("StarterGui"):SetCore("SendNotification", {
