@@ -1134,7 +1134,6 @@ local function onCharacterAdded(char)
     if connections[target] then connections[target]:Disconnect() end
     
     connections[target] = animator.AnimationPlayed:Connect(function(animTrack)
-        -- Support checking both animations inside the table
         isTackleAnim = false
         for i = 1, #tackle_anim do
             if animTrack.Animation.AnimationId == tackle_anim[i] then
@@ -2790,7 +2789,6 @@ game.UserInputService.InputEnded:Connect(function(input, bg)
 end) 
 
 game:GetService("RunService").RenderStepped:Connect(function() 
-    -- Check if the feature is completely turned off OR if the activation key isn't active
     if not autoActivateState.toggleState or autoActivateState.db then 
         if game.CoreGui:FindFirstChild("AutoActGui") then 
             game.CoreGui.AutoActGui:Destroy() 
@@ -2798,7 +2796,6 @@ game:GetService("RunService").RenderStepped:Connect(function()
         return 
     end 
     
-    -- If it's enabled and active, ensure the green dot exists on screen
     if not game.CoreGui:FindFirstChild("AutoActGui") then 
         gui = Instance.new("ScreenGui") 
         gui.Name = "AutoActGui" 
@@ -2818,7 +2815,6 @@ game:GetService("RunService").RenderStepped:Connect(function()
         gui.Parent = game.CoreGui 
     end 
     
-    -- Keep running character, ball, and distance checks underneath to fire the remote
     char = game.Players.LocalPlayer.Character 
     hrp = char and char:FindFirstChild("HumanoidRootPart") 
     if not hrp then return end 
