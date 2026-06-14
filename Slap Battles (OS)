@@ -1424,7 +1424,7 @@ getgenv().HasDangerousTool = function(player)
 	if not player:FindFirstChildOfClass("Backpack") and not player.Character then return false end
 
 	for _, tool in ipairs((player:FindFirstChildOfClass("Backpack") or {}):GetChildren()) do
-		if ({ Error = true, OVERKILL = true, ["The Flex"] = true, rob = true, Leash = true })[tool.Name] then
+		if ({ Error = true, OVERKILL = true, ["The Flex"] = true, rob = true, Link = true, Leash = true })[tool.Name] then
 			return true
 		end
 	end
