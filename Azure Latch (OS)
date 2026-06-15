@@ -91,7 +91,7 @@ else
     hometab:Banner("13308582899", 135)
 end
 
-local notifsup = maintab2:Folder("Notification Suppression.", Color3.fromRGB(24, 255, 228), true)
+notifsup = maintab2:Folder("Notification Suppression.", Color3.fromRGB(24, 255, 228), true)
 notifsup:Label("Notification Suppression: Useful When Streaming.")
 
 local suppressNotifs = false
@@ -1985,8 +1985,6 @@ end)
 local th = maintab:Folder("Trap Helper.", Color3.fromRGB(24, 255, 228), true)
 th:Label("Trap Helper: Automatically Moves Toward Ball During Trap Moves.")
 
-local player = Players.LocalPlayer
-
 local trapAnims = {
     "rbxassetid://73387016994281",
     "rbxassetid://101043441232233",
@@ -3301,6 +3299,176 @@ autoline:Toggle("Rin Flow Line Ups", "Rin's Kill Shot Line Ups.", function(k)
 	end
 end)
 
+local linecreator = maintab2:Folder("Line Up Creator Features.", Color3.fromRGB(24, 255, 228), true)
+linecreator:Label("Line Up Creator: Create Your Own Lineups!")
+
+linecreator:Button("Copy Lineup Code", "Click To Log A Lineup At The Current Position & Target.", function()
+    local Players = game:GetService("Players")
+    local lp = Players.LocalPlayer
+    local char = lp.Character
+
+    if not char or not char:FindFirstChild("HumanoidRootPart") then
+        return
+    end
+
+    local hrp = char.HumanoidRootPart
+
+    local camera = workspace.CurrentCamera
+    local viewport = camera.ViewportSize
+
+    local ray = camera:ViewportPointToRay(
+        viewport.X / 2,
+        viewport.Y / 2
+    )
+
+    local params = RaycastParams.new()
+	params.FilterDescendantsInstances = {
+    	char,
+    	workspace.map.gkbarriar.Abarriar,
+    	workspace.map.gkbarriar.Bbarriar
+	}
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+
+    local result = workspace:Raycast(ray.Origin, ray.Direction * 5000, params)
+    if not result then
+        return
+    end
+
+    local hitPos = result.Position
+
+    local map = workspace:FindFirstChild("map")
+    if not map then return end
+
+    local aGoal = map:FindFirstChild("Agoal")
+    local bGoal = map:FindFirstChild("Bgoal")
+    if not aGoal or not bGoal then return end
+
+    local aPos = aGoal.Position
+    local bPos = bGoal.Position
+
+    local distA = (hrp.Position - aPos).Magnitude
+    local distB = (hrp.Position - bPos).Magnitude
+
+    local goalPos = (distA <= distB) and aPos or bPos
+
+    local targetOffset = hitPos - goalPos
+    local playerOffset = hrp.Position - goalPos
+
+    local function r(n)
+        return math.round(n)
+    end
+
+    local code = string.format(
+        "t(%d,%d,%d)p(%d,%d,%d)",
+        r(targetOffset.X),
+        r(targetOffset.Y),
+        r(targetOffset.Z),
+        r(playerOffset.X),
+        r(playerOffset.Y),
+        r(playerOffset.Z)
+    )
+
+    setclipboard(code)
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Custom Lineup Copied!",
+        Text = code,
+        Duration = 5
+    })
+end)
+
+local lineupColorsss = {
+    Color3.fromRGB(255, 0, 0),
+    Color3.fromRGB(255, 128, 0),
+    Color3.fromRGB(255, 255, 0),
+    Color3.fromRGB(0, 255, 0),
+    Color3.fromRGB(0, 0, 255),
+    Color3.fromRGB(128, 0, 255),
+    Color3.fromRGB(255, 0, 255),
+    Color3.fromRGB(128, 255, 0),
+    Color3.fromRGB(120, 72, 0),
+    Color3.fromRGB(255, 255, 255),
+    Color3.fromRGB(0, 0, 0)
+}
+
+linecreator:Textbox("Enter Lineup Code(s)", "Enter Lineup Codes. Enter Nothing To Disable.", function(text)
+    local player = game:GetService("Players").LocalPlayer
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+    if not hrp then
+        return
+    end
+
+    local map = workspace:FindFirstChild("map")
+    if not map then
+        return
+    end
+
+    local agoal = map:FindFirstChild("Agoal")
+    local bgoal = map:FindFirstChild("Bgoal")
+
+    if not agoal or not bgoal then
+        return
+    end
+
+    for i = 1, padCount do
+        local p = workspace:FindFirstChild("pad" .. i)
+        if p then
+            p:Destroy()
+        end
+    end
+
+    for i = 1, targetCount do
+        local t = workspace:FindFirstChild("target" .. i)
+        if t then
+            t:Destroy()
+        end
+    end
+
+    padCount = 0
+    targetCount = 0
+
+    local colorIndex = 1
+
+    for tx, ty, tz, px, py, pz in text:gmatch(
+        "t%((%-?[%d%.]+),(%-?[%d%.]+),(%-?[%d%.]+)%)p%((%-?[%d%.]+),(%-?[%d%.]+),(%-?[%d%.]+)%)"
+    ) do
+		
+        local playerOffset = Vector3.new(
+    		tonumber(px),
+    		tonumber(py) - 3,
+    		tonumber(pz)
+		)
+
+        local targetOffset = Vector3.new(
+            tonumber(tx),
+            tonumber(ty),
+            tonumber(tz)
+        )
+
+        local worldPosA = agoal.Position + playerOffset
+        local worldPosB = bgoal.Position + playerOffset
+
+        local goalPos = ((hrp.Position - worldPosA).Magnitude <= (hrp.Position - worldPosB).Magnitude)
+            and agoal.Position
+            or bgoal.Position
+
+        local col = lineupColorsss[((colorIndex - 1) % #lineupColorsss) + 1]
+
+        pad(goalPos + playerOffset, col)
+        target(goalPos + targetOffset, col)
+
+        colorIndex += 1
+    end
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Lineups Loaded",
+        Text = string.format("%d lineup(s) created.", colorIndex - 1),
+        Duration = 5
+    })
+end)
+
 local autopos = maintab2:Folder("Auto Position Features.", Color3.fromRGB(24, 255, 228), true)
 autopos:Label("Auto Position: Automatically Sets Certain Positions.")
 
@@ -4300,7 +4468,7 @@ local function show()
     mobform.gui = sg
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 100, 0, 100)
+    btn.Size = UDim2.new(0, 60, 0, 60)
     btn.Position = UDim2.new(0.5, -50, 0.5, -50)
     btn.AnchorPoint = Vector2.new(0.5, 0.5)
     btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
@@ -4408,7 +4576,7 @@ local function show()
     airDribble.gui = sg
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 100, 0, 100)
+    btn.Size = UDim2.new(0, 60, 0, 60)
     btn.Position = UDim2.new(0.5, -50, 0.5, -50)
     btn.AnchorPoint = Vector2.new(0.5, 0.5)
     btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
@@ -4543,13 +4711,14 @@ mobilessss:Button("Create Mobile PC Key", "Creates A Mobile PC Key.", function()
     sg.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 100, 0, 100)
+    btn.Size = UDim2.new(0, 60, 0, 60)
     btn.Position = UDim2.new(0.5, math.random(-150, 150), 0.5, math.random(-150, 150))
     btn.AnchorPoint = Vector2.new(0.5, 0.5)
 
     btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     btn.BorderSizePixel = 0
     btn.Text = key
+	btn.Transparency = 0.4
     btn.TextColor3 = Color3.fromRGB(220, 220, 220)
     btn.Font = Enum.Font.GothamSemibold
     btn.TextSize = 20
