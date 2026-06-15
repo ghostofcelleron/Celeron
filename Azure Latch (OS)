@@ -3391,7 +3391,7 @@ local lineupColorsss = {
     Color3.fromRGB(0, 0, 0)
 }
 
-linecreator:Textbox("Enter Lineup Code(s)", "Enter Lineup Codes. Enter Nothing To Disable.", function(text)
+linecreator:Textbox("Enter Lineup Code(s)", "Enter Lineup Codes (seperated by commas). Enter Nothing To Disable.", function(text)
     local player = game:GetService("Players").LocalPlayer
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
