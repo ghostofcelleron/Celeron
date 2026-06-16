@@ -3322,12 +3322,12 @@ linecreator:Button("Copy Lineup Code", "Click To Log A Lineup At The Current Pos
     )
 
     local params = RaycastParams.new()
-	params.FilterDescendantsInstances = {
-    	char,
-    	workspace.map.gkbarriar.Abarriar,
-    	workspace.map.gkbarriar.Bbarriar
-	}
-	params.FilterType = Enum.RaycastFilterType.Blacklist
+    params.FilterDescendantsInstances = {
+        char,
+        workspace.map.gkbarriar.Abarriar,
+        workspace.map.gkbarriar.Bbarriar
+    }
+    params.FilterType = Enum.RaycastFilterType.Blacklist
 
     local result = workspace:Raycast(ray.Origin, ray.Direction * 5000, params)
     if not result then
@@ -3337,11 +3337,16 @@ linecreator:Button("Copy Lineup Code", "Click To Log A Lineup At The Current Pos
     local hitPos = result.Position
 
     local map = workspace:FindFirstChild("map")
-    if not map then return end
+    if not map then
+        return
+    end
 
     local aGoal = map:FindFirstChild("Agoal")
     local bGoal = map:FindFirstChild("Bgoal")
-    if not aGoal or not bGoal then return end
+
+    if not aGoal or not bGoal then
+        return
+    end
 
     local aPos = aGoal.Position
     local bPos = bGoal.Position
@@ -3349,7 +3354,8 @@ linecreator:Button("Copy Lineup Code", "Click To Log A Lineup At The Current Pos
     local distA = (hrp.Position - aPos).Magnitude
     local distB = (hrp.Position - bPos).Magnitude
 
-    local goalPos = (distA <= distB) and aPos or bPos
+    local useA = distA <= distB
+    local goalPos = useA and aPos or bPos
 
     local targetOffset = hitPos - goalPos
     local playerOffset = hrp.Position - goalPos
@@ -3359,13 +3365,14 @@ linecreator:Button("Copy Lineup Code", "Click To Log A Lineup At The Current Pos
     end
 
     local code = string.format(
-        "t(%d,%d,%d)p(%d,%d,%d)",
+        "t(%d,%d,%d)p(%d,%d,%d)%s",
         r(targetOffset.X),
         r(targetOffset.Y),
         r(targetOffset.Z),
         r(playerOffset.X),
         r(playerOffset.Y),
-        r(playerOffset.Z)
+        r(playerOffset.Z),
+        useA and "a" or "b"
     )
 
     setclipboard(code)
@@ -3431,15 +3438,14 @@ linecreator:Textbox("Enter Lineup Code(s)", "Enter Lineup Codes (seperated by co
 
     local colorIndex = 1
 
-    for tx, ty, tz, px, py, pz in text:gmatch(
-        "t%((%-?[%d%.]+),(%-?[%d%.]+),(%-?[%d%.]+)%)p%((%-?[%d%.]+),(%-?[%d%.]+),(%-?[%d%.]+)%)"
+    for tx, ty, tz, px, py, pz, goalLetter in text:gmatch(
+        "t%((%-?[%d%.]+),(%-?[%d%.]+),(%-?[%d%.]+)%)p%((%-?[%d%.]+),(%-?[%d%.]+),(%-?[%d%.]+)%)([ab])"
     ) do
-		
         local playerOffset = Vector3.new(
-    		tonumber(px),
-    		tonumber(py) - 3,
-    		tonumber(pz)
-		)
+            tonumber(px),
+            tonumber(py) - 3,
+            tonumber(pz)
+        )
 
         local targetOffset = Vector3.new(
             tonumber(tx),
@@ -3447,10 +3453,7 @@ linecreator:Textbox("Enter Lineup Code(s)", "Enter Lineup Codes (seperated by co
             tonumber(tz)
         )
 
-        local worldPosA = agoal.Position + playerOffset
-        local worldPosB = bgoal.Position + playerOffset
-
-        local goalPos = ((hrp.Position - worldPosA).Magnitude <= (hrp.Position - worldPosB).Magnitude)
+        local goalPos = goalLetter == "a"
             and agoal.Position
             or bgoal.Position
 
