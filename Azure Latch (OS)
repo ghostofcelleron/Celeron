@@ -950,262 +950,275 @@ local ipairs = ipairs
 local pairs = pairs
 local unpack = unpack
 
-local autoSkillState = { 
-    suppressNotifs = false, 
-    autoSkills = { 
-        ["toggleDribble"] = "dribble", 
-        ["toggleCounter1"] = "skill1", 
-        ["toggleCounter2"] = "skill2", 
-        ["toggleCounter3"] = "skill3", 
-        ["toggleCounter4"] = "skill4", 
-        ["toggleCounter5"] = "skill5", 
-        ["toggleTSpecial"] = "Tspecialer" 
-    }, 
-    toggleDribble = false, 
-    toggleCounter1 = false, 
-    toggleCounter2 = false, 
-    toggleCounter3 = false, 
-    toggleCounter4 = false, 
-    toggleCounter5 = false, 
-    toggleTSpecial = false, 
-    keybindsEnabled = false, 
-    keybindSetup = false, 
-    cooldowns = {}, 
-    showActiveCounters = false, 
+local autoSkillState = {
+    suppressNotifs = false,
+    autoSkills = {
+        ["toggleDribble"] = "dribble",
+        ["toggleCounter1"] = "skill1",
+        ["toggleCounter2"] = "skill2",
+        ["toggleCounter3"] = "skill3",
+        ["toggleCounter4"] = "skill4",
+        ["toggleCounter5"] = "skill5",
+        ["toggleTSpecial"] = "Tspecialer"
+    },
+    toggleDribble = false,
+    toggleCounter1 = false,
+    toggleCounter2 = false,
+    toggleCounter3 = false,
+    toggleCounter4 = false,
+    toggleCounter5 = false,
+    toggleTSpecial = false,
+    keybindsEnabled = false,
+    keybindSetup = false,
+    cooldowns = {},
+    showActiveCounters = false,
     useClosestTeammate = false,
-    mCD = 65
-} 
+    mCD = 65,
+    fireRate = 0.05,
+    playerCooldown = 0.33,
+}
 
-buffer = buffer or { fromstring = function(str) return str end } 
+local buffer = buffer or { fromstring = function(str) return str end }
+local player = Players.LocalPlayer
+local localplayer = player
 
-local player = Players.LocalPlayer 
+local StarterGui = game:GetService("StarterGui")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local tackle_anim = {
     "rbxassetid://109744655458082",
     "rbxassetid://113088324958896"
 }
 
-local function notify2(title, text, duration) 
-    if not autoSkillState.suppressNotifs then 
-        StarterGui:SetCore("SendNotification", { Title = title, Text = text, Duration = duration or 2 }) 
-    end 
-end 
+local function notify2(title, text, duration)
+    if not autoSkillState.suppressNotifs then
+        StarterGui:SetCore("SendNotification", { Title = title, Text = text, Duration = duration or 2 })
+    end
+end
 
-local screenGui = Instance.new("ScreenGui") 
-screenGui.Name = "AutoCounterStatus" 
-screenGui.ResetOnSpawn = false 
-screenGui.Parent = player:WaitForChild("PlayerGui") 
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AutoCounterStatus"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
 
-local statusFrame = Instance.new("Frame") 
-statusFrame.Size = UDim2.new(0, 320, 0, 360) 
-statusFrame.Position = UDim2.new(1, -340, 0.5, -180) 
-statusFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
-statusFrame.BorderSizePixel = 0 
-statusFrame.BackgroundTransparency = 0 
-statusFrame.Visible = false 
-statusFrame.Parent = screenGui 
+local statusFrame = Instance.new("Frame")
+statusFrame.Size = UDim2.new(0, 320, 0, 360)
+statusFrame.Position = UDim2.new(1, -340, 0.5, -180)
+statusFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+statusFrame.BorderSizePixel = 0
+statusFrame.BackgroundTransparency = 0.1
+statusFrame.Visible = false
+statusFrame.Parent = screenGui
 
-local uiCorner = Instance.new("UICorner") 
-uiCorner.CornerRadius = UDim.new(0, 10) 
-uiCorner.Parent = statusFrame 
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 10)
+uiCorner.Parent = statusFrame
 
-local uiStroke = Instance.new("UIStroke") 
-uiStroke.Thickness = 2 
-uiStroke.Color = Color3.fromRGB(0, 0, 0) 
-uiStroke.Parent = statusFrame 
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Thickness = 2
+uiStroke.Color = Color3.fromRGB(0, 0, 0)
+uiStroke.Parent = statusFrame
 
-local uiList = Instance.new("UIListLayout") 
-uiList.SortOrder = Enum.SortOrder.LayoutOrder 
-uiList.Padding = UDim.new(0, 6) 
-uiList.Parent = statusFrame 
+local uiList = Instance.new("UIListLayout")
+uiList.SortOrder = Enum.SortOrder.LayoutOrder
+uiList.Padding = UDim.new(0, 6)
+uiList.Parent = statusFrame
 
-local titleLabel = Instance.new("TextLabel") 
-titleLabel.Size = UDim2.new(1, 0, 0, 40) 
-titleLabel.BackgroundTransparency = 1 
-titleLabel.Text = "Auto Counters" 
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255) 
-titleLabel.TextScaled = true 
-titleLabel.Font = Enum.Font.GothamBold 
-titleLabel.Parent = statusFrame 
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 40)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "Auto Counters"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextScaled = true
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Parent = statusFrame
 
-local statusLabels = {} 
-
-local counters = { 
-    {name = "Auto Dribble", key = "toggleDribble", bind = "Z"}, 
-    {name = "Auto Counter (Move One)", key = "toggleCounter1", bind = "X"}, 
-    {name = "Auto Counter (Move Two)", key = "toggleCounter2", bind = "C"}, 
-    {name = "Auto Counter (Move Three)", key = "toggleCounter3", bind = "V"}, 
-    {name = "Auto Counter (Move Four)", key = "toggleCounter4", bind = "N"}, 
-    {name = "Auto Counter (Move Five)", key = "toggleCounter5", bind = "M"}, 
-    {name = "T Special", key = "toggleTSpecial", bind = "L"}, 
+local statusLabels = {}
+local counters = {
+    {name = "Auto Dribble", key = "toggleDribble", bind = "Z"},
+    {name = "Auto Counter (Move One)", key = "toggleCounter1", bind = "X"},
+    {name = "Auto Counter (Move Two)", key = "toggleCounter2", bind = "C"},
+    {name = "Auto Counter (Move Three)", key = "toggleCounter3", bind = "V"},
+    {name = "Auto Counter (Move Four)", key = "toggleCounter4", bind = "N"},
+    {name = "Auto Counter (Move Five)", key = "toggleCounter5", bind = "M"},
+    {name = "T Special", key = "toggleTSpecial", bind = "L"},
 }
 
-local function updateStatusGUI() 
-    if not autoSkillState.showActiveCounters then return end 
-    
-    for i = 1, #statusLabels do 
-        statusLabels[i]:Destroy() 
-    end 
-    statusLabels = {} 
-    
-    for i = 1, #counters do 
+local function updateStatusGUI()
+    if not autoSkillState.showActiveCounters then return end
+    for i = 1, #statusLabels do
+        statusLabels[i]:Destroy()
+    end
+    statusLabels = {}
+    for i = 1, #counters do
         local c = counters[i]
-        local enabled = autoSkillState[c.key] 
-        local lbl = Instance.new("TextLabel") 
-        lbl.Size = UDim2.new(1, 0, 0, 28) 
-        lbl.BackgroundTransparency = 1 
-        lbl.Text = c.name .. " [" .. c.bind .. "]" 
-        lbl.TextColor3 = enabled and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 80, 80) 
-        lbl.TextXAlignment = Enum.TextXAlignment.Center 
-        lbl.Font = Enum.Font.GothamSemibold 
-        lbl.TextScaled = true 
-        lbl.Parent = statusFrame 
+        local enabled = autoSkillState[c.key]
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(1, 0, 0, 28)
+        lbl.BackgroundTransparency = 1
+        lbl.Text = c.name .. " [" .. c.bind .. "]"
+        lbl.TextColor3 = enabled and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 80, 80)
+        lbl.TextXAlignment = Enum.TextXAlignment.Center
+        lbl.Font = Enum.Font.GothamSemibold
+        lbl.TextScaled = true
+        lbl.Parent = statusFrame
         statusLabels[#statusLabels + 1] = lbl
-    end 
-end 
+    end
+end
 
-local connections = {} 
+local connections = {}
 local byteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
 
-local function getClosestTeammate() 
-    local character = player.Character
-    local root = character and character:FindFirstChild("HumanoidRootPart") 
-    if not root then return nil end 
-    local closest = nil 
-    local closestDistSq = math.huge 
+local function hasball()
+    return localplayer.Character and localplayer.Character:FindFirstChild("Ball") ~= nil
+end
+
+local function getClosestTeammate()
+    local character = localplayer.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then return nil end
+    local closest, closestDistSq = nil, math.huge
     local pPos = root.Position
-    local pTeam = player.Team
-    local playersList = Players:GetPlayers()
-    for i = 1, #playersList do 
-        local plr = playersList[i]
-        if plr ~= player and plr.Team == pTeam and plr.Character then 
-            local hrp = plr.Character:FindFirstChild("HumanoidRootPart") 
-            if hrp then 
-                local tPos = hrp.Position
-                local distX = pPos.X - tPos.X
-                local distY = pPos.Y - tPos.Y
-                local distZ = pPos.Z - tPos.Z
-                local distSq = (distX * distX) + (distY * distY) + (distZ * distZ)
-                
-                if distSq < closestDistSq then 
-                    closestDistSq = distSq 
-                    closest = plr 
-                end 
-            end 
-        end 
-    end 
-    return closest 
-end 
-
-local function fireSkill(skillName, targetPlayer) 
-    local args 
-    if autoSkillState.useClosestTeammate and targetPlayer then 
-        local targetChar = targetPlayer.Character
-        if targetChar then
-            args = { buffer.fromstring(buffers["base"]), { { skillName, targetChar } } } 
-        else
-            args = { buffer.fromstring(buffers["base"]), { { skillName } } } 
+    local pTeam = localplayer.Team
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= localplayer and plr.Team == pTeam and plr.Character then
+            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local distSq = (pPos - hrp.Position).Magnitude ^ 2
+                if distSq < closestDistSq then
+                    closestDistSq = distSq
+                    closest = plr
+                end
+            end
         end
-    else 
-        args = { buffer.fromstring(buffers["base"]), { { skillName } } } 
-    end 
-    byteNetReliable:FireServer(unpack(args)) 
-end 
+    end
+    return closest
+end
 
-local toggleKeys = { "toggleCounter1", "toggleCounter2", "toggleCounter3", "toggleCounter4", "toggleCounter5" }
+local function fireSkill(skillName, targetPlayer)
+    if not hasball() then return end
+    local args
+    if autoSkillState.useClosestTeammate and targetPlayer then
+        local targetChar = targetPlayer.Character
+        args = { buffer.fromstring(buffers["base"]), {{ skillName, targetChar }} }
+    else
+        args = { buffer.fromstring(buffers["base"]), {{ skillName }} }
+    end
+    byteNetReliable:FireServer(unpack(args))
+end
 
-local function onCharacterAdded(char)
-    local humanoid = char:WaitForChild("Humanoid", 5)
-    if not humanoid then return end
-    local animator = humanoid:FindFirstChildOfClass("Animator") or humanoid:WaitForChild("Animator", 3)
-    if not animator then return end
-    local target = Players:GetPlayerFromCharacter(char)
-    if not target or target == player or target.Team == player.Team then return end
-    if target.Team == player.Team then return end
+local toggleKeys = {"toggleCounter1", "toggleCounter2", "toggleCounter3", "toggleCounter4", "toggleCounter5"}
 
-    if connections[target] then connections[target]:Disconnect() end
-    
-    connections[target] = animator.AnimationPlayed:Connect(function(animTrack)
-        local isTackleAnim = false
-        for i = 1, #tackle_anim do
-            if animTrack.Animation.AnimationId == tackle_anim[i] then
-                isTackleAnim = true
+local function monitorTackleAnimation(animator, targetPlayer)
+    if connections[targetPlayer] and connections[targetPlayer].animLoop then
+        connections[targetPlayer].animLoop:Disconnect()
+    end
+
+    local animConnection = animator.AnimationPlayed:Connect(function(animTrack)
+        local isTackle = false
+        for _, id in ipairs(tackle_anim) do
+            if animTrack.Animation.AnimationId == id then
+                isTackle = true
                 break
             end
         end
-        
-        if isTackleAnim then
-            if target.Team == player.Team then return end
+        if not isTackle then return end
 
-            local character = player.Character
-            local root = character and character:FindFirstChild("HumanoidRootPart")
-            local targetHRP = char:FindFirstChild("HumanoidRootPart")
-            if root and targetHRP then
-                local pPos = root.Position
-                local tPos = targetHRP.Position
-                local distX = pPos.X - tPos.X
-                local distY = pPos.Y - tPos.Y
-                local distZ = pPos.Z - tPos.Z
-                local distSq = (distX * distX) + (distY * distY) + (distZ * distZ)
-                if distSq > (autoSkillState.mCD * autoSkillState.mCD) then return end
-            else
+        local lastFire = 0
+        local loopConn
+        loopConn = game:GetService("RunService").Heartbeat:Connect(function()
+            if not animTrack.IsPlaying or not hasball() then
+                if loopConn then loopConn:Disconnect() end
                 return
             end
+
             local now = tick()
-            if now - (autoSkillState.cooldowns[target] or 0) >= 0.5 then
-                autoSkillState.cooldowns[target] = now
-                local closestTeammate = autoSkillState.useClosestTeammate and getClosestTeammate() or nil
-                for i = 1, 5 do
-                    local toggleKey = toggleKeys[i]
-                    if autoSkillState[toggleKey] then
-                        local skillName = autoSkillState.autoSkills[toggleKey]
-                        if skillName then fireSkill(skillName, closestTeammate) end
-                    end
-                end
-                if autoSkillState.toggleTSpecial then
-                    task.delay(0.05, function()
-                        local tsName = autoSkillState.autoSkills["toggleTSpecial"]
-                        if tsName then fireSkill(tsName, closestTeammate) end
-                    end)
-                end
-                if autoSkillState.toggleDribble then
-                    local dribbleName = autoSkillState.autoSkills["toggleDribble"]
-                    if dribbleName then fireSkill(dribbleName, closestTeammate) end
+
+            if autoSkillState.cooldowns[targetPlayer] and now - autoSkillState.cooldowns[targetPlayer] < autoSkillState.playerCooldown then
+                return
+            end
+
+            if now - lastFire < autoSkillState.fireRate then return end
+            lastFire = now
+
+            local myChar = localplayer.Character
+            local root = myChar and myChar:FindFirstChild("HumanoidRootPart")
+            local targetHRP = targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+
+            if root and targetHRP and (root.Position - targetHRP.Position).Magnitude > autoSkillState.mCD then
+                return
+            end
+
+            local closestTeammate = autoSkillState.useClosestTeammate and getClosestTeammate() or nil
+
+            for _, key in ipairs(toggleKeys) do
+                if autoSkillState[key] then
+                    fireSkill(autoSkillState.autoSkills[key], closestTeammate)
                 end
             end
-        end
+
+            if autoSkillState.toggleTSpecial then
+                fireSkill(autoSkillState.autoSkills["toggleTSpecial"], closestTeammate)
+            end
+
+            if autoSkillState.toggleDribble then
+                fireSkill(autoSkillState.autoSkills["toggleDribble"], closestTeammate)
+            end
+
+            autoSkillState.cooldowns[targetPlayer] = now
+        end)
+
+        connections[targetPlayer] = connections[targetPlayer] or {}
+        connections[targetPlayer].animLoop = loopConn
     end)
+
+    connections[targetPlayer] = connections[targetPlayer] or {}
+    connections[targetPlayer].animatorConn = animConnection
 end
 
-local function onPlayerAdded(plr) 
-    if plr == player then return end 
-    if plr.Character then onCharacterAdded(plr.Character) end 
-    plr.CharacterAdded:Connect(onCharacterAdded) 
-end 
+local function setupPlayer(plr)
+    if plr == localplayer then return end
+    local function onCharAdded(char)
+        if connections[plr] then
+            for _, conn in pairs(connections[plr]) do
+                if typeof(conn) == "RBXScriptConnection" then conn:Disconnect() end
+            end
+        end
+        local humanoid = char:WaitForChild("Humanoid", 6)
+        if not humanoid then return end
+        local animator = humanoid:FindFirstChildOfClass("Animator") or humanoid:WaitForChild("Animator", 4)
+        if animator then
+            monitorTackleAnimation(animator, plr)
+        end
+    end
+    if plr.Character then onCharAdded(plr.Character) end
+    plr.CharacterAdded:Connect(onCharAdded)
+end
 
-local playersList = Players:GetPlayers()
-for i = 1, #playersList do 
-    onPlayerAdded(playersList[i]) 
-end 
+for _, plr in ipairs(Players:GetPlayers()) do
+    setupPlayer(plr)
+end
+Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerRemoving:Connect(function(plr)
+    if connections[plr] then
+        for _, conn in pairs(connections[plr]) do
+            if typeof(conn) == "RBXScriptConnection" then conn:Disconnect() end
+        end
+        connections[plr] = nil
+    end
+end)
 
-Players.PlayerAdded:Connect(onPlayerAdded) 
-Players.PlayerRemoving:Connect(function(plr) 
-    if connections[plr] then 
-        connections[plr]:Disconnect() 
-        connections[plr] = nil 
-    end 
-end) 
-
-local function createAutoCounter(label, toggleKey) 
-    autodrib:Toggle(label, function() 
-        if autoSkillState.keybindsEnabled then 
-            notify2("calm error", "hey! dont try using gui toggles if u got keybinds on!!! 😡", 3) 
-            return 
-        end 
+local function createAutoCounter(label, toggleKey)
+    autodrib:Toggle(label, function()
+        if autoSkillState.keybindsEnabled then
+            notify2("calm error", "hey! dont try using gui toggles if u got keybinds on!!! 😡", 3)
+            return
+        end
         autoSkillState[toggleKey] = not autoSkillState[toggleKey]
-        notify2(label, autoSkillState[toggleKey] and "Enabled." or "Disabled.", 3) 
-        updateStatusGUI() 
-    end) 
+        notify2(label, autoSkillState[toggleKey] and "Enabled." or "Disabled.", 3)
+        updateStatusGUI()
+    end)
 end
 
 autodrib:Toggle("Show Active Auto Counters", "Shows Your Currently Toggled Auto Counters.", function()
@@ -1228,7 +1241,6 @@ end)
 
 autodrib:Slider("Counter Radius", 65, 45, 75, 1, function(v)
     autoSkillState.mCD = v
-    notify2("Counter Radius", "Counter Radius: " .. v .. "", 2)
 end)
 
 createAutoCounter("Auto Dribble", "toggleDribble")
