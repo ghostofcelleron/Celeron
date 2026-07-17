@@ -1045,7 +1045,7 @@ local counters = {
     {name = "T Special", key = "toggleTSpecial", bind = "L"},
 }
 
-local function updateStatusGUI()
+local function updcounterui()
     if not autoSkillState.showActiveCounters then return end
     for i = 1, #statusLabels do
         statusLabels[i]:Destroy()
@@ -1074,7 +1074,7 @@ local function hasball()
     return localplayer.Character and localplayer.Character:FindFirstChild("Ball") ~= nil
 end
 
-local function getClosestTeammate()
+local function getcteammate()
     local character = localplayer.Character
     local root = character and character:FindFirstChild("HumanoidRootPart")
     if not root then return nil end
@@ -1110,7 +1110,7 @@ end
 
 local toggleKeys = {"toggleCounter1", "toggleCounter2", "toggleCounter3", "toggleCounter4", "toggleCounter5"}
 
-local function monitorTackleAnimation(animator, targetPlayer)
+local function montackleanim(animator, targetPlayer)
     if connections[targetPlayer] and connections[targetPlayer].animLoop then
         connections[targetPlayer].animLoop:Disconnect()
     end
@@ -1150,7 +1150,7 @@ local function monitorTackleAnimation(animator, targetPlayer)
                 return
             end
 
-            local closestTeammate = autoSkillState.useClosestTeammate and getClosestTeammate() or nil
+            local closestTeammate = autoSkillState.useClosestTeammate and getcteammate() or nil
 
             for _, key in ipairs(toggleKeys) do
                 if autoSkillState[key] then
@@ -1189,7 +1189,7 @@ local function setupPlayer(plr)
         if not humanoid then return end
         local animator = humanoid:FindFirstChildOfClass("Animator") or humanoid:WaitForChild("Animator", 4)
         if animator then
-            monitorTackleAnimation(animator, plr)
+            montackleanim(animator, plr)
         end
     end
     if plr.Character then onCharAdded(plr.Character) end
@@ -1217,7 +1217,7 @@ local function createAutoCounter(label, toggleKey)
         end
         autoSkillState[toggleKey] = not autoSkillState[toggleKey]
         notify2(label, autoSkillState[toggleKey] and "Enabled." or "Disabled.", 3)
-        updateStatusGUI()
+        updcounterui()
     end)
 end
 
@@ -1225,13 +1225,13 @@ autodrib:Toggle("Show Active Auto Counters", "Shows Your Currently Toggled Auto 
     autoSkillState.showActiveCounters = not autoSkillState.showActiveCounters
     statusFrame.Visible = autoSkillState.showActiveCounters
     notify2("Status GUI", autoSkillState.showActiveCounters and "Enabled." or "Disabled.", 3)
-    updateStatusGUI()
+    updcounterui()
 end)
 
 autodrib:Toggle("Toggle Keybinds", "Allows You To Toggle The Counters Using Binds.", function()
     autoSkillState.keybindsEnabled = not autoSkillState.keybindsEnabled
     notify2("Keybinds", autoSkillState.keybindsEnabled and "Enabled." or "Disabled.", 3)
-    updateStatusGUI()
+    updcounterui()
 end)
 
 autodrib:Toggle("Use Closest Teammate", "When Enabled, Skills Will Target Your Closest Teammate (Pass Based Counters Only).", function()
@@ -1239,7 +1239,7 @@ autodrib:Toggle("Use Closest Teammate", "When Enabled, Skills Will Target Your C
     notify2("Closest Teammate", autoSkillState.useClosestTeammate and "Enabled." or "Disabled.", 3)
 end)
 
-autodrib:Slider("Counter Radius", 65, 45, 75, 1, function(v)
+autodrib:Slider("Counter Radius", 65, 25, 75, 1, function(v)
     autoSkillState.mCD = v
 end)
 
@@ -1269,12 +1269,12 @@ if not autoSkillState.keybindSetup then
             local toggleKey, label = unpack(mapping)
             autoSkillState[toggleKey] = not (autoSkillState[toggleKey] or false)
             notify2(label, autoSkillState[toggleKey] and "Enabled." or "Disabled.", 3)
-            updateStatusGUI()
+            updcounterui()
         end
     end)
 end
 
-updateStatusGUI()
+updcounterui()
 
 local autogoal = maintab:Folder("Auto Goal Features.", Color3.fromRGB(24, 255, 228), true)
 autogoal:Label("Auto Goal: Automatically Does Auto Goal Steps Instantly.")
