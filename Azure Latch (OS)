@@ -269,13 +269,13 @@ local flowPartData = {
 }
 
 flowPartData.flowPart = Instance.new("Part")
-flowPartData.flowPart.Size = Vector3.new(30, 1, 30)
+flowPartData.flowPart.Size = Vector3.new(150, 1, 150)
 flowPartData.flowPart.Anchored = true
 flowPartData.flowPart.CanCollide = true
-flowPartData.flowPart.Position = Vector3.new(100, 1000, 100)
+flowPartData.flowPart.Position = Vector3.new(-782, 2500, 1262)
 flowPartData.flowPart.Parent = workspace
 
-ballfolder:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To Get Flow. Click Again To Cancel.", function()
+ballfolder:Button("Get Flow (Req. Ball)", "Click To Attempt Getting Flow. Click Again To Cancel.", function()
     local char = flowPartData.LocalPlayer.Character
     if not char then return end
     local root = char:FindFirstChild("HumanoidRootPart")
@@ -283,16 +283,13 @@ ballfolder:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To
 
     if flowPartData.flowActive then
         flowPartData.flowActive = false
-
         if flowPartData.flowConnection then
             task.cancel(flowPartData.flowConnection)
             flowPartData.flowConnection = nil
         end
-
         if flowPartData.originalCFrame then
             root.CFrame = flowPartData.originalCFrame
         end
-
         return
     end
 
@@ -300,22 +297,103 @@ ballfolder:Button("Get Flow (Req. Ball)", "Creates A Safe Area And Spams Kick To
     flowPartData.originalCFrame = root.CFrame
 
     root.CFrame = flowPartData.flowPart.CFrame + Vector3.new(0, 5, 0)
-
     task.wait(0.67)
 
     flowPartData.flowConnection = task.spawn(function()
-        local flow = workspace:WaitForChild("characters"):WaitForChild(flowPartData.LocalPlayer.Name):WaitForChild("state"):WaitForChild("flow")
+        local playerFolder = workspace:WaitForChild("characters"):WaitForChild(flowPartData.LocalPlayer.Name)
+        local flow = playerFolder:WaitForChild("state"):WaitForChild("flow")
 
-        while flowPartData.flowActive and flow.Value < 100 do
-            flowPartData.ByteNetReliable:FireServer(
-                buffer.fromstring(buffers["base"]),
-                { { "kick", 1, false, vector.create(0, 1, 0) } }
-            )
-            task.wait(0.01)
+        local gks = {A = workspace.gks:FindFirstChild("A"), B = workspace.gks:FindFirstChild("B")}
+
+        local preferredGK = nil
+        local playerTeam = flowPartData.LocalPlayer.Team
+        if playerTeam then
+            local teamName = playerTeam.Name:lower()
+            if teamName:find("a") or teamName == "red" then
+                preferredGK = gks.A or gks.B
+            elseif teamName:find("b") or teamName == "blue" then
+                preferredGK = gks.B or gks.A
+            end
         end
 
-        task.wait(0.9)
+        if not preferredGK then
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "oops!!! error!!",
+                Text = "no AI gk found. cannot get flow.",
+                Duration = 5
+            })
+            if flowPartData.originalCFrame and root and root.Parent then
+                root.CFrame = flowPartData.originalCFrame
+            end
+            flowPartData.flowActive = false
+            return
+        end
 
+        while flowPartData.flowActive and flow.Value < 100 do
+            for i = 1, 25 do
+                if not flowPartData.flowActive or flow.Value >= 100 then break end
+                flowPartData.ByteNetReliable:FireServer(
+                    buffer.fromstring(buffers["base"]),
+                    { { "kick", 1, false, vector.create(0, 1, 0) } }
+                )
+                task.wait(0.15)
+            end
+
+            if not flowPartData.flowActive or flow.Value >= 100 then break end
+            task.wait(0.5)
+
+            local targetGK = preferredGK
+            if targetGK then
+                local targetCFrame = targetGK.PrimaryPart and targetGK.PrimaryPart.CFrame or targetGK:GetPivot()
+                root.CFrame = targetCFrame + Vector3.new(0, 5, 0)
+            end
+            task.wait(0.25)
+
+            for i = 1, 2 do
+                if not flowPartData.flowActive or flow.Value >= 100 then break end
+                flowPartData.ByteNetReliable:FireServer(
+                    buffer.fromstring(buffers["base"]),
+                    { { "kick", 1, false, vector.create(0, 1, 0) } }
+                )
+                task.wait(0.12)
+            end
+
+            if not flowPartData.flowActive or flow.Value >= 100 then break end
+
+            task.wait(1)
+
+            local ball = workspace.Terrain:FindFirstChild("Ball")
+            if not ball then
+                ball = workspace.Terrain:WaitForChild("Ball", 10)
+            end
+
+            if ball then
+                while flowPartData.flowActive and ball.Parent == workspace.Terrain and flow.Value < 100 do
+                    root.CFrame = ball.CFrame + Vector3.new(0, 5, 0)
+                    task.wait(0.05)
+                end
+            end
+
+            if not flowPartData.flowActive or flow.Value >= 100 then break end
+
+            task.wait(0.2)
+            root.CFrame = flowPartData.flowPart.CFrame + Vector3.new(0, 5, 0)
+            task.wait(0.5)
+        end
+
+        task.wait(0.5)
+
+        if flow.Value >= 100 then
+            local ball = workspace.Terrain:FindFirstChild("Ball")
+            if ball and ball.Parent == workspace.Terrain then
+                while ball.Parent == workspace.Terrain and flowPartData.flowActive do
+                    root.CFrame = ball.CFrame + Vector3.new(0, 5, 0)
+                    task.wait(0.05)
+                end
+            end
+        end
+
+        task.wait(0.3)
         if flowPartData.flowActive and root and root.Parent and flowPartData.originalCFrame then
             root.CFrame = flowPartData.originalCFrame
         end
@@ -439,7 +517,7 @@ end
 updateCharacter()
 player.CharacterAdded:Connect(updateCharacter)
 
-function notify(title, text)
+function noty(title, text)
     starterGui:SetCore("SendNotification", {
         Title = title,
         Text = text,
@@ -567,12 +645,12 @@ end
 
 nocd:Toggle("No Rush Cooldown", "Emulates Having No Rush Cooldown.", function()
     dashState.ForwardRushEnabled = not dashState.ForwardRushEnabled
-    notify("No Rush CD", dashState.ForwardRushEnabled and "Enabled." or "Disabled.")
+    noty("No Rush CD", dashState.ForwardRushEnabled and "Enabled." or "Disabled.")
 end)
 
 nocd:Toggle("No Side Dash Cooldown", "Emulates Having No Side Dash Cooldown.", function()
     dashState.SideDashEnabled = not dashState.SideDashEnabled
-    notify("No Side Dash CD", dashState.SideDashEnabled and "Enabled." or "Disabled.")
+    noty("No Side Dash CD", dashState.SideDashEnabled and "Enabled." or "Disabled.")
 end)
 
 if not dashState.dashBindsSetup then
@@ -1277,7 +1355,7 @@ end
 updcounterui()
 
 local autogoal = maintab:Folder("Auto Goal Features.", Color3.fromRGB(24, 255, 228), true)
-autogoal:Label("Auto Goal: Automatically Does Auto Goal Steps Instantly.")
+autogoal:Label("Auto Goal: Automatically Does Auto Goal Steps Instantly, Use In 5v5.")
 
 autogoal:Button("Isagi U-20 Goal", "Attempts To Do Isagi's U-20 Auto Goal By Teleporting To The Designated Area.", function()
     local plr = game.Players.LocalPlayer
@@ -1293,6 +1371,28 @@ autogoal:Button("Isagi U-20 Goal", "Attempts To Do Isagi's U-20 Auto Goal By Tel
         ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(
             buffer.fromstring(buffers["base"]),
             { { "skill3"} }
+        )
+    end
+end)
+
+autogoal:Button("Nagi Dream Goal", "Attempts To Do Nagi's Control Move Auto Goal In Flow.", function()
+    local plr = game.Players.LocalPlayer
+    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = plr.Character.HumanoidRootPart
+        
+        if plr.Team == game.Teams:FindFirstChild("A") then
+            hrp.CFrame = CFrame.new(-459, 3, 862)
+        elseif plr.Team == game.Teams:FindFirstChild("B") then
+            hrp.CFrame = CFrame.new(-611, 3, 1682) * CFrame.Angles(0, math.rad(180), 0)
+        end
+        task.wait(0.2)
+        if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+            plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+        task.wait(0.2)
+        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(
+            buffer.fromstring(buffers["base"]),
+            { { "skill2", true } }
         )
     end
 end)
@@ -1360,28 +1460,6 @@ autogoal:Button("Barou Devour Goal", "Attempts To Do Barou's Devour Auto Goal By
         elseif plr.Team == game.Teams:FindFirstChild("B") then
             plr.Character.HumanoidRootPart.Position = Vector3.new(-588, 3, 1643)
         end
-    end
-end)
-
-autogoal:Button("Nagi Dream Goal", "Attempts To Do Nagi's Control Move Auto Goal In Flow.", function()
-    local plr = game.Players.LocalPlayer
-    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = plr.Character.HumanoidRootPart
-        
-        if plr.Team == game.Teams:FindFirstChild("A") then
-            hrp.CFrame = CFrame.new(-459, 3, 862)
-        elseif plr.Team == game.Teams:FindFirstChild("B") then
-            hrp.CFrame = CFrame.new(-611, 3, 1682) * CFrame.Angles(0, math.rad(180), 0)
-        end
-        task.wait(0.2)
-        if plr.Character and plr.Character:FindFirstChild("Humanoid") then
-            plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-        task.wait(0.2)
-        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(
-            buffer.fromstring(buffers["base"]),
-            { { "skill2", true } }
-        )
     end
 end)
 
@@ -1795,10 +1873,18 @@ add:Button("Steal Screen Time (funny)", "Click Z To Disable, Steals Screen Time.
     local ogPos = plr.Character.HumanoidRootPart.Position
     local incut = false
     local anim = nil
+    local bg = nil
+    local bp = nil
+
+    local function CleanupFloat()
+        if bg then bg:Destroy() bg = nil end
+        if bp then bp:Destroy() bp = nil end
+    end
 
     local con
     con = game["Run Service"].RenderStepped:Connect(function()
         if stopped then
+            CleanupFloat()
             con:Disconnect()
             return
         end
@@ -1813,15 +1899,31 @@ add:Button("Steal Screen Time (funny)", "Click Z To Disable, Steals Screen Time.
                 anim.Looped = true
                 anim:Play()
                 anim:AdjustSpeed(4)
+
+                bg = Instance.new("BodyGyro")
+                bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                bg.P = 10000
+                bg.D = 500
+                bg.Parent = root
+
+                bp = Instance.new("BodyPosition")
+                bp.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                bp.P = 10000
+                bp.D = 500
+                bp.Parent = root
             end
             incut = true
-            root.CFrame = cam.CFrame * CFrame.new(0, -1.3, -2.3) * CFrame.Angles(0, math.rad(180), 0)
+
+            local targetCFrame = cam.CFrame * CFrame.new(0, -1.3, -2.3) * CFrame.Angles(0, math.rad(180), 0)
+            bp.Position = targetCFrame.Position
+            bg.CFrame = targetCFrame
         else
             if incut == true then
                 incut = false
                 if anim then
                     anim:Stop()
                 end
+                CleanupFloat()
                 root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
                 root.CFrame = CFrame.new(ogPos)
                 root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
@@ -1990,6 +2092,137 @@ oth:Toggle("Spam Brick Sound (5v5 + GK Only.)", "This SHOULD Be Self Explanatory
         })
     end
 end)
+
+if not workspace:FindFirstChild("DevourPlate") then
+    local p = Instance.new("Part")
+    p.Name = "ddddegrdgdhgrgtedrhgdrtg"
+    p.Size = Vector3.new(1000, 1, 1000)
+    p.Transparency = 1
+    p.Anchored = true
+    p.CanCollide = true
+    p.Position = Vector3.new(5000, 750, 5000)
+    p.Parent = workspace
+end
+
+local murder = maintab:Folder("''This Isn't Soccer Anymore''! Features.", Color3.fromRGB(24, 255, 228), true)
+murder:Label("Evil Features: You Are Killing People In A Soccer Match??")
+
+attackmode = "KILL, KILL, KILL!"
+youareamurderer = false
+originalCFrame = nil
+
+murder:Button("Evil Info", "This Comes With Instructions On How To Use The Feature Below.", function()
+    StarterGui:SetCore("SendNotification", {
+        Title = "Evil Info",
+        Text = "KILL, KILL, KILL! will kill the victim.",
+        Duration = 10
+    }) 
+    task.wait(0.5)
+    StarterGui:SetCore("SendNotification", {
+        Title = "Evil Info",
+        Text = "New Commentator! will send the victim to the commentator box.",
+        Duration = 10
+    })
+end)
+
+murder:Toggle("THIS ISN'T SOCCER ANYMORE!", "When Using Certain Grab Moves, This Will DEVOUR The Victim.", function(state)
+    youareamurderer = state
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "evil ass soccer mode",
+        Text = youareamurderer and "you're a dead man!! im sending you straight to hell!" or "you're a good man arthur morgan.",
+        Duration = 4
+    })
+end)
+
+murder:Dropdown("Attack Method", {"KILL, KILL, KILL!", "New Commentator?", "PrisonA", "PrisonB"}, function(v) 
+    attackmode = v
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Attack Method",
+        Text = "Attack Method: " .. attackmode,
+        Duration = 3
+    })
+end)
+
+local grabz = {
+    "rbxassetid://123994829903056",
+    "rbxassetid://73092083880817",
+    "rbxassetid://96801747244950",
+	"rbxassetid://107389719253201",
+	"rbxassetid://114866946968143",
+	"rbxassetid://88690614253524"
+}
+
+local function isgrabbing(animTrack)
+    if not animTrack.Animation then return false end
+    local animId = animTrack.Animation.AnimationId
+    for _, id in ipairs(grabz) do
+        if animId == id or animId:find(id) then
+            return true
+        end
+    end
+    return false
+end
+
+local LocalPlayer = game:GetService("Players").LocalPlayer
+local connection
+
+local function killthemNOW()
+    if connection then connection:Disconnect() end
+    
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    
+    connection = humanoid.AnimationPlayed:Connect(function(animTrack)
+        if not youareamurderer then return end
+        if not isgrabbing(animTrack) then return end
+        
+        local root = character:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        
+        local originalCFrame = root.CFrame
+        
+        local targetPos
+        if attackmode == "KILL, KILL, KILL!" then
+            targetPos = Vector3.new(5000, 760, 5000)
+        elseif attackmode == "New Commentator?" then
+            targetPos = Vector3.new(-6, 2, 3237)
+		elseif attackmode == "PrisonA" then
+            targetPos = Vector3.new(-512, 3, 1731)
+		elseif attackmode == "PrisonB" then
+            targetPos = Vector3.new(-558, 3, 816)
+        else
+            return
+        end
+        
+        root.CFrame = CFrame.new(targetPos)
+        
+        local killConn
+        killConn = animTrack.Stopped:Connect(function()
+            killConn:Disconnect()
+            task.delay(1, function()
+                if root and root.Parent and originalCFrame then
+                    root.CFrame = originalCFrame
+                end
+            end)
+        end)
+        
+        task.delay(5, function()
+            if killConn then killConn:Disconnect() end
+        end)
+    end)
+end
+
+LocalPlayer.CharacterAdded:Connect(function()
+    if youareamurderer then
+        task.wait(1)
+        killthemNOW()
+    end
+end)
+
+if LocalPlayer.Character then
+    killthemNOW()
+end
 
 local th = maintab:Folder("Trap Helper.", Color3.fromRGB(24, 255, 228), true)
 th:Label("Trap Helper: Automatically Moves Toward Ball During Trap Moves.")
@@ -4108,7 +4341,7 @@ local airDribbleState = {
 
 local cooldown = 0.255
 
-local function notify(text)
+local function notiy(text)
     game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = "Air Dribble",
         Text = text,
@@ -4118,13 +4351,13 @@ end
 
 airdr:Toggle("Air Dribble", "Kicks The Ball Forward Infront Of You And Up.", function()
     airDribbleState.enabled = not airDribbleState.enabled
-    notify(airDribbleState.enabled and "Enabled." or "Disabled.")
+    notiy(airDribbleState.enabled and "Enabled." or "Disabled.")
 end)
 
 airdr:Textbox("Air Dribble Bind", "Enter Key (Example: E, Q, LeftAlt.)", function(text)
     if typeof(text) ~= "string" then
         bindKey = Enum.KeyCode.LeftAlt
-        notify("Invalid Key. Bind Is Now LeftAlt.")
+        notiy("Invalid Key. Bind Is Now LeftAlt.")
         return
     end
 
@@ -4135,10 +4368,10 @@ airdr:Textbox("Air Dribble Bind", "Enter Key (Example: E, Q, LeftAlt.)", functio
 
     if success and key then
         bindKey = key
-        notify("Bind Set To: " .. key.Name)
+        notiy("Bind Set To: " .. key.Name)
     else
         bindKey = Enum.KeyCode.LeftAlt
-        notify("Invalid Key. Bind Is Now LeftAlt.")
+        notiy("Invalid Key. Bind Is Now LeftAlt.")
     end
 end)
 
@@ -5030,7 +5263,7 @@ teleporttab:Button("Middle Field", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-540, 3, 1274)
 end)
 
-teleporttab:Button("Reporter Area", function()
+teleporttab:Button("Commentator Area", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-6, 2, 3237)
 end)
 
