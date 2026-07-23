@@ -1,5 +1,12 @@
+game:GetService("ReplicatedStorage").Resources:FindFirstChild("dio"):Destroy()
+print("deleted current dio files (unneccessary slop)!")
+wait(1)
+
 print("recreated dio folder")
 print("fixed and brought back to azl by celeron! :3")
+
+for _,v in game:GetDescendants() do if v:IsA("Sound") and v.SoundId=="rbxassetid://73870725763219" then v:Stop() v.Volume=0 end end
+game.DescendantAdded:Connect(function(d) if d:IsA("Sound") and d.SoundId=="rbxassetid://73870725763219" then d:Stop() d.Volume=0 end end)
 
 if not game:GetService("ReplicatedStorage").Resources:FindFirstChild("dio") then
 	local dio = Instance.new("Folder")
@@ -48,7 +55,7 @@ end
 if not game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh.Animations:FindFirstChild("Stand") then
 	local standAnim = Instance.new("Animation")
 	standAnim.Name = "Stand"
-	standAnim.AnimationId = "rbxassetid://126653138458150"
+	standAnim.AnimationId = "rbxassetid://115839777221212"
 	standAnim.Parent = game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh.Animations
 end
 
@@ -933,7 +940,7 @@ local function Skill1(char)
 	weld.Part0 = stand.PrimaryPart
 	weld.Part1 = char.HumanoidRootPart
 	weld.Parent = stand.PrimaryPart
-	local standAnim = game:GetService("ReplicatedStorage").Resources.akane.skill3
+	local standAnim = game:GetService("ReplicatedStorage").Resources.dio.GreatestHigh.Animations.Stand
 	stand.Humanoid:LoadAnimation(standAnim):Play()
 
 	game:GetService("ReplicatedStorage").workspace.ballHolder.Value = stand
@@ -1101,6 +1108,9 @@ local function ult(char)
 	end
 	camRig:PivotTo(ogPos * CFrame.new(0, -3, 0))
 	camRig.Parent = game.Workspace
+
+	local animator = game.Players.LocalPlayer.Character.Humanoid:FindFirstChild("Animator")
+	if animator then for _, track in ipairs(animator:GetPlayingAnimationTracks()) do track:Stop() end end
 
 	local guy1 = guy()
 	guy1.Humanoid.Animator:LoadAnimation(dio.Timestop.Animations.Victim1):Play()
