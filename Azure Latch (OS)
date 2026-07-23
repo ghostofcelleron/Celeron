@@ -724,11 +724,19 @@ ballmag:Label("Original Ball Magnet: Allows You To Grab The Ball From Further Aw
 
 local ballMagnetState = {
     active = false,
-    conn = nil
+    conn = nil,
+    lastFire = 0,
+    fire_intrv = 0.05,
+    radius = 1,
+    hrp = nil,
+    useM2Hold = false
 }
 
-ballmag:Toggle("Ball Magnet", "The Original Ball Magnet, Always On Max Range.", function()
-    local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+local userInputService = game:GetService("UserInputService")
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+local localPlayer = Players.LocalPlayer
+
+ballmag:Toggle("Ball Magnet", "Ball Magnet, Uses Set Radius As Range.", function()
     ballMagnetState.active = not ballMagnetState.active
 
     game.StarterGui:SetCore("SendNotification", {
@@ -742,176 +750,52 @@ ballmag:Toggle("Ball Magnet", "The Original Ball Magnet, Always On Max Range.", 
             ballMagnetState.conn:Disconnect()
         end
 
-        ballMagnetState.conn = task.spawn(function()
-            while ballMagnetState.active do
-                pcall(function()
-                    remote:FireServer(buffer.fromstring(buffers["grabball"]))
-                end)
-                task.wait()
+        ballMagnetState.conn = RunService.Heartbeat:Connect(function()
+            local radius = ballMagnetState.radius or 1
+            if radius < 2 then return end
+
+            local ball = Workspace.Terrain:FindFirstChild("Ball")
+            if not ball then return end
+
+            if ballMagnetState.hrp then
+                local dist = (ballMagnetState.hrp.Position - ball.Position).Magnitude
+                
+                if ballMagnetState.useM2Hold and not userInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+                    return
+                end
+                
+                if dist <= radius and (time() - ballMagnetState.lastFire) >= ballMagnetState.fire_intrv then
+                    ballMagnetState.lastFire = time()
+                    pcall(function()
+                        remote:FireServer(buffer.fromstring(buffers["grabball"]))
+                    end)
+                end
             end
         end)
     else
         if ballMagnetState.conn then
+            ballMagnetState.conn:Disconnect()
             ballMagnetState.conn = nil
         end
     end
 end)
 
-local magnetHoldState = {
-    enabled = false,
-    holding = false,
-    beganConnection = nil,
-    endedConnection = nil
-}
-
-local userInputService2 = game:GetService("UserInputService")
-local remote2 = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-
-ballmag:Toggle("Ball Magnet (Bind: M2, Click / Hold.)", "Similar To The Original, But Only Activate While Right Click Is Held Down.", function()
-    if not magnetHoldState.enabled then
-        magnetHoldState.enabled = true
-
-        magnetHoldState.beganConnection = userInputService2.InputBegan:Connect(function(input, gameProcessed)
-            if gameProcessed then return end
-            if input.UserInputType == Enum.UserInputType.MouseButton2 then
-                magnetHoldState.holding = true
-                task.spawn(function()
-                    while magnetHoldState.holding do
-                        remote2:FireServer(buffer.fromstring(buffers["grabball"]))
-                        task.wait(0.05)
-                    end
-                end)
-            end
-        end)
-
-        magnetHoldState.endedConnection = userInputService2.InputEnded:Connect(function(input, gameProcessed)
-            if gameProcessed then return end
-            if input.UserInputType == Enum.UserInputType.MouseButton2 then
-                magnetHoldState.holding = false
-            end
-        end)
-
-        starterGui:SetCore("SendNotification", {
-            Title = "Ball Magnet (M2 Hold)",
-            Text = "Enabled.",
-            Duration = 3
-        })
-    else
-        magnetHoldState.enabled = false
-        magnetHoldState.holding = false
-
-        if magnetHoldState.beganConnection then magnetHoldState.beganConnection:Disconnect() magnetHoldState.beganConnection = nil end
-        if magnetHoldState.endedConnection then magnetHoldState.endedConnection:Disconnect() magnetHoldState.endedConnection = nil end
-
-        starterGui:SetCore("SendNotification", {
-            Title = "Ball Magnet (M2 Hold)",
-            Text = "Disabled.",
-            Duration = 3
-        })
-    end
+ballmag:Slider("Ball Magnet Radius", 7, 7, 25, 0.5, function(v)
+    ballMagnetState.radius = v
 end)
 
-local ballHitboxState = {
-    active = false,
-    hitbox = nil,
-    loop = nil
-}
-
-ballmag:Toggle("Ball Magnet Hitbox", "Shows The Magnet's Hitbox On The Ball.", function()
-    ballHitboxState.active = not ballHitboxState.active
+ballmag:Toggle("Magnet Uses M2 Hold", "If Enabled, Ball Magnet Only Grabs While Right Click Is Held Down.", function()
+    ballMagnetState.useM2Hold = not ballMagnetState.useM2Hold
 
     game.StarterGui:SetCore("SendNotification", {
-        Title = "Ball Magnet Hitbox",
-        Text = ballHitboxState.active and "Enabled." or "Disabled.",
+        Title = "Magnet Uses M2 Hold",
+        Text = ballMagnetState.useM2Hold and "Enabled." or "Disabled.",
         Duration = 1
     })
-
-    local function removeHitbox()
-        if ballHitboxState.hitbox then
-            ballHitboxState.hitbox:Destroy()
-            ballHitboxState.hitbox = nil
-        end
-    end
-
-    local function stopLoop()
-        if ballHitboxState.loop then
-            ballHitboxState.loop:Disconnect()
-            ballHitboxState.loop = nil
-        end
-    end
-
-    if not ballHitboxState.active then
-        stopLoop()
-        removeHitbox()
-        return
-    end
-
-    stopLoop()
-
-    ballHitboxState.loop = RunService.Heartbeat:Connect(function()
-        if not ballHitboxState.active then
-            stopLoop()
-            removeHitbox()
-            return
-        end
-
-        local terrain = workspace:FindFirstChild("Terrain")
-        local ball = terrain and terrain:FindFirstChild("Ball")
-
-        if not ball or not ball:IsA("BasePart") then
-            removeHitbox()
-            return
-        end
-
-        if not ballHitboxState.hitbox then
-            local hitbox = Instance.new("Part")
-            hitbox.Name = "BallMagnetHitbox"
-            hitbox.Shape = Enum.PartType.Ball
-            hitbox.Size = Vector3.new(25, 25, 25)
-            hitbox.Material = Enum.Material.Neon
-            hitbox.Color = Color3.fromRGB(15, 155, 155)
-            hitbox.Transparency = 0.9
-            hitbox.CanCollide = false
-            hitbox.CanTouch = false
-            hitbox.CanQuery = false
-            hitbox.Anchored = false
-            hitbox.Massless = true
-            hitbox.CFrame = ball.CFrame
-            hitbox.Parent = ball
-
-            local weld = Instance.new("WeldConstraint")
-            weld.Part0 = ball
-            weld.Part1 = hitbox
-            weld.Parent = hitbox
-
-            ballHitboxState.hitbox = hitbox
-        end
-    end)
 end)
-
-ballmag:Label("Ball Magnet Radius: Same As Above, But The Range Is Changeable.")
-
-local remote3 = ReplicatedStorage:WaitForChild("ByteNetReliable")
-local localPlayer = Players.LocalPlayer
-
-local ballRadiusState = {
-    radius = 1,
-    conn = nil,
-    lastFire = 0,
-    FIRE_INTERVAL = 0.1,
-    hrp = nil
-}
-
-ballmag:Slider("Ball Magnet Radius", 1, 1, 25, 0.5, function(v)
-    ballRadiusState.radius = v
-end)
-
-if ballRadiusState.conn then
-    ballRadiusState.conn:Disconnect()
-end
 
 local function setupCharacter(char)
-    ballRadiusState.hrp = char:WaitForChild("HumanoidRootPart", 10)
+    ballMagnetState.hrp = char:WaitForChild("HumanoidRootPart", 10)
 end
 
 if localPlayer.Character then
@@ -922,31 +806,13 @@ localPlayer.CharacterAdded:Connect(function(char)
     setupCharacter(char)
 end)
 
-ballRadiusState.conn = RunService.Heartbeat:Connect(function()
-    local radius = ballRadiusState.radius or 1
-    if radius < 2 then return end
-
-    local ball = Workspace.Terrain:FindFirstChild("Ball")
-    if not ball then return end
-
-    if ballRadiusState.hrp then
-        local dist = (ballRadiusState.hrp.Position - ball.Position).Magnitude
-        if dist <= radius and (time() - ballRadiusState.lastFire) >= ballRadiusState.FIRE_INTERVAL then
-            ballRadiusState.lastFire = time()
-            pcall(function()
-                remote3:FireServer(buffer.fromstring(buffers["grabball"]))
-            end)
-        end
-    end
-end)
-
 local ballRangeVizState = {
     enabled = false,
     hitbox = nil,
     loop = nil
 }
 
-ballmag:Toggle("Ball Magnet Radius Hitbox", "Shows The Magnet's Hitbox On The Ball.", function()
+ballmag:Toggle("Ball Magnet Radius Hitbox", "Shows The Magnet's Radius Hitbox.", function()
     ballRangeVizState.enabled = not ballRangeVizState.enabled
 
     game.StarterGui:SetCore("SendNotification", {
@@ -991,7 +857,7 @@ ballmag:Toggle("Ball Magnet Radius Hitbox", "Shows The Magnet's Hitbox On The Ba
             return
         end
 
-        local radius = ballRadiusState.radius or 1
+        local radius = ballMagnetState.radius or 1
         if radius < 2 then
             removeHitbox()
             return
@@ -1203,6 +1069,8 @@ local function montackleanim(animator, targetPlayer)
         end
         if not isTackle then return end
 
+        if targetPlayer.Team == localplayer.Team then return end
+
         local lastFire = 0
         local loopConn
         loopConn = game:GetService("RunService").Heartbeat:Connect(function()
@@ -1212,12 +1080,11 @@ local function montackleanim(animator, targetPlayer)
             end
 
             local now = tick()
-
             if autoSkillState.cooldowns[targetPlayer] and now - autoSkillState.cooldowns[targetPlayer] < autoSkillState.playerCooldown then
                 return
             end
-
             if now - lastFire < autoSkillState.fireRate then return end
+
             lastFire = now
 
             local myChar = localplayer.Character
@@ -1235,11 +1102,9 @@ local function montackleanim(animator, targetPlayer)
                     fireSkill(autoSkillState.autoSkills[key], closestTeammate)
                 end
             end
-
             if autoSkillState.toggleTSpecial then
                 fireSkill(autoSkillState.autoSkills["toggleTSpecial"], closestTeammate)
             end
-
             if autoSkillState.toggleDribble then
                 fireSkill(autoSkillState.autoSkills["toggleDribble"], closestTeammate)
             end
@@ -1257,19 +1122,23 @@ end
 
 local function setupPlayer(plr)
     if plr == localplayer then return end
+
     local function onCharAdded(char)
         if connections[plr] then
             for _, conn in pairs(connections[plr]) do
                 if typeof(conn) == "RBXScriptConnection" then conn:Disconnect() end
             end
         end
+
         local humanoid = char:WaitForChild("Humanoid", 6)
         if not humanoid then return end
+
         local animator = humanoid:FindFirstChildOfClass("Animator") or humanoid:WaitForChild("Animator", 4)
         if animator then
             montackleanim(animator, plr)
         end
     end
+
     if plr.Character then onCharAdded(plr.Character) end
     plr.CharacterAdded:Connect(onCharAdded)
 end
@@ -1277,6 +1146,7 @@ end
 for _, plr in ipairs(Players:GetPlayers()) do
     setupPlayer(plr)
 end
+
 Players.PlayerAdded:Connect(setupPlayer)
 Players.PlayerRemoving:Connect(function(plr)
     if connections[plr] then
@@ -5275,8 +5145,41 @@ teleporttab:Button("Goal Box (B)", function()
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-534, 3, 974)
 end)
 
-misctab:Button("Upgrade UI (very cool actually)", function()
-    loadstring(game:HttpGet("https://pastebin.com/raw/QDNYsgxQ"))()
+misctab:Toggle("Enable All Dubs / Voicelines", "Enables Dub Voicelines For All Styles.", function(sts)
+    local lp = game:GetService("Players").LocalPlayer
+    local setting = lp.setting
+
+    local dubs = {
+        setting.dub_yukimiya,
+        setting.dubVoicelines,
+        setting.britishaikuevil,
+        setting.dub_barou,
+        setting.dub_chigiri,
+        setting.dub_donlorenzo,
+        setting.dub_gagamaru,
+        setting.dub_isagi,
+        setting.dub_kaiser,
+        setting.dub_karasu,
+        setting.dub_kunigami,
+        setting.dub_masterylorenzo,
+        setting.dub_nagi,
+        setting.dub_otoya,
+        setting.dub_rin,
+        setting.dub_sae,
+        setting.dub_what,
+    }
+
+    for _, dub in ipairs(dubs) do
+        if dub then
+            dub.Value = sts
+        end
+    end
+
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Dub Voicelines",
+        Text = sts and "Enabled." or "Disabled.",
+        Duration = 1
+    })
 end)
 
 misctab:Label("Emotes.")
