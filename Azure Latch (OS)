@@ -2017,8 +2017,6 @@ end)
 local grabz = {
     "rbxassetid://123994829903056",
     "rbxassetid://73092083880817",
-    "rbxassetid://96801747244950",
-	"rbxassetid://107389719253201",
 	"rbxassetid://114866946968143",
 	"rbxassetid://88690614253524"
 }
@@ -2051,6 +2049,7 @@ local function killthemNOW()
         if not root then return end
         
         local originalCFrame = root.CFrame
+        task.wait(0.2)
         
         local targetPos
         if attackmode == "KILL, KILL, KILL!" then
@@ -2065,20 +2064,25 @@ local function killthemNOW()
             return
         end
         
-        root.CFrame = CFrame.new(targetPos)
+        local isAnimPlaying = true
+        local teleportLoop = game:GetService("RunService").Heartbeat:Connect(function()
+            if isAnimPlaying and root and root.Parent then
+                root.CFrame = CFrame.new(targetPos)
+            end
+        end)
         
         local killConn
         killConn = animTrack.Stopped:Connect(function()
             killConn:Disconnect()
-            task.delay(1, function()
-                if root and root.Parent and originalCFrame then
-                    root.CFrame = originalCFrame
-                end
-            end)
+            isAnimPlaying = false
+            teleportLoop:Disconnect()
+			root.CFrame = originalCFrame
         end)
         
-        task.delay(5, function()
+        task.delay(10, function()
             if killConn then killConn:Disconnect() end
+            if teleportLoop then teleportLoop:Disconnect() end
+            isAnimPlaying = false
         end)
     end)
 end
