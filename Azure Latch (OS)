@@ -441,6 +441,42 @@ ballfolder:Button("Steal Ball", "Repeatedly Attempts To Get The Ball. Click Agai
     end)
 end)
 
+ballfolder:Button("Steal Ball (Aiku)", "Repeatedly Attempts To Get The Ball Via Reflex Tackle. Click Again To Cancel.", function()
+    local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
+    if not hrp then return end
+
+    if stealActive then
+        stealActive = false
+        return
+    end
+
+    stealActive = true
+
+    spawn(function()
+        while stealActive and hrp and hrp.Parent and not flowPartData.LocalPlayer.Character:FindFirstChild("Ball") do
+            local ball = workspace.Terrain:FindFirstChild("Ball")
+            if ball then
+                hrp.CFrame = CFrame.new(ball.Position)
+            end
+
+            for _, p in game.Players:GetPlayers() do
+                if not stealActive then break end
+                if p ~= flowPartData.LocalPlayer then
+                    local b = p.Character and p.Character:FindFirstChild("Ball")
+                    if b then
+                        hrp.CFrame = b.CFrame
+                        flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"skill2"}})
+                    end
+                end
+            end
+
+            task.wait(0.05)
+        end
+
+        stealActive = false
+    end)
+end)
+
 ballfolder:Button("Bring Ball", "Steals The Ball Then Teleports Back. Click Again To Cancel.", function()
     local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
     if not hrp then return end
@@ -473,6 +509,48 @@ ballfolder:Button("Bring Ball", "Steals The Ball Then Teleports Back. Click Agai
             end
 
             task.wait(0.05)
+        end
+
+        if stealActive and hrp and hrp.Parent and flowPartData.LocalPlayer.Character:FindFirstChild("Ball") then
+            hrp.CFrame = orig
+        end
+
+        stealActive = false
+    end)
+end)
+
+ballfolder:Button("Bring Ball (Aiku)", "Steals The Ball Then Teleports Back. Click Again To Cancel.", function()
+    local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
+    if not hrp then return end
+
+    if stealActive then
+        stealActive = false
+        return
+    end
+
+    stealActive = true
+
+    spawn(function()
+        local orig = hrp.CFrame
+
+        while stealActive and hrp and hrp.Parent and not flowPartData.LocalPlayer.Character:FindFirstChild("Ball") do
+            local ball = workspace.Terrain:FindFirstChild("Ball")
+            if ball then
+                hrp.CFrame = CFrame.new(ball.Position)
+            end
+
+            for _, p in game.Players:GetPlayers() do
+                if not stealActive then break end
+                if p ~= flowPartData.LocalPlayer then
+                    local ob = p.Character and p.Character:FindFirstChild("Ball")
+                    if ob then
+                        hrp.CFrame = ob.CFrame
+                        flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"skill2"}})
+                    end
+                end
+            end
+
+            task.wait(0.7)
         end
 
         if stealActive and hrp and hrp.Parent and flowPartData.LocalPlayer.Character:FindFirstChild("Ball") then
@@ -1963,7 +2041,7 @@ oth:Toggle("Spam Brick Sound (5v5 + GK Only.)", "This SHOULD Be Self Explanatory
     end
 end)
 
-if not workspace:FindFirstChild("DevourPlate") then
+if not workspace:FindFirstChild("ddddegrdgdhgrgtedrhgdrtg") then
     local p = Instance.new("Part")
     p.Name = "ddddegrdgdhgrgtedrhgdrtg"
     p.Size = Vector3.new(1000, 1, 1000)
@@ -1981,6 +2059,8 @@ attackmode = "KILL, KILL, KILL!"
 youareamurderer = false
 originalCFrame = nil
 
+local connection
+
 murder:Button("Evil Info", "This Comes With Instructions On How To Use The Feature Below.", function()
     StarterGui:SetCore("SendNotification", {
         Title = "Evil Info",
@@ -1995,30 +2075,13 @@ murder:Button("Evil Info", "This Comes With Instructions On How To Use The Featu
     })
 end)
 
-murder:Toggle("THIS ISN'T SOCCER ANYMORE!", "When Using Certain Grab Moves, This Will DEVOUR The Victim.", function(state)
-    youareamurderer = state
-    
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "evil ass soccer mode",
-        Text = youareamurderer and "you're a dead man!! im sending you straight to hell!" or "you're a good man arthur morgan.",
-        Duration = 4
-    })
-end)
-
-murder:Dropdown("Attack Method", {"KILL, KILL, KILL!", "New Commentator?", "PrisonA", "PrisonB"}, function(v) 
-    attackmode = v
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Attack Method",
-        Text = "Attack Method: " .. attackmode,
-        Duration = 3
-    })
-end)
-
 local grabz = {
     "rbxassetid://123994829903056",
     "rbxassetid://73092083880817",
-	"rbxassetid://114866946968143",
-	"rbxassetid://88690614253524"
+    "rbxassetid://114866946968143",
+    "rbxassetid://88690614253524",
+    "rbxassetid://107389719253201",
+	"rbxassetid://133382731392749"
 }
 
 local function isgrabbing(animTrack)
@@ -2032,14 +2095,17 @@ local function isgrabbing(animTrack)
     return false
 end
 
-local LocalPlayer = game:GetService("Players").LocalPlayer
-local connection
-
 local function killthemNOW()
-    if connection then connection:Disconnect() end
+    if connection then
+        connection:Disconnect()
+        connection = nil
+    end
     
-    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local humanoid = character:WaitForChild("Humanoid")
+    local character = game:GetService("Players").LocalPlayer.Character
+    if not character then return end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid", 5)
+    if not humanoid then return end
     
     connection = humanoid.AnimationPlayed:Connect(function(animTrack)
         if not youareamurderer then return end
@@ -2056,9 +2122,9 @@ local function killthemNOW()
             targetPos = Vector3.new(5000, 760, 5000)
         elseif attackmode == "New Commentator?" then
             targetPos = Vector3.new(-6, 2, 3237)
-		elseif attackmode == "PrisonA" then
+        elseif attackmode == "PrisonA" then
             targetPos = Vector3.new(-512, 3, 1731)
-		elseif attackmode == "PrisonB" then
+        elseif attackmode == "PrisonB" then
             targetPos = Vector3.new(-558, 3, 816)
         else
             return
@@ -2073,10 +2139,12 @@ local function killthemNOW()
         
         local killConn
         killConn = animTrack.Stopped:Connect(function()
-            killConn:Disconnect()
+            if killConn then killConn:Disconnect() end
             isAnimPlaying = false
-            teleportLoop:Disconnect()
-			root.CFrame = originalCFrame
+            if teleportLoop then teleportLoop:Disconnect() end
+            if root and root.Parent then
+                root.CFrame = originalCFrame
+            end
         end)
         
         task.delay(10, function()
@@ -2087,14 +2155,43 @@ local function killthemNOW()
     end)
 end
 
-LocalPlayer.CharacterAdded:Connect(function()
-    if youareamurderer then
-        task.wait(1)
+murder:Toggle("THIS ISN'T SOCCER ANYMORE!", "When Using Certain Grab Moves, This Will DEVOUR The Victim.", function(state)
+    youareamurderer = state
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "evil ass soccer mode",
+        Text = youareamurderer and "you're a dead man!! im sending you straight to hell!" or "you're a good man arthur morgan.",
+        Duration = 4
+    })
+
+    if youareamurderer and game:GetService("Players").LocalPlayer.Character then
         killthemNOW()
     end
 end)
 
-if LocalPlayer.Character then
+murder:Dropdown("Attack Method", {"KILL, KILL, KILL!", "New Commentator?", "PrisonA", "PrisonB"}, function(v) 
+    attackmode = v
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Attack Method",
+        Text = "Attack Method: " .. attackmode,
+        Duration = 3
+    })
+end)
+
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
+    if connection then
+        connection:Disconnect()
+        connection = nil
+    end
+    
+    task.wait(1)
+    
+    if youareamurderer then
+        killthemNOW()
+    end
+end)
+
+if game:GetService("Players").LocalPlayer.Character then
     killthemNOW()
 end
 
