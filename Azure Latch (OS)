@@ -441,42 +441,6 @@ ballfolder:Button("Steal Ball", "Repeatedly Attempts To Get The Ball. Click Agai
     end)
 end)
 
-ballfolder:Button("Steal Ball (Aiku)", "Repeatedly Attempts To Get The Ball Via Reflex Tackle. Click Again To Cancel.", function()
-    local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
-    if not hrp then return end
-
-    if stealActive then
-        stealActive = false
-        return
-    end
-
-    stealActive = true
-
-    spawn(function()
-        while stealActive and hrp and hrp.Parent and not flowPartData.LocalPlayer.Character:FindFirstChild("Ball") do
-            local ball = workspace.Terrain:FindFirstChild("Ball")
-            if ball then
-                hrp.CFrame = CFrame.new(ball.Position)
-            end
-
-            for _, p in game.Players:GetPlayers() do
-                if not stealActive then break end
-                if p ~= flowPartData.LocalPlayer then
-                    local b = p.Character and p.Character:FindFirstChild("Ball")
-                    if b then
-                        hrp.CFrame = b.CFrame
-                        flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"skill2"}})
-                    end
-                end
-            end
-
-            task.wait(0.05)
-        end
-
-        stealActive = false
-    end)
-end)
-
 ballfolder:Button("Bring Ball", "Steals The Ball Then Teleports Back. Click Again To Cancel.", function()
     local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
     if not hrp then return end
@@ -519,7 +483,44 @@ ballfolder:Button("Bring Ball", "Steals The Ball Then Teleports Back. Click Agai
     end)
 end)
 
-ballfolder:Button("Bring Ball (Aiku)", "Steals The Ball Then Teleports Back. Click Again To Cancel.", function()
+
+ballfolder:Button("Steal Ball (Aiku)", "Repeatedly Attempts To Get The Ball Via Reflex Tackle. Click Again To Cancel.", function()
+    local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
+    if not hrp then return end
+
+    if stealActive then
+        stealActive = false
+        return
+    end
+
+    stealActive = true
+
+    spawn(function()
+        while stealActive and hrp and hrp.Parent and not flowPartData.LocalPlayer.Character:FindFirstChild("Ball") do
+            local ball = workspace.Terrain:FindFirstChild("Ball")
+            if ball then
+                hrp.CFrame = CFrame.new(ball.Position)
+            end
+
+            for _, p in game.Players:GetPlayers() do
+                if not stealActive then break end
+                if p ~= flowPartData.LocalPlayer then
+                    local b = p.Character and p.Character:FindFirstChild("Ball")
+                    if b then
+                        hrp.CFrame = b.CFrame
+                        flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"skill2"}})
+                    end
+                end
+            end
+
+            task.wait(0.05)
+        end
+
+        stealActive = false
+    end)
+end)
+
+ballfolder:Button("Bring Ball (Aiku)", "Steals The Ball  Via Reflex Tackle Then Teleports Back. Click Again To Cancel.", function()
     local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
     if not hrp then return end
 
@@ -804,15 +805,14 @@ local ballMagnetState = {
     active = false,
     conn = nil,
     lastFire = 0,
-    fire_intrv = 0.05,
+    fire_intrv = 0.01,
     radius = 1,
     hrp = nil,
-    useM2Hold = false
+    useM2Hold = false,
+    vizEnabled = false,
+    hitbox = nil,
+    vizLoop = nil
 }
-
-local userInputService = game:GetService("UserInputService")
-local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-local localPlayer = Players.LocalPlayer
 
 ballmag:Toggle("Ball Magnet", "Ball Magnet, Uses Set Radius As Range.", function()
     ballMagnetState.active = not ballMagnetState.active
@@ -838,14 +838,14 @@ ballmag:Toggle("Ball Magnet", "Ball Magnet, Uses Set Radius As Range.", function
             if ballMagnetState.hrp then
                 local dist = (ballMagnetState.hrp.Position - ball.Position).Magnitude
                 
-                if ballMagnetState.useM2Hold and not userInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+                if ballMagnetState.useM2Hold and not game:GetService("UserInputService"):IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
                     return
                 end
                 
                 if dist <= radius and (time() - ballMagnetState.lastFire) >= ballMagnetState.fire_intrv then
                     ballMagnetState.lastFire = time()
                     pcall(function()
-                        remote:FireServer(buffer.fromstring(buffers["grabball"]))
+                        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(buffers["grabball"]))
                     end)
                 end
             end
@@ -876,54 +876,47 @@ local function setupCharacter(char)
     ballMagnetState.hrp = char:WaitForChild("HumanoidRootPart", 10)
 end
 
-if localPlayer.Character then
-    setupCharacter(localPlayer.Character)
+if Players.LocalPlayer.Character then
+    setupCharacter(Players.LocalPlayer.Character)
 end
 
-localPlayer.CharacterAdded:Connect(function(char)
+Players.LocalPlayer.CharacterAdded:Connect(function(char)
     setupCharacter(char)
 end)
 
-local ballRangeVizState = {
-    enabled = false,
-    hitbox = nil,
-    loop = nil
-}
-
 ballmag:Toggle("Ball Magnet Radius Hitbox", "Shows The Magnet's Radius Hitbox.", function()
-    ballRangeVizState.enabled = not ballRangeVizState.enabled
+    ballMagnetState.vizEnabled = not ballMagnetState.vizEnabled
 
     game.StarterGui:SetCore("SendNotification", {
         Title = "Ball Magnet Radius Hitbox",
-        Text = ballRangeVizState.enabled and "Enabled." or "Disabled.",
+        Text = ballMagnetState.vizEnabled and "Enabled." or "Disabled.",
         Duration = 1
     })
 
     local function removeHitbox()
-        if ballRangeVizState.hitbox then
-            ballRangeVizState.hitbox:Destroy()
-            ballRangeVizState.hitbox = nil
+        if ballMagnetState.hitbox then
+            ballMagnetState.hitbox:Destroy()
+            ballMagnetState.hitbox = nil
         end
     end
 
-    local function stopLoop()
-        if ballRangeVizState.loop then
-            ballRangeVizState.loop:Disconnect()
-            ballRangeVizState.loop = nil
+    local function stopVizLoop()
+        if ballMagnetState.vizLoop then
+            ballMagnetState.vizLoop:Disconnect()
+            ballMagnetState.vizLoop = nil
         end
     end
 
-    if not ballRangeVizState.enabled then
-        stopLoop()
+    if not ballMagnetState.vizEnabled then
+        stopVizLoop()
         removeHitbox()
         return
     end
 
-    stopLoop()
+    stopVizLoop()
 
-    ballRangeVizState.loop = RunService.Heartbeat:Connect(function()
-        if not ballRangeVizState.enabled then
-            stopLoop()
+    ballMagnetState.vizLoop = RunService.Heartbeat:Connect(function()
+        if not ballMagnetState.vizEnabled or not ballMagnetState.active then
             removeHitbox()
             return
         end
@@ -941,7 +934,7 @@ ballmag:Toggle("Ball Magnet Radius Hitbox", "Shows The Magnet's Radius Hitbox.",
             return
         end
 
-        if not ballRangeVizState.hitbox then
+        if not ballMagnetState.hitbox then
             local hitbox = Instance.new("Part")
             hitbox.Name = "BallMagnetRange"
             hitbox.Shape = Enum.PartType.Ball
@@ -954,11 +947,11 @@ ballmag:Toggle("Ball Magnet Radius Hitbox", "Shows The Magnet's Radius Hitbox.",
             hitbox.Anchored = true
             hitbox.Massless = true
             hitbox.Parent = workspace
-            ballRangeVizState.hitbox = hitbox
+            ballMagnetState.hitbox = hitbox
         end
 
         local d = radius * 2
-        local hitbox = ballRangeVizState.hitbox
+        local hitbox = ballMagnetState.hitbox
         hitbox.Size = Vector3.new(d, d, d)
         hitbox.CFrame = ball.CFrame
     end)
@@ -3084,6 +3077,7 @@ local player = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
 local character = player.Character
 local hrp = character and character:FindFirstChild("HumanoidRootPart")
+local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 
 local padCount = 0
 local targetCount = 0
@@ -3091,12 +3085,14 @@ local targetCount = 0
 local holdingRMB = false
 local camLockConnection = nil
 local activeTarget = nil
+local speedLockActive = false
 
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
 local function updateCharacterRefs(char)
     character = char
     hrp = character:WaitForChild("HumanoidRootPart")
+    humanoid = character:WaitForChild("Humanoid")
 end
 
 if player.Character then
@@ -3143,12 +3139,13 @@ UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         holdingRMB = false
         activeTarget = nil
+        speedLockActive = false
         if camLockConnection then
             camLockConnection:Disconnect()
             camLockConnection = nil
         end
-        if hrp then
-            hrp.Anchored = false
+        if humanoid then
+            humanoid.WalkSpeed = 30
         end
     end
 end)
@@ -3207,19 +3204,39 @@ if isMobile then
     end)
 else
     RunService.RenderStepped:Connect(function()
-        if not holdingRMB or not hrp then return end
+        if not holdingRMB or not hrp or not humanoid then
+            if speedLockActive then
+                speedLockActive = false
+                humanoid.WalkSpeed = 30
+            end
+            return
+        end
         
         local padIndex = getPadUnderPlayer()
-        if not padIndex then return end
+        if not padIndex then
+            if speedLockActive then
+                speedLockActive = false
+                humanoid.WalkSpeed = 30
+            end
+            stopCamLock()
+            return
+        end
         
         local targetPart = Workspace:FindFirstChild("target" .. padIndex)
-        if not targetPart then return end
+        if not targetPart then
+            if speedLockActive then
+                speedLockActive = false
+                humanoid.WalkSpeed = 30
+            end
+            return
+        end
         
         if activeTarget ~= targetPart then
             startCamLock(targetPart)
         end
-        
-        hrp.Anchored = true
+
+        speedLockActive = true
+        humanoid.WalkSpeed = 5
     end)
 end
 
@@ -3236,17 +3253,38 @@ autoline:Toggle("Sae Line Ups", "Sae's Drive Shot Line Ups.", function(s)
 			Color3.fromRGB(0, 255, 0),
 			Color3.fromRGB(255, 255, 0),
 			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(255, 0, 255),
+			Color3.fromRGB(255, 182, 193),
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(255, 0, 255),
+			Color3.fromRGB(255, 182, 193),
 		}
 
 		local goalRelative = {
-			{pad = Vector3.new(80, -10, -162),  target = Vector3.new(20, 44, -26)},
-			{pad = Vector3.new(172, -10, -44),  target = Vector3.new(110, 13, -15)},
-			{pad = Vector3.new(0, -10, -211),   target = Vector3.new(32, 85, -14)},
-			{pad = Vector3.new(-78, -10, -133), target = Vector3.new(82, 41, -18)},
-			{pad = Vector3.new(-130, -9, 166),  target = Vector3.new(-50, 52, 16)},
-			{pad = Vector3.new(-190, -9, 66),   target = Vector3.new(-90, 30, 16)},
-			{pad = Vector3.new(72, -9, 164),    target = Vector3.new(-57, 56, 16)},
-			{pad = Vector3.new(-1, -9, 222),    target = Vector3.new(-6, 76, 55)},
+			{pad = Vector3.new(-58, -9, -127), target = Vector3.new(71, 35, -13)},
+			{pad = Vector3.new(-38, -9, -171), target = Vector3.new(70, 18, -13)},
+			{pad = Vector3.new(-16, -9, -176), target = Vector3.new(45, 45, -14)},
+			{pad = Vector3.new(15, -9, -174),  target = Vector3.new(25, 25, -14)},
+			{pad = Vector3.new(48, -9, -161),  target = Vector3.new(20, 32, -14)},
+			{pad = Vector3.new(71, -9, -134),  target = Vector3.new(22, 5, -12)},
+			{pad = Vector3.new(86, -9, -113),  target = Vector3.new(31, 19, -14)},
+			{pad = Vector3.new(99, -9, -137),  target = Vector3.new(29, 34, -14)},
+			{pad = Vector3.new(-47, -9, -145), target = Vector3.new(53, 28, -14)},
+			{pad = Vector3.new(132, -9, -111), target = Vector3.new(30, 8, -13)},
+
+			{pad = Vector3.new(58, -9, 127),   target = Vector3.new(-71, 35, 13)},
+			{pad = Vector3.new(38, -9, 171),   target = Vector3.new(-70, 18, 13)},
+			{pad = Vector3.new(16, -9, 176),   target = Vector3.new(-45, 45, 14)},
+			{pad = Vector3.new(-15, -9, 174),  target = Vector3.new(-25, 25, 14)},
+			{pad = Vector3.new(-48, -9, 161),  target = Vector3.new(-20, 32, 14)},
+			{pad = Vector3.new(-71, -9, 134),  target = Vector3.new(-22, 5, 12)},
+			{pad = Vector3.new(-86, -9, 113),  target = Vector3.new(-31, 19, 14)},
+			{pad = Vector3.new(-99, -9, 137),  target = Vector3.new(-29, 34, 14)},
+			{pad = Vector3.new(47, -9, 145),   target = Vector3.new(-53, 28, 14)},
+			{pad = Vector3.new(-132, -9, 111), target = Vector3.new(-30, 8, 13)},
 		}
 
 		local map = Workspace:WaitForChild("map", 8)
@@ -3258,12 +3296,12 @@ autoline:Toggle("Sae Line Ups", "Sae's Drive Shot Line Ups.", function(s)
 		local agoalPos = agoal.Position
 		local bgoalPos = bgoal.Position
 
-		for i = 1, 8 do
+		for i = 1, 20 do
 			local entry = goalRelative[i]
 			if not entry then continue end
 
-			local basePos = (i <= 4) and agoalPos or bgoalPos
-			local col = colors[(i - 1) % 4 + 1]
+			local basePos = (i <= 10) and agoalPos or bgoalPos
+			local col = colors[(i - 1) % #colors + 1]
 
 			pad(basePos + entry.pad, col)
 			target(basePos + entry.target, col)
@@ -3313,21 +3351,34 @@ autoline:Toggle("Kaiser Line Ups", "Kaiser's Impact Magnus Line Ups.", function(
 			Color3.fromRGB(255, 0, 255),
 			Color3.fromRGB(255, 182, 193),
 		}
-	
-	    local goalRelative = {
-            {pad = Vector3.new(-3, -9, 263), target = Vector3.new(8, 112, 16)},
-            {pad = Vector3.new(120, -9, 221), target = Vector3.new(49, 75, 15)},
-            {pad = Vector3.new(230, -9, 68), target = Vector3.new(116, 39, 21)},
-            {pad = Vector3.new(207, -9, 15), target = Vector3.new(91, 29, -11)},
-            {pad = Vector3.new(39, -9, 117), target = Vector3.new(24, 10, 13)},
-            {pad = Vector3.new(-134, -9, 148), target = Vector3.new(87, 57, 19)},
-            {pad = Vector3.new(-1, -10, -250), target = Vector3.new(-12, 115, -13)},
-            {pad = Vector3.new(-231, -10, -60), target = Vector3.new(-142, 24, -22)},
-            {pad = Vector3.new(-120, -10, -215), target = Vector3.new(-53, 65, -18)},
-            {pad = Vector3.new(-212, -10, -15), target = Vector3.new(-89, 33, 12)},
-            {pad = Vector3.new(-48, -10, -116), target = Vector3.new(-24, 8, -13)},
-            {pad = Vector3.new(126, -10, -146), target = Vector3.new(-109, 60, -14)},
-        }
+
+		local goalRelative = {
+			{pad = Vector3.new(-76, -9, 140),  target = Vector3.new(108, 19, 14)},
+			{pad = Vector3.new(-35, -9, 178),  target = Vector3.new(80, -5, 14)},
+			{pad = Vector3.new(17, -9, 170),   target = Vector3.new(26, 18, 14)},
+			{pad = Vector3.new(81, -9, 178),   target = Vector3.new(35, 34, 14)},
+			{pad = Vector3.new(54, -9, 165),   target = Vector3.new(34, 2, 14)},
+			{pad = Vector3.new(-55, -9, 171),  target = Vector3.new(87, -1, 14)},
+			{pad = Vector3.new(-13, -9, 161),  target = Vector3.new(76, 15, 14)},
+			{pad = Vector3.new(-42, -9, 122),  target = Vector3.new(73, 5, 14)},
+			{pad = Vector3.new(61, -9, 114),   target = Vector3.new(35, 16, 14)},
+			{pad = Vector3.new(130, -9, 110),  target = Vector3.new(50, 25, 14)},
+			{pad = Vector3.new(110, -9, 151),  target = Vector3.new(34, 25, 14)},
+			{pad = Vector3.new(39, -9, 194),   target = Vector3.new(32, 28, 14)},
+
+			{pad = Vector3.new(76, -9, -140),  target = Vector3.new(-108, 19, -14)},
+			{pad = Vector3.new(35, -9, -178),  target = Vector3.new(-80, -5, -14)},
+			{pad = Vector3.new(-17, -9, -170), target = Vector3.new(-26, 18, -14)},
+			{pad = Vector3.new(-81, -9, -178), target = Vector3.new(-35, 34, -14)},
+			{pad = Vector3.new(-54, -9, -165), target = Vector3.new(-34, 2, -14)},
+			{pad = Vector3.new(55, -9, -171),  target = Vector3.new(-87, -1, -14)},
+			{pad = Vector3.new(13, -9, -161),  target = Vector3.new(-76, 15, -14)},
+			{pad = Vector3.new(42, -9, -122),  target = Vector3.new(-73, 5, -14)},
+			{pad = Vector3.new(-61, -9, -114), target = Vector3.new(-35, 16, -14)},
+			{pad = Vector3.new(-130, -9, -110),target = Vector3.new(-50, 25, -14)},
+			{pad = Vector3.new(-110, -9, -151),target = Vector3.new(-34, 25, -14)},
+			{pad = Vector3.new(-39, -9, -194), target = Vector3.new(-32, 28, -14)},
+		}
 
 		local map = Workspace:WaitForChild("map", 8)
 		if not map then return end
@@ -3338,12 +3389,12 @@ autoline:Toggle("Kaiser Line Ups", "Kaiser's Impact Magnus Line Ups.", function(
 		local agoalPos = agoal.Position
 		local bgoalPos = bgoal.Position
 
-		for i = 1, 12 do
+		for i = 1, 24 do
 			local entry = goalRelative[i]
 			if not entry then continue end
 
-			local basePos = (i <= 6) and bgoalPos or agoalPos
-			local col = colors[i]
+			local basePos = (i <= 12) and bgoalPos or agoalPos
+			local col = colors[(i - 1) % #colors + 1]
 
 			pad(basePos + entry.pad, col)
 			target(basePos + entry.target, col)
@@ -3388,17 +3439,36 @@ autoline:Toggle("Yukimiya Line Ups", "Yukimiya's Gyro Shot Line Ups.", function(
 			Color3.fromRGB(0, 255, 0),
 			Color3.fromRGB(255, 255, 0),
 			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(0, 255, 0),
 		}
 
 		local goalRelative = {
-			{pad = Vector3.new(-1, -9, 222), target = Vector3.new(-57, 58, 13)},
-			{pad = Vector3.new(-82, -9, 182), target = Vector3.new(-51, 74, 14)},
-			{pad = Vector3.new(130, -9, 136), target = Vector3.new(-114, 95, 13)},
-			{pad = Vector3.new(63, -9, 192), target = Vector3.new(-104, 128, 13)},
-			{pad = Vector3.new(6, -10, -206), target = Vector3.new(65, 95, -12)},
-			{pad = Vector3.new(-59, -10, -201), target = Vector3.new(123, 148, -12)},
-			{pad = Vector3.new(68, -10, -198), target = Vector3.new(61, 105, -12)},
-			{pad = Vector3.new(-134, -10, -113), target = Vector3.new(4, 48, -53)},
+			{pad = Vector3.new(3, -9, -216),   target = Vector3.new(68, 144, -16)},
+			{pad = Vector3.new(62, -9, -193),  target = Vector3.new(50, 91, -16)},
+			{pad = Vector3.new(-39, -9, -128), target = Vector3.new(6, 0, -12)},
+			{pad = Vector3.new(-32, -9, -134), target = Vector3.new(15, 8, -15)},
+			{pad = Vector3.new(-142, -9, -97), target = Vector3.new(81, 65, -16)},
+			{pad = Vector3.new(-69, -9, -212), target = Vector3.new(158, 223, -16)},
+			{pad = Vector3.new(32, -9, -130),  target = Vector3.new(-10, 24, -14)},
+			{pad = Vector3.new(-115, -9, -160),target = Vector3.new(33, 72, -14)},
+			{pad = Vector3.new(-92, -9, -188), target = Vector3.new(99, 133, -13)},
+			{pad = Vector3.new(-40, -9, -208), target = Vector3.new(50, 116, -14)},
+			{pad = Vector3.new(57, -9, -122),  target = Vector3.new(-8, 23, -15)},
+
+			{pad = Vector3.new(-3, -9, 216),   target = Vector3.new(-68, 144, 16)},
+			{pad = Vector3.new(-62, -9, 193),  target = Vector3.new(-50, 91, 16)},
+			{pad = Vector3.new(39, -9, 128),   target = Vector3.new(-6, 0, 12)},
+			{pad = Vector3.new(32, -9, 134),   target = Vector3.new(-15, 8, 15)},
+			{pad = Vector3.new(142, -9, 97),   target = Vector3.new(-81, 65, 16)},
+			{pad = Vector3.new(69, -9, 212),   target = Vector3.new(-158, 223, 16)},
+			{pad = Vector3.new(-32, -9, 130),  target = Vector3.new(10, 24, 14)},
+			{pad = Vector3.new(115, -9, 160),  target = Vector3.new(-33, 72, 14)},
+			{pad = Vector3.new(92, -9, 188),   target = Vector3.new(-99, 133, 13)},
+			{pad = Vector3.new(40, -9, 208),   target = Vector3.new(-50, 116, 14)},
+			{pad = Vector3.new(-57, -9, 122),  target = Vector3.new(8, 23, 15)},
 		}
 
 		local map = Workspace:WaitForChild("map", 8)
@@ -3410,12 +3480,12 @@ autoline:Toggle("Yukimiya Line Ups", "Yukimiya's Gyro Shot Line Ups.", function(
 		local agoalPos = agoal.Position
 		local bgoalPos = bgoal.Position
 
-		for i = 1, 8 do
+		for i = 1, 22 do
 			local entry = goalRelative[i]
 			if not entry then continue end
 
-			local basePos = (i <= 4) and bgoalPos or agoalPos
-			local col = colors[i]
+			local basePos = (i <= 11) and agoalPos or bgoalPos
+			local col = colors[(i - 1) % #colors + 1]
 
 			pad(basePos + entry.pad, col)
 			target(basePos + entry.target, col)
@@ -3424,78 +3494,6 @@ autoline:Toggle("Yukimiya Line Ups", "Yukimiya's Gyro Shot Line Ups.", function(
 	else
 		StarterGui:SetCore("SendNotification", {
 			Title = "Yukimiya Line Ups",
-			Text = "Disabled.",
-			Duration = 3
-		})
-
-		for i = 1, padCount do
-			local p = Workspace:FindFirstChild("pad" .. i)
-			if p then p:Destroy() end
-		end
-
-		for i = 1, targetCount do
-			local t = Workspace:FindFirstChild("target" .. i)
-			if t then t:Destroy() end
-		end
-
-		padCount = 0
-		targetCount = 0
-	end
-end)
-
-autoline:Toggle("Rin Line Ups", "Rin's Curve Shot Line Ups.", function(r)
-	if r then
-		StarterGui:SetCore("SendNotification", {
-			Title = "Rin Line Ups",
-			Text = "Enabled.",
-			Duration = 3
-		})
-
-		local colors = {
-			Color3.fromRGB(255, 0, 0),
-			Color3.fromRGB(0, 255, 0),
-			Color3.fromRGB(255, 255, 0),
-			Color3.fromRGB(0, 0, 255),
-			Color3.fromRGB(255, 0, 0),
-			Color3.fromRGB(0, 255, 0),
-			Color3.fromRGB(255, 255, 0),
-			Color3.fromRGB(0, 0, 255),
-		}
-
-		local goalRelative = {
-			{pad = Vector3.new(73, -9, 200), target = Vector3.new(5, 67, 54)},
-			{pad = Vector3.new(-2, -9, 215), target = Vector3.new(0, 88, 54)},
-			{pad = Vector3.new(-84, -9, 160), target = Vector3.new(-29, 13, 26)},
-			{pad = Vector3.new(-169, -9, 105), target = Vector3.new(-29, 24, 26)},
-			{pad = Vector3.new(-1, -10, -213), target = Vector3.new(-1, 77, -53)},
-			{pad = Vector3.new(-70, -10, -196), target = Vector3.new(9, 71, -53)},
-			{pad = Vector3.new(81, -10, -114), target = Vector3.new(30, 11, -20)},
-			{pad = Vector3.new(163, -10, -91), target = Vector3.new(30, 26, -20)},
-		}
-
-		local map = Workspace:WaitForChild("map", 8)
-		if not map then return end
-
-		local agoal = map:FindFirstChild("Agoal")
-		local bgoal = map:FindFirstChild("Bgoal")
-
-		local agoalPos = agoal.Position
-		local bgoalPos = bgoal.Position
-
-		for i = 1, 8 do
-			local entry = goalRelative[i]
-			if not entry then continue end
-
-			local basePos = (i <= 4) and bgoalPos or agoalPos
-			local col = colors[i]
-
-			pad(basePos + entry.pad, col)
-			target(basePos + entry.target, col)
-		end
-
-	else
-		StarterGui:SetCore("SendNotification", {
-			Title = "Rin Line Ups",
 			Text = "Disabled.",
 			Duration = 3
 		})
@@ -3525,51 +3523,51 @@ autoline:Toggle("Karasu Line Ups", "Karasu's Dive Bomb Line Ups.", function(kar)
 
 		local colors = {
 			Color3.fromRGB(255, 0, 0),
-    		Color3.fromRGB(255, 128, 0),
-    		Color3.fromRGB(255, 255, 0),
-    		Color3.fromRGB(0, 255, 0),
-    		Color3.fromRGB(0, 0, 255),
-    		Color3.fromRGB(128, 0, 255),
-    		Color3.fromRGB(255, 0, 255),
-    		Color3.fromRGB(128, 255, 0),
-    		Color3.fromRGB(120, 72, 0),
-    		Color3.fromRGB(255, 255, 255),
-    		Color3.fromRGB(0, 0, 0),
+			Color3.fromRGB(255, 128, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(128, 0, 255),
+			Color3.fromRGB(255, 0, 255),
+			Color3.fromRGB(128, 255, 0),
+			Color3.fromRGB(120, 72, 0),
+			Color3.fromRGB(255, 255, 255),
+			Color3.fromRGB(0, 0, 0),
 			Color3.fromRGB(255, 0, 0),
-    		Color3.fromRGB(255, 128, 0),
-    		Color3.fromRGB(255, 255, 0),
-    		Color3.fromRGB(0, 255, 0),
-    		Color3.fromRGB(0, 0, 255),
-    		Color3.fromRGB(128, 0, 255),
-    		Color3.fromRGB(255, 0, 255),
-    		Color3.fromRGB(128, 255, 0),
-    		Color3.fromRGB(120, 72, 0),
-    		Color3.fromRGB(255, 255, 255),
-    		Color3.fromRGB(0, 0, 0)
+			Color3.fromRGB(255, 128, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(128, 0, 255),
+			Color3.fromRGB(255, 0, 255),
+			Color3.fromRGB(128, 255, 0),
+			Color3.fromRGB(120, 72, 0),
+			Color3.fromRGB(255, 255, 255),
+			Color3.fromRGB(0, 0, 0)
 		}
-	
-	    local goalRelative = {
-			{pad = Vector3.new(-47, -9, 164), target = Vector3.new(-25, 30, 14)},
-			{pad = Vector3.new(-24, -9, 193), target = Vector3.new(-30, 78, 14)},
-			{pad = Vector3.new(-2, -9, 206), target = Vector3.new(-4, 103, 14)},
-			{pad = Vector3.new(14, -9, 195), target = Vector3.new(-22, 93, 14)},
-			{pad = Vector3.new(56, -9, 157), target = Vector3.new(-71, 45, 14)},
-			{pad = Vector3.new(-19, -9, 114), target = Vector3.new(-25, 11, 16)},
-			{pad = Vector3.new(30, -9, 158), target = Vector3.new(-52, 28, 14)},
-			{pad = Vector3.new(66, -9, 187), target = Vector3.new(-34, 124, 14)},
-			{pad = Vector3.new(141, -9, 167), target = Vector3.new(-8, 122, 14)},
-			{pad = Vector3.new(-141, -9, 164), target = Vector3.new(-35, 118, 14)},
-			
-			{pad = Vector3.new(-3, -9, -205), target = Vector3.new(-1, 270, -14)},
-			{pad = Vector3.new(-22, -9, -201), target = Vector3.new(10, 146, -14)},
-			{pad = Vector3.new(34, -9, -197), target = Vector3.new(39, 103, -14)},
-			{pad = Vector3.new(-37, -9, -169), target = Vector3.new(53, 57, -14)},
-			{pad = Vector3.new(-130, -9, -172), target = Vector3.new(13, 111, -14)},
-			{pad = Vector3.new(-148, -9, -150), target = Vector3.new(3, 129, -14)},
-			{pad = Vector3.new(14, -9, -184), target = Vector3.new(40, 67, -14)},
-			{pad = Vector3.new(85, -9, -158), target = Vector3.new(54, 41, -14)},
-			{pad = Vector3.new(118, -9, -168), target = Vector3.new(44, 71, -14)},
-			{pad = Vector3.new(170, -9, -154), target = Vector3.new(56, 85, -14)},
+
+		local goalRelative = {
+			{pad = Vector3.new(66, -9, 135),   target = Vector3.new(-44, 39, 14)},
+			{pad = Vector3.new(24, -9, 159),   target = Vector3.new(-70, 19, 13)},
+			{pad = Vector3.new(43, -9, 147),   target = Vector3.new(-72, 34, 13)},
+			{pad = Vector3.new(-12, -9, 160),  target = Vector3.new(-23, 25, 14)},
+			{pad = Vector3.new(-46, -9, 184),  target = Vector3.new(5, 110, 14)},
+			{pad = Vector3.new(-76, -9, 160),  target = Vector3.new(-6, 74, 14)},
+			{pad = Vector3.new(-28, -9, 178),  target = Vector3.new(-11, 65, 14)},
+			{pad = Vector3.new(-96, -9, 134),  target = Vector3.new(-25, 45, 14)},
+			{pad = Vector3.new(-47, -9, 142),  target = Vector3.new(-19, 18, 14)},
+			{pad = Vector3.new(47, -9, 124),   target = Vector3.new(-67, 20, 13)},
+
+			{pad = Vector3.new(-66, -9, -135), target = Vector3.new(44, 39, -14)},
+			{pad = Vector3.new(-24, -9, -159), target = Vector3.new(70, 19, -13)},
+			{pad = Vector3.new(-43, -9, -147), target = Vector3.new(72, 34, -13)},
+			{pad = Vector3.new(12, -9, -160),  target = Vector3.new(23, 25, -14)},
+			{pad = Vector3.new(46, -9, -184),  target = Vector3.new(-5, 110, -14)},
+			{pad = Vector3.new(76, -9, -160),  target = Vector3.new(6, 74, -14)},
+			{pad = Vector3.new(28, -9, -178),  target = Vector3.new(11, 65, -14)},
+			{pad = Vector3.new(96, -9, -134),  target = Vector3.new(25, 45, -14)},
+			{pad = Vector3.new(47, -9, -142),  target = Vector3.new(19, 18, -14)},
+			{pad = Vector3.new(-47, -9, -124), target = Vector3.new(67, 20, -13)},
 		}
 
 		local map = Workspace:WaitForChild("map", 8)
@@ -3614,6 +3612,95 @@ autoline:Toggle("Karasu Line Ups", "Karasu's Dive Bomb Line Ups.", function(kar)
 	end
 end)
 
+autoline:Toggle("Rin Line Ups", "Rin's Curve Shot Line Ups.", function(r)
+	if r then
+		StarterGui:SetCore("SendNotification", {
+			Title = "Rin Line Ups",
+			Text = "Enabled.",
+			Duration = 3
+		})
+
+		local colors = {
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(0, 255, 0),
+			Color3.fromRGB(255, 255, 0),
+			Color3.fromRGB(0, 0, 255),
+		}
+
+		local goalRelative = {
+			{pad = Vector3.new(62, -9, 121),   target = Vector3.new(-29, -9, 38)},
+			{pad = Vector3.new(35, -9, 150),   target = Vector3.new(-26, -9, 50)},
+			{pad = Vector3.new(0, -9, 161),    target = Vector3.new(-33, 39, 14)},
+			{pad = Vector3.new(-28, -9, 154),  target = Vector3.new(-16, 28, 14)},
+			{pad = Vector3.new(-56, -9, 135),  target = Vector3.new(-28, 10, 14)},
+			{pad = Vector3.new(21, -9, 161),   target = Vector3.new(-40, -6, 13)},
+			{pad = Vector3.new(-107, -9, 113), target = Vector3.new(-89, -9, 90)},
+			{pad = Vector3.new(-133, -9, 102), target = Vector3.new(-27, 0, 15)},
+			{pad = Vector3.new(-78, -9, 128),  target = Vector3.new(-27, 9, 17)},
+			{pad = Vector3.new(50, -9, 135),   target = Vector3.new(-44, -3, 13)},
+
+			{pad = Vector3.new(-62, -9, -121), target = Vector3.new(29, -9, -38)},
+			{pad = Vector3.new(-35, -9, -150), target = Vector3.new(26, -9, -50)},
+			{pad = Vector3.new(0, -9, -161),   target = Vector3.new(33, 39, -14)},
+			{pad = Vector3.new(28, -9, -154),  target = Vector3.new(16, 28, -14)},
+			{pad = Vector3.new(56, -9, -135),  target = Vector3.new(28, 10, -14)},
+			{pad = Vector3.new(-21, -9, -161), target = Vector3.new(40, -6, -13)},
+			{pad = Vector3.new(107, -9, -113), target = Vector3.new(89, -9, -90)},
+			{pad = Vector3.new(133, -9, -102), target = Vector3.new(27, 0, -15)},
+			{pad = Vector3.new(78, -9, -128),  target = Vector3.new(27, 9, -17)},
+			{pad = Vector3.new(-50, -9, -135), target = Vector3.new(44, -3, -13)},
+		}
+
+		local map = Workspace:WaitForChild("map", 8)
+		if not map then return end
+
+		local agoal = map:FindFirstChild("Agoal")
+		local bgoal = map:FindFirstChild("Bgoal")
+
+		local agoalPos = agoal.Position
+		local bgoalPos = bgoal.Position
+
+		for i = 1, 20 do
+			local entry = goalRelative[i]
+			if not entry then continue end
+
+			local basePos = (i <= 10) and bgoalPos or agoalPos
+			local col = colors[(i - 1) % #colors + 1]
+
+			pad(basePos + entry.pad, col)
+			target(basePos + entry.target, col)
+		end
+
+	else
+		StarterGui:SetCore("SendNotification", {
+			Title = "Rin Line Ups",
+			Text = "Disabled.",
+			Duration = 3
+		})
+
+		for i = 1, padCount do
+			local p = Workspace:FindFirstChild("pad" .. i)
+			if p then p:Destroy() end
+		end
+
+		for i = 1, targetCount do
+			local t = Workspace:FindFirstChild("target" .. i)
+			if t then t:Destroy() end
+		end
+
+		padCount = 0
+		targetCount = 0
+	end
+end)
+
 autoline:Toggle("Rin Flow Line Ups", "Rin's Kill Shot Line Ups.", function(k)
 	if k then
 		StarterGui:SetCore("SendNotification", {
@@ -3627,13 +3714,22 @@ autoline:Toggle("Rin Flow Line Ups", "Rin's Kill Shot Line Ups.", function(k)
 			Color3.fromRGB(255, 0, 0),
 			Color3.fromRGB(147, 112, 219),
 			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(147, 112, 219),
+			Color3.fromRGB(255, 0, 0),
+			Color3.fromRGB(147, 112, 219),
+			Color3.fromRGB(255, 0, 0),
 		}
 
 		local goalRelative = {
-			{pad = Vector3.new(158, -9, 321), target = Vector3.new(-12, 80, 54)},
-			{pad = Vector3.new(-187, -9, 290), target = Vector3.new(-29, 83, 20)},
-			{pad = Vector3.new(-117, -10, -320), target = Vector3.new(14, 80, -53)},
-			{pad = Vector3.new(198, -10, -265), target = Vector3.new(30, 90, -13)},
+			{pad = Vector3.new(-134, -9, 266), target = Vector3.new(-73, -9, 74)},
+			{pad = Vector3.new(51, -9, 237),   target = Vector3.new(-87, 34, 13)},
+			{pad = Vector3.new(-189, -9, 192), target = Vector3.new(-65, 24, 13)},
+			{pad = Vector3.new(111, -9, 187),  target = Vector3.new(-116, 16, 13)},
+
+			{pad = Vector3.new(134, -9, -266), target = Vector3.new(73, -9, -74)},
+			{pad = Vector3.new(-51, -9, -237), target = Vector3.new(87, 34, -13)},
+			{pad = Vector3.new(189, -9, -192), target = Vector3.new(65, 24, -13)},
+			{pad = Vector3.new(-111, -9, -187),target = Vector3.new(116, 16, -13)},
 		}
 
 		local map = Workspace:WaitForChild("map", 8)
@@ -3645,11 +3741,11 @@ autoline:Toggle("Rin Flow Line Ups", "Rin's Kill Shot Line Ups.", function(k)
 		local agoalPos = agoal.Position
 		local bgoalPos = bgoal.Position
 
-		for i = 1, 4 do
+		for i = 1, 8 do
 			local entry = goalRelative[i]
 			if not entry then continue end
 
-			local basePos = (i <= 2) and bgoalPos or agoalPos
+			local basePos = (i <= 4) and bgoalPos or agoalPos
 			local col = colors[i]
 
 			pad(basePos + entry.pad, col)
@@ -5224,10 +5320,6 @@ end)
 
 misctab:Button("Infinite Yield", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-end)
-
-teleporttab:Button("Spawn Area", function()
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-269, 4, -1599)
 end)
 
 teleporttab:Button("Middle Field", function()
