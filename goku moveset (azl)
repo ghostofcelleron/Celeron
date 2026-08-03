@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
@@ -18,7 +19,7 @@ game.Lighting:FindFirstChild("BUFFERSTRINGS"):Destroy()
 --
 
 local spiritbombfx = "https://pastebin.com/raw/aZ3kAGQd"
-print("hello goku (v1.2)")
+print("hello goku (v1.3)")
 
 local disabled = false
 
@@ -26,7 +27,7 @@ local names = {
     "Strong Shot",
     "Dragon Combo",
     "Instant Transmission",
-    "Ultra Instinct.",
+    "Ultra Instinct",
     "Spirit Bomb"
 }
 
@@ -217,14 +218,13 @@ UserInputService.InputBegan:Connect(function(input, gp)
         looped.Volume = 1
         looped.Looped = true
         looped.Parent = SoundService
-        local emitterTemplate = workspace.DawnWalker.DawnwalkerAura.Attachment.Aura3
-        emitterTemplate.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.new(0, 0.333333, 1)),
-            ColorSequenceKeypoint.new(0.25, Color3.new(1, 0.0623117, 0.910085)),
-            ColorSequenceKeypoint.new(0.5, Color3.new(1, 0, 0)),
-            ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
-        })
-        emitterTemplate.LightEmission = 3
+        local emitterTemplate = ReplicatedStorage.Resources.mvpAssets.dawnwalkerMVP.Aura.Enable2.Attatchment:GetChildren()[3]
+		emitterTemplate.Color = ColorSequence.new({
+    		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 0)),
+    		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 0))
+		})
+		emitterTemplate.LightEmission = 3
+		emitterTemplate.Rate = emitterTemplate.Rate * 1.5
         local clones = {}
         local anim = Instance.new("Animation")
         anim.AnimationId = "rbxassetid://126933926912872"
@@ -236,12 +236,18 @@ UserInputService.InputBegan:Connect(function(input, gp)
             looped:Play()
         end)
         task.delay(1.2, function()
-            for i = 1, 5 do
-                local clone = emitterTemplate:Clone()
-                clone.Parent = root
-                table.insert(clones, clone)
-            end
-        end)
+    	for i = 1, 3 do
+        	local attachment = Instance.new("Attachment")
+        	attachment.Name = "particleoffset"
+        	attachment.Parent = root
+        	attachment.Position = Vector3.new(0, -3.5, 0)
+
+        	local clone = emitterTemplate:Clone()
+        	clone.Parent = attachment
+        	clone.Enabled = true
+        	table.insert(clones, clone)
+    		end
+		end)
         task.delay(1.3, function()
             track:Stop()
         end)
