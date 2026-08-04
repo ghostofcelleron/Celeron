@@ -3073,6 +3073,11 @@ end)
 local autoline = maintab2:Folder("Auto Line Up Features.", Color3.fromRGB(24, 255, 228), true)
 autoline:Label("Auto Line Ups: Helps You Aim At Certain Areas.")
 
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
 local player = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
 local character = player.Character
@@ -3081,13 +3086,13 @@ local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 
 local padCount = 0
 local targetCount = 0
-
 local holdingRMB = false
 local camLockConnection = nil
 local activeTarget = nil
-local speedLockActive = false
-
+local lineupLockActive = false
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+
+local currentLineupMode = "Freeze"
 
 local function updateCharacterRefs(char)
     character = char
@@ -3095,16 +3100,25 @@ local function updateCharacterRefs(char)
     humanoid = character:WaitForChild("Humanoid")
 end
 
-if player.Character then
-    updateCharacterRefs(player.Character)
+if player.Character then 
+    updateCharacterRefs(player.Character) 
 end
 player.CharacterAdded:Connect(updateCharacterRefs)
+
+autoline:Dropdown("Lineup Mode", {"Freeze", "Slowness"}, function(v)
+    currentLineupMode = v
+    if lineupLockActive then
+        lineupLockActive = false
+        if humanoid then humanoid.WalkSpeed = 30 end
+        if hrp then hrp.Anchored = false end
+    end
+end)
 
 local function pad(pos, color)
     padCount += 1
     local p = Instance.new("Part")
     p.Name = "pad" .. padCount
-    p.Size = Vector3.new(5, 5, 5)
+    p.Size = Vector3.new(4, 4, 4)
     p.Position = pos
     p.Transparency = 0.65
     p.Anchored = true
@@ -3119,7 +3133,7 @@ local function target(pos, color)
     local t = Instance.new("Part")
     t.Name = "target" .. targetCount
     t.Shape = Enum.PartType.Ball
-    t.Size = Vector3.new(6, 6, 6)
+    t.Size = Vector3.new(7, 7, 7)
     t.Position = pos
     t.Anchored = true
     t.CanCollide = false
@@ -3139,14 +3153,15 @@ UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         holdingRMB = false
         activeTarget = nil
-        speedLockActive = false
+        lineupLockActive = false
+        
         if camLockConnection then
             camLockConnection:Disconnect()
             camLockConnection = nil
         end
-        if humanoid then
-            humanoid.WalkSpeed = 30
-        end
+        
+        if humanoid then humanoid.WalkSpeed = 30 end
+        if hrp then hrp.Anchored = false end
     end
 end)
 
@@ -3165,14 +3180,13 @@ end
 local function startCamLock(targetPart)
     activeTarget = targetPart
     if camLockConnection then camLockConnection:Disconnect() end
-    
     camLockConnection = RunService.RenderStepped:Connect(function()
-        if not activeTarget then 
+        if not activeTarget then
             if camLockConnection then
                 camLockConnection:Disconnect()
                 camLockConnection = nil
             end
-            return 
+            return
         end
         camera.CFrame = CFrame.new(camera.CFrame.Position, activeTarget.Position)
     end)
@@ -3186,10 +3200,29 @@ local function stopCamLock()
     end
 end
 
+local function resetLineupPhysics()
+    if lineupLockActive then
+        lineupLockActive = false
+        if currentLineupMode == "Freeze" then
+            if hrp then hrp.Anchored = false end
+        elseif currentLineupMode == "Slowness" then
+            if humanoid then humanoid.WalkSpeed = 30 end
+        end
+    end
+end
+
+local function applyLineupMode()
+    lineupLockActive = true
+    if currentLineupMode == "Freeze" then
+        if hrp then hrp.Anchored = true end
+    elseif currentLineupMode == "Slowness" then
+        if humanoid then humanoid.WalkSpeed = 5 end
+    end
+end
+
 if isMobile then
     RunService.RenderStepped:Connect(function()
         if not hrp then return end
-        
         local padIndex = getPadUnderPlayer()
         if padIndex then
             local targetPart = Workspace:FindFirstChild("target" .. padIndex)
@@ -3197,46 +3230,34 @@ if isMobile then
                 startCamLock(targetPart)
             end
         else
-            if activeTarget then
-                stopCamLock()
-            end
+            if activeTarget then stopCamLock() end
         end
     end)
 else
     RunService.RenderStepped:Connect(function()
         if not holdingRMB or not hrp or not humanoid then
-            if speedLockActive then
-                speedLockActive = false
-                humanoid.WalkSpeed = 30
-            end
+            resetLineupPhysics()
             return
         end
         
         local padIndex = getPadUnderPlayer()
         if not padIndex then
-            if speedLockActive then
-                speedLockActive = false
-                humanoid.WalkSpeed = 30
-            end
+            resetLineupPhysics()
             stopCamLock()
             return
         end
         
         local targetPart = Workspace:FindFirstChild("target" .. padIndex)
         if not targetPart then
-            if speedLockActive then
-                speedLockActive = false
-                humanoid.WalkSpeed = 30
-            end
+            resetLineupPhysics()
             return
         end
         
         if activeTarget ~= targetPart then
             startCamLock(targetPart)
         end
-
-        speedLockActive = true
-        humanoid.WalkSpeed = 5
+        
+        applyLineupMode()
     end)
 end
 
