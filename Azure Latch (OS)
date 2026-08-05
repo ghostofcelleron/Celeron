@@ -5328,17 +5328,6 @@ funtab:Button("Naoya Moveset (Req. Sae)", "Click F4 To Disable.", function()
     loadstring(game:HttpGet("https://pastebin.com/raw/PDwm0ZcF"))()
 end)
 
-funtab:Button("Lore Sae Moveset (Req. Sae.)", "Rejoin To Disable.", function()
-    local StarterGui = game:GetService("StarterGui")
-    StarterGui:SetCore("SendNotification", {
-        Title = "Credits",
-        Text = "brought to you by daffy!",
-        Duration = 5,
-        Button1 = "OK",
-    })
-    loadstring(game:HttpGet("https://pastebin.com/raw/kMQ0v88u"))()
-end)
-
 misctab:Button("Infinite Yield", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
