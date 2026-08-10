@@ -885,6 +885,16 @@ guntab:Toggle("Weapon ESP", function()
     startFolderWatcher()
 end)
 
+maintab:Label("Survivor Features.")
+
+maintab:Button("Pack-A-Punch Teleport (Requires 100 Points, VERY BANNABLE.)", function()
+game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(114, 313, 70) wait(1)
+local prompt = workspace.AREA51.TeleporterRoom.Teleporter["Control Panels"].Middle.Teleport.ProximityPrompt
+if prompt then
+fireproximityprompt(prompt) end
+game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(111, 316, 42)
+end)
+
 maintab:Label("Aimlock Features.")
 
 local Players = game:GetService("Players")
@@ -1688,6 +1698,12 @@ maintab:Toggle("Juggernaut Auto-Win (Bannable.)", function()
 		return not (hum and hum.Health > 0)
 	end
 
+	local function isAboveLimit(player)
+		local char = player.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		return root and root.Position.Y > 475
+	end
+
 	local function teleportTo(player)
 		local targetChar = player.Character
 		local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
@@ -1713,7 +1729,7 @@ maintab:Toggle("Juggernaut Auto-Win (Bannable.)", function()
 		task.spawn(function()
 			while _G.LoopKillEnabled do
 				for _, player in ipairs(Players:GetPlayers()) do
-					if player ~= LocalPlayer and not visited[player] then
+					if player ~= LocalPlayer and not visited[player] and not isAboveLimit(player) then
 						repeat
 							if not _G.LoopKillEnabled then
 								running = false
@@ -1722,7 +1738,7 @@ maintab:Toggle("Juggernaut Auto-Win (Bannable.)", function()
 								return
 							end
 
-							if isDead(player) then
+							if isDead(player) or isAboveLimit(player) then
 								visited[player] = true
 							else
 								teleportTo(player)
@@ -1784,17 +1800,17 @@ guntab:Label("Gun Mods.")
 
 local godGunEnabled = false
 local godGunConn = nil
-local charConn = nil
+local killersConn = nil
 
 local function getClosestKillerToPlayer()
     local myChar = player.Character
     if not myChar then return nil end
     local myRoot = myChar:FindFirstChild("HumanoidRootPart")
     if not myRoot then return nil end
-    
+
     local closestPart = nil
     local shortestDistance = math.huge
-    
+
     for _, model in ipairs(killersList) do
         if model and model.Parent then
             local targetPart = model:FindFirstChild("Head") or model:FindFirstChild("HumanoidRootPart")
@@ -1811,15 +1827,32 @@ local function getClosestKillerToPlayer()
     return closestPart
 end
 
-local function startGodGunLoop()
-    if godGunConn then 
-        godGunConn:Disconnect() 
-        godGunConn = nil 
+local function setupKillersListener()
+    if killersConn then
+        killersConn:Disconnect()
+        killersConn = nil
     end
-    
+
+    refreshKillers()
+
+    killersConn = workspace.ChildAdded:Connect(function()
+        refreshKillers()
+    end)
+
+    workspace.ChildRemoved:Connect(function()
+        refreshKillers()
+    end)
+end
+
+local function startGodGunLoop()
+    if godGunConn then
+        godGunConn:Disconnect()
+        godGunConn = nil
+    end
+
     godGunConn = RunService.RenderStepped:Connect(function()
         if not godGunEnabled or silentAimEnabled then return end
-        
+
         for _, obj in ipairs(workspace:GetChildren()) do
             if obj:IsA("BasePart") and (obj.Name == "Bullet" or obj.Name:find("Bullet")) then
                 if not hasWelds(obj) then
@@ -1835,7 +1868,7 @@ end
 
 local function toggleGodGun()
     godGunEnabled = not godGunEnabled
-    
+
     pcall(function()
         StarterGui:SetCore("SendNotification", {
             Title = "God Gun",
@@ -1843,21 +1876,19 @@ local function toggleGodGun()
             Duration = 3
         })
     end)
-    
+
     if godGunEnabled then
-        refreshKillers()
+        setupKillersListener()
         startGodGunLoop()
-        
-        charConn = player.CharacterAdded:Connect(function()
-            task.wait(0.5)
-            refreshKillers()
-            if godGunEnabled then
-                startGodGunLoop()
-            end
-        end)
     else
-        if godGunConn then godGunConn:Disconnect() godGunConn = nil end
-        if charConn then charConn:Disconnect() charConn = nil end
+        if godGunConn then
+            godGunConn:Disconnect()
+            godGunConn = nil
+        end
+        if killersConn then
+            killersConn:Disconnect()
+            killersConn = nil
+        end
     end
 end
 
