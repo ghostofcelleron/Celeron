@@ -23,6 +23,7 @@ local neo = {85056532479796}
 local bls = {77021749781226}
 local bbn = {70845479499574}
 local tb = {92416817362629}
+local trd = {4939362930}
 local example = {}
 
 local loaderGui = Instance.new("ScreenGui")
@@ -171,6 +172,8 @@ local function loadScripts()
 		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Bite%20By%20Night%20(OS)"))()
 		elseif table.find(tb, placeId) then
 		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/The%20Button%20(OS)"))()
+		elseif table.find(trd, placeId) then
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/TRD%3A%20Camp%20(OS)"))()
 		else
 			game:GetService("StarterGui"):SetCore("SendNotification", {
     			Title = "Celeron's Loader";
