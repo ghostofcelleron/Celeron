@@ -1,0 +1,427 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local StarterGui = game:GetService("StarterGui")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (TRD: Camp)",
+    ThemeColor = Color3.fromRGB(55, 55, 55),
+    ThemeGradient = Color3.fromRGB(55, 55, 55),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne,
+    ToggledSideBar = true
+})
+
+local maintab = win:Tab("Main")
+local gametab = win:Tab("Minigame")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron!")
+gametab:Label("Automatically Completes Certain Minigames.")
+misctab:Label("Other Features.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+local players = game:GetService("Players")
+local player = players.LocalPlayer
+
+local speed = 17
+local jumpPower = 50
+
+local function setSpeed(value)
+    local newSpeed = tonumber(value)
+
+    if not newSpeed then
+        return
+    end
+
+    speed = newSpeed
+
+    local character = player.Character
+    if not character then
+        return
+    end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+    if humanoid then
+        humanoid.WalkSpeed = speed
+    end
+end
+
+local function setJumpPower(value)
+    local newJumpPower = tonumber(value)
+
+    if not newJumpPower then
+        return
+    end
+
+    jumpPower = newJumpPower
+
+    local character = player.Character
+    if not character then
+        return
+    end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+    if humanoid then
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = jumpPower
+    end
+end
+
+maintab:Textbox("Player Speed", function(v)
+    setSpeed(v)
+end)
+
+maintab:Textbox("Player Jump Power", function(v)
+    setJumpPower(v)
+end)
+
+
+maintab:Label("Useful Features: Features To Assist Your Gameplay.")
+
+local votecon
+local StarterGui = game:GetService("StarterGui")
+
+maintab:Toggle("Notify Votes", "This Will Notify Who Voted For Who.", function(c)
+    if c then
+        if not votecon then
+            votecon = game.ReplicatedStorage.Season.Voting.Votes.ChildAdded:Connect(function(v)
+                local PlayerVoted = game.ReplicatedStorage.Season.Players[v.Value].Value
+                local PlayerPicked = game.ReplicatedStorage.Season.Players[v.Name].Value
+                local voted = PlayerVoted .. " voted for " .. PlayerPicked .. "."
+
+                StarterGui:SetCore("SendNotification", {
+                    Title = "Notify Votes",
+                    Text = voted,
+                    Duration = 3
+                })
+            end)
+        end
+
+        StarterGui:SetCore("SendNotification", {
+            Title = "Notify Votes",
+            Text = "Enabled.",
+            Duration = 3
+        })
+    else
+        if votecon then
+            votecon:Disconnect()
+            votecon = nil
+        end
+
+        StarterGui:SetCore("SendNotification", {
+            Title = "Notify Votes",
+            Text = "Disabled.",
+            Duration = 3
+        })
+    end
+end)
+
+maintab:Label("Gender Selection: Use When Voted Out To Come Back.")
+
+maintab:Button("Become Male", "Come Back Named Male.", function()
+local args = {
+    [1] = "Gender",
+    [2] = "Male"
+}
+
+game:GetService("ReplicatedStorage").Events.Buy:FireServer(unpack(args))
+end)
+
+maintab:Button("Become Female", "Come Back Named Female.", function()
+local args = {
+    [1] = "Gender",
+    [2] = "Female"
+}
+
+game:GetService("ReplicatedStorage").Events.Buy:FireServer(unpack(args))
+end)
+
+maintab:Label("Character Selection: Allows You To Have A Custom Name.")
+
+maintab:Textbox("Enter Name", "This Will Cost 60 Cash, Use Before Match Starts.", function(v)
+local args = {
+    [1] = "Character",
+    [2] = v
+}
+
+game:GetService("ReplicatedStorage").Events.Buy:FireServer(unpack(args))
+end)
+
+maintab:Button("Server Breaking Name", "This Will Cost 60 Cash, Sets Your Character Name To Be Extremely Long.", function()
+    local raw = game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/weird%20string")
+
+    game:GetService("ReplicatedStorage").Events.Buy:FireServer(
+        "Character",
+        raw
+    )
+end)
+
+gametab:Label("Obby Minigame: Instantly Completes The Current Obby.")
+
+gametab:Button("Complete Obby", "Automatically Finishes The Current Obby.", function()
+    local finish = game.Workspace.Assets:FindFirstChild("Finish", true)
+
+    if finish then
+        finish.CanCollide = false
+        finish.Transparency = 1
+        wait()
+        finish.Position = game.Players.LocalPlayer.Character.Torso.Position
+    end
+end)
+
+gametab:Label("Spleef Minigame: Clears All The Spleef Parts.")
+
+gametab:Button("Complete Spleef", "Clears The Spleef Pads.", function()
+local player = game.Players.LocalPlayer
+local character = player.Character
+local root = character and character:FindFirstChild("HumanoidRootPart")
+
+    for _, v in pairs(game.Workspace.Assets:GetDescendants()) do
+        if v.Name == "SpleefPart" then
+            firetouchinterest(root, v, 0)
+        end
+    end
+
+    wait(0.12)
+    if root then
+    root.Anchored = true
+
+    task.wait(3)
+
+    if root and root.Parent then
+        root.Anchored = false
+    end
+end
+end)
+
+gametab:Label("Math Mania Minigame: Completes All The Questions Like Einstein.")
+
+gametab:Button("Complete Math Mania", "Automatically Completes The Math Equations.", function()
+    local number = 0
+
+    for i = 1, 10 do
+        task.wait()
+
+        number = number + 1
+
+        local mathManiaGui = game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("MathMania")
+
+        if mathManiaGui and mathManiaGui:FindFirstChild(tostring(number)) then
+            local questionGui = mathManiaGui[tostring(number)]
+            local s = questionGui.MainText.Text
+
+            local clean = s:gsub("=", ""):gsub("%?", ""):gsub(" ", "")
+            local result = loadstring("return " .. clean)()
+
+            if result then
+                questionGui.Box.Text = tostring(result)
+                task.wait(0.05)
+
+                local button = questionGui:FindFirstChild("Enter")
+
+                if button then
+                    local events = {
+                        "MouseButton1Click",
+                        "MouseButton1Down",
+                        "Activated"
+                    }
+
+                    for _, event in pairs(events) do
+                        if getconnections and button[event] then
+                            for _, connection in pairs(getconnections(button[event])) do
+                                if connection.Function then
+                                    connection:Fire()
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+gametab:Label("Coins & Gems Minigame: Completes The Coins & Gems Minigame.")
+
+gametab:Toggle("Win Coins & Gems Game", "Automatically Collects Coins And Gems.", function(e)
+    getgenv().CollectCoins = e
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Collect Coins",
+        Text = e and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+
+    if not e then
+        return
+    end
+
+    task.spawn(function()
+        while getgenv().CollectCoins do
+            local player = game:GetService("Players").LocalPlayer
+            local character = player.Character
+            local root = character and character:FindFirstChild("HumanoidRootPart")
+
+            if root then
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if not getgenv().CollectCoins then
+                        break
+                    end
+
+                    if v.Name == "Gem" or v.Name == "Coin" then
+                        if v:IsA("BasePart") then
+                            v.Transparency = 1
+                            v.CanCollide = false
+                            v.CFrame = root.CFrame
+                        elseif v:IsA("Model") then
+                            v:PivotTo(root.CFrame)
+                        end
+                    end
+                end
+            end
+
+            task.wait(0.1)
+        end
+    end)
+end)
+
+gametab:Label("Sword Fighting Minigame: Allows You To Have Reach On Your Sword.")
+
+local reachEnabled = false
+local reachRadius = 0
+local originalGrips = {}
+local reachConnection = nil
+local selectionBox = nil
+
+local function getSelectionBox()
+    if selectionBox and selectionBox.Parent then return selectionBox end
+    if selectionBox then selectionBox:Destroy() end
+    
+    selectionBox = Instance.new("SelectionBox")
+    selectionBox.Name = "ReachVisual"
+    selectionBox.Color3 = Color3.fromRGB(255, 0, 100)
+    selectionBox.LineThickness = 0.05
+    selectionBox.SurfaceTransparency = 0.85
+    selectionBox.SurfaceColor3 = Color3.fromRGB(255, 0, 100)
+    return selectionBox
+end
+
+local function removeSelectionBox()
+    if selectionBox then
+        selectionBox:Destroy()
+        selectionBox = nil
+    end
+end
+
+local function getWeaponHandle(tool)
+    return tool:FindFirstChild("Handle")
+end
+
+local function applyReach(tool)
+    if not reachEnabled or not tool:IsA("Tool") then return end
+    local handle = getWeaponHandle(tool)
+    if not handle or not handle:IsA("BasePart") then return end
+
+    if not originalGrips[tool] then
+        originalGrips[tool] = {
+            grip = tool.Grip,
+            size = handle.Size,
+            transparency = handle.Transparency
+        }
+    end
+
+    handle.Massless = true
+    handle.CanCollide = false
+    handle.Size = Vector3.new(reachRadius, reachRadius, reachRadius)
+    handle.Transparency = 1
+    
+    local box = getSelectionBox()
+    box.Adornee = handle
+    box.Parent = handle
+    
+    tool.Grip = originalGrips[tool].grip
+end
+
+local function removeReach(tool)
+    removeSelectionBox()
+    local data = originalGrips[tool]
+    if not data then return end
+    
+    local handle = getWeaponHandle(tool)
+    if handle and handle:IsA("BasePart") then
+        handle.Size = data.size
+        handle.Transparency = data.transparency
+    end
+    
+    tool.Grip = data.grip
+    originalGrips[tool] = nil
+end
+
+local function manageReachLoop()
+    if reachConnection then
+        reachConnection:Disconnect()
+        reachConnection = nil
+    end
+
+    if not reachEnabled then
+        removeSelectionBox()
+        local char = player.Character
+        if char then
+            local currentTool = char:FindFirstChildOfClass("Tool")
+            if currentTool then removeReach(currentTool) end
+        end
+        return
+    end
+
+    reachConnection = RunService.Heartbeat:Connect(function()
+        local char = player.Character
+        if not char then 
+            removeSelectionBox()
+            return 
+        end
+
+        local currentTool = char:FindFirstChildOfClass("Tool")
+        if currentTool then
+            applyReach(currentTool)
+        end
+    end)
+end
+
+gametab:Toggle("Weapon Reach", "Attaches Reach To Your Sword, Enable While Holding Sword.", function(state)
+    reachEnabled = state
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Weapon Reach",
+        Text = state and "Enabled." or "Disabled.",
+        Duration = 3
+    })
+
+    manageReachLoop()
+end)
+
+gametab:Slider("Weapon Reach Radius", 0, 0, 50, 1, function(v)
+    reachRadius = v
+    if reachEnabled then
+        local char = player.Character
+        if char then
+            local currentTool = char:FindFirstChildOfClass("Tool")
+            if currentTool then applyReach(currentTool) end
+        end
+    end
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("FE Audio Control", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/3dWP6BW4"))()
+end)
