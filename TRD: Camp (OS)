@@ -27,64 +27,85 @@ helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
 local players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local player = players.LocalPlayer
 
-local speed = 17
+local speed = 16
 local jumpPower = 50
+local speedConn = nil
 
-local function setSpeed(value)
-    local newSpeed = tonumber(value)
+local function startSpeedLoop()
+	if speedConn then return end
 
-    if not newSpeed then
-        return
-    end
+	speedConn = RunService.Heartbeat:Connect(function()
+		local character = player.Character
+		if not character then return end
 
-    speed = newSpeed
-
-    local character = player.Character
-    if not character then
-        return
-    end
-
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-    if humanoid then
-        humanoid.WalkSpeed = speed
-    end
-end
-
-local function setJumpPower(value)
-    local newJumpPower = tonumber(value)
-
-    if not newJumpPower then
-        return
-    end
-
-    jumpPower = newJumpPower
-
-    local character = player.Character
-    if not character then
-        return
-    end
-
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-
-    if humanoid then
-        humanoid.UseJumpPower = true
-        humanoid.JumpPower = jumpPower
-    end
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = speed
+			humanoid.UseJumpPower = true
+			humanoid.JumpPower = jumpPower
+		end
+	end)
 end
 
 maintab:Textbox("Player Speed", function(v)
-    setSpeed(v)
+	local newSpeed = tonumber(v)
+	if newSpeed then
+		speed = newSpeed
+		startSpeedLoop()
+	end
 end)
 
 maintab:Textbox("Player Jump Power", function(v)
-    setJumpPower(v)
+	local newJumpPower = tonumber(v)
+	if newJumpPower then
+		jumpPower = newJumpPower
+		startSpeedLoop()
+	end
 end)
 
+maintab:Button("Reset Speed & Jump", function()
+	if speedConn then
+		speedConn:Disconnect()
+		speedConn = nil
+	end
+
+	speed = 18
+	jumpPower = 50
+
+	local character = player.Character
+	if character then
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = 18
+			humanoid.UseJumpPower = true
+			humanoid.JumpPower = 50
+		end
+	end
+end)
 
 maintab:Label("Useful Features: Features To Assist Your Gameplay.")
+
+maintab:Button("Teleport To Safe Area", "Teleports You To A Safe Area.", function()
+game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(11, 58, -598)
+end)
+
+maintab:Button("Get Safety Statue", "Gives You The Safety Statue, May Require Cash.", function()
+	for _, v in pairs(workspace.Idols:GetDescendants()) do
+		if v.Name == "Bag" or v.Name == "SafetyStatue" then
+			if v:FindFirstChild("hit") then
+				v.hit.Transparency = 1
+				v.hit.CanCollide = false
+				v.hit.Position = game:GetService("Players").LocalPlayer.Character.Torso.Position
+				if v.Name == "Bag" then
+					v:Destroy()
+				end
+			end
+		end
+	end
+end)
 
 local votecon
 local StarterGui = game:GetService("StarterGui")
@@ -291,6 +312,12 @@ gametab:Toggle("Win Coins & Gems Game", "Automatically Collects Coins And Gems."
             task.wait(0.1)
         end
     end)
+end)
+
+gametab:Label("Paintball / Dodgeball Minigame: Use To Go To A Safe Area.")
+
+gametab:Button("Teleport To Safe Area", "Teleports You To A Safe Area.", function()
+game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(11, 58, -598)
 end)
 
 gametab:Label("Sword Fighting Minigame: Allows You To Have Reach On Your Sword.")
