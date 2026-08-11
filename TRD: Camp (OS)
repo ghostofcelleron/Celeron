@@ -167,13 +167,19 @@ end)
 
 maintab:Label("Character Selection: Allows You To Have A Custom Name.")
 
-maintab:Textbox("Enter Name", "This Will Cost 60 Cash, Use Before Match Starts.", function(v)
-local args = {
-    [1] = "Character",
-    [2] = v
-}
+local sn = ""
 
-game:GetService("ReplicatedStorage").Events.Buy:FireServer(unpack(args))
+maintab:Textbox("Enter Custom Name", "Sets Your Custom Character's Name.", function(v)
+    sn = v
+end)
+
+maintab:Button("Buy Custom Character", "Buys Custom Character Using Name Set Above. Costs 60 Cash.", function()
+    local args = {
+        [1] = "Character",
+        [2] = sn
+    }
+
+    game:GetService("ReplicatedStorage").Events.Buy:FireServer(unpack(args))
 end)
 
 maintab:Button("Server Breaking Name", "This Will Cost 60 Cash, Sets Your Character Name To Be Extremely Long.", function()
