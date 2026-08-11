@@ -434,7 +434,7 @@ gametab:Toggle("Weapon Reach", "Attaches Reach To Your Sword, Enable While Holdi
     manageReachLoop()
 end)
 
-gametab:Slider("Weapon Reach Radius", 0, 0, 50, 1, function(v)
+gametab:Slider("Weapon Reach Radius", 0, 0, 100, 1, function(v)
     reachRadius = v
     if reachEnabled then
         local char = player.Character
