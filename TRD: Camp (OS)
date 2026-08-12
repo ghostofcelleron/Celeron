@@ -326,6 +326,36 @@ gametab:Button("Teleport To Safe Area", "Teleports You To A Safe Area.", functio
 game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(11, 58, -598)
 end)
 
+gametab:Label("Block Push Minigame: Instantly Teleports Your Block Out.")
+
+gametab:Button("Win Block Push", "Teleports Your Block Out, Wait For Minigame Start Timer.", function()
+    local playerName = game.Players.LocalPlayer.Name
+    local blocksFolder = game:GetService("Workspace"):FindFirstChild("Assets")
+        and game.Workspace.Assets:FindFirstChild("Block Push")
+        and game.Workspace.Assets["Block Push"]:FindFirstChild("Blockpush")
+        and game.Workspace.Assets["Block Push"].Blockpush:FindFirstChild("PushableBlocks")
+
+    if not blocksFolder then return end
+
+    local block = blocksFolder:FindFirstChild(playerName)
+    if not block then return end
+
+    local targetCFrame = CFrame.new(137, -17, -213)
+
+    if block:IsA("Model") then
+        if block.PrimaryPart then
+            block:SetPrimaryPartCFrame(targetCFrame)
+        else
+            local part = block:FindFirstChildWhichIsA("BasePart", true)
+            if part then
+                part.CFrame = targetCFrame
+            end
+        end
+    elseif block:IsA("BasePart") then
+        block.CFrame = targetCFrame
+    end
+end)
+
 gametab:Label("Sword Fighting Minigame: Allows You To Have Reach On Your Sword.")
 
 local reachEnabled = false
