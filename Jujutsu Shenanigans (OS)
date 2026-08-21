@@ -66,38 +66,6 @@ qoltab:Textbox("Better Inviting (Use In Duel Queue, Enter Username.)", function(
 	end)
 end)
 
-misctab:Button("Infinite Yield", function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-end)
-
-misctab:Button("Shutdown Game", function()
-	game:Shutdown()
-end)
-
-misctab:Button("Rejoin Server", function()
-	TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
-end)
-
-misctab:Button("Switch Servers", function()
-	local servers = {}
-	local success, req = pcall(function()
-		return game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
-	end)
-	if success then
-		local body = HttpService:JSONDecode(req)
-		if body and body.data then
-			for _, v in next, body.data do
-				if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
-					table.insert(servers, 1, v.id)
-				end
-			end
-		end
-	end
-	if #servers > 0 then
-		TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], player)
-	end
-end)
-
 helptab:Button("Copy Owner Discord Username", function()
 	StarterGui:SetCore("SendNotification", {
 		Title = "Discord Username",
@@ -444,101 +412,148 @@ antitab:Toggle("Anti Damage", function()
 	end
 end)
 
-local antiDomainEnabled = false
-local activeTarget = nil
-local lerpStart = nil
-local lerpEnd = nil
-local lerpTime = 0.8
-local lerpProgress = 0
+local antiDomainEnabled = false 
+local activeTarget = nil 
+local lerpStart = nil 
+local lerpEnd = nil 
+local lerpTime = 0.8 
+local lerpProgress = 0 
 
 local animationIds = {
-	"rbxassetid://132725601768618",
-	"rbxassetid://118861398234801",
-	"rbxassetid://73048386765082",
-	"rbxassetid://80922461169812",
-	"rbxassetid://121984128639453",
-	"rbxassetid://121984128639453",
-	"rbxassetid://125335594549446",
-	"rbxassetid://83241775239139"
+    "rbxassetid://132725601768618",
+    "rbxassetid://118861398234801",
+    "rbxassetid://73048386765082",
+    "rbxassetid://80922461169812",
+    "rbxassetid://121984128639453",
+    "rbxassetid://125335594549446",
+    "rbxassetid://83241775239139",
+    "rbxassetid://101617544363219",
+    "rbxassetid://105801749091005",
+    "rbxassetid://75736902190737",
+    "rbxassetid://115561023870463"
 }
 
-antitab:Toggle("Anti Domain", function()
-	antiDomainEnabled = not antiDomainEnabled
-
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti Domain",
-		Text = antiDomainEnabled and "Enabled." or "Disabled.",
-		Duration = 2
-	})
-end)
-
-local player = game:GetService("Players").LocalPlayer
-local runService = game:GetService("RunService")
-local char = player.Character or player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-
-player.CharacterAdded:Connect(function(c)
-	char = c
-	hrp = c:WaitForChild("HumanoidRootPart")
-end)
-
-local function isAnimationPlaying(humanoid)
-	for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
-		for _, id in ipairs(animationIds) do
-			if track.Animation and track.Animation.AnimationId == id then
-				return true
-			end
-		end
-	end
-	return false
+local targetIds = {}
+for _, id in ipairs(animationIds) do
+    local numerical = string.match(id, "%d+")
+    if numerical then
+        targetIds[numerical] = true
+    end
 end
 
-runService.RenderStepped:Connect(function(dt)
-	if not antiDomainEnabled or not char or not hrp then return end
+antitab:Toggle("Anti Domain", function() 
+    antiDomainEnabled = not antiDomainEnabled 
+    game:GetService("StarterGui"):SetCore("SendNotification", { 
+        Title = "Anti Domain", 
+        Text = antiDomainEnabled and "Enabled." or "Disabled.", 
+        Duration = 2 
+    }) 
+end) 
 
-	if activeTarget and lerpProgress < lerpTime then
-		lerpProgress += dt
-		local alpha = math.clamp(lerpProgress / lerpTime, 0, 1)
-		local targetHRP = activeTarget:FindFirstChild("HumanoidRootPart")
-		if targetHRP then
-			local startCF = CFrame.new(lerpStart, lerpStart + hrp.CFrame.LookVector)
-			local endCF = CFrame.new(lerpEnd, lerpEnd + hrp.CFrame.LookVector)
-			hrp.CFrame = startCF:Lerp(endCF, alpha)
-		end
-		return
-	end
+local player = game:GetService("Players").LocalPlayer 
+local runService = game:GetService("RunService") 
 
-	if activeTarget then
-		local targetHRP = activeTarget:FindFirstChild("HumanoidRootPart")
-		if not targetHRP or (hrp.Position - targetHRP.Position).Magnitude > 75 then
-			activeTarget = nil
-			lerpStart = nil
-			lerpEnd = nil
-			lerpProgress = 0
-		end
-	end
+local function triggerEscape(otherChar)
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local otherHRP = otherChar and otherChar:FindFirstChild("HumanoidRootPart")
+    
+    if hrp and otherHRP and not activeTarget then
+        local dist = (hrp.Position - otherHRP.Position).Magnitude 
+        if dist <= 60 then 
+            local direction = (hrp.Position - otherHRP.Position).Unit 
+            if direction.Magnitude == 0 or direction ~= direction then
+                direction = hrp.CFrame.LookVector * -1
+            end
+            local escapePos = otherHRP.Position + direction * 85 
+            
+            activeTarget = otherChar 
+            lerpStart = hrp.Position 
+            lerpEnd = escapePos 
+            lerpProgress = 0 
+        end
+    end
+end
 
-	for _, otherPlayer in ipairs(game:GetService("Players"):GetPlayers()) do
-		if otherPlayer ~= player then
-			local otherChar = otherPlayer.Character
-			local otherHRP = otherChar and otherChar:FindFirstChild("HumanoidRootPart")
-			local otherHum = otherChar and otherChar:FindFirstChildOfClass("Humanoid")
+local function trackAnimator(animator, ownerChar)
+    animator.AnimationPlayed:Connect(function(track)
+        if not antiDomainEnabled then return end
+        local trackId = track.Animation and track.Animation.AnimationId
+        if trackId then
+            local numericalTrackId = string.match(trackId, "%d+")
+            if targetIds[numericalTrackId] then
+                triggerEscape(ownerChar)
+            end
+        end
+    end)
+end
 
-			if otherHRP and otherHum then
-				local dist = (hrp.Position - otherHRP.Position).Magnitude
-				if dist <= 50 and isAnimationPlaying(otherHum) then
-					local direction = (hrp.Position - otherHRP.Position).Unit
-					local escapePos = otherHRP.Position + direction * 75
+local function setupCharacter(otherPlayer, char)
+    if not char then return end
+    local humanoid = char:WaitForChild("Humanoid", 5) or char:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        local animator = humanoid:WaitForChild("Animator", 5) or humanoid:FindFirstChildOfClass("Animator")
+        if animator then
+            trackAnimator(animator, char)
+        end
+    end
+end
 
-					activeTarget = otherChar
-					lerpStart = hrp.Position
-					lerpEnd = escapePos
-					lerpProgress = 0
-					break
-				end
-			end
-		end
-	end
+local function setupPlayer(otherPlayer)
+    if otherPlayer == player then return end
+    if otherPlayer.Character then
+        task.spawn(setupCharacter, otherPlayer, otherPlayer.Character)
+    end
+    otherPlayer.CharacterAdded:Connect(function(char)
+        setupCharacter(otherPlayer, char)
+    end)
+end
+
+for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+    setupPlayer(p)
+end
+game:GetService("Players").PlayerAdded:Connect(setupPlayer)
+
+runService.RenderStepped:Connect(function(dt) 
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if not antiDomainEnabled or not char or not hrp then return end 
+
+    if activeTarget then 
+        if lerpProgress < lerpTime then
+            lerpProgress += dt 
+            local alpha = math.clamp(lerpProgress / lerpTime, 0, 1) 
+            local targetHRP = activeTarget:FindFirstChild("HumanoidRootPart") 
+            
+            if targetHRP and lerpStart and lerpEnd then 
+                local startCF = CFrame.new(lerpStart, lerpStart + hrp.CFrame.LookVector) 
+                local endCF = CFrame.new(lerpEnd, lerpEnd + hrp.CFrame.LookVector) 
+                hrp.CFrame = startCF:Lerp(endCF, alpha) 
+            end 
+        else
+            activeTarget = nil 
+            lerpStart = nil 
+            lerpEnd = nil 
+            lerpProgress = 0 
+        end
+    end 
+end)
+
+local baseplate = Instance.new("Part")
+baseplate.Size = Vector3.new(20000, 10, 20000)
+baseplate.Position = Vector3.new(-18, -52, -135)
+baseplate.Anchored = true
+baseplate.Transparency = 1
+baseplate.CanCollide = false
+baseplate.Parent = workspace
+
+antitab:Toggle("Anti Void", function(state)
+    if state then
+        baseplate.CanCollide = true
+    else
+        baseplate.CanCollide = false
+    end
 end)
 
 funtab:Toggle("Climb Walls", function()
@@ -659,10 +674,6 @@ misctab:Button("Infinite Yield", function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 end)
 
-misctab:Button("Shutdown Game", function()
-	game:Shutdown()
-end)
-
 misctab:Button("Rejoin Server", function()
 	TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
 end)
@@ -685,6 +696,10 @@ misctab:Button("Switch Servers", function()
 	if #servers > 0 then
 		TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], player)
 	end
+end)
+
+misctab:Button("Shutdown Game", function()
+	game:Shutdown()
 end)
 
 helptab:Button("Copy Owner Discord Username", function()
