@@ -65,7 +65,7 @@ helptab:Button("Copy Owner Discord Username", "Copies The Owner's Discord Userna
         Duration = 3,
         Button1 = "alright fella",
     })
-    setclipboard("celeronistuff")
+    setclipboard("celeronstilltuff")
 end)
 
 helptab:Button("Copy Discord Server Invite", "Copies The Discord Invite To Your Clipboard.", function()
