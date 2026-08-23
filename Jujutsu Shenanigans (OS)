@@ -13,7 +13,6 @@ local hometab = win:Tab("Home")
 local maintab = win:Tab("Main")
 local antitab = win:Tab("Protection")
 local funtab = win:Tab("Fun")
-local qoltab = win:Tab("QOL")
 local misctab = win:Tab("Others")
 local helptab = win:Tab("Info")
 
@@ -22,49 +21,11 @@ hometab:Label("Join The Discord Server In Info For Updates / Suggestions.")
 maintab:Label("Main Features.")
 antitab:Label("Protection Features.")
 funtab:Label("Fun Features.")
-qoltab:Label("Quality Of Life Features, No Advantages.")
 misctab:Label("Other Features.")
 helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
 hometab:Banner("15586596109", 185)
-
-loopId = 0
-
-qoltab:Textbox("Better Inviting (Use In Duel Queue, Enter Username.)", function(v)
-	loopId += 1
-	local currentLoop = loopId
-
-	task.spawn(function()
-		while currentLoop == loopId do
-			local gui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
-			local container = gui and gui:FindFirstChild("Ranked") and gui.Ranked:FindFirstChild("Invite") and gui.Ranked.Invite:FindFirstChild("Players")
-
-			if container then
-				local children = container:GetChildren()
-
-				for i = 1, #children do
-					local frame = children[i]
-					if frame:IsA("Frame") then
-						frame.Visible = true
-					end
-				end
-
-				for i = 1, #children do
-					task.defer(function()
-						if currentLoop ~= loopId then return end
-						local frame = children[i]
-						if frame:IsA("Frame") and not string.find(string.lower(frame.Name), string.lower(v)) then
-							frame.Visible = false
-						end
-					end)
-				end
-			end
-
-			game:GetService("RunService").RenderStepped:Wait()
-		end
-	end)
-end)
 
 helptab:Button("Copy Owner Discord Username", function()
 	StarterGui:SetCore("SendNotification", {
@@ -148,117 +109,141 @@ end
 
 player.CharacterAdded:Connect(hookJump)
 
-local flightEnabled = false
-local flightLoop = nil
-local animTrack = nil
-local idleTrack = nil
-local flightSound = nil
-local bv = nil
-local bg = nil
+local flightEnabled = false 
+local flightLoop = nil 
+local animTrack = nil 
+local idleTrack = nil 
+local flightSound = nil 
+local bv = nil 
+local bg = nil 
+
+local TweenService = game:GetService("TweenService") 
+local cam = workspace.CurrentCamera 
+local tweenInfo = TweenInfo.new(0.65, Enum.EasingStyle.Quad, Enum.EasingDirection.Out) 
+
+local activeTween = nil
+local lastTargetFov = 70
 
 maintab:Toggle("Flight", function()
-	flightEnabled = not flightEnabled
-
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Flight",
-		Text = flightEnabled and "Enabled." or "Disabled.",
-		Duration = 2
-	})
-
-	if flightLoop then
-		flightLoop:Disconnect()
-		flightLoop = nil
-	end
-
-	local player = game:GetService("Players").LocalPlayer
-	local uis = game:GetService("UserInputService")
-	local cam = workspace.CurrentCamera
-	local char = player.Character or player.CharacterAdded:Wait()
-	local hrp = char:WaitForChild("HumanoidRootPart")
-	local hum = char:WaitForChild("Humanoid")
-
-	if animTrack then animTrack:Stop() animTrack = nil end
-	if idleTrack then idleTrack:Stop() idleTrack = nil end
-	if flightSound then flightSound:Destroy() flightSound = nil end
-	if bv then bv:Destroy() bv = nil end
-	if bg then bg:Destroy() bg = nil end
-
-	if flightEnabled then
-		hum.PlatformStand = true
-
-		local flightAnim = Instance.new("Animation")
-		flightAnim.AnimationId = "rbxassetid://15984964491"
-		animTrack = hum:LoadAnimation(flightAnim)
-		animTrack.Looped = true
-		animTrack:Play()
-		animTrack.TimePosition = 0.7
-		animTrack:AdjustSpeed(0)
-
-		local idleAnim = Instance.new("Animation")
-		idleAnim.AnimationId = "rbxassetid://91428863336534"
-		idleTrack = hum:LoadAnimation(idleAnim)
-		idleTrack.Looped = true
-
-		flightSound = Instance.new("Sound")
-		flightSound.SoundId = "rbxassetid://3308152153"
-		flightSound.Looped = true
-		flightSound.Volume = 1
-		flightSound.Parent = hrp
-		flightSound:Play()
-
-		bv = Instance.new("BodyVelocity")
-		bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-		bv.Velocity = Vector3.zero
-		bv.Parent = hrp
-
-		bg = Instance.new("BodyGyro")
-		bg.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
-		bg.P = 1e5
-		bg.CFrame = hrp.CFrame
-		bg.Parent = hrp
-
-		local currentVel = Vector3.zero
-		local currentSpeed = 165
-
-		flightLoop = game:GetService("RunService").RenderStepped:Connect(function(dt)
-			local direction = Vector3.zero
-			if uis:IsKeyDown(Enum.KeyCode.W) then direction += cam.CFrame.LookVector end
-			if uis:IsKeyDown(Enum.KeyCode.S) then direction -= cam.CFrame.LookVector end
-			if uis:IsKeyDown(Enum.KeyCode.A) then direction -= cam.CFrame.RightVector end
-			if uis:IsKeyDown(Enum.KeyCode.D) then direction += cam.CFrame.RightVector end
-			if uis:IsKeyDown(Enum.KeyCode.Space) then direction += Vector3.new(0, 1, 0) end
-			if uis:IsKeyDown(Enum.KeyCode.LeftControl) then direction -= Vector3.new(0, 1, 0) end
-
-			currentSpeed = 165
-			local targetVel = direction.Magnitude > 0 and direction.Unit * currentSpeed or Vector3.zero
-			currentVel = currentVel:Lerp(targetVel, 0.25)
-			bv.Velocity = currentVel
-
-			bg.CFrame = CFrame.new(hrp.Position, hrp.Position + cam.CFrame.LookVector)
-
-			if currentVel.Magnitude < 1 then
-				if animTrack.IsPlaying then animTrack:Stop() end
-				if not idleTrack.IsPlaying then idleTrack:Play() end
-				flightSound.Volume = 1
-			else
-				if idleTrack.IsPlaying then idleTrack:Stop() end
-				if not animTrack.IsPlaying then
-					animTrack:Play()
-					animTrack.TimePosition = 0.7
-					animTrack:AdjustSpeed(0)
-				end
-				flightSound.Volume = 3
+	flightEnabled = not flightEnabled 
+	
+	game:GetService("StarterGui"):SetCore("SendNotification", { 
+		Title = "Flight", 
+		Text = flightEnabled and "Enabled." or "Disabled.", 
+		Duration = 2 
+	}) 
+	
+	if flightLoop then 
+		flightLoop:Disconnect() 
+		flightLoop = nil 
+	end 
+	
+	local player = game:GetService("Players").LocalPlayer 
+	local uis = game:GetService("UserInputService") 
+	local char = player.Character or player.CharacterAdded:Wait() 
+	local hrp = char:WaitForChild("HumanoidRootPart") 
+	local hum = char:WaitForChild("Humanoid") 
+	
+	if activeTween then activeTween:Cancel() activeTween = nil end
+	lastTargetFov = 70
+	
+	if animTrack then animTrack:Stop() animTrack = nil end 
+	if idleTrack then idleTrack:Stop() idleTrack = nil end 
+	if flightSound then flightSound:Destroy() flightSound = nil end 
+	if bv then bv:Destroy() bv = nil end 
+	if bg then bg:Destroy() bg = nil end 
+	
+	if flightEnabled then 
+		hum.PlatformStand = true 
+		
+		local flightAnim = Instance.new("Animation") 
+		flightAnim.AnimationId = "rbxassetid://15984964491" 
+		animTrack = hum:LoadAnimation(flightAnim) 
+		animTrack.Looped = true 
+		animTrack:Play() 
+		animTrack.TimePosition = 0.7 
+		animTrack:AdjustSpeed(0) 
+		
+		local idleAnim = Instance.new("Animation") 
+		idleAnim.AnimationId = "rbxassetid://91428863336534" 
+		idleTrack = hum:LoadAnimation(idleAnim) 
+		idleTrack.Looped = true 
+		
+		flightSound = Instance.new("Sound") 
+		flightSound.SoundId = "rbxassetid://3308152153" 
+		flightSound.Looped = true 
+		flightSound.Volume = 1 
+		flightSound.Parent = hrp 
+		flightSound:Play() 
+		
+		bv = Instance.new("BodyVelocity") 
+		bv.MaxForce = Vector3.new(1e5, 1e5, 1e5) 
+		bv.Velocity = Vector3.zero 
+		bv.Parent = hrp 
+		
+		bg = Instance.new("BodyGyro") 
+		bg.MaxTorque = Vector3.new(1e6, 1e6, 1e6) 
+		bg.P = 1e5 
+		bg.CFrame = hrp.CFrame 
+		bg.Parent = hrp 
+		
+		local currentVel = Vector3.zero 
+		local currentSpeed = 165 
+		
+		flightLoop = game:GetService("RunService").RenderStepped:Connect(function(dt) 
+			local direction = Vector3.zero 
+			
+			-- Only process key updates if the player is not actively typing in chat
+			if not uis:GetFocusedTextBox() then
+				if uis:IsKeyDown(Enum.KeyCode.W) then direction += cam.CFrame.LookVector end 
+				if uis:IsKeyDown(Enum.KeyCode.S) then direction -= cam.CFrame.LookVector end 
+				if uis:IsKeyDown(Enum.KeyCode.A) then direction -= cam.CFrame.RightVector end 
+				if uis:IsKeyDown(Enum.KeyCode.D) then direction += cam.CFrame.RightVector end 
 			end
-		end)
-	else
-		hum.PlatformStand = false
-
-		if animTrack then animTrack:Stop() animTrack = nil end
-		if idleTrack then idleTrack:Stop() idleTrack = nil end
-		if flightSound then flightSound:Destroy() flightSound = nil end
-		if bv then bv:Destroy() bv = nil end
-		if bg then bg:Destroy() bg = nil end
-	end
+			
+			currentSpeed = 165 
+			local targetVel = direction.Magnitude > 0 and direction.Unit * currentSpeed or Vector3.zero 
+			currentVel = currentVel:Lerp(targetVel, 0.25) 
+			bv.Velocity = currentVel 
+			
+			bg.CFrame = CFrame.new(hrp.Position, hrp.Position + cam.CFrame.LookVector) 
+			
+			local targetFov = (direction.Magnitude > 0) and 145 or 70
+			if targetFov ~= lastTargetFov then
+				lastTargetFov = targetFov
+				if activeTween then activeTween:Cancel() end
+				activeTween = TweenService:Create(cam, tweenInfo, {FieldOfView = targetFov})
+				activeTween:Play()
+			end 
+			
+			if currentVel.Magnitude < 1 then 
+				if animTrack.IsPlaying then animTrack:Stop() end 
+				if not idleTrack.IsPlaying then idleTrack:Play() end 
+				flightSound.Volume = 1 
+			else 
+				if idleTrack.IsPlaying then idleTrack:Stop() end 
+				if not animTrack.IsPlaying then 
+					animTrack:Play() 
+					animTrack.TimePosition = 0.7 
+					animTrack:AdjustSpeed(0) 
+				end 
+				flightSound.Volume = 3 
+			end 
+		end) 
+	else 
+		hum.PlatformStand = false 
+		
+		if animTrack then animTrack:Stop() animTrack = nil end 
+		if idleTrack then idleTrack:Stop() idleTrack = nil end 
+		if flightSound then flightSound:Destroy() flightSound = nil end 
+		if bv then bv:Destroy() bv = nil end 
+		if bg then bg:Destroy() bg = nil end 
+		
+		if activeTween then activeTween:Cancel() end
+		lastTargetFov = 70
+		activeTween = TweenService:Create(cam, tweenInfo, {FieldOfView = 70})
+		activeTween:Play()
+	end 
 end)
 
 local lockOnEnabled = false
@@ -329,6 +314,55 @@ maintab:Toggle("Lock On", function()
 	end
 end)
 
+maintab:Toggle("Flash Step Technique", function(state) _G.FlashStepEnabled = state end)
+
+if not _G.FlashStepSound then 
+    _G.FlashStepSound = Instance.new("Sound") 
+    _G.FlashStepSound.SoundId = "rbxassetid://108156899947106" 
+end
+
+_G.FlashStepSound.Volume = 10
+_G.FlashStepSound.Parent = game:GetService("SoundService")
+
+_G.GetClosestPlayer = function() 
+    local closestPlayer = nil 
+    local dd = 50 
+    local localCharacter = game:GetService("Players").LocalPlayer.Character 
+    if not localCharacter or not localCharacter:FindFirstChild("HumanoidRootPart") then return nil end 
+    local localRoot = localCharacter.HumanoidRootPart 
+    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do 
+        if player ~= game:GetService("Players").LocalPlayer then 
+            local character = player.Character 
+            if character and character:FindFirstChild("HumanoidRootPart") and character:FindFirstChildOfClass("Humanoid") and character.Humanoid.Health > 0 then 
+                local targetRoot = character.HumanoidRootPart 
+                local distance = (localRoot.Position - targetRoot.Position).Magnitude 
+                if distance < dd then 
+                    dd = distance 
+                    closestPlayer = player 
+                end 
+            end 
+        end 
+    end 
+    return closestPlayer 
+end
+
+if _G.FlashStepConnection then _G.FlashStepConnection:Disconnect() end
+
+_G.FlashStepConnection = game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessedEvent) 
+    if gameProcessedEvent then return end 
+    if not _G.FlashStepEnabled then return end 
+    if input.KeyCode == Enum.KeyCode.T then 
+        local localCharacter = game:GetService("Players").LocalPlayer.Character 
+        if not localCharacter or not localCharacter:FindFirstChild("HumanoidRootPart") then return end 
+        local targetPlayer = _G.GetClosestPlayer() 
+        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then 
+            local targetRoot = targetPlayer.Character.HumanoidRootPart 
+            _G.FlashStepSound:Play() 
+            localCharacter.HumanoidRootPart.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 2) 
+        end 
+    end 
+end)
+
 funtab:Button("Invade Domain (Look At Domain.)", function()
 game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame+=workspace.CurrentCamera.CFrame.LookVector*10
 end)
@@ -361,55 +395,56 @@ if returnPos then
 end
 end)
 
-escapeEnabled = false
-escapeConnection = nil
+escapeEnabled = false 
+escapeConnection = nil 
 
-antitab:Toggle("Anti Damage", function()
-	escapeEnabled = not escapeEnabled
-
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Anti Damage",
-		Text = escapeEnabled and "Enabled." or "Disabled.",
-		Duration = 2
-	})
-
-	if escapeEnabled then
-		if escapeConnection then escapeConnection:Disconnect() end
-
-		lastHealth = game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health
-
-		escapeConnection = game:GetService("RunService").Heartbeat:Connect(function()
-			char = game:GetService("Players").LocalPlayer.Character
-			hum = char and char:FindFirstChildOfClass("Humanoid")
-			hrp = char and char:FindFirstChild("HumanoidRootPart")
-			if not hum or not hrp then return end
-
-			if hum.Health < lastHealth then
-				closest = nil
-				shortest = math.huge
-				for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
-					if p ~= game:GetService("Players").LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-						d = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
-						if d < shortest then
-							shortest = d
-							closest = p
-						end
-					end
-				end
-				if closest and closest.Character and closest.Character:FindFirstChild("HumanoidRootPart") then
-					dir = (hrp.Position - closest.Character.HumanoidRootPart.Position).Unit
-					hrp.CFrame = CFrame.new(hrp.Position + dir * 20)
-				end
-			end
-
-			lastHealth = hum.Health
-		end)
-	else
-		if escapeConnection then
-			escapeConnection:Disconnect()
-			escapeConnection = nil
-		end
-	end
+antitab:Toggle("Anti Damage", function() 
+    escapeEnabled = not escapeEnabled 
+    game:GetService("StarterGui"):SetCore("SendNotification", { 
+        Title = "Anti Damage", 
+        Text = escapeEnabled and "Enabled." or "Disabled.", 
+        Duration = 2 
+    }) 
+    
+    if escapeEnabled then 
+        if escapeConnection then escapeConnection:Disconnect() end 
+        
+        local character = game:GetService("Players").LocalPlayer.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        lastHealth = humanoid and humanoid.Health or 100
+        
+        escapeConnection = game:GetService("RunService").Heartbeat:Connect(function() 
+            char = game:GetService("Players").LocalPlayer.Character 
+            hum = char and char:FindFirstChildOfClass("Humanoid") 
+            hrp = char and char:FindFirstChild("HumanoidRootPart") 
+            if not hum or not hrp then return end 
+            
+            if hum.Health < lastHealth then 
+                closest = nil 
+                shortest = math.huge 
+                for _, p in ipairs(game:GetService("Players"):GetPlayers()) do 
+                    if p ~= game:GetService("Players").LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then 
+                        d = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude 
+                        if d < shortest then 
+                            shortest = d 
+                            closest = p 
+                        end 
+                    end 
+                end 
+                
+                if closest and closest.Character and closest.Character:FindFirstChild("HumanoidRootPart") then 
+                    dir = (hrp.Position - closest.Character.HumanoidRootPart.Position).Unit 
+                    hrp.CFrame = CFrame.new(hrp.Position + (dir * 20) + Vector3.new(0, 25, 0)) 
+                end 
+            end 
+            lastHealth = hum.Health 
+        end) 
+    else 
+        if escapeConnection then 
+            escapeConnection:Disconnect() 
+            escapeConnection = nil 
+        end 
+    end 
 end)
 
 local antiDomainEnabled = false 
