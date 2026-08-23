@@ -428,7 +428,7 @@ StarterGui:SetCore("SendNotification", {
     Duration = 3,
     Button1 = "alright fella",
 })
-setclipboard("ghostofcelleron")
+setclipboard("celeronstilltuff")
 end)
 
 helptab:Button("Copy Discord Server Invite", function()
