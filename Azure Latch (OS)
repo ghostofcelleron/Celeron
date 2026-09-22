@@ -82,7 +82,8 @@ end)
 helptab:Label("Script Credits.")
 
 helptab:Label("Main Scripter: Celeron.")
-helptab:Label("Custom UI + Small Features: Daffy.")
+helptab:Label("Custom UI + Some Features: Daffy.")
+helptab:Label("GK Anywhere Feature: Ashura.")
 helptab:Label("Auto Config: Serlicia.")
 
 if math.random(1,50) == 1 then
@@ -1001,9 +1002,12 @@ local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local tackle_anim = {
+local steal_anims = {
     "rbxassetid://109744655458082",
-    "rbxassetid://113088324958896"
+    "rbxassetid://113088324958896",
+    "rbxassetid://96801747244950",
+    "rbxassetid://130345228612384",
+    "rbxassetid://82417661349987"
 }
 
 local function notify2(title, text, duration)
@@ -1132,7 +1136,7 @@ local function montackleanim(animator, targetPlayer)
 
     local animConnection = animator.AnimationPlayed:Connect(function(animTrack)
         local isTackle = false
-        for _, id in ipairs(tackle_anim) do
+        for _, id in ipairs(steal_anims) do
             if animTrack.Animation.AnimationId == id then
                 isTackle = true
                 break
@@ -1874,7 +1878,7 @@ add:Button("Steal Screen Time (funny)", "Click Z To Disable, Steals Screen Time.
     end)
 end)
 
-add:Button("Goalkeeper Anywhere (Rejoin To Disable.) (Credit: someone cool..)", "Allows You To Do GK Side Dashes Instead!", function()
+add:Button("Goalkeeper Anywhere (Rejoin To Disable.)", "Allows You To Do GK Side Dashes Instead!", function()
     game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = "Goalkeeper Anywhere",
         Text = "If You Don't See GK Animations, Your Executor Doesn't Support The Required Functions.",
@@ -1890,6 +1894,67 @@ add:Button("Goalkeeper Anywhere (Rejoin To Disable.) (Credit: someone cool..)", 
     oldfunc = hookfunction(env.checkGK, function (...)
         return true
     end)
+end)
+
+local kickrealhard = false
+
+add:Toggle("Kick Like Kaiser", "Makes You Kick Like Kaiser!1!11!", function(state)
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Kick Like Kaiser",
+        Text = "If Your Kicks Are Not Max Power While On, It Means Your Executor Does Not Support This Feature.",
+        Duration = 10,
+        Button1 = "ok my executor is fine",
+        Button2 = "aw man my executor sucks"
+    })
+    
+    kickrealhard = state
+    
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local ByteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
+    local rawMeta = getrawmetatable(game)
+    
+    if not getgenv().kickhookk then
+        getgenv().kickhookk = true
+        
+        local oldIndex = rawMeta.__index
+        local oldNamecall = rawMeta.__namecall
+        setreadonly(rawMeta, false)
+
+        function modKick(args)
+            if not kickrealhard then return end
+            if type(args) == "table" and type(args[2]) == "table" then
+                for _, subTable in pairs(args[2]) do
+                    if type(subTable) == "table" and subTable[1] == "kick" then
+                        subTable[2] = 100
+                    end
+                end
+            end
+        end
+
+        rawMeta.__index = newcclosure(function(self, key)
+            if self == ByteNetReliable and (key == "FireServer" or key == "fireServer") then
+                return newcclosure(function(remote, ...)
+                    local args = {...}
+                    modKick(args)
+                    return oldIndex(remote, key)(remote, unpack(args))
+                end)
+            end
+            return oldIndex(self, key)
+        end)
+
+        rawMeta.__namecall = newcclosure(function(self, ...)
+            local args = {...}
+            local method = getnamecallmethod()
+            if self == ByteNetReliable and (method == "FireServer" or method == "fireServer") then
+                modKick(args)
+                return oldNamecall(self, unpack(args))
+            end
+            return oldNamecall(self, ...)
+        end)
+
+        setreadonly(rawMeta, true)
+    end
 end)
 
 add:Button("Shachoko GK Catch (Req. GK Position.)", "Makes It Almost Impossible To Be Scored On As GK And Does Shachoko Kick.", function()
@@ -2974,7 +3039,8 @@ local autoActivateState = {
     toggleState = false, 
     moveNumber = 1, 
     db = true, 
-    mode = "Hold" 
+    mode = "Hold",
+    minHeight = 0
 } 
 
 autoact:Toggle("Auto Activate", "Toggles The Feature On.", function(v) 
@@ -2991,6 +3057,10 @@ end)
 autoact:Slider("Auto Activate Distance", 10, 3, 70, 0.5, function(v) 
     autoActivateState.distance = v 
 end) 
+
+autoact:Slider("Auto Activate Ball Height", 0, 0, 50, 0.5, function(v)
+    autoActivateState.minHeight = v
+end)
 
 autoact:Dropdown("Auto Activate Mode", {"Hold", "Toggle"}, function(v) 
     autoActivateState.mode = v 
@@ -3060,6 +3130,13 @@ game:GetService("RunService").RenderStepped:Connect(function()
     distance = (hrp.Position - ball.Position).Magnitude 
     
     if distance <= autoActivateState.distance then 
+        if autoActivateState.minHeight > 0 then
+            local relativeHeight = ball.Position.Y - (hrp.Position.Y - 2)
+            if relativeHeight < autoActivateState.minHeight then
+                return
+            end
+        end
+        
         args = { 
             buffer.fromstring(buffers["base"]), 
             { 
@@ -4066,6 +4143,12 @@ autogk:Label("Auto Goalkeeper: Automatically Plays As GK For You.")
 
 autogk:Button("Celeron's Auto GK Enhanced", "Click V To Toggle, Reset To Disable.", function()
 task.spawn(function()
+    local Players = game:GetService("Players")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local Workspace = game:GetService("Workspace")
+    local RunService = game:GetService("RunService")
+    local UserInputService = game:GetService("UserInputService")
+
     local plr = Players.LocalPlayer
     local char = plr.Character or plr.CharacterAdded:Wait()
     local hum = char:WaitForChild("Humanoid")
@@ -4097,15 +4180,20 @@ task.spawn(function()
         magnetBurstActive = false,
         tackle_radius = 35,
         terrain = Workspace.Terrain,
-        cachedBall = nil,
         renderConn = nil,
         inputConn = nil,
         holderConn = nil,
-        ballAdded = nil,
-        ballRemoved = nil,
         diedConn = nil,
         charAddedConn = nil
     }
+
+    local function getBall()
+        local ball = gkState.terrain:FindFirstChild("Ball")
+        if not ball then
+            ball = Workspace:FindFirstChild("Ball", true)
+        end
+        return ball
+    end
 
     gkState.look = Instance.new("AlignOrientation")
     gkState.look.Name = "AutoGKLook"
@@ -4127,8 +4215,6 @@ task.spawn(function()
         if gkState.renderConn then gkState.renderConn:Disconnect() end
         if gkState.inputConn then gkState.inputConn:Disconnect() end
         if gkState.holderConn then gkState.holderConn:Disconnect() end
-        if gkState.ballAdded then gkState.ballAdded:Disconnect() end
-        if gkState.ballRemoved then gkState.ballRemoved:Disconnect() end
         if gkState.diedConn then gkState.diedConn:Disconnect() end
         if gkState.charAddedConn then gkState.charAddedConn:Disconnect() end
         if gkState.look then gkState.look:Destroy() end
@@ -4143,18 +4229,10 @@ task.spawn(function()
         gkState.lastHolder = cur
     end)
 
-    gkState.ballAdded = gkState.terrain.ChildAdded:Connect(function(child)
-        if child.Name == "Ball" then gkState.cachedBall = child end
-    end)
-
-    gkState.ballRemoved = gkState.terrain.ChildRemoved:Connect(function(child)
-        if child == gkState.cachedBall then gkState.cachedBall = nil end
-    end)
-
     local function predictgoalimpact(pos, vel, accel, goal)
         if not goal then return nil end
         local cf = goal.CFrame
-        local normal = cf.LookVector
+        normal = cf.LookVector
         local goalPos = cf.Position
         local rel = pos - goalPos
         local a = 0.5 * accel:Dot(normal)
@@ -4174,28 +4252,31 @@ task.spawn(function()
     end
 
     gkState.renderConn = RunService.RenderStepped:Connect(function(dt)
-        if not gkState.enabled then return end
-
-        local ball = gkState.cachedBall
-        if not ball or plr.Team == game.Teams.lobby or gkState.pause then
+        if not gkState.enabled or gkState.pause or plr.Team == game.Teams.lobby then 
             gkState.look.Enabled = false
-            return
+            return 
         end
 
         local currentHolder = gkState.ballHolder.Value
+        local ball = getBall()
 
         if currentHolder and currentHolder ~= char and currentHolder:FindFirstChild("HumanoidRootPart") then
             local holderRoot = currentHolder.HumanoidRootPart
             gkState.look.Enabled = true
             gkState.look.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(holderRoot.Position.X, hrp.Position.Y, holderRoot.Position.Z))
-        else
+            
+            local dist = (hrp.Position - holderRoot.Position).Magnitude
+            if dist <= gkState.tackle_radius then
+                gkState.remote:FireServer(unpack(gkState.tackleArgs))
+            end
+
+        elseif ball then
             local rawVel = ball.AssemblyLinearVelocity
             gkState.velSmooth = gkState.velSmooth:Lerp(rawVel, math.clamp(dt*15, 0, 1))
             local accel = (gkState.velSmooth - gkState.lastVel) / math.max(dt, 1/240)
             gkState.lastVel = gkState.velSmooth
 
             local goal = (plr.Team == game.Teams.B and gkState.map.Bgoal) or (plr.Team == game.Teams.A and gkState.map.Agoal)
-
             local tImpact = predictgoalimpact(ball.Position, gkState.velSmooth, accel, goal)
 
             local predicted
@@ -4207,27 +4288,28 @@ task.spawn(function()
 
             gkState.look.Enabled = true
             gkState.look.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(predicted.X, hrp.Position.Y, predicted.Z))
-        end
 
-        local dist = (hrp.Position - ball.Position).Magnitude
-
-        if dist > gkState.tackle_radius and dist <= 37 and ball.Position.Y > hrp.Position.Y + 4 then
-            hum.Jump = true
-        end
-
-        if dist <= gkState.tackle_radius then
-            gkState.remote:FireServer(unpack(gkState.tackleArgs))
-            if not gkState.magnetBurstActive then
-                gkState.magnetBurstActive = true
-                task.spawn(function()
-                    local start = os.clock()
-                    while os.clock() - start < 0.897 and gkState.enabled do
-                        gkState.remote:FireServer(gkState.emptyBuffer)
-                        task.wait(0.125)
-                    end
-                    gkState.magnetBurstActive = false
-                end)
+            local dist = (hrp.Position - ball.Position).Magnitude
+            if dist > gkState.tackle_radius and dist <= 37 and ball.Position.Y > hrp.Position.Y + 4 then
+                hum.Jump = true
             end
+
+            if dist <= gkState.tackle_radius then
+                gkState.remote:FireServer(unpack(gkState.tackleArgs))
+                if not gkState.magnetBurstActive then
+                    gkState.magnetBurstActive = true
+                    task.spawn(function()
+                        local start = os.clock()
+                        while os.clock() - start < 0.897 and gkState.enabled do
+                            gkState.remote:FireServer(gkState.emptyBuffer)
+                            task.wait(0.125)
+                        end
+                        gkState.magnetBurstActive = false
+                    end)
+                end
+            end
+        else
+            gkState.look.Enabled = false
         end
     end)
 
@@ -4583,6 +4665,95 @@ game:GetService("RunService").RenderStepped:Connect(checkQTE)
 sendNotification(qteState.enabled and "Enabled." or "Disabled.")
 end)
 
+local teamHighlightActive = false
+local highlightFolder = nil
+
+local function notiy(text)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Team Highlighting",
+        Text = text,
+        Duration = 2
+    })
+end
+
+local function cleanHighlights()
+    if highlightFolder then
+        highlightFolder:Destroy()
+        highlightFolder = nil
+    end
+end
+
+local function applyHighlights()
+    cleanHighlights()
+    if not teamHighlightActive then return end
+
+    highlightFolder = Instance.new("Folder")
+    highlightFolder.Name = "ActiveTeamHighlights"
+    highlightFolder.Parent = game:GetService("CoreGui")
+
+    local localPlayer = game:GetService("Players").LocalPlayer
+    if not localPlayer then return end
+
+    for _, p in pairs(game:GetService("Players"):GetPlayers()) do
+        if p ~= localPlayer and p.Character then
+            local color = (p.Team == localPlayer.Team) and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(255, 50, 50)
+            
+            local hl = Instance.new("Highlight")
+            hl.Name = p.Name .. "_Highlight"
+            hl.FillColor = color
+            hl.FillTransparency = 0.65
+            hl.OutlineColor = color
+            hl.OutlineTransparency = 0.2
+            hl.Adornee = p.Character
+            hl.Parent = highlightFolder
+        end
+    end
+end
+
+othersil:Toggle("Team Highlighting", "Highlights Your Teammates / Enemies Accordingly.", function()
+    teamHighlightActive = not teamHighlightActive
+    notiy(teamHighlightActive and "Enabled." or "Disabled.")
+    
+    if teamHighlightActive then
+        applyHighlights()
+        
+        getgenv().HighlightConn1 = game:GetService("Players").PlayerAdded:Connect(function(p)
+            p.CharacterAdded:Connect(function()
+                task.wait(0.5)
+                applyHighlights()
+            end)
+            p:GetPropertyChangedSignal("Team"):Connect(applyHighlights)
+        end)
+        
+        for _, p in pairs(game:GetService("Players"):GetPlayers()) do
+            if p ~= game:GetService("Players").LocalPlayer then
+                p.CharacterAdded:Connect(function()
+                    task.wait(0.5)
+                    applyHighlights()
+                end)
+                p:GetPropertyChangedSignal("Team"):Connect(applyHighlights)
+            else
+                p:GetPropertyChangedSignal("Team"):Connect(applyHighlights)
+            end
+        end
+
+        getgenv().HighlightConn2 = game:GetService("RunService").Heartbeat:Connect(function()
+            if not teamHighlightActive then return end
+            local localPlayer = game:GetService("Players").LocalPlayer
+            for _, p in pairs(game:GetService("Players"):GetPlayers()) do
+                if p ~= localPlayer and p.Character and not highlightFolder:FindFirstChild(p.Name .. "_Highlight") then
+                    applyHighlights()
+                    break
+                end
+            end
+        end)
+    else
+        cleanHighlights()
+        if getgenv().HighlightConn1 then getgenv().HighlightConn1:Disconnect() end
+        if getgenv().HighlightConn2 then getgenv().HighlightConn2:Disconnect() end
+    end
+end)
+
 getgenv().AutoStealState = getgenv().AutoStealState or { enabled = false, connections = {} } 
 state = getgenv().AutoStealState 
 
@@ -4667,76 +4838,6 @@ othersil:Toggle("Auto Steal Ball", "Automatically Attempts To Steal When Opponen
         hookPlayer(p) 
     end 
     table.insert(state.connections, Players.PlayerAdded:Connect(hookPlayer)) 
-end)
-
-local formlessState = {
-    enabled = false
-}
-
-othersil:Toggle("Auto Formless (Bind: Y)", "Shidou Only Formless Macro.", function()
-    formlessState.enabled = not (formlessState.enabled or false)
-
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Auto Formless",
-        Text = formlessState.enabled and "Enabled." or "Disabled.",
-        Duration = 2
-    })
-
-    if formlessState.inputConnection then
-        formlessState.inputConnection:Disconnect()
-        formlessState.inputConnection = nil
-    end
-
-    if formlessState.enabled then
-        formlessState.inputConnection = game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
-            if gp or input.KeyCode ~= Enum.KeyCode.Y then return end
-            if game:GetService("UserInputService").MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
-
-            local LP = game:GetService("Players").LocalPlayer
-            local char = LP.Character
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if not hrp or not hum then return end
-
-            hum.AutoRotate = false
-
-            local Camera = workspace.CurrentCamera
-            local camType = Camera.CameraType
-            local camSubject = Camera.CameraSubject
-            local camCF = Camera.CFrame
-            local flipped = camCF * CFrame.Angles(0, math.rad(180), 0)
-
-            Camera.CameraType = Enum.CameraType.Scriptable
-            Camera.CFrame = flipped
-
-            task.delay(0.1, function()
-                if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
-                    Camera.CameraSubject = LP.Character:FindFirstChildOfClass("Humanoid")
-                    Camera.CameraType = Enum.CameraType.Custom
-                else
-                    Camera.CameraSubject = camSubject
-                    Camera.CameraType = camType
-                end
-                hum.AutoRotate = true
-            end)
-
-            task.wait(0.15)
-
-            local anim = Instance.new("Animation")
-            anim.AnimationId = "rbxassetid://76587445975710"
-            local track = hum:LoadAnimation(anim)
-            track:Play()
-
-            local dir = hrp.CFrame.LookVector
-            local kickVec = vector.create(dir.X * 0.5, 1, dir.Z * 0.5)
-
-            local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
-            remote:FireServer(buffer.fromstring(buffers["base"]), { { "kick", 25, false, kickVec } })
-            game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(
-                buffer.fromstring(buffers["base"]), { { "skill1" } }
-            )
-        end)
-    end
 end)
 
 local cutsceneState = {
@@ -4869,6 +4970,102 @@ othersil:Button("Fix Duplicate Ball", "I Don't Know If This Is Still An Issue Bu
         if obj:IsA("MeshPart") and obj.Name == "Ball" then
             obj:Destroy()
         end
+    end
+end)
+
+local bindKey = Enum.KeyCode.Y
+
+local formlessState = {
+    enabled = false
+}
+
+local function notiy(text)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Auto Formless",
+        Text = text,
+        Duration = 2
+    })
+end
+
+othersil:Toggle("Auto Formless", "Shidou Only Formless Macro.", function()
+    formlessState.enabled = not formlessState.enabled
+    notiy(formlessState.enabled and "Enabled." or "Disabled.")
+
+    if formlessState.inputConnection then
+        formlessState.inputConnection:Disconnect()
+        formlessState.inputConnection = nil
+    end
+
+    if formlessState.enabled then
+        formlessState.inputConnection = game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
+            if gp or input.KeyCode ~= bindKey then return end
+            if game:GetService("UserInputService").MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
+
+            local LP = game:GetService("Players").LocalPlayer
+            local char = LP.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if not hrp or not hum then return end
+
+            hum.AutoRotate = false
+
+            local Camera = workspace.CurrentCamera
+            local camType = Camera.CameraType
+            local camSubject = Camera.CameraSubject
+            local camCF = Camera.CFrame
+            local flipped = camCF * CFrame.Angles(0, math.rad(180), 0)
+
+            Camera.CameraType = Enum.CameraType.Scriptable
+            Camera.CFrame = flipped
+
+            task.delay(0.1, function()
+                if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
+                    Camera.CameraSubject = LP.Character:FindFirstChildOfClass("Humanoid")
+                    Camera.CameraType = Enum.CameraType.Custom
+                else
+                    Camera.CameraSubject = camSubject
+                    Camera.CameraType = camType
+                end
+                hum.AutoRotate = true
+            end)
+
+            task.wait(0.15)
+
+            local anim = Instance.new("Animation")
+            anim.AnimationId = "rbxassetid://76587445975710"
+            local track = hum:LoadAnimation(anim)
+            track:Play()
+
+            local dir = hrp.CFrame.LookVector
+            local kickVec = vector.create(dir.X * 0.5, 1, dir.Z * 0.5)
+
+            local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+            remote:FireServer(buffer.fromstring(buffers["base"]), { { "kick", 25, false, kickVec } })
+            game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(
+                buffer.fromstring(buffers["base"]), { { "skill1" } }
+            )
+        end)
+    end
+end)
+
+othersil:Textbox("Formless Keybind", "Enter Key (Example: Y, V, L.)", function(text)
+    if typeof(text) ~= "string" then
+        bindKey = Enum.KeyCode.Y
+        notiy("Invalid Key. Bind Is Now Y.")
+        return
+    end
+
+    local formatted = text:gsub("%s+", "")
+    local success, key = pcall(function()
+        return Enum.KeyCode[formatted]
+    end)
+
+    if success and key then
+        bindKey = key
+        notiy("Bind Set To: " .. key.Name)
+    else
+        bindKey = Enum.KeyCode.Y
+        notiy("Invalid Key. Bind Is Now Y.")
     end
 end)
 
@@ -5681,122 +5878,138 @@ local goalFarmState = {
     desc = "not-started"
 }
 
+local farmmode = "Solo Farm"
+local lastFiredTeam = "B"
+local teamSwitching = false
+local lastResetTime = 0
+
 buffer = buffer or {
     fromstring = function(str)
         return str
     end
 }
 
-local GoalPlayers = game:GetService("Players")
-local GoalRunService = game:GetService("RunService")
-local GoalReplicatedStorage = game:GetService("ReplicatedStorage")
+GoalPlayers = game:GetService("Players")
+GoalMapFolder = workspace:WaitForChild("map")
+GoalAGoal = GoalMapFolder:WaitForChild("Agoal")
+GoalBGoal = GoalMapFolder:WaitForChild("Bgoal")
+GoalLocalPlayer = GoalPlayers.LocalPlayer
 
-local GoalMapFolder = workspace:WaitForChild("map")
-local GoalAGoal = GoalMapFolder:WaitForChild("Agoal")
-local GoalBGoal = GoalMapFolder:WaitForChild("Bgoal")
-local GoalLocalPlayer = GoalPlayers.LocalPlayer
+function checkScoreCondition()
+    local hotbar = GoalLocalPlayer:FindFirstChild("PlayerGui") and GoalLocalPlayer.PlayerGui:FindFirstChild("Hotbar")
+    local homeLabel = hotbar and hotbar:FindFirstChild("Home")
+    local awayLabel = hotbar and hotbar:FindFirstChild("Away")
+    
+    if homeLabel and awayLabel then
+        local homeGoals = tonumber(string.match(homeLabel.Text, ":%s*(%d+)")) or 0
+        local awayGoals = tonumber(string.match(awayLabel.Text, "(%d+)%s*:")) or 0
+        
+        if math.abs(homeGoals - awayGoals) >= 4 and not (homeGoals >= 10 and awayGoals >= 10) then
+            if os.clock() - lastResetTime >= 60 then
+                return true
+            end
+        end
+    end
+    return false
+end
 
-local function firePacketsIfNearGoal()
+function firePacketsIfNearGoal()
     local char = GoalLocalPlayer.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
+    local root = char and char:FindFirstChild("HumanoidRootPart")
     if not root then return end
     if (root.Position - Vector3.new(-371, 13, -1599)).Magnitude <= 15 or
        (root.Position - Vector3.new(-196, 13, -1599)).Magnitude <= 15 then
-        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000A"))
-        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000B"))
+        
+        if farmmode == "Solo Farm" then
+            if teamSwitching then return end
+            
+            if checkScoreCondition() then
+                teamSwitching = true
+                lastResetTime = os.clock()
+                task.spawn(function()
+                    if char then
+                        char:BreakJoints()
+                    end
+                    task.wait(8)
+                    lastFiredTeam = (lastFiredTeam == "A") and "B" or "A"
+                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000" .. lastFiredTeam))
+                    teamSwitching = false
+                end)
+                return
+            end
+            
+            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000" .. lastFiredTeam))
+        else
+            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000A"))
+            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000B"))
+        end
     end
 end
 
-local function IsInGame()
-    local LocalCharacter = GoalLocalPlayer.Character
-    if not LocalCharacter then return false end
-    local StateFolder = LocalCharacter:FindFirstChild("state")
-    if not StateFolder then return false end
-    local InGameValue = StateFolder:FindFirstChild("ingame")
-    if not InGameValue then return false end
-    return InGameValue.Value
+function IsInGame()
+    local char = GoalLocalPlayer.Character
+    local state = char and char:FindFirstChild("state")
+    local ingame = state and state:FindFirstChild("ingame")
+    return ingame and ingame.Value or false
 end
 
-local function DisableCollisionBoxes()
-    local MapFolder = workspace:FindFirstChild("map")
-    if not MapFolder then return end
-    local GkBarriar = MapFolder:FindFirstChild("gkbarriar")
-    local AGoal = MapFolder:FindFirstChild("Agoal")
-    local BGoal = MapFolder:FindFirstChild("Bgoal")
-    if GkBarriar then
-        local ABarriar = GkBarriar:FindFirstChild("A")
-        local BBarriar = GkBarriar:FindFirstChild("B")
-        if ABarriar then ABarriar.CanCollide = false end
-        if BBarriar then BBarriar.CanCollide = false end
+function DisableCollisionBoxes()
+    local map = workspace:FindFirstChild("map")
+    if not map then return end
+    local gk = map:FindFirstChild("gkbarriar")
+    local aGoal = map:FindFirstChild("Agoal")
+    local bGoal = map:FindFirstChild("Bgoal")
+    if gk then
+        local aBar = gk:FindFirstChild("A")
+        local bBar = gk:FindFirstChild("B")
+        if aBar then aBar.CanCollide = false end
+        if bBar then bBar.CanCollide = false end
     end
-    if AGoal then AGoal.CanCollide = false end
-    if BGoal then BGoal.CanCollide = false end
+    if aGoal then aGoal.CanCollide = false end
+    if bGoal then bGoal.CanCollide = false end
 end
 
-local function StealBall()
-    local LocalCharacter = GoalLocalPlayer.Character
-    local LocalHumanoidRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
-    local Football = workspace.Terrain:FindFirstChild("Ball")
-    if LocalHumanoidRootPart and Football then
+function StealBall()
+    local char = GoalLocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local ball = workspace.Terrain:FindFirstChild("Ball")
+    if root and ball then
         task.wait(0.5)
-        LocalHumanoidRootPart.CFrame = CFrame.new(Football.Position.X, 0, Football.Position.Z)
+        root.CFrame = CFrame.new(ball.Position.X, 0, ball.Position.Z)
     end
-    for _, OtherPlayer in pairs(GoalPlayers:GetPlayers()) do
-        if OtherPlayer ~= GoalLocalPlayer then
-            local OtherCharacter = OtherPlayer.Character
-            local OtherFootball = OtherCharacter and OtherCharacter:FindFirstChild("Ball")
-            local OtherHumanoidRootPart = OtherCharacter and OtherCharacter:FindFirstChild("HumanoidRootPart")
-            if OtherFootball and OtherHumanoidRootPart and LocalHumanoidRootPart then
+    for _, opp in pairs(GoalPlayers:GetPlayers()) do
+        if opp ~= GoalLocalPlayer then
+            local oChar = opp.Character
+            local oBall = oChar and oChar:FindFirstChild("Ball")
+            local oRoot = oChar and oChar:FindFirstChild("HumanoidRootPart")
+            if oBall and oRoot and root then
                 task.wait(0.5)
-                LocalHumanoidRootPart.CFrame = OtherFootball.CFrame
-                local args = {
-                    buffer.fromstring(buffers["base"]),
-                    {
-                        {
-                            "tackle"
-                        }
-                    }
-                }
-                GoalReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                root.CFrame = oBall.CFrame
+                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack({buffer.fromstring(buffers["base"]), {{"tackle"}}}))
             end
         end
     end
 end
 
-local function HasBall()
-    local LocalCharacter = GoalLocalPlayer.Character
-    local Football = LocalCharacter and LocalCharacter:FindFirstChild("Ball")
-    return Football ~= nil
+function HasBall()
+    local char = GoalLocalPlayer.Character
+    return char and char:FindFirstChild("Ball") ~= nil
 end
 
-local function stopGoalFarm()
+function stopGoalFarm()
     if not goalFarmState.Enabled then return end
     goalFarmState.Enabled = false
-
-    if goalFarmState.CFConn then
-        goalFarmState.CFConn:Disconnect()
-        goalFarmState.CFConn = nil
-    end
-    if goalFarmState.RenderConn then
-        goalFarmState.RenderConn:Disconnect()
-        goalFarmState.RenderConn = nil
-    end
-
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Goal Farm",
-        Text = "Target Reached! :3",
-        Duration = 2
-    })
+    if goalFarmState.CFConn then goalFarmState.CFConn:Disconnect() goalFarmState.CFConn = nil end
+    if goalFarmState.RenderConn then goalFarmState.RenderConn:Disconnect() goalFarmState.RenderConn = nil end
+    game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Goal Farm", Text = "Target Reached! :3", Duration = 2})
 end
 
-local function trackGoalsLoop()
+function trackGoalsLoop()
     task.spawn(function()
         local goals = GoalLocalPlayer:WaitForChild("leaderstats"):WaitForChild("goals")
         while goalFarmState.Enabled do
             task.wait(1)
-            local count = goals.Value
-            if goalFarmState.StopAt and count >= goalFarmState.StopAt then
+            if goalFarmState.StopAt and goals.Value >= goalFarmState.StopAt then
                 stopGoalFarm()
                 return
             end
@@ -5804,52 +6017,72 @@ local function trackGoalsLoop()
     end)
 end
 
+exploittab:Dropdown("Goal Farm Method", {"Solo Farm", "Alt Farm (FAST)"}, function(v) 
+    farmmode = v
+    game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Goal Farm Method", Text = "Farming Method: " .. farmmode, Duration = 3})
+end)
+
+exploittab:Button("Goal Farm Info", "This Comes With Instructions On How To Use The Feature Below.", function()
+    local StarterGui = game:GetService("StarterGui")
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Goal Farm Info",
+        Text = "Solo Mode: The Score On BOTH TEAMS Must Be Zero Or Above 15-20 Goals Each.",
+        Duration = 10
+    }) task.wait(0.5)
+    StarterGui:SetCore("SendNotification", {
+        Title = "Goal Farm Info",
+        Text = "Alt Mode: Turn The Feature On For BOTH ACCOUNTS On SEPERATE TEAMS.",
+        Duration = 10
+    })
+end)
+
 exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
     goalFarmState.Enabled = not goalFarmState.Enabled
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Goal Farm",
-        Text = goalFarmState.Enabled and "Enabled." or "Disabled.",
-        Duration = 1
-    })
+    game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Goal Farm", Text = goalFarmState.Enabled and "Enabled." or "Disabled.", Duration = 1})
     if goalFarmState.Enabled then
         goalFarmState.CFConn = GoalLocalPlayer.CharacterAdded:Connect(function()
             task.wait(1)
-            if goalFarmState.Enabled then
-                firePacketsIfNearGoal()
-            end
+            if goalFarmState.Enabled then firePacketsIfNearGoal() end
         end)
         task.spawn(function()
             repeat task.wait() until GoalLocalPlayer.Character and GoalLocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if goalFarmState.Enabled then
-                firePacketsIfNearGoal()
-            end
+            if goalFarmState.Enabled then firePacketsIfNearGoal() end
         end)
-        goalFarmState.RenderConn = GoalRunService.RenderStepped:Connect(function()
+        goalFarmState.RenderConn = RunService.RenderStepped:Connect(function()
             if not goalFarmState.Enabled then return end
             pcall(function()
+                if farmmode == "Solo Farm" and (teamSwitching or checkScoreCondition()) then
+                    if not teamSwitching then
+                        teamSwitching = true
+                        lastResetTime = os.clock()
+                        task.spawn(function()
+                            local char = GoalLocalPlayer.Character
+                            if char then
+                                char:BreakJoints()
+                            end
+                            task.wait(8)
+                            lastFiredTeam = (lastFiredTeam == "A") and "B" or "A"
+                            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000" .. lastFiredTeam))
+                            teamSwitching = false
+                        end)
+                    end
+                    return
+                end
+                
                 if not IsInGame() then return end
                 DisableCollisionBoxes()
                 StealBall()
                 if HasBall() then
-                    local LocalCharacter = GoalLocalPlayer.Character
-                    local LocalRootPart = LocalCharacter and LocalCharacter:FindFirstChild("HumanoidRootPart")
-                    local Goal = GoalLocalPlayer.Team.Name == "A" and GoalBGoal or GoalAGoal
-                    if LocalRootPart and Goal then
+                    local char = GoalLocalPlayer.Character
+                    local root = char and char:FindFirstChild("HumanoidRootPart")
+                    local targetGoal = GoalLocalPlayer.Team.Name == "A" and GoalBGoal or GoalAGoal
+                    if root and targetGoal then
                         task.wait(0.5)
-                        LocalRootPart.CFrame = Goal.CFrame
+                        root.CFrame = targetGoal.CFrame
                         task.wait(0.185)
-                        local args = {
-                            buffer.fromstring(buffers["base"]),
-                            {
-                                {
-                                    "kick",
-                                    20,
-                                    false,
-                                    vector.create(0, 1, 0)
-                                }
-                            }
-                        }
-                        GoalReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack({buffer.fromstring(buffers["base"]), {{"kick", 50, false, vector.create(0, 1, 0)}}}))
+                        firePacketsIfNearGoal()
                     end
                 end
             end)
@@ -5864,18 +6097,10 @@ exploittab:Textbox("Goal Target", "Enter A Number Of Goals To Stop Farming At.",
     local num = tonumber(v)
     if num then
         goalFarmState.StopAt = num
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Goal Target",
-            Text = "Goal Target: " .. num,
-            Duration = 2
-        })
+        game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Goal Target", Text = "Goal Target: " .. num, Duration = 2})
     else
         goalFarmState.StopAt = math.huge
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Goal Target",
-            Text = "Invalid Target, Farm Will Be Infinite.",
-            Duration = 2
-        })
+        game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Goal Target", Text = "Invalid Target, Farm Will Be Infinite.", Duration = 2})
     end
 end)
 
