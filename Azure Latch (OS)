@@ -4224,7 +4224,9 @@ task.spawn(function()
     gkState.holderConn = gkState.ballHolder.Changed:Connect(function(cur)
         if gkState.lastHolder == char and cur == nil then
             gkState.pause = true
-            task.delay(2.6, function() gkState.pause = false end)
+            task.delay(2.6, function()
+                gkState.pause = false
+            end)
         end
         gkState.lastHolder = cur
     end)
@@ -4232,7 +4234,7 @@ task.spawn(function()
     local function predictgoalimpact(pos, vel, accel, goal)
         if not goal then return nil end
         local cf = goal.CFrame
-        normal = cf.LookVector
+        local normal = cf.LookVector
         local goalPos = cf.Position
         local rel = pos - goalPos
         local a = 0.5 * accel:Dot(normal)
@@ -4252,48 +4254,46 @@ task.spawn(function()
     end
 
     gkState.renderConn = RunService.RenderStepped:Connect(function(dt)
-        if not gkState.enabled or gkState.pause or plr.Team == game.Teams.lobby then 
+        if not gkState.enabled or gkState.pause or plr.Team == game.Teams.lobby then
             gkState.look.Enabled = false
-            return 
+            return
         end
 
         local currentHolder = gkState.ballHolder.Value
-        local ball = getBall()
 
-        if currentHolder and currentHolder ~= char and currentHolder:FindFirstChild("HumanoidRootPart") then
+        if currentHolder == char then
+            gkState.look.Enabled = false
+            return
+        end
+
+        local ball = getBall()
+        if currentHolder and currentHolder:FindFirstChild("HumanoidRootPart") then
             local holderRoot = currentHolder.HumanoidRootPart
             gkState.look.Enabled = true
             gkState.look.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(holderRoot.Position.X, hrp.Position.Y, holderRoot.Position.Z))
-            
             local dist = (hrp.Position - holderRoot.Position).Magnitude
             if dist <= gkState.tackle_radius then
                 gkState.remote:FireServer(unpack(gkState.tackleArgs))
             end
-
         elseif ball then
             local rawVel = ball.AssemblyLinearVelocity
             gkState.velSmooth = gkState.velSmooth:Lerp(rawVel, math.clamp(dt*15, 0, 1))
             local accel = (gkState.velSmooth - gkState.lastVel) / math.max(dt, 1/240)
             gkState.lastVel = gkState.velSmooth
-
             local goal = (plr.Team == game.Teams.B and gkState.map.Bgoal) or (plr.Team == game.Teams.A and gkState.map.Agoal)
             local tImpact = predictgoalimpact(ball.Position, gkState.velSmooth, accel, goal)
-
             local predicted
             if tImpact then
                 predicted = ball.Position + gkState.velSmooth * tImpact + 0.5 * accel * tImpact^2
             else
                 predicted = ball.Position + gkState.velSmooth * 0.25 + 0.5 * gkState.GRAVITY * 0.0625
             end
-
             gkState.look.Enabled = true
             gkState.look.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(predicted.X, hrp.Position.Y, predicted.Z))
-
             local dist = (hrp.Position - ball.Position).Magnitude
             if dist > gkState.tackle_radius and dist <= 37 and ball.Position.Y > hrp.Position.Y + 4 then
                 hum.Jump = true
             end
-
             if dist <= gkState.tackle_radius then
                 gkState.remote:FireServer(unpack(gkState.tackleArgs))
                 if not gkState.magnetBurstActive then
@@ -4318,7 +4318,9 @@ task.spawn(function()
         if input.KeyCode == Enum.KeyCode.V then
             gkState.enabled = not gkState.enabled
             updateindicator()
-            if not gkState.enabled then gkState.look.Enabled = false end
+            if not gkState.enabled then
+                gkState.look.Enabled = false
+            end
         end
     end)
 
@@ -6039,16 +6041,28 @@ end)
 
 exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
     goalFarmState.Enabled = not goalFarmState.Enabled
-    game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Goal Farm", Text = goalFarmState.Enabled and "Enabled." or "Disabled.", Duration = 1})
+    
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Goal Farm", 
+        Text = goalFarmState.Enabled and "Enabled." or "Disabled.", 
+        Duration = 1
+    })
+    
     if goalFarmState.Enabled then
         goalFarmState.CFConn = GoalLocalPlayer.CharacterAdded:Connect(function()
             task.wait(1)
-            if goalFarmState.Enabled then firePacketsIfNearGoal() end
+            if goalFarmState.Enabled then 
+                firePacketsIfNearGoal() 
+            end
         end)
+        
         task.spawn(function()
             repeat task.wait() until GoalLocalPlayer.Character and GoalLocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if goalFarmState.Enabled then firePacketsIfNearGoal() end
+            if goalFarmState.Enabled then 
+                firePacketsIfNearGoal() 
+            end
         end)
+        
         goalFarmState.RenderConn = RunService.RenderStepped:Connect(function()
             if not goalFarmState.Enabled then return end
             pcall(function()
@@ -6056,14 +6070,33 @@ exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
                     if not teamSwitching then
                         teamSwitching = true
                         lastResetTime = os.clock()
+                        
                         task.spawn(function()
                             local char = GoalLocalPlayer.Character
-                            if char then
-                                char:BreakJoints()
+                            local hum = char and char:FindFirstChildOfClass("Humanoid")
+                            if hum then
+                                hum.Health = 0
                             end
+                            
                             task.wait(8)
-                            lastFiredTeam = (lastFiredTeam == "A") and "B" or "A"
-                            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000" .. lastFiredTeam))
+                            
+                            if lastFiredTeam == nil then
+                                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000A"))
+                                task.wait(0.1)
+                                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000B"))
+                                
+                                task.wait(0.1)
+                                
+                                if GoalLocalPlayer.Team then
+                                    lastFiredTeam = GoalLocalPlayer.Team.Name
+                                else
+                                    lastFiredTeam = "B"
+                                end
+                            else
+                                lastFiredTeam = (lastFiredTeam == "A") and "B" or "A"
+                                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000" .. lastFiredTeam))
+                            end
+                            
                             teamSwitching = false
                         end)
                     end
@@ -6073,20 +6106,25 @@ exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
                 if not IsInGame() then return end
                 DisableCollisionBoxes()
                 StealBall()
+                
                 if HasBall() then
                     local char = GoalLocalPlayer.Character
                     local root = char and char:FindFirstChild("HumanoidRootPart")
                     local targetGoal = GoalLocalPlayer.Team.Name == "A" and GoalBGoal or GoalAGoal
+                    
                     if root and targetGoal then
-                        task.wait(0.5)
+                        task.wait(0.75)
                         root.CFrame = targetGoal.CFrame
-                        task.wait(0.185)
+                        
+                        task.wait(0.175)
                         ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack({buffer.fromstring(buffers["base"]), {{"kick", 50, false, vector.create(0, 1, 0)}}}))
+                        
                         firePacketsIfNearGoal()
                     end
                 end
             end)
         end)
+        
         trackGoalsLoop()
     else
         stopGoalFarm()
