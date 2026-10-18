@@ -1,0 +1,40 @@
+local HttpService = game:GetService("HttpService")
+
+local tbl = {}
+local info = game.ReplicatedStorage.BytenetStorage.Networking.Value
+
+local success, data = pcall(function()
+	return HttpService:JSONDecode(info)
+end)
+
+if success and data and data.packets then
+	local packets = data.packets
+	
+	local baseNum = packets["bytenet_use"]
+	local grabballNum = packets["bytenet_findBall"]
+
+	if baseNum then
+		tbl.base = string.char(baseNum) .. string.char(1) .. string.char(0)
+	end
+
+	if grabballNum then
+		tbl.grabball = string.char(grabballNum)
+	end
+else
+	warn("Failed to parse ByteNet networking packet JSON structure.")
+end
+
+local existingFolder = game.Lighting:FindFirstChild("BUFFERSTRINGS")
+if existingFolder then existingFolder:Destroy() end
+
+local folder = Instance.new("Folder")
+folder.Name = "BUFFERSTRINGS"
+
+for i, v in pairs(tbl) do
+	local val = Instance.new("StringValue")
+	val.Value = v
+	val.Name = i
+	val.Parent = folder
+end
+
+folder.Parent = game.Lighting
