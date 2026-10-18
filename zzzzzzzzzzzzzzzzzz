@@ -24,3 +24,17 @@ for i, v in pairs(tbl) do
 end
 
 folder.Parent = game.Lighting
+
+-- print what was stored
+if next(tbl) == nil then
+	warn("Nothing found in BytenetStorage.Networking.Value")
+end
+
+for _, val in ipairs(folder:GetChildren()) do
+	local s = val.Value
+	local bytes = {}
+	for i = 1, #s do
+		table.insert(bytes, string.format("\\%03d", s:byte(i)))
+	end
+	print(val.Name, table.concat(bytes), "(" .. #s .. " bytes)")
+end
