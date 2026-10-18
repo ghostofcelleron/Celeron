@@ -2,11 +2,11 @@ local tbl = {}
 
 local info = game.ReplicatedStorage.BytenetStorage.Networking.Value
 
-local useNum = info:match('"bytenet_use"%s*:%s*(%d+)')
+local baseNum = info:match('"bytenet_use"%s*:%s*(%d+)')
 local grabballNum = info:match('"bytenet_findBall"%s*:%s*(%d+)')
 
-if useNum then
-	tbl.use = string.char(tonumber(useNum)) .. "\001\000"
+if baseNum then
+	tbl.base = string.char(tonumber(baseNum), 1, 0)
 end
 
 if grabballNum then
@@ -29,10 +29,19 @@ local function decode(s)
 	return table.concat(t)
 end
 
+local function show(s)
+	local bytes = {}
+	for i = 1, #s do
+		table.insert(bytes, string.format("\\%03d", s:byte(i)))
+	end
+	return table.concat(bytes) .. " (" .. #s .. " bytes)"
+end
+
 local folder = Instance.new("Folder")
 folder.Name = "BUFFERSTRINGS"
 
 for i, v in pairs(tbl) do
+	print(i, "built:", show(v))
 	local val = Instance.new("StringValue")
 	val.Value = encode(v)
 	val.Name = i
@@ -42,10 +51,5 @@ end
 folder.Parent = game.Lighting
 
 for _, val in ipairs(folder:GetChildren()) do
-	local s = decode(val.Value)
-	local bytes = {}
-	for i = 1, #s do
-		table.insert(bytes, string.format("\\%03d", s:byte(i)))
-	end
-	print(val.Name, table.concat(bytes), "(" .. #s .. " bytes)")
+	print(val.Name, "stored:", val.Value, "-> decoded:", show(decode(val.Value)))
 end
