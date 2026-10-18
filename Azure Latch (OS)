@@ -31,23 +31,29 @@ exploittab:Label("This Tab Comes With Useful Features.")
 
 --- IGNORE THESE
 local buffers = {}
-loadstring(game:HttpGet("https://pastebin.com/raw/8XJh7dzh"))()
-repeat
-    task.wait()
-until game.Lighting:FindFirstChild("BUFFERSTRINGS")
-for _, val in ipairs(game.Lighting:FindFirstChild("BUFFERSTRINGS"):GetChildren()) do
-    buffers[val.Name] = val.Value
+
+local function decode(s)
+	local t = {}
+	for n in s:gmatch("%d+") do
+		table.insert(t, string.char(tonumber(n)))
+	end
+	return table.concat(t)
 end
-game.Lighting:FindFirstChild("BUFFERSTRINGS"):Destroy()
 
-local role = game:GetService("ReplicatedStorage")
-    :WaitForChild("BytenetStorage")
-    :WaitForChild("Networking").Value
-    :match('"bytenet_selectRole"%s*:%s*(%d+)')
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/buffers"))()
+repeat
+	task.wait()
+until game.Lighting:FindFirstChild("BUFFERSTRINGS")
 
-role = role and tonumber(role)
+local folder = game.Lighting:FindFirstChild("BUFFERSTRINGS")
+for _, val in ipairs(folder:GetChildren()) do
+	buffers[val.Name] = decode(val.Value)
+end
+folder:Destroy()
 
-local pick = string.char(role)
+for k, v in pairs(buffers) do
+	print("buffers key:", k, #v .. " bytes")
+end
 ---
 
 local Players = game:GetService("Players")
@@ -303,11 +309,10 @@ ballfolder:Button("Get Flow (Req. Ball)", "Click To Attempt Getting Flow. Click 
     flowPartData.flowConnection = task.spawn(function()
         local playerFolder = workspace:WaitForChild("characters"):WaitForChild(flowPartData.LocalPlayer.Name)
         local flow = playerFolder:WaitForChild("state"):WaitForChild("flow")
-
         local gks = {A = workspace.gks:FindFirstChild("A"), B = workspace.gks:FindFirstChild("B")}
-
         local preferredGK = nil
         local playerTeam = flowPartData.LocalPlayer.Team
+
         if playerTeam then
             local teamName = playerTeam.Name:lower()
             if teamName:find("a") or teamName == "red" then
@@ -330,6 +335,37 @@ ballfolder:Button("Get Flow (Req. Ball)", "Click To Attempt Getting Flow. Click 
             return
         end
 
+        local function findBall()
+            return workspace.Terrain:FindFirstChild("Ball")
+                or char:FindFirstChild("Ball", true)
+                or playerFolder:FindFirstChild("Ball", true)
+        end
+
+        local function iHaveBall(ball)
+            return ball.Parent ~= nil
+                and (ball:IsDescendantOf(char) or ball:IsDescendantOf(playerFolder))
+        end
+
+        local function waitForBall(ball, timeout, stopAtFullFlow)
+            local start = os.clock()
+            while flowPartData.flowActive and os.clock() - start < timeout do
+                if stopAtFullFlow and flow.Value >= 100 then
+                    return false
+                end
+
+                if not ball or not ball.Parent then
+                    ball = findBall()
+                elseif iHaveBall(ball) then
+                    return true
+                elseif ball.Parent == workspace.Terrain then
+                    root.CFrame = ball.CFrame + Vector3.new(0, 5, 0)
+                end
+
+                task.wait(0.05)
+            end
+            return false
+        end
+
         while flowPartData.flowActive and flow.Value < 100 do
             for i = 1, 25 do
                 if not flowPartData.flowActive or flow.Value >= 100 then break end
@@ -342,6 +378,8 @@ ballfolder:Button("Get Flow (Req. Ball)", "Click To Attempt Getting Flow. Click 
 
             if not flowPartData.flowActive or flow.Value >= 100 then break end
             task.wait(0.5)
+
+            local ball = findBall()
 
             local targetGK = preferredGK
             if targetGK then
@@ -360,23 +398,13 @@ ballfolder:Button("Get Flow (Req. Ball)", "Click To Attempt Getting Flow. Click 
             end
 
             if not flowPartData.flowActive or flow.Value >= 100 then break end
-
             task.wait(1)
 
-            local ball = workspace.Terrain:FindFirstChild("Ball")
-            if not ball then
-                ball = workspace.Terrain:WaitForChild("Ball", 10)
-            end
-
-            if ball then
-                while flowPartData.flowActive and ball.Parent == workspace.Terrain and flow.Value < 100 do
-                    root.CFrame = ball.CFrame + Vector3.new(0, 5, 0)
-                    task.wait(0.05)
-                end
+            local got = waitForBall(ball, 30, true)
+            if not got and flowPartData.flowActive and flow.Value < 100 then
             end
 
             if not flowPartData.flowActive or flow.Value >= 100 then break end
-
             task.wait(0.2)
             root.CFrame = flowPartData.flowPart.CFrame + Vector3.new(0, 5, 0)
             task.wait(0.5)
@@ -384,17 +412,11 @@ ballfolder:Button("Get Flow (Req. Ball)", "Click To Attempt Getting Flow. Click 
 
         task.wait(0.5)
 
-        if flow.Value >= 100 then
-            local ball = workspace.Terrain:FindFirstChild("Ball")
-            if ball and ball.Parent == workspace.Terrain then
-                while ball.Parent == workspace.Terrain and flowPartData.flowActive do
-                    root.CFrame = ball.CFrame + Vector3.new(0, 5, 0)
-                    task.wait(0.05)
-                end
-            end
+        if flowPartData.flowActive and flow.Value >= 100 then
+            waitForBall(findBall(), 15, false)
         end
 
-        task.wait(0.3)
+        task.wait(0.75)
         if flowPartData.flowActive and root and root.Parent and flowPartData.originalCFrame then
             root.CFrame = flowPartData.originalCFrame
         end
