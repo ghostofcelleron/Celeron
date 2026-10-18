@@ -2,25 +2,25 @@ local tbl = {}
 
 local info = game.ReplicatedStorage.BytenetStorage.Networking.Value
 
-local baseNum = info:match('"bytenet_use"%s*:%s*(%d+)')
+local useNum = info:match('"bytenet_use"%s*:%s*(%d+)')
 local grabballNum = info:match('"bytenet_findBall"%s*:%s*(%d+)')
 
-if baseNum then
-    tbl.base = string.char(tonumber(baseNum), 1, 0)
+if useNum then
+	tbl.use = string.char(tonumber(useNum)) .. "\001\000"
 end
 
 if grabballNum then
-    tbl.grabball = string.char(tonumber(grabballNum))
+	tbl.grabball = string.char(tonumber(grabballNum))
 end
 
 local folder = Instance.new("Folder")
 folder.Name = "BUFFERSTRINGS"
 
 for i, v in pairs(tbl) do
-    local val = Instance.new("StringValue")
-    val.Value = v
-    val.Name = i
-    val.Parent = folder
+	local val = Instance.new("StringValue")
+	val.Value = v
+	val.Name = i
+	val.Parent = folder
 end
 
 folder.Parent = game.Lighting
