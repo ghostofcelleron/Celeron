@@ -637,17 +637,41 @@ local dio = game:GetService("ReplicatedStorage").Resources.dio
 
 local stopped = false
 
--- buffer string
+--- IGNORE THESE
 local buffers = {}
-loadstring(game:HttpGet("https://pastebin.com/raw/8XJh7dzh"))()
+
+local function decode(s)
+	local t = {}
+	for n in s:gmatch("%d+") do
+		table.insert(t, string.char(tonumber(n)))
+	end
+	return table.concat(t)
+end
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/buffers"))()
 repeat
 	task.wait()
 until game.Lighting:FindFirstChild("BUFFERSTRINGS")
-for _, val in ipairs(game.Lighting:FindFirstChild("BUFFERSTRINGS"):GetChildren()) do
-	buffers[val.Name] = val.Value
+
+local folder = game.Lighting:FindFirstChild("BUFFERSTRINGS")
+for _, val in ipairs(folder:GetChildren()) do
+	buffers[val.Name] = decode(val.Value)
 end
-game.Lighting:FindFirstChild("BUFFERSTRINGS"):Destroy()
---
+folder:Destroy()
+
+for k, v in pairs(buffers) do
+	print("buffers key:", k, #v .. " bytes")
+end
+
+local role = game:GetService("ReplicatedStorage")
+    :WaitForChild("BytenetStorage")
+    :WaitForChild("Networking").Value
+    :match('"bytenet_selectRole"%s*:%s*(%d+)')
+
+role = role and tonumber(role)
+
+local pick = string.char(role)
+---
 
 local objectnames = {}
 for _, obj in ipairs(dio:GetChildren()) do
