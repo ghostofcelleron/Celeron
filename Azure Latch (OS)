@@ -6,8 +6,8 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcel
 
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
-    ThemeColor = Color3.fromRGB(111, 111, 111),
-	ThemeGradient = Color3.fromRGB(10, 10, 10),
+    ThemeColor = Color3.fromRGB(152, 58, 201),
+	ThemeGradient = Color3.fromRGB(95, 11, 143),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.GothamBold,
 	ToggledSideBar = true
@@ -104,10 +104,10 @@ helptab:Label("Auto Config: Serlicia.")
 if math.random(1,50) == 1 then
     hometab:Banner("17327779381", 385)
 else
-    hometab:Banner("13308582899", 135)
+    hometab:Banner("93012899590948", 135)
 end
 
-notifsup = maintab2:Folder("Notification Suppression.", Color3.fromRGB(24, 255, 228), true)
+notifsup = maintab2:Folder("Notification Suppression.", Color3.fromRGB(169, 5, 255), true)
 notifsup:Label("Notification Suppression: Useful When Streaming.")
 
 local suppressNotifs = false
@@ -128,7 +128,7 @@ for _, obj in ipairs(workspace:GetDescendants()) do
 	end
 end
 
-local meta = maintab:Folder("Metavision Features.", Color3.fromRGB(24, 255, 228), true)
+local meta = maintab:Folder("Metavision Features.", Color3.fromRGB(169, 5, 255), true)
 meta:Label("Metavision Features.")
 
 meta:Button("Metavision V1", "This Feature Emulates Having Isagi's Metavision From The Show.", function()
@@ -139,7 +139,7 @@ meta:Button("Metavision V2", "Similar To V1, Only Can Be Used Below 1:30 On Cloc
     loadstring(game:HttpGet("https://pastebin.com/raw/HfpQBAsF"))()
 end)
 
-local ballfolder = maintab:Folder("Ball Features.", Color3.fromRGB(24, 255, 228), true)
+local ballfolder = maintab:Folder("Ball Features.", Color3.fromRGB(169, 5, 255), true)
 ballfolder:Label("Ball Features.")
 
 local autoGoalState = {
@@ -594,7 +594,7 @@ ballfolder:Button("Bring Ball (Aiku)", "Steals The Ball  Via Reflex Tackle Then 
     end)
 end)
 
-local nocd = maintab:Folder("No Cooldown Features.", Color3.fromRGB(24, 255, 228), true)
+local nocd = maintab:Folder("No Cooldown Features.", Color3.fromRGB(169, 5, 255), true)
 nocd:Label("No Cooldown Features. Please Note This Is Exclusive To PC.")
 
 userInputService = game:GetService("UserInputService")
@@ -782,7 +782,7 @@ if not dashState.dashBindsSetup then
     end)
 end
 
-local breakball = maintab:Folder("Break Ball Features.", Color3.fromRGB(24, 255, 228), true)
+local breakball = maintab:Folder("Break Ball Features.", Color3.fromRGB(169, 5, 255), true)
 breakball:Label("Break Ball Features.")
 
 breakball:Button("Break Ball (Player Method, Req. Ball)", "Breaks The Ball By Going Extremely High Up.", function()
@@ -830,7 +830,7 @@ breakball:Button("Permanent Break Ball (Req. Ball)", "Breaks The Ball By Placing
     game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(1, -49999, 1))
 end)
 
-local ballmag = maintab2:Folder("Ball Magnet Features.", Color3.fromRGB(24, 255, 228), true)
+local ballmag = maintab2:Folder("Ball Magnet Features.", Color3.fromRGB(169, 5, 255), true)
 ballmag:Label("Original Ball Magnet: Allows You To Grab The Ball From Further Away.")
 
 local ballMagnetState = {
@@ -989,7 +989,7 @@ ballmag:Toggle("Ball Magnet Radius Hitbox", "Shows The Magnet's Radius Hitbox.",
     end)
 end)
 
-local autodrib = maintab2:Folder("Auto Dribble / Counter Features.", Color3.fromRGB(24, 255, 228), true)
+local autodrib = maintab2:Folder("Auto Dribble / Counter Features.", Color3.fromRGB(169, 5, 255), true)
 autodrib:Label("Set The Auto-Counter Number To Your Character's Counter Move.")
 
 local tick = tick
@@ -1025,13 +1025,140 @@ local autoSkillState = {
     playerCooldown = 0.33,
 }
 
-local buffer = buffer or { fromstring = function(str) return str end }
 local player = Players.LocalPlayer
 local localplayer = player
+local playerGui = player:WaitForChild("PlayerGui")
 
 local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local extraHud = playerGui:WaitForChild("ExtraHud")
+local fpsCounter = extraHud:WaitForChild("FPSCounter")
+local icon = fpsCounter:WaitForChild("icon")
+
+local existingGui = playerGui:FindFirstChild("cubies")
+if existingGui then
+    existingGui:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "cubies"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local cubesizeeee = 15
+local gapbetweenuisyesireallylikelongvariablenameshowdyouknow = 3           
+local icantrememberwhatthisisgapxtho = 5     
+local offsetfrompingui = 30 
+
+local layoutCounters = {
+    {key = "toggleDribble", labelText = "Z"},
+    {key = "toggleCounter1", labelText = "1"},
+    {key = "toggleCounter2", labelText = "2"},
+    {key = "toggleCounter3", labelText = "3"},
+    {key = "toggleCounter4", labelText = "4"},
+    {key = "toggleCounter5", labelText = "5"},
+    {key = "toggleTSpecial", labelText = "L"},
+}
+
+local visualCubeElements = {}
+
+local positionCubes
+
+local function updcounterui()
+    if not autoSkillState.showActiveCounters then 
+        screenGui.Enabled = false
+        return 
+    else
+        screenGui.Enabled = true
+        if #screenGui:GetChildren() == 0 then
+            positionCubes()
+            return
+        end
+    end
+
+    for idx, configuration in ipairs(layoutCounters) do
+        local frameElement = visualCubeElements[idx]
+        if frameElement then
+            local isToggledActive = autoSkillState[configuration.key]
+            if isToggledActive then
+                frameElement.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+            else
+                frameElement.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+            end
+        end
+    end
+end
+
+function positionCubes()
+    local iconPos = icon.AbsolutePosition
+    local iconSize = icon.AbsoluteSize
+    
+    local startX = iconPos.X
+    local startY = iconPos.Y + iconSize.Y + offsetfrompingui
+    
+    screenGui:ClearAllChildren()
+    visualCubeElements = {}
+    
+    for i, configuration in ipairs(layoutCounters) do
+        local labelText = configuration.labelText
+        local frame = Instance.new("Frame")
+        frame.Name = "Cube_" .. labelText
+        
+        local posX = startX
+        local posY = startY + ((i - 1) * (cubesizeeee + gapbetweenuisyesireallylikelongvariablenameshowdyouknow))
+        
+        frame.Size = UDim2.new(0, cubesizeeee, 0, cubesizeeee)
+        frame.Position = UDim2.new(0, posX, 0, posY)
+        frame.BorderSizePixel = 0
+        frame.Parent = screenGui
+        
+        visualCubeElements[i] = frame
+        
+        local label = Instance.new("TextLabel")
+        label.Name = "Label_" .. labelText
+        
+        local labelX = posX + cubesizeeee + icantrememberwhatthisisgapxtho
+        label.Size = UDim2.new(0, cubesizeeee, 0, cubesizeeee)
+        label.Position = UDim2.new(0, labelX, 0, posY)
+        label.Text = labelText
+        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+        label.BackgroundTransparency = 1
+        label.TextSize = 14
+        label.Font = Enum.Font.SourceSansBold
+        label.TextXAlignment = Enum.TextXAlignment.Center
+        label.TextYAlignment = Enum.TextYAlignment.Center
+        label.Parent = screenGui
+    end
+    
+    for idx, configuration in ipairs(layoutCounters) do
+        local frameElement = visualCubeElements[idx]
+        if frameElement then
+            local isToggledActive = autoSkillState[configuration.key]
+            if isToggledActive then
+                frameElement.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+            else
+                frameElement.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+            end
+        end
+    end
+end
+
+task.wait(1)
+if autoSkillState.showActiveCounters then
+    positionCubes()
+else
+    screenGui.Enabled = false
+end
+icon:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
+    if autoSkillState.showActiveCounters then
+        positionCubes()
+    end
+end)
+
+icon:GetPropertyChangedSignal("AbsolutePosition"):Connect(positionCubes)
+
 
 local steal_anims = {
     "rbxassetid://109744655458082",
@@ -1047,76 +1174,7 @@ local function notify2(title, text, duration)
     end
 end
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AutoCounterStatus"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = player:WaitForChild("PlayerGui")
-
-local statusFrame = Instance.new("Frame")
-statusFrame.Size = UDim2.new(0, 320, 0, 360)
-statusFrame.Position = UDim2.new(1, -340, 0.5, -180)
-statusFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-statusFrame.BorderSizePixel = 0
-statusFrame.BackgroundTransparency = 0.1
-statusFrame.Visible = false
-statusFrame.Parent = screenGui
-
-local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 10)
-uiCorner.Parent = statusFrame
-
-local uiStroke = Instance.new("UIStroke")
-uiStroke.Thickness = 2
-uiStroke.Color = Color3.fromRGB(0, 0, 0)
-uiStroke.Parent = statusFrame
-
-local uiList = Instance.new("UIListLayout")
-uiList.SortOrder = Enum.SortOrder.LayoutOrder
-uiList.Padding = UDim.new(0, 6)
-uiList.Parent = statusFrame
-
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, 0, 0, 40)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "Auto Counters"
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextScaled = true
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.Parent = statusFrame
-
-local statusLabels = {}
-local counters = {
-    {name = "Auto Dribble", key = "toggleDribble", bind = "Z"},
-    {name = "Auto Counter (Move One)", key = "toggleCounter1", bind = "X"},
-    {name = "Auto Counter (Move Two)", key = "toggleCounter2", bind = "C"},
-    {name = "Auto Counter (Move Three)", key = "toggleCounter3", bind = "V"},
-    {name = "Auto Counter (Move Four)", key = "toggleCounter4", bind = "N"},
-    {name = "Auto Counter (Move Five)", key = "toggleCounter5", bind = "M"},
-    {name = "T Special", key = "toggleTSpecial", bind = "L"},
-}
-
-local function updcounterui()
-    if not autoSkillState.showActiveCounters then return end
-    for i = 1, #statusLabels do
-        statusLabels[i]:Destroy()
-    end
-    statusLabels = {}
-    for i = 1, #counters do
-        local c = counters[i]
-        local enabled = autoSkillState[c.key]
-        local lbl = Instance.new("TextLabel")
-        lbl.Size = UDim2.new(1, 0, 0, 28)
-        lbl.BackgroundTransparency = 1
-        lbl.Text = c.name .. " [" .. c.bind .. "]"
-        lbl.TextColor3 = enabled and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 80, 80)
-        lbl.TextXAlignment = Enum.TextXAlignment.Center
-        lbl.Font = Enum.Font.GothamSemibold
-        lbl.TextScaled = true
-        lbl.Parent = statusFrame
-        statusLabels[#statusLabels + 1] = lbl
-    end
-end
-
+local buffer = buffer or { fromstring = function(str) return str end }
 local connections = {}
 local byteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
 
@@ -1160,7 +1218,7 @@ end
 
 local toggleKeys = {"toggleCounter1", "toggleCounter2", "toggleCounter3", "toggleCounter4", "toggleCounter5"}
 
-local function montackleanim(animator, targetPlayer)
+function montackleanim(animator, targetPlayer)
     if connections[targetPlayer] and connections[targetPlayer].animLoop then
         connections[targetPlayer].animLoop:Disconnect()
     end
@@ -1190,7 +1248,7 @@ local function montackleanim(animator, targetPlayer)
                 return
             end
             if now - lastFire < autoSkillState.fireRate then return end
-
+            
             lastFire = now
 
             local myChar = localplayer.Character
@@ -1226,7 +1284,7 @@ local function montackleanim(animator, targetPlayer)
     connections[targetPlayer].animatorConn = animConnection
 end
 
-local function setupPlayer(plr)
+function setupPlayer(plr)
     if plr == localplayer then return end
 
     local function onCharAdded(char)
@@ -1263,7 +1321,7 @@ Players.PlayerRemoving:Connect(function(plr)
     end
 end)
 
-local function createAutoCounter(label, toggleKey)
+function createAutoCounter(label, toggleKey)
     autodrib:Toggle(label, function()
         if autoSkillState.keybindsEnabled then
             notify2("calm error", "hey! dont try using gui toggles if u got keybinds on!!! 😡", 3)
@@ -1275,9 +1333,23 @@ local function createAutoCounter(label, toggleKey)
     end)
 end
 
+exploittab:Button("Auto Counter Info", "This Comes With Instructions On How To Use The Feature Below.", function()
+    local StarterGui = game:GetService("StarterGui")
+
+    StarterGui:SetCore("SendNotification", {
+        Title = "Auto Counter Info",
+        Text = "Dribble: Z, T-Special: L.",
+        Duration = 10
+    }) task.wait(0.5)
+    StarterGui:SetCore("SendNotification", {
+        Title = "Auto Counter Info",
+        Text = "C Stands For Counter, C1: X, C2: C, C3: V, C4: N, C5: M.",
+        Duration = 10
+    })
+end)
+
 autodrib:Toggle("Show Active Auto Counters", "Shows Your Currently Toggled Auto Counters.", function()
     autoSkillState.showActiveCounters = not autoSkillState.showActiveCounters
-    statusFrame.Visible = autoSkillState.showActiveCounters
     notify2("Status GUI", autoSkillState.showActiveCounters and "Enabled." or "Disabled.", 3)
     updcounterui()
 end)
@@ -1328,9 +1400,7 @@ if not autoSkillState.keybindSetup then
     end)
 end
 
-updcounterui()
-
-local autogoal = maintab:Folder("Auto Goal Features.", Color3.fromRGB(24, 255, 228), true)
+autogoal = maintab:Folder("Auto Goal Features.", Color3.fromRGB(169, 5, 255), true)
 autogoal:Label("Auto Goal: Automatically Does Auto Goal Steps Instantly, Use In 5v5.")
 
 autogoal:Button("Isagi U-20 Goal", "Attempts To Do Isagi's U-20 Auto Goal By Teleporting To The Designated Area.", function()
@@ -1439,7 +1509,7 @@ autogoal:Button("Barou Devour Goal", "Attempts To Do Barou's Devour Auto Goal By
     end
 end)
 
-local add = maintab:Folder("Fun Features.", Color3.fromRGB(24, 255, 228), true)
+local add = maintab:Folder("Fun Features.", Color3.fromRGB(169, 5, 255), true)
 add:Label("Fun Features: Pretty Fun Features I'd Say.")
 
 local AnimationId = "rbxassetid://113098409724280"
@@ -1689,7 +1759,7 @@ add:Button("Invisibility V2 (Method: Clone)", "Makes You Almost Fully Invisible 
     end)
 end)
 
-local passingState = {
+passingState = {
     InfiniteRangePassing = false,
     busy = false
 }
@@ -1992,7 +2062,7 @@ add:Button("Shachoko GK Catch (Req. GK Position.)", "Makes It Almost Impossible 
 loadstring(game:HttpGet("https://pastebin.com/raw/Hr1HnK38"))()
 end)
 
-local oth = maintab:Folder("Other Blatant Features.", Color3.fromRGB(24, 255, 228), true)
+local oth = maintab:Folder("Other Blatant Features.", Color3.fromRGB(169, 5, 255), true)
 oth:Label("Other Blatant Features: It's In The Name.")
 
 local blatantState = {
@@ -2141,7 +2211,7 @@ if not workspace:FindFirstChild("ddddegrdgdhgrgtedrhgdrtg") then
     p.Parent = workspace
 end
 
-local murder = maintab:Folder("''This Isn't Soccer Anymore''! Features.", Color3.fromRGB(24, 255, 228), true)
+local murder = maintab:Folder("''This Isn't Soccer Anymore''! Features.", Color3.fromRGB(169, 5, 255), true)
 murder:Label("Evil Features: You Are Killing People In A Soccer Match??")
 
 attackmode = "KILL, KILL, KILL!"
@@ -2284,7 +2354,7 @@ if game:GetService("Players").LocalPlayer.Character then
     killthemNOW()
 end
 
-local th = maintab:Folder("Trap Helper.", Color3.fromRGB(24, 255, 228), true)
+local th = maintab:Folder("Trap Helper.", Color3.fromRGB(169, 5, 255), true)
 th:Label("Trap Helper: Automatically Moves Toward Ball During Trap Moves.")
 
 local trapAnims = {
@@ -2477,7 +2547,7 @@ th:Slider("Trap Helper Speed", 50, 50, 1000, 1, function(v)
     trapSpeed = v
 end)
 
-local d = maintab:Folder("Distance Move Buffs.", Color3.fromRGB(24, 255, 228), true)
+local d = maintab:Folder("Distance Move Buffs.", Color3.fromRGB(169, 5, 255), true)
 d:Label("Distance Move Buffs: Buffs Movement Based Moves.")
 
 local player = Players.LocalPlayer
@@ -3062,7 +3132,7 @@ d:Slider("Shadow Step Distance", 0, 0, 50, 1, function(v)
     Distances.shadowDist = v
 end)
 
-local autoact = maintab2:Folder("Auto Activate Features.", Color3.fromRGB(24, 255, 228), true)
+local autoact = maintab2:Folder("Auto Activate Features.", Color3.fromRGB(169, 5, 255), true)
 autoact:Label("Auto Activate: Activates The Move When Ball Within Range.")
 
 local autoActivateState = { 
@@ -3178,7 +3248,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
     end 
 end)
 
-local autoline = maintab2:Folder("Auto Line Up Features.", Color3.fromRGB(24, 255, 228), true)
+local autoline = maintab2:Folder("Auto Line Up Features.", Color3.fromRGB(169, 5, 255), true)
 autoline:Label("Auto Line Ups: Helps You Aim At Certain Areas.")
 
 local Players = game:GetService("Players")
@@ -3312,7 +3382,7 @@ local function resetLineupPhysics()
     if lineupLockActive then
         lineupLockActive = false
         if currentLineupMode == "Freeze" then
-            if hrp then hrp.Anchored = false end
+            if hrp then humanoid.WalkSpeed = 0 end
         elseif currentLineupMode == "Slowness" then
             if humanoid then humanoid.WalkSpeed = 30 end
         end
@@ -3322,7 +3392,7 @@ end
 local function applyLineupMode()
     lineupLockActive = true
     if currentLineupMode == "Freeze" then
-        if hrp then hrp.Anchored = true end
+        if hrp then humanoid.WalkSpeed = 0 end
     elseif currentLineupMode == "Slowness" then
         if humanoid then humanoid.WalkSpeed = 5 end
     end
@@ -3903,7 +3973,7 @@ autoline:Toggle("Rin Flow Line Ups", "Rin's Kill Shot Line Ups.", function(k)
 	end
 end)
 
-local linecreator = maintab2:Folder("Line Up Creator Features.", Color3.fromRGB(24, 255, 228), true)
+local linecreator = maintab2:Folder("Line Up Creator Features.", Color3.fromRGB(169, 5, 255), true)
 linecreator:Label("Line Up Creator: Create Your Own Lineups!")
 
 linecreator:Button("Copy Lineup Code", "Click To Log A Lineup At The Current Position & Target.", function()
@@ -4076,7 +4146,7 @@ linecreator:Textbox("Enter Lineup Code(s)", "Enter Lineup Codes (seperated by co
     })
 end)
 
-local autopos = maintab2:Folder("Auto Position Features.", Color3.fromRGB(24, 255, 228), true)
+local autopos = maintab2:Folder("Auto Position Features.", Color3.fromRGB(169, 5, 255), true)
 autopos:Label("Auto Position: Automatically Sets Certain Positions.")
 
 local autoPositionState = {
@@ -4169,7 +4239,7 @@ autopos:Toggle("Auto Pick GK", "Automatically Picks Goalkeeper Position On Respa
     end
 end)
 
-local autogk = maintab2:Folder("Auto Goalkeeper Features.", Color3.fromRGB(24, 255, 228), true)
+local autogk = maintab2:Folder("Auto Goalkeeper Features.", Color3.fromRGB(169, 5, 255), true)
 autogk:Label("Auto Goalkeeper: Automatically Plays As GK For You.")
 
 autogk:Button("Celeron's Auto GK Enhanced", "Click V To Toggle, Reset To Disable.", function()
@@ -4531,7 +4601,7 @@ autogk:Button("Daffy's Auto GK", "Reset Or Click F4 To Disable.", function()
     gkPlayerState.con:Disconnect()
 end)
 
-local airdr = maintab2:Folder("Air Dribble Features.", Color3.fromRGB(24, 255, 228), true)
+local airdr = maintab2:Folder("Air Dribble Features.", Color3.fromRGB(169, 5, 255), true)
 airdr:Label("Air Dribble: Dribbles The Ball Through The Air.")
 
 local bindKey = Enum.KeyCode.LeftAlt
@@ -4636,7 +4706,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
-local othersil = maintab2:Folder("Other Features.", Color3.fromRGB(24, 255, 228), true)
+local othersil = maintab2:Folder("Other Features.", Color3.fromRGB(169, 5, 255), true)
 othersil:Label("Other Features: Self Explanatory, Other Silent Features.")
 
 local qteState = {
@@ -5102,7 +5172,7 @@ othersil:Textbox("Formless Keybind", "Enter Key (Example: Y, V, L.)", function(t
     end
 end)
 
-local mobile = maintab2:Folder("Mobile Silent Features.", Color3.fromRGB(24, 255, 228), true)
+local mobile = maintab2:Folder("Mobile Silent Features.", Color3.fromRGB(169, 5, 255), true)
 mobile:Label("Mobile Silent Features: Silent Features Ported To Mobile.")
 
 local mobform = {
@@ -5339,7 +5409,7 @@ mobile:Button("Air Dribble (Mobile Button)", "Click Again To Remove Button.", fu
     if airDribble.active then show() else hide() end
 end)
 
-mobilessss = maintab2:Folder("Mobile Simulation Features.", Color3.fromRGB(24, 255, 228), true)
+mobilessss = maintab2:Folder("Mobile Simulation Features.", Color3.fromRGB(169, 5, 255), true)
 
 getgenv().MobileKeySystem = getgenv().MobileKeySystem or {
     key = "",
