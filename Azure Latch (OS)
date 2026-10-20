@@ -54,6 +54,15 @@ folder:Destroy()
 for k, v in pairs(buffers) do
 	print("buffers key:", k, #v .. " bytes")
 end
+
+local role = game:GetService("ReplicatedStorage")
+    :WaitForChild("BytenetStorage")
+    :WaitForChild("Networking").Value
+    :match('"bytenet_selectRole"%s*:%s*(%d+)')
+
+role = role and tonumber(role)
+
+local pick = string.char(role)
 ---
 
 local Players = game:GetService("Players")
