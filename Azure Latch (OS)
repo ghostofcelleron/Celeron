@@ -70,6 +70,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local StarterGui = game:GetService("StarterGui")
 
 helptab:Button("Copy Owner Discord Username", "Copies The Owner's Discord Username To Your Clipboard.", function()
@@ -128,7 +129,7 @@ for _, obj in ipairs(workspace:GetDescendants()) do
 	end
 end
 
-local meta = maintab:Folder("Metavision Features.", Color3.fromRGB(169, 5, 255), true)
+meta = maintab:Folder("Metavision Features.", Color3.fromRGB(169, 5, 255), true)
 meta:Label("Metavision Features.")
 
 meta:Button("Metavision V1", "This Feature Emulates Having Isagi's Metavision From The Show.", function()
@@ -1522,9 +1523,20 @@ local invisState = {
     animationTrack = nil
 }
 
+local function stopInvisibility()
+    if invisState.animationTrack then
+        invisState.animationTrack:Stop()
+        invisState.animationTrack:Destroy()
+        invisState.animationTrack = nil
+    end
+    if invisState.humanoid then
+        invisState.humanoid.CameraOffset = Vector3.new(0, 0, 0)
+    end
+end
+
 local function startInvisibility()
+    stopInvisibility()
     if not invisState.humanoid then return end
-    invisState.active = true
 
     local anim = Instance.new("Animation")
     anim.AnimationId = AnimationId
@@ -1536,15 +1548,13 @@ local function startInvisibility()
     invisState.animationTrack = track
 end
 
-local function stopInvisibility()
-    invisState.active = false
-    if invisState.animationTrack then
-        invisState.animationTrack:Stop()
-        invisState.animationTrack:Destroy()
-        invisState.animationTrack = nil
-    end
-    if invisState.humanoid then
-        invisState.humanoid.CameraOffset = Vector3.new(0, 0, 0)
+local function setupCharacter(char)
+    invisState.character = char
+    invisState.humanoid = char:WaitForChild("Humanoid", 5)
+    
+    if invisState.active then
+        task.wait(0.1)
+        startInvisibility()
     end
 end
 
@@ -1566,21 +1576,14 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-player.CharacterAdded:Connect(function(char)
-    invisState.character = char
-    invisState.humanoid = char:WaitForChild("Humanoid")
-
-    if invisState.active then
-        startInvisibility()
-    end
-end)
+player.CharacterAdded:Connect(setupCharacter)
 
 if player.Character then
-    invisState.character = player.Character
-    invisState.humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+    setupCharacter(player.Character)
 end
 
 add:Toggle("Invisibility V1 (Method: Animation)", "Makes You Almost Fully Invisible To Other Players Using An Animation.", function(v)
+    invisState.active = v
     if v then
         startInvisibility()
     else
@@ -2111,6 +2114,8 @@ local function applyNoStun()
     local h = c:FindFirstChild("Humanoid")
     if h then
         h.WalkSpeed = 40
+        h.JumpPower = 50
+        h:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
     end
 end
 
@@ -2211,7 +2216,7 @@ if not workspace:FindFirstChild("ddddegrdgdhgrgtedrhgdrtg") then
     p.Parent = workspace
 end
 
-local murder = maintab:Folder("''This Isn't Soccer Anymore''! Features.", Color3.fromRGB(169, 5, 255), true)
+murder = maintab:Folder("''This Isn't Soccer Anymore''! Features.", Color3.fromRGB(169, 5, 255), true)
 murder:Label("Evil Features: You Are Killing People In A Soccer Match??")
 
 attackmode = "KILL, KILL, KILL!"
@@ -2234,7 +2239,7 @@ murder:Button("Evil Info", "This Comes With Instructions On How To Use The Featu
     })
 end)
 
-local grabz = {
+grabz = {
     "rbxassetid://123994829903056",
     "rbxassetid://73092083880817",
     "rbxassetid://114866946968143",
@@ -2243,7 +2248,7 @@ local grabz = {
 	"rbxassetid://133382731392749"
 }
 
-local function isgrabbing(animTrack)
+function isgrabbing(animTrack)
     if not animTrack.Animation then return false end
     local animId = animTrack.Animation.AnimationId
     for _, id in ipairs(grabz) do
@@ -2254,7 +2259,7 @@ local function isgrabbing(animTrack)
     return false
 end
 
-local function killthemNOW()
+function killthemNOW()
     if connection then
         connection:Disconnect()
         connection = nil
@@ -3400,7 +3405,21 @@ end
 
 if isMobile then
     RunService.RenderStepped:Connect(function()
-        if not hrp then return end
+        if not hrp or not character then return end
+        
+        local hasBall = false
+        for _, child in ipairs(character:GetChildren()) do
+            if child:IsA("MeshPart") and child.Name:lower():match("ball") then
+                hasBall = true
+                break
+            end
+        end
+
+        if not hasBall then
+            if activeTarget then stopCamLock() end
+            return
+        end
+
         local padIndex = getPadUnderPlayer()
         if padIndex then
             local targetPart = Workspace:FindFirstChild("target" .. padIndex)
@@ -4865,7 +4884,7 @@ othersil:Toggle("Auto Steal Ball", "Automatically Attempts To Steal When Opponen
     RunService = game:GetService("RunService") 
     lp = Players.LocalPlayer 
     state.enabled = v 
-    animId = "rbxassetid://76587445975710" 
+    animId = "rbxassetid://87049473772388" 
     
     function getHRP(char) 
         return char and char:FindFirstChild("HumanoidRootPart") 
@@ -4876,7 +4895,7 @@ othersil:Toggle("Auto Steal Ball", "Automatically Attempts To Steal When Opponen
         hrp = getHRP(char) 
         if not hrp or not targetHRP then return end 
         
-        if (hrp.Position - targetHRP.Position).Magnitude > 20 then return end
+        if (hrp.Position - targetHRP.Position).Magnitude > 30 then return end
         
         start = tick() 
         conn = RunService.RenderStepped:Connect(function() 
@@ -5650,31 +5669,13 @@ end)
 
 misctab:Toggle("Enable All Dubs / Voicelines", "Enables Dub Voicelines For All Styles.", function(sts)
     local lp = game:GetService("Players").LocalPlayer
-    local setting = lp.setting
+    local setting = lp:FindFirstChild("setting")
 
-    local dubs = {
-        setting.dub_yukimiya,
-        setting.dubVoicelines,
-        setting.britishaikuevil,
-        setting.dub_barou,
-        setting.dub_chigiri,
-        setting.dub_donlorenzo,
-        setting.dub_gagamaru,
-        setting.dub_isagi,
-        setting.dub_kaiser,
-        setting.dub_karasu,
-        setting.dub_kunigami,
-        setting.dub_masterylorenzo,
-        setting.dub_nagi,
-        setting.dub_otoya,
-        setting.dub_rin,
-        setting.dub_sae,
-        setting.dub_what,
-    }
-
-    for _, dub in ipairs(dubs) do
-        if dub then
-            dub.Value = sts
+    if setting then
+        for _, child in ipairs(setting:GetChildren()) do
+            if string.sub(string.lower(child.Name), 1, 3) == "dub" then
+                child.Value = sts
+            end
         end
     end
 
