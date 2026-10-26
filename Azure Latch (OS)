@@ -29,40 +29,53 @@ teleporttab:Label("Map Teleports, No Prerequisites To Use!")
 misctab:Label("Miscellaneous Features, They Give No Advantages In-Game!")
 exploittab:Label("This Tab Comes With Useful Features.")
 
---- IGNORE THESE
-local buffers = {}
+--- buffers brrrrrr
+local buffers = setmetatable({}, {__index = function(_, k) return k end})
 
-local function decode(s)
-	local t = {}
-	for n in s:gmatch("%d+") do
-		table.insert(t, string.char(tonumber(n)))
-	end
-	return table.concat(t)
-end
-
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/buffers"))()
-repeat
-	task.wait()
-until game.Lighting:FindFirstChild("BUFFERSTRINGS")
-
-local folder = game.Lighting:FindFirstChild("BUFFERSTRINGS")
-for _, val in ipairs(folder:GetChildren()) do
-	buffers[val.Name] = decode(val.Value)
-end
-folder:Destroy()
-
-for k, v in pairs(buffers) do
-	print("buffers key:", k, #v .. " bytes")
-end
-
-local role = game:GetService("ReplicatedStorage")
-    :WaitForChild("BytenetStorage")
-    :WaitForChild("Networking").Value
-    :match('"bytenet_selectRole"%s*:%s*(%d+)')
-
-role = role and tonumber(role)
-
-local pick = string.char(role)
+NET = (function()
+    local Packets = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+    local warned = {}
+    
+    local function warnOnce(key, message)
+        if not warned[key] then 
+            warned[key] = true
+            warn("[Network Shim] " .. message) 
+        end
+    end
+    
+    local function convertToString(inputData)
+        if type(inputData) == "string" then return inputData end
+        if typeof(inputData) == "buffer" then return buffer.tostring(inputData) end
+    end
+    
+    local netShim = {}
+    
+    function netShim.FireServer(_, dataBuffer, actionsList)
+        local bufferType = convertToString(dataBuffer)
+        
+        if bufferType == "base" then
+            if type(actionsList) ~= "table" then return end
+            
+            for _, primaryAction in ipairs(actionsList) do
+                if type(primaryAction) == "table" then
+                    local success = pcall(Packets.bytenet_use.send, primaryAction)
+                    if not success then 
+                        warnOnce("use_" .. tostring(primaryAction), "bytenet_use execution failed for: '" .. tostring(primaryAction) .. "'") 
+                    end
+                end
+            end
+            
+        elseif bufferType == "grabball" then
+            local success = pcall(Packets.bytenet_findBall.send, actionsList)
+            if not success then 
+                warnOnce("grab", "bytenet_findBall execution channel failed.") 
+            end
+        end
+    end
+    
+    netShim.fireServer = netShim.FireServer
+    return netShim
+end)()
 ---
 
 local Players = game:GetService("Players")
@@ -192,7 +205,7 @@ ballfolder:Toggle("Auto Goal", "Attempts To Steal The Ball And Score.", function
                     local localroot = localplayer.Character:FindFirstChild("HumanoidRootPart")
                     if otherball and otherroot and localroot then
                         localroot.CFrame = otherball.CFrame
-                        replicatedstorage:WaitForChild("ByteNetReliable"):FireServer(
+                        NET:FireServer(
                             buffer.fromstring(buffers["base"]),
                             {{"tackle"}}
                         )
@@ -217,7 +230,7 @@ ballfolder:Toggle("Auto Goal", "Attempts To Steal The Ball And Score.", function
                     if root and goal then
                         root.CFrame = goal.CFrame
                         task.wait(0.185)
-                        replicatedstorage:WaitForChild("ByteNetReliable"):FireServer(
+                        NET:FireServer(
                             buffer.fromstring(buffers["base"]),
                             {{"kick", 20, false, vector.create(0, 1, 0)}}
                         )
@@ -261,7 +274,7 @@ ballfolder:Toggle("Always Ball", "Attempts To Always Hold The Ball (zero gravity
                         local otherroot = plr.Character:FindFirstChild("HumanoidRootPart")
                         if otherball and otherroot and root then
                             root.CFrame = otherball.CFrame
-                            game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(
+                            NET:FireServer(
                                 buffer.fromstring(buffers["base"]),
                                 {{"tackle"}}
                             )
@@ -278,7 +291,7 @@ end)
 
 local flowPartData = {
     LocalPlayer = game:GetService("Players").LocalPlayer,
-    ByteNetReliable = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"),
+    ByteNetReliable = NET,
     flowPart = nil,
     flowActive = false,
     flowConnection = nil,
@@ -553,7 +566,7 @@ ballfolder:Button("Steal Ball (Aiku)", "Repeatedly Attempts To Get The Ball Via 
     end)
 end)
 
-ballfolder:Button("Bring Ball (Aiku)", "Steals The Ball  Via Reflex Tackle Then Teleports Back. Click Again To Cancel.", function()
+ballfolder:Button("Bring Ball (Aiku)", "Steals The Ball Via Reflex Tackle Then Teleports Back. Click Again To Cancel.", function()
     local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
     if not hrp then return end
 
@@ -878,7 +891,7 @@ ballmag:Toggle("Ball Magnet", "Ball Magnet, Uses Set Radius As Range.", function
                 if dist <= radius and (time() - ballMagnetState.lastFire) >= ballMagnetState.fire_intrv then
                     ballMagnetState.lastFire = time()
                     pcall(function()
-                        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(buffers["grabball"]))
+                        NET:FireServer(buffer.fromstring(buffers["grabball"]))
                     end)
                 end
             end
@@ -1050,7 +1063,7 @@ screenGui.Parent = playerGui
 
 local cubesizeeee = 15
 local gapbetweenuisyesireallylikelongvariablenameshowdyouknow = 3           
-local icantrememberwhatthisisgapxtho = 5     
+local icantrememberwhatthisisgapxtho = 10    
 local offsetfrompingui = 30 
 
 local layoutCounters = {
@@ -1177,7 +1190,7 @@ end
 
 local buffer = buffer or { fromstring = function(str) return str end }
 local connections = {}
-local byteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
+local byteNetReliable = NET
 
 local function hasball()
     return localplayer.Character and localplayer.Character:FindFirstChild("Ball") ~= nil
@@ -1415,7 +1428,7 @@ autogoal:Button("Isagi U-20 Goal", "Attempts To Do Isagi's U-20 Auto Goal By Tel
             hrp.CFrame = CFrame.new(-537, 3, 1549)
         end
         task.wait(0.2)
-        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(
+        NET:FireServer(
             buffer.fromstring(buffers["base"]),
             { { "skill3"} }
         )
@@ -1437,7 +1450,7 @@ autogoal:Button("Nagi Dream Goal", "Attempts To Do Nagi's Control Move Auto Goal
             plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
         end
         task.wait(0.2)
-        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(
+        NET:FireServer(
             buffer.fromstring(buffers["base"]),
             { { "skill2", true } }
         )
@@ -1770,7 +1783,7 @@ passingState = {
 local plr = Players.LocalPlayer
 local mouse = plr:GetMouse()
 local Camera = workspace.CurrentCamera
-local passpass = ReplicatedStorage:WaitForChild("ByteNetReliable")
+local passpass = NET
 
 local keyToSkill = {
     [Enum.KeyCode.One]   = "skill1",
@@ -2000,67 +2013,6 @@ add:Button("Goalkeeper Anywhere (Rejoin To Disable.)", "Allows You To Do GK Side
     end)
 end)
 
-local kickrealhard = false
-
-add:Toggle("Kick Like Kaiser", "Makes You Kick Like Kaiser!1!11!", function(state)
-    
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Kick Like Kaiser",
-        Text = "If Your Kicks Are Not Max Power While On, It Means Your Executor Does Not Support This Feature.",
-        Duration = 10,
-        Button1 = "ok my executor is fine",
-        Button2 = "aw man my executor sucks"
-    })
-    
-    kickrealhard = state
-    
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    local ByteNetReliable = ReplicatedStorage:WaitForChild("ByteNetReliable")
-    local rawMeta = getrawmetatable(game)
-    
-    if not getgenv().kickhookk then
-        getgenv().kickhookk = true
-        
-        local oldIndex = rawMeta.__index
-        local oldNamecall = rawMeta.__namecall
-        setreadonly(rawMeta, false)
-
-        function modKick(args)
-            if not kickrealhard then return end
-            if type(args) == "table" and type(args[2]) == "table" then
-                for _, subTable in pairs(args[2]) do
-                    if type(subTable) == "table" and subTable[1] == "kick" then
-                        subTable[2] = 100
-                    end
-                end
-            end
-        end
-
-        rawMeta.__index = newcclosure(function(self, key)
-            if self == ByteNetReliable and (key == "FireServer" or key == "fireServer") then
-                return newcclosure(function(remote, ...)
-                    local args = {...}
-                    modKick(args)
-                    return oldIndex(remote, key)(remote, unpack(args))
-                end)
-            end
-            return oldIndex(self, key)
-        end)
-
-        rawMeta.__namecall = newcclosure(function(self, ...)
-            local args = {...}
-            local method = getnamecallmethod()
-            if self == ByteNetReliable and (method == "FireServer" or method == "fireServer") then
-                modKick(args)
-                return oldNamecall(self, unpack(args))
-            end
-            return oldNamecall(self, ...)
-        end)
-
-        setreadonly(rawMeta, true)
-    end
-end)
-
 add:Button("Shachoko GK Catch (Req. GK Position.)", "Makes It Almost Impossible To Be Scored On As GK And Does Shachoko Kick.", function()
 loadstring(game:HttpGet("https://pastebin.com/raw/Hr1HnK38"))()
 end)
@@ -2190,7 +2142,7 @@ oth:Toggle("Spam Brick Sound (5v5 + GK Only.)", "This SHOULD Be Self Explanatory
                             }
                         }
                     }
-                    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args))
+                    NET:FireServer(unpack(args))
 
                     task.wait(0.05)
                 end
@@ -3249,7 +3201,7 @@ game:GetService("RunService").RenderStepped:Connect(function()
                 { "skill" .. autoActivateState.moveNumber } 
             } 
         } 
-        game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args)) 
+        NET:FireServer(unpack(args)) 
     end 
 end)
 
@@ -4187,21 +4139,24 @@ local function firePacketsIfNear()
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
+
     if (root.Position - Vector3.new(-371, 13, -1599)).Magnitude <= 15 or
        (root.Position - Vector3.new(-196, 13, -1599)).Magnitude <= 15 then
-        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000A"))
-        game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000B"))
+
+        local P = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+
+
+        pcall(function() P.bytenet_selectRole.send({index = 1, t = "A"}) end)
+        pcall(function() P.bytenet_selectRole.send({index = 1, t = "B"}) end)
     end
 end
 
 local function fireGKPackets()
-    local char = game:GetService("Players").LocalPlayer.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+    local P = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
 
-    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\005\001\000B"))
-    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\005\001\000A"))
+
+    pcall(function() P.bytenet_selectRole.send({index = 5, t = "A"}) end)
+    pcall(function() P.bytenet_selectRole.send({index = 5, t = "B"}) end)
 end
 
 autopos:Toggle("Auto Pick CF", "Automatically Picks Center Field Position On Respawn Or Enable.", function()
@@ -4290,7 +4245,7 @@ task.spawn(function()
         look = nil,
         ballHolder = ReplicatedStorage.workspace.ballHolder,
         lastHolder = nil,
-        remote = ReplicatedStorage:WaitForChild("ByteNetReliable"),
+        remote = NET,
         map = Workspace:WaitForChild("map"),
         GRAVITY = Vector3.new(0, -Workspace.Gravity, 0),
         velSmooth = Vector3.zero,
@@ -4546,7 +4501,7 @@ autogk:Button("Daffy's Auto GK", "Reset Or Click F4 To Disable.", function()
         gkPlayerState.lastHolder = cur
     end)
 
-    gkPlayerState.remote = ReplicatedStorage:WaitForChild("ByteNetReliable")
+    gkPlayerState.remote = NET
 
     local function cleanup()
         gkPlayerState.onn = false
@@ -4691,7 +4646,7 @@ local function performAirDribble()
     local dir = root.CFrame.LookVector
     local kickVec = Vector3.new(dir.X * 0.75, 0.65, dir.Z * 0.75)
 
-    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(buffers["base"]), {
+    NET:FireServer(buffer.fromstring(buffers["base"]), {
         { "kick", 28, false, kickVec }
     })
 end
@@ -4909,7 +4864,7 @@ othersil:Toggle("Auto Steal Ball", "Automatically Attempts To Steal When Opponen
 
 			local args = {
     			buffer.fromstring(buffers["base"]),{{"tackle"}}}
-			game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(unpack(args)) 
+			NET:FireServer(unpack(args)) 
 
         end) 
     end 
@@ -5161,9 +5116,9 @@ othersil:Toggle("Auto Formless", "Shidou Only Formless Macro.", function()
             local dir = hrp.CFrame.LookVector
             local kickVec = vector.create(dir.X * 0.5, 1, dir.Z * 0.5)
 
-            local remote = game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable")
+            local remote = NET
             remote:FireServer(buffer.fromstring(buffers["base"]), { { "kick", 25, false, kickVec } })
-            game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(
+            NET:FireServer(
                 buffer.fromstring(buffers["base"]), { { "skill1" } }
             )
         end)
@@ -5240,8 +5195,8 @@ local function trigger()
     local dir = hrp.CFrame.LookVector
     local kickVec = Vector3.new(dir.X * 0.5, 1, dir.Z * 0.5)
 
-    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(buffers["base"]), { { "kick", 25, false, kickVec } })
-    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(buffers["base"]), { { "skill1" } })
+    NET:FireServer(buffer.fromstring(buffers["base"]), { { "kick", 25, false, kickVec } })
+    NET:FireServer(buffer.fromstring(buffers["base"]), { { "skill1" } })
 end
 
 local function makeDraggable(frame)
@@ -5351,7 +5306,7 @@ local function trigger()
     local dir = hrp.CFrame.LookVector
     local kickVec = Vector3.new(dir.X * 0.75, 0.65, dir.Z * 0.75)
 
-    game:GetService("ReplicatedStorage"):WaitForChild("ByteNetReliable"):FireServer(
+    NET:FireServer(
         buffer.fromstring(buffers["base"]),
         { { "kick", 28, false, kickVec } }
     )
@@ -6017,39 +5972,6 @@ function checkScoreCondition()
     return false
 end
 
-function firePacketsIfNearGoal()
-    local char = GoalLocalPlayer.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-    if (root.Position - Vector3.new(-371, 13, -1599)).Magnitude <= 15 or
-       (root.Position - Vector3.new(-196, 13, -1599)).Magnitude <= 15 then
-        
-        if farmmode == "Solo Farm" then
-            if teamSwitching then return end
-            
-            if checkScoreCondition() then
-                teamSwitching = true
-                lastResetTime = os.clock()
-                task.spawn(function()
-                    if char then
-                        char:BreakJoints()
-                    end
-                    task.wait(8)
-                    lastFiredTeam = (lastFiredTeam == "A") and "B" or "A"
-                    ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000" .. lastFiredTeam))
-                    teamSwitching = false
-                end)
-                return
-            end
-            
-            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000" .. lastFiredTeam))
-        else
-            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000A"))
-            ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000B"))
-        end
-    end
-end
-
 function IsInGame()
     local char = GoalLocalPlayer.Character
     local state = char and char:FindFirstChild("state")
@@ -6089,7 +6011,7 @@ function StealBall()
             if oBall and oRoot and root then
                 task.wait(0.5)
                 root.CFrame = oBall.CFrame
-                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack({buffer.fromstring(buffers["base"]), {{"tackle"}}}))
+                NET:FireServer(unpack({buffer.fromstring(buffers["base"]), {{"tackle"}}}))
             end
         end
     end
@@ -6141,6 +6063,19 @@ exploittab:Button("Goal Farm Info", "This Comes With Instructions On How To Use 
     })
 end)
 
+local currentTrackedTeam = nil
+
+local function fireOppositeTeamPacket(cachedTeam)
+    local P = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+    local teamToUse = cachedTeam or currentTrackedTeam or (GoalLocalPlayer.Team and GoalLocalPlayer.Team.Name) or "A"
+    local nextTeam = (teamToUse == "A") and "B" or "A"
+    
+    pcall(function() 
+        P.bytenet_selectRole.send({index = 1, t = nextTeam}) 
+    end)
+    currentTrackedTeam = nextTeam
+end
+
 exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
     goalFarmState.Enabled = not goalFarmState.Enabled
     
@@ -6151,29 +6086,35 @@ exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
     })
     
     if goalFarmState.Enabled then
+        if GoalLocalPlayer.Team then
+            currentTrackedTeam = GoalLocalPlayer.Team.Name
+        end
+
         goalFarmState.CFConn = GoalLocalPlayer.CharacterAdded:Connect(function()
             task.wait(1)
-            if goalFarmState.Enabled then 
-                firePacketsIfNearGoal() 
+            if goalFarmState.Enabled and not teamSwitching then 
+                firePacketsIfNear() 
             end
         end)
         
         task.spawn(function()
             repeat task.wait() until GoalLocalPlayer.Character and GoalLocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if goalFarmState.Enabled then 
-                firePacketsIfNearGoal() 
+            if goalFarmState.Enabled and not teamSwitching then 
+                firePacketsIfNear() 
             end
         end)
         
         goalFarmState.RenderConn = RunService.RenderStepped:Connect(function()
             if not goalFarmState.Enabled then return end
             pcall(function()
-                if farmmode == "Solo Farm" and (teamSwitching or checkScoreCondition()) then
+                local conditionMet = checkScoreCondition()
+                if farmmode == "Solo Farm" and (teamSwitching or conditionMet) then
                     if not teamSwitching then
                         teamSwitching = true
                         lastResetTime = os.clock()
                         
                         task.spawn(function()
+                            local teamBeforeReset = GoalLocalPlayer.Team and GoalLocalPlayer.Team.Name or currentTrackedTeam or "A"
                             local char = GoalLocalPlayer.Character
                             local hum = char and char:FindFirstChildOfClass("Humanoid")
                             if hum then
@@ -6182,23 +6123,19 @@ exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
                             
                             task.wait(8)
                             
-                            if lastFiredTeam == nil then
-                                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000A"))
-                                task.wait(0.1)
-                                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000B"))
-                                
-                                task.wait(0.1)
-                                
-                                if GoalLocalPlayer.Team then
-                                    lastFiredTeam = GoalLocalPlayer.Team.Name
-                                else
-                                    lastFiredTeam = "B"
+                            local timeout = 0
+                            while timeout < 30 do
+                                if GoalLocalPlayer.Character and GoalLocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                                    break
                                 end
-                            else
-                                lastFiredTeam = (lastFiredTeam == "A") and "B" or "A"
-                                ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(buffer.fromstring(pick .. "\001\001\000" .. lastFiredTeam))
+                                task.wait(0.1)
+                                timeout = timeout + 1
                             end
                             
+                            task.wait(0.5)
+                            fireOppositeTeamPacket(teamBeforeReset)
+                            
+                            task.wait(0.2)
                             teamSwitching = false
                         end)
                     end
@@ -6219,9 +6156,11 @@ exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
                         root.CFrame = targetGoal.CFrame
                         
                         task.wait(0.175)
-                        ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack({buffer.fromstring(buffers["base"]), {{"kick", 50, false, vector.create(0, 1, 0)}}}))
+                        NET:FireServer("base", {{"kick", 50, false, vector.create(0, 1, 0)}})
                         
-                        firePacketsIfNearGoal()
+                        if not teamSwitching then
+                            firePacketsIfNear()
+                        end
                     end
                 end
             end)
@@ -6232,6 +6171,7 @@ exploittab:Toggle("Goal Farm", "Automatically Farms Goals For You.", function()
         stopGoalFarm()
     end
 end)
+
 
 exploittab:Textbox("Goal Target", "Enter A Number Of Goals To Stop Farming At.", function(v)
     local num = tonumber(v)
