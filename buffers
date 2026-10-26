@@ -1,16 +1,30 @@
 local tbl = {}
+local NetworkPacket = require(game:GetService("ReplicatedStorage"):WaitForChild("Network"):WaitForChild("NetworkPacket"))
 
-local info = game.ReplicatedStorage.BytenetStorage.Networking.Value
+-- Helper utility to extract IDs from the new ByteNet structure
+local function getPacketId(name)
+    local packet = NetworkPacket[name]
+    if packet and type(packet) == "table" then
+        return packet.id or packet._id or packet.packetId
+    end
+    -- Fallback sequence loop
+    for k, v in pairs(NetworkPacket) do
+        if type(v) == "table" and (v.name == name or k == name) then
+            return v.id or v._id or v.packetId
+        end
+    end
+    return nil
+end
 
-local baseNum = info:match('"bytenet_use"%s*:%s*(%d+)')
-local grabballNum = info:match('"bytenet_findBall"%s*:%s*(%d+)')
+local baseNum = getPacketId("bytenet_use")
+local grabballNum = getPacketId("bytenet_findBall")
 
 if baseNum then
-	tbl.base = string.char(tonumber(baseNum), 1, 0)
+	tbl.base = string.char(baseNum, 1, 0)
 end
 
 if grabballNum then
-	tbl.grabball = string.char(tonumber(grabballNum))
+	tbl.grabball = string.char(grabballNum)
 end
 
 local function encode(s)
