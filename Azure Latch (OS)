@@ -1,3 +1,8 @@
+executor = identifyexecutor and string.lower(identifyexecutor()) or ""
+if string.find(executor, "xeno") or string.find(executor, "solara") or Solara or Xeno then
+    game.Players.LocalPlayer:Kick("hey this script dont support xeno / solara, upgrade nowww")
+end
+
 if game.PlaceId == 139609232261520 then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/hgghhghghhgg"))()
 else
