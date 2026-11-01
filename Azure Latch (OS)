@@ -1,7 +1,7 @@
 local executor = identifyexecutor and string.lower(identifyexecutor()) or "" 
 
 if string.find(executor, "xeno") or string.find(executor, "solara") or Solara or Xeno then 
-    loadstring(game:HttpGet("https://githubusercontent.com"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Azure%20Latch%3A%20Solara%20Edition%20(OS)"))()
     return
 end
 
