@@ -1,6 +1,8 @@
-executor = identifyexecutor and string.lower(identifyexecutor()) or ""
-if string.find(executor, "xeno") or string.find(executor, "solara") or Solara or Xeno then
-    game.Players.LocalPlayer:Kick("hey this script dont support xeno / solara, upgrade nowww")
+local executor = identifyexecutor and string.lower(identifyexecutor()) or "" 
+
+if string.find(executor, "xeno") or string.find(executor, "solara") or Solara or Xeno then 
+    loadstring(game:HttpGet("https://githubusercontent.com"))()
+    return
 end
 
 if game.PlaceId == 139609232261520 then
@@ -44,7 +46,7 @@ NET = (function()
     local function warnOnce(key, message)
         if not warned[key] then 
             warned[key] = true
-            warn("[Network Shim] " .. message) 
+            warn("[net shim] " .. message) 
         end
     end
     
@@ -158,7 +160,7 @@ meta:Button("Metavision V2", "Similar To V1, Only Can Be Used Below 1:30 On Cloc
     loadstring(game:HttpGet("https://pastebin.com/raw/HfpQBAsF"))()
 end)
 
-local ballfolder = maintab:Folder("Ball Features.", Color3.fromRGB(169, 5, 255), true)
+ballfolder = maintab:Folder("Ball Features.", Color3.fromRGB(169, 5, 255), true)
 ballfolder:Label("Ball Features.")
 
 local autoGoalState = {
@@ -1352,7 +1354,7 @@ function createAutoCounter(label, toggleKey)
     end)
 end
 
-exploittab:Button("Auto Counter Info", "This Comes With Instructions On How To Use The Feature Below.", function()
+autodrib:Button("Auto Counter Info", "This Comes With Instructions On How To Use The Feature Below.", function()
     local StarterGui = game:GetService("StarterGui")
 
     StarterGui:SetCore("SendNotification", {
@@ -4839,7 +4841,7 @@ end)
 getgenv().AutoStealState = getgenv().AutoStealState or { enabled = false, connections = {} } 
 state = getgenv().AutoStealState 
 
-othersil:Toggle("Auto Steal Ball", "Automatically Attempts To Steal When Opponent Normal Kicks The Ball.", function(v) 
+othersil:Toggle("Auto Steal Ball", "Automatically Attempts To Steal When Opponent Whiffs A Counter.", function(v) 
     Players = game:GetService("Players") 
     RunService = game:GetService("RunService") 
     lp = Players.LocalPlayer 
