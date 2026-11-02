@@ -58,7 +58,7 @@ local function sendKeyPress(keyName)
     VIM:SendKeyEvent(false, keyCode, false, game)
 end
 
-local actionmap = { 
+local ACTION_TO_VIM = { 
     dribble = "E", 
     tackle = "Q", 
     kick = "leftmouseclick", 
@@ -72,7 +72,7 @@ local actionmap = {
 }
 
 local function pressAction(actionName)
-    local mapped = actionmap[actionName]
+    local mapped = ACTION_TO_VIM[actionName]
     if not mapped then
         return
     end
@@ -112,6 +112,8 @@ helptab:Label("Script Credits.")
 
 helptab:Label("Main Scripter: Celeron.")
 helptab:Label("Custom UI + Some Features: Daffy.")
+helptab:Label("GK Anywhere Feature: Ashura.")
+helptab:Label("Auto Config: Serlicia.")
 
 if math.random(1,50) == 1 then
     hometab:Banner("17327779381", 385)
@@ -226,7 +228,7 @@ ballfolder:Toggle("Auto Goal", "Attempts To Steal The Ball And Score.", function
                     local goal = localplayer.Team.Name == "A" and bgoal or agoal
                     if root and goal then
                         root.CFrame = goal.CFrame
-                        task.wait(0.075)
+                        task.wait(0.185)
                         pressAction("kick")
                     end
                 end
@@ -1249,34 +1251,24 @@ autogoal:Button("Isagi U-20 Goal", "Attempts To Do Isagi's U-20 Auto Goal By Tel
     end
 end)
 
-local VirtualInputManager = game:GetService("VirtualInputManager")
+autogoal:Button("Nagi Dream Goal", "Attempts To Do Nagi's Control Move Auto Goal In Flow.", function()
+    local plr = game.Players.LocalPlayer
+    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = plr.Character.HumanoidRootPart
 
-autogoal:Button("Nagi Dream Goal", "Attempts To Do Nagi's Control Move Auto Goal In Flow.", function() 
-    local plr = game.Players.LocalPlayer 
-    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then 
-        local hrp = plr.Character.HumanoidRootPart 
-        
-        if plr.Team == game.Teams:FindFirstChild("A") then 
-            hrp.CFrame = CFrame.new(-459, 3, 862) 
-        elseif plr.Team == game.Teams:FindFirstChild("B") then 
-            hrp.CFrame = CFrame.new(-611, 3, 1682) * CFrame.Angles(0, math.rad(180), 0) 
-        end 
-        
-        task.wait(0.2) 
-        
-        if plr.Character and plr.Character:FindFirstChild("Humanoid") then 
-            plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) 
+        if plr.Team == game.Teams:FindFirstChild("A") then
+            hrp.CFrame = CFrame.new(-459, 3, 862)
+        elseif plr.Team == game.Teams:FindFirstChild("B") then
+            hrp.CFrame = CFrame.new(-611, 3, 1682) * CFrame.Angles(0, math.rad(180), 0)
         end
-
-        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game) 
-        
-        task.wait(0.25) 
-        pressAction("skill2") 
-        
-        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-    end 
+        task.wait(0.2)
+        if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+            plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+        task.wait(0.2)
+        pressAction("skill2")
+    end
 end)
-
 
 autogoal:Button("Barou Devour Goal", "Attempts To Do Barou's Devour Auto Goal By Teleporting Behind Two Enemy Players.", function()
     local plr = game.Players.LocalPlayer
@@ -1347,10 +1339,15 @@ end)
 local add = maintab:Folder("Fun Features.", Color3.fromRGB(169, 5, 255), true)
 add:Label("Fun Features: Pretty Fun Features I'd Say.")
 
-local AnimationId = "rbxassetid://113098409724280"
+local AnimationId = "rbxassetid://106978014114973"
 local safety = Vector3.new(-540, 3, 1274)
+mapFolmain = workspace.map.map.sanam.main
+local floorAie = workspace.map.map.sanam.main.Size
 
-local invisState = {
+workspace.map.map.sanam.main.Size = Vector3.new(floorAie.X, 2, floorAie.Z)
+workspace.map.map.sanam.main.Position += Vector3.new(0, (floorAie.Y - 2) / 2, 0)
+
+invisState = {
     active = false,
     character = nil,
     humanoid = nil,
@@ -1391,7 +1388,6 @@ local function setupCharacter(char)
         startInvisibility()
     end
 end
-
 RunService.RenderStepped:Connect(function()
     if not invisState.active then return end
     if not invisState.humanoid or not invisState.character then return end
@@ -1406,6 +1402,15 @@ RunService.RenderStepped:Connect(function()
 
         if not raycastResult then
             rootPart.CFrame = CFrame.new(safety)
+            return
+        end
+        
+        local floorTop = mapFolmain.Position.Y + mapFolmain.Size.Y / 2
+        if rootPart.Position.Y > floorTop + 20 then
+            local _, yaw, _ = rootPart.CFrame:ToOrientation()
+            rootPart.CFrame = CFrame.new(rootPart.Position.X, floorTop + 3, rootPart.Position.Z) * CFrame.Angles(0, yaw, 0)
+            rootPart.AssemblyLinearVelocity = Vector3.zero
+            rootPart.AssemblyAngularVelocity = Vector3.zero
         end
     end
 end)
@@ -1416,184 +1421,13 @@ if player.Character then
     setupCharacter(player.Character)
 end
 
-add:Toggle("Invisibility V1 (Method: Animation)", "Makes You Almost Fully Invisible To Other Players Using An Animation.", function(v)
+add:Toggle("Invisibility (Method: Animation)", "Makes You Almost Fully Invisible To Other Players Using An Animation.", function(v)
     invisState.active = v
     if v then
         startInvisibility()
     else
         stopInvisibility()
     end
-end)
-
-add:Button("Invisibility V2 (Method: Clone)", "Makes You Almost Fully Invisible To Other Players Using Cloning. Click Z To Disable." , function(v)
-    local Players = game:GetService("Players")
-    local RunService = game:GetService("RunService")
-    local UserInputService = game:GetService("UserInputService")
-
-    local player = Players.LocalPlayer
-    local enabled = true
-
-    local charactersfolder = workspace:WaitForChild("characters", 10)
-    if not charactersfolder then return end
-
-    local character = charactersfolder:WaitForChild(player.Name, 15)
-    if not character then return end
-
-    if not character:FindFirstChild("Humanoid") or not character:FindFirstChild("HumanoidRootPart") then return end
-
-    character.Archivable = true
-    local characterroot = character:WaitForChild("HumanoidRootPart")
-    characterroot.Transparency = 1
-
-    local clone = character:Clone()
-    if not clone then return end
-
-    clone.Name = player.Name .. "_Ghost"
-    clone.Parent = workspace
-
-    for _, obj in ipairs(clone:GetDescendants()) do
-        if obj:IsA("BasePart") or obj:IsA("MeshPart") or obj:IsA("Part") then
-            if obj.Name == "HumanoidRootPart" then
-                obj.Transparency = 1
-            else
-                obj.Transparency = 0.4
-            end
-            obj.CanCollide = true
-        elseif obj:IsA("Decal") or obj:IsA("Texture") or obj:IsA("ShirtGraphic") then
-            obj.Transparency = 0
-        end
-    end
-
-    local cloneroot = clone:WaitForChild("HumanoidRootPart", 5)
-    if cloneroot then
-        cloneroot.Transparency = 1
-    end
-
-    local clonehumanoid = clone:WaitForChild("Humanoid", 5)
-    if not cloneroot or not clonehumanoid then
-        clone:Destroy()
-        return
-    end
-
-    cloneroot.CFrame = character.HumanoidRootPart.CFrame + Vector3.new(0, 5, 0)
-    clonehumanoid.PlatformStand = false
-    clonehumanoid.WalkSpeed = 75
-    clonehumanoid.JumpPower = 50
-
-    player.Character = clone
-    workspace.CurrentCamera.CameraSubject = clonehumanoid
-
-    local animations = {
-        Run  = "rbxassetid://90801998022970",
-        Jump = "rbxassetid://80330677678466"
-    }
-
-    local runanim = Instance.new("Animation")
-    runanim.AnimationId = animations.Run
-    local runtrack = clonehumanoid:LoadAnimation(runanim)
-    runtrack.Looped = true
-    runtrack.Priority = Enum.AnimationPriority.Movement
-
-    local jumpanim = Instance.new("Animation")
-    jumpanim.AnimationId = animations.Jump
-    local jumptrack = clonehumanoid:LoadAnimation(jumpanim)
-    jumptrack.Looped = false
-    jumptrack.Priority = Enum.AnimationPriority.Action
-
-    local isrunning = false
-
-    local teleportconn
-    local speedenforceconn
-
-    UserInputService.InputBegan:Connect(function(input, gameprocessed)
-        if gameprocessed then return end
-        if input.KeyCode == Enum.KeyCode.Z and enabled then
-            enabled = false
-
-            if teleportconn then teleportconn:Disconnect() end
-            if speedenforceconn then speedenforceconn:Disconnect() end
-            teleportconn = nil
-            speedenforceconn = nil
-
-            player.Character = character
-            workspace.CurrentCamera.CameraSubject = character:FindFirstChild("Humanoid")
-
-            if clone then clone:Destroy() end
-            clone = nil
-
-            for _, part in ipairs(character:GetDescendants()) do
-                if part:IsA("BasePart") or part:IsA("MeshPart") then
-                    if part.Name == "HumanoidRootPart" then
-                        part.Transparency = 1
-                    else
-                        part.Transparency = 0
-                    end
-                    part.CanCollide = true
-                elseif part:IsA("Decal") or part:IsA("Texture") or part:IsA("ShirtGraphic") then
-                    part.Transparency = 0
-                end
-            end
-
-            runtrack:Stop(0.2)
-            jumptrack:Stop(0.2)
-            isrunning = false
-        end
-    end)
-
-    teleportconn = RunService.Heartbeat:Connect(function()
-        if not enabled then return end
-        if not cloneroot or not cloneroot.Parent or not characterroot or not characterroot.Parent then return end
-        local clonepos = cloneroot.Position
-        local underpos = clonepos - Vector3.new(0, 15, 0)
-        characterroot.CFrame = CFrame.new(underpos, clonepos)
-        for _, part in ipairs(character:GetDescendants()) do
-            if part:IsA("BasePart") or part:IsA("MeshPart") then
-                part.Transparency = 1
-                part.CanCollide = false
-            end
-        end
-    end)
-
-    speedenforceconn = RunService.RenderStepped:Connect(function()
-        if not enabled then return end
-        if not clonehumanoid or not clonehumanoid.Parent then return end
-        clonehumanoid.WalkSpeed = 75
-        clonehumanoid.JumpPower = 50
-    end)
-
-    RunService.Heartbeat:Connect(function()
-        if not enabled or not clonehumanoid or not clonehumanoid.Parent then return end
-        local moving = clonehumanoid.MoveDirection.Magnitude > 0.01
-        local currentstate = clonehumanoid:GetState()
-        if moving and currentstate ~= Enum.HumanoidStateType.Jumping then
-            if not isrunning then
-                runtrack:Play(0.1)
-                isrunning = true
-            end
-        else
-            if isrunning then
-                runtrack:Stop(0.3)
-                isrunning = false
-            end
-        end
-        if currentstate == Enum.HumanoidStateType.Jumping or currentstate == Enum.HumanoidStateType.Freefall then
-            if not jumptrack.IsPlaying then
-                jumptrack:Play(0.15)
-            end
-        elseif jumptrack.IsPlaying then
-            jumptrack:Stop(0.2)
-        end
-    end)
-
-    player.CharacterRemoving:Connect(function()
-        enabled = false
-        if teleportconn then teleportconn:Disconnect() end
-        if speedenforceconn then speedenforceconn:Disconnect() end
-        runtrack:Stop(0)
-        jumptrack:Stop(0)
-        isrunning = false
-        if clone then clone:Destroy() end
-    end)
 end)
 
 add:Toggle("Auto Break Server (Demon's Contract)", "When Using Demon's Contract With Kunigami, It Will Automatically Reset.", function(v)
@@ -1731,6 +1565,10 @@ add:Button("Steal Screen Time (funny)", "Click Z To Disable, Steals Screen Time.
             ogPos = root.Position
         end
     end)
+end)
+
+add:Button("Shachoko GK Catch (Req. GK Position.)", "Makes It Almost Impossible To Be Scored On As GK And Does Shachoko Kick.", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/Hr1HnK38"))()
 end)
 
 local oth = maintab:Folder("Other Blatant Features.", Color3.fromRGB(169, 5, 255), true)
@@ -3816,6 +3654,107 @@ linecreator:Textbox("Enter Lineup Code(s)", "Enter Lineup Codes (seperated by co
     })
 end)
 
+local autopos = maintab2:Folder("Auto Position Features.", Color3.fromRGB(169, 5, 255), true)
+autopos:Label("Auto Position: Automatically Sets Certain Positions.")
+
+local targets = {A = Vector3.new(-370, 13, -1598), B = Vector3.new(-195, 13, -1598)}
+local player = game:GetService("Players").LocalPlayer
+local vim = game:GetService("VirtualInputManager")
+local gui_service = game:GetService("GuiService")
+local states = {}
+
+local function click(btn)
+    if not btn then return end
+    pcall(function()
+        local abs_pos = btn.AbsolutePosition
+        local abs_size = btn.AbsoluteSize
+        local inset = gui_service:GetGuiInset()
+        
+        local click_x = abs_pos.X + (abs_size.X / 2) + inset.X
+        local click_y = abs_pos.Y + (abs_size.Y / 2) + inset.Y
+        
+        vim:SendMouseButtonEvent(click_x, click_y, 0, true, game, 0)
+        task.wait(0.05)
+        vim:SendMouseButtonEvent(click_x, click_y, 0, false, game, 0)
+    end)
+end
+
+local function run_seq(pos)
+    local pgui = player:WaitForChild("PlayerGui", 15)
+    if not pgui or not states[pos] then return end
+
+    local lobby = pgui:WaitForChild("Lobby", 15)
+    local frame = lobby and lobby:WaitForChild("Frame", 15)
+    local play_frame = frame and frame:WaitForChild("Play", 15)
+    local play = play_frame and play_frame:WaitForChild("Button", 15)
+
+    if play then
+        while states[pos] do
+            if play.Visible and play.AbsoluteSize.X > 0 then
+                click(play)
+                break
+            end
+            task.wait(0.1)
+        end
+    end
+
+    local char = player.Character or player.CharacterAdded:Wait()
+    local root = char:WaitForChild("HumanoidRootPart", 15)
+    if not root then return end
+
+    while root.Position == Vector3.new(0, 0, 0) or (root.Position - Vector3.new(0, 0, 0)).Magnitude < 5 do
+        if not states[pos] then return end
+        task.wait(0.1)
+    end
+
+    for side, target_pos in pairs(targets) do
+        if (root.Position - target_pos).Magnitude <= 15 then
+            while states[pos] do
+                local select_gui = pgui:FindFirstChild("Select")
+                local select_frame = select_gui and select_gui:FindFirstChild("Frame")
+                local side_frame = select_frame and select_frame:FindFirstChild(side)
+                local pos_frame = side_frame and side_frame:FindFirstChild(pos)
+                local btn = pos_frame and pos_frame:FindFirstChild("Button")
+                
+                if btn and btn.Visible and btn.AbsoluteSize.X > 0 then
+                    task.wait(0.5)
+                    click(btn)
+                    break
+                end
+                task.wait(0.1)
+            end
+            break
+        end
+    end
+end
+
+autopos:Toggle("Auto Pick CF", "Automatically Picks Center Field Position On Respawn Or Enable.", function()
+    states.CF = not states.CF
+    game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Auto Pick CF", Text = states.CF and "Enabled." or "Disabled.", Duration = 1})
+
+    if states.CF then
+        states.CFConn = player.CharacterAdded:Connect(function() task.spawn(run_seq, "CF") end)
+        task.spawn(run_seq, "CF")
+    elseif states.CFConn then
+        states.CFConn:Disconnect()
+        states.CFConn = nil
+    end
+end)
+
+autopos:Toggle("Auto Pick GK", "Automatically Picks Goalkeeper Position On Respawn Or Enable.", function()
+    states.GK = not states.GK
+    game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Auto Pick GK", Text = states.GK and "Enabled." or "Disabled.", Duration = 1})
+
+    if states.GK then
+        states.GKConn = player.CharacterAdded:Connect(function() task.spawn(run_seq, "GK") end)
+        task.spawn(run_seq, "GK")
+    elseif states.GKConn then
+        states.GKConn:Disconnect()
+        states.GKConn = nil
+    end
+end)
+
+
 local othersil = maintab2:Folder("Other Features.", Color3.fromRGB(169, 5, 255), true)
 othersil:Label("Other Features: Self Explanatory, Other Silent Features.")
 
@@ -3970,7 +3909,7 @@ end)
 getgenv().AutoStealState = getgenv().AutoStealState or { enabled = false, connections = {} }
 state = getgenv().AutoStealState
 
-othersil:Toggle("Auto Steal Ball", "Automatically Attempts To Steal When Opponent Whiffs A Counter.", function(v)
+othersil:Toggle("Auto Steal Ball", "Automatically Attempts To Steal When Opponent Normal Kicks The Ball.", function(v)
     Players = game:GetService("Players")
     RunService = game:GetService("RunService")
     lp = Players.LocalPlayer
