@@ -58,7 +58,7 @@ local function sendKeyPress(keyName)
     VIM:SendKeyEvent(false, keyCode, false, game)
 end
 
-local ACTION_TO_VIM = { 
+local actionmap = { 
     dribble = "E", 
     tackle = "Q", 
     kick = "leftmouseclick", 
@@ -72,7 +72,7 @@ local ACTION_TO_VIM = {
 }
 
 local function pressAction(actionName)
-    local mapped = ACTION_TO_VIM[actionName]
+    local mapped = actionmap[actionName]
     if not mapped then
         return
     end
