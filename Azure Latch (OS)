@@ -12,7 +12,7 @@ else
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/ui"))() -- yo ts ui :rofl:
 
 local win = ui:Create({
-    Name = "Celeron's GUI (Azure Latch: T)",
+    Name = "Celeron's GUI (Azure Latch)",
     ThemeColor = Color3.fromRGB(152, 58, 201),
 	ThemeGradient = Color3.fromRGB(95, 11, 143),
     StartupSound = "rbxassetid://6958727243",
