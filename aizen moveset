@@ -3,15 +3,52 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local SoundService = game:GetService("SoundService")
 local Workspace = game:GetService("Workspace")
-local buffers = {}
-loadstring(game:HttpGet("https://pastebin.com/raw/8XJh7dzh"))()
-repeat
-    task.wait()
-until game.Lighting:FindFirstChild("BUFFERSTRINGS")
-for _, val in ipairs(game.Lighting:FindFirstChild("BUFFERSTRINGS"):GetChildren()) do
-    buffers[val.Name] = val.Value
-end
-game.Lighting:FindFirstChild("BUFFERSTRINGS"):Destroy()
+
+NET = (function()
+    local packets = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+    local warned = {}
+
+    local function warn_once(key, message)
+        if not warned[key] then
+            warned[key] = true
+            warn("[net shim] " .. message)
+        end
+    end
+
+    local function convert_to_string(input_data)
+        if type(input_data) == "string" then return input_data end
+        if typeof(input_data) == "buffer" then return buffer.tostring(input_data) end
+    end
+
+    local net_shim = {}
+
+    function net_shim.FireServer(_, data_buffer, actions_list)
+        local buffer_type = convert_to_string(data_buffer)
+
+        if buffer_type == "base" then
+            if type(actions_list) ~= "table" then return end
+
+            for _, primary_action in ipairs(actions_list) do
+                if type(primary_action) == "table" then
+                    local success = pcall(packets.bytenet_use.send, primary_action)
+                    if not success then
+                        warn_once("use_" .. tostring(primary_action), "bytenet_use execution failed for: '" .. tostring(primary_action) .. "'")
+                    end
+                end
+            end
+
+        elseif buffer_type == "grabball" then
+            local success = pcall(packets.bytenet_findBall.send, actions_list)
+            if not success then
+                warn_once("grab", "bytenet_findBall execution channel failed.")
+            end
+        end
+    end
+
+    net_shim.fireServer = net_shim.FireServer
+    return net_shim
+end)()
+
 local plr = Players.LocalPlayer
 local lastCast = 0
 local lastCast2 = 0
@@ -134,10 +171,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
         fx()
         task.wait(0.35)
         local forward = (root.CFrame - root.Position).LookVector
-        ReplicatedStorage.ByteNetReliable:FireServer(
-            buffer.fromstring(buffers["base"]),
-            { { "kick", 100, false, vector.create(forward.X, forward.Y + 0.3, forward.Z) } }
-        )
+        NET:FireServer("base", {{"kick", 100, false, vector.create(forward.X, forward.Y + 0.3, forward.Z)}})
     end
     if input.KeyCode == Enum.KeyCode.Two then
         local char = plr.Character
