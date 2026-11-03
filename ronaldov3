@@ -13,13 +13,50 @@ workspace.map.Bgoal.CanCollide = false
 
 local ReplicatedStorage = game.ReplicatedStorage
 
-local buffers = {}
-loadstring(game:HttpGet("https://pastebin.com/raw/8XJh7dzh"))()
-repeat task.wait() until game.Lighting:FindFirstChild("BUFFERSTRINGS")
-for _, val in ipairs(game.Lighting:FindFirstChild("BUFFERSTRINGS"):GetChildren()) do
-    buffers[val.Name] = val.Value
-end
-game.Lighting:FindFirstChild("BUFFERSTRINGS"):Destroy()
+NET = (function()
+    local Packets = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+    local warned = {}
+
+    local function warnOnce(key, message)
+        if not warned[key] then
+            warned[key] = true
+            warn("[net shim] " .. message)
+        end
+    end
+
+    local function convertToString(inputData)
+        if type(inputData) == "string" then return inputData end
+        if typeof(inputData) == "buffer" then return buffer.tostring(inputData) end
+    end
+
+    local netShim = {}
+
+    function netShim.FireServer(_, dataBuffer, actionsList)
+        local bufferType = convertToString(dataBuffer)
+
+        if bufferType == "base" then
+            if type(actionsList) ~= "table" then return end
+
+            for _, primaryAction in ipairs(actionsList) do
+                if type(primaryAction) == "table" then
+                    local success = pcall(Packets.bytenet_use.send, primaryAction)
+                    if not success then
+                        warnOnce("use_" .. tostring(primaryAction), "bytenet_use execution failed for: '" .. tostring(primaryAction) .. "'")
+                    end
+                end
+            end
+
+        elseif bufferType == "grabball" then
+            local success = pcall(Packets.bytenet_findBall.send, actionsList)
+            if not success then
+                warnOnce("grab", "bytenet_findBall execution channel failed.")
+            end
+        end
+    end
+
+    netShim.fireServer = netShim.FireServer
+    return netShim
+end)()
 
 game:GetService("ReplicatedStorage").Resources.shidou.NEWthemes.SoundId = "rbxassetid://101265113960897"
 game:GetService("ReplicatedStorage").Resources.shidou.AwkOvertime.BGM.SoundId = "rbxassetid://101265113960897"
@@ -378,10 +415,7 @@ UserInputService.InputBegan:Connect(function(input, bg)
 		local kickDir = Vector3.new(direction.X, 0.18, direction.Z).Unit
 		local power = math.clamp(distance / 1.4, 18, 95)
 
-		ReplicatedStorage.ByteNetReliable:FireServer(
-			buffer.fromstring(buffers["base"]),
-			{ {"kick", power, true, vector.create(kickDir.X, kickDir.Y, kickDir.Z)} }
-		)
+		NET:FireServer("base", {{"kick", power, true, vector.create(kickDir.X, kickDir.Y, kickDir.Z)}})
 
 		task.delay(0.7, function()
 			if char and char:FindFirstChild("Humanoid") then
