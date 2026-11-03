@@ -637,41 +637,50 @@ local dio = game:GetService("ReplicatedStorage").Resources.dio
 
 local stopped = false
 
---- IGNORE THESE
-local buffers = {}
+NET = (function()
+    local packets = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+    local warned = {}
 
-local function decode(s)
-	local t = {}
-	for n in s:gmatch("%d+") do
-		table.insert(t, string.char(tonumber(n)))
-	end
-	return table.concat(t)
-end
+    local function warn_once(key, message)
+        if not warned[key] then
+            warned[key] = true
+            warn("[net shim] " .. message)
+        end
+    end
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/buffers"))()
-repeat
-	task.wait()
-until game.Lighting:FindFirstChild("BUFFERSTRINGS")
+    local function convert_to_string(input_data)
+        if type(input_data) == "string" then return input_data end
+        if typeof(input_data) == "buffer" then return buffer.tostring(input_data) end
+    end
 
-local folder = game.Lighting:FindFirstChild("BUFFERSTRINGS")
-for _, val in ipairs(folder:GetChildren()) do
-	buffers[val.Name] = decode(val.Value)
-end
-folder:Destroy()
+    local net_shim = {}
 
-for k, v in pairs(buffers) do
-	print("buffers key:", k, #v .. " bytes")
-end
+    function net_shim.FireServer(_, data_buffer, actions_list)
+        local buffer_type = convert_to_string(data_buffer)
 
-local role = game:GetService("ReplicatedStorage")
-    :WaitForChild("BytenetStorage")
-    :WaitForChild("Networking").Value
-    :match('"bytenet_selectRole"%s*:%s*(%d+)')
+        if buffer_type == "base" then
+            if type(actions_list) ~= "table" then return end
 
-role = role and tonumber(role)
+            for _, primary_action in ipairs(actions_list) do
+                if type(primary_action) == "table" then
+                    local success = pcall(packets.bytenet_use.send, primary_action)
+                    if not success then
+                        warn_once("use_" .. tostring(primary_action), "bytenet_use execution failed for: '" .. tostring(primary_action) .. "'")
+                    end
+                end
+            end
 
-local pick = string.char(role)
----
+        elseif buffer_type == "grabball" then
+            local success = pcall(packets.bytenet_findBall.send, actions_list)
+            if not success then
+                warn_once("grab", "bytenet_findBall execution channel failed.")
+            end
+        end
+    end
+
+    net_shim.fireServer = net_shim.FireServer
+    return net_shim
+end)()
 
 local objectnames = {}
 for _, obj in ipairs(dio:GetChildren()) do
@@ -975,15 +984,7 @@ local function Skill1(char)
 	game.Debris:AddItem(voice, 5)
 
 	task.delay(0.15, function()
-		local args = {
-			buffer.fromstring(buffers["base"]),
-			{
-				{ "skill2" }
-			}
-		}
-
-		game.ReplicatedStorage:WaitForChild("ByteNetReliable"):FireServer(unpack(args))
-
+		NET:FireServer("base", {{"skill2"}})
 		repeat
 			task.wait()
 		until IsAnimationPlaying(char, game:GetService("ReplicatedStorage").Resources.kunigami.lefty_shot.AnimationId)
