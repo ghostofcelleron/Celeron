@@ -881,7 +881,10 @@ local ballMagnetState = {
         ["["] = "LeftBracket", ["]"] = "RightBracket", ["`"] = "Backquote",
         num0 = "KeypadZero", num1 = "KeypadOne", num2 = "KeypadTwo", num3 = "KeypadThree",
         num4 = "KeypadFour", num5 = "KeypadFive", num6 = "KeypadSix", num7 = "KeypadSeven",
-        num8 = "KeypadEight", num9 = "KeypadNine"
+        num8 = "KeypadEight", num9 = "KeypadNine",
+        mouse1 = "MouseButton1", m1 = "MouseButton1",
+        mouse2 = "MouseButton2", m2 = "MouseButton2",
+        mouse3 = "MouseButton3", m3 = "MouseButton3"
     }
 }
 
@@ -899,6 +902,18 @@ ballMagnetState.set_bind = function(text)
     end
 
     for _, item in ipairs(Enum.KeyCode:GetEnumItems()) do
+        if item.Name:lower() == text or item.Name == ballMagnetState.aliases[text] then
+            ballMagnetState.bind_key = item
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "Ball Magnet Bind",
+                Text = "Bind Set To: " .. item.Name .. ".",
+                Duration = 2
+            })
+            return
+        end
+    end
+
+    for _, item in ipairs(Enum.UserInputType:GetEnumItems()) do
         if item.Name:lower() == text or item.Name == ballMagnetState.aliases[text] then
             ballMagnetState.bind_key = item
             game.StarterGui:SetCore("SendNotification", {
@@ -942,7 +957,12 @@ ballMagnetState.toggle = function()
                 local dist = (ballMagnetState.hrp.Position - ball.Position).Magnitude
 
                 if ballMagnetState.use_bind_held then
-                    if not ballMagnetState.bind_key or not game:GetService("UserInputService"):IsKeyDown(ballMagnetState.bind_key) then
+                    if not ballMagnetState.bind_key then return end
+                    if ballMagnetState.bind_key.EnumType == Enum.KeyCode then
+                        if not game:GetService("UserInputService"):IsKeyDown(ballMagnetState.bind_key) then return end
+                    elseif ballMagnetState.bind_key.EnumType == Enum.UserInputType then
+                        if not game:GetService("UserInputService"):IsMouseButtonPressed(ballMagnetState.bind_key) then return end
+                    else
                         return
                     end
                 end
@@ -967,7 +987,7 @@ ballmag:Toggle("Ball Magnet", "Ball Magnet, Uses Set Radius As Range.", function
     ballMagnetState.toggle()
 end)
 
-ballmag:Textbox("Ball Magnet Bind", "Enter Key (Example: E, Q, LeftAlt). Blank Or None Unbinds.", function(v)
+ballmag:Textbox("Ball Magnet Bind", "Enter Key (Example: E, M1, Mouse2). Blank Or None Unbinds.", function(v)
     ballMagnetState.set_bind(v)
 end)
 
