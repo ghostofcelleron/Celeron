@@ -941,8 +941,10 @@ ballMagnetState.toggle = function()
             if ballMagnetState.hrp then
                 local dist = (ballMagnetState.hrp.Position - ball.Position).Magnitude
 
-                if ballMagnetState.use_bind_held and (not ballMagnetState.bind_key or not game:GetService("UserInputService"):IsKeyDown(ballMagnetState.bind_key)) then
-                    return
+                if ballMagnetState.use_bind_held then
+                    if not ballMagnetState.bind_key or not game:GetService("UserInputService"):IsKeyDown(ballMagnetState.bind_key) then
+                        return
+                    end
                 end
 
                 if dist <= radius and (time() - ballMagnetState.lastFire) >= ballMagnetState.fire_intrv then
@@ -960,14 +962,6 @@ ballMagnetState.toggle = function()
         end
     end
 end
-
-ballMagnetState.input_conn = game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
-    if processed then return end
-
-    if ballMagnetState.bind_key and input.KeyCode == ballMagnetState.bind_key and not ballMagnetState.use_bind_held then
-        ballMagnetState.toggle()
-    end
-end)
 
 ballmag:Toggle("Ball Magnet", "Ball Magnet, Uses Set Radius As Range.", function()
     ballMagnetState.toggle()
@@ -3205,262 +3199,283 @@ local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
-local character = player.Character
-local hrp = character and character:FindFirstChild("HumanoidRootPart")
-local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-
+local character, hrp, humanoid
 local padCount = 0
 local targetCount = 0
 local camLockConnection = nil
 local activeTarget = nil
-local lineupLockActive = false
+local currentLineupMode = "Freeze"
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
-local currentLineupMode = "Freeze"
-
 local lineup = {
-    bind_key = Enum.UserInputType.MouseButton2,
-    isKeyBind = false
+	bind_key = Enum.UserInputType.MouseButton2,
+	isKeyBind = false
 }
 
 lineup.set_bind = function(text)
-    text = tostring(text or ""):match("^%s*(.-)%s*$"):lower()
+	text = tostring(text or ""):match("^%s*(.-)%s*$"):lower()
 
-    if text == "" or text == "none" or text == "clear" then
-        lineup.bind_key = Enum.UserInputType.MouseButton2
-        lineup.isKeyBind = false
-        StarterGui:SetCore("SendNotification", {
-            Title = "Lineup Lock Bind",
-            Text = "Reset to Right Mouse Button (M2).",
-            Duration = 2
-        })
-        return
-    end
+	if text == "" or text == "none" or text == "clear" then
+		lineup.bind_key = Enum.UserInputType.MouseButton2
+		lineup.isKeyBind = false
+		StarterGui:SetCore("SendNotification", {
+			Title = "Lineup Lock Bind",
+			Text = "Reset to Right Mouse Button (M2).",
+			Duration = 2
+		})
+		return
+	end
 
-    if text == "m2" or text == "rmb" or text == "rightclick" or text == "mousebutton2" then
-        lineup.bind_key = Enum.UserInputType.MouseButton2
-        lineup.isKeyBind = false
-        StarterGui:SetCore("SendNotification", {
-            Title = "Lineup Lock Bind",
-            Text = "Bind Set To: Right Mouse Button (M2).",
-            Duration = 2
-        })
-        return
-    end
+	local aliases = {
+		["m1"] = Enum.UserInputType.MouseButton1,
+		["lmb"] = Enum.UserInputType.MouseButton1,
+		["left"] = Enum.UserInputType.MouseButton1,
+		["leftclick"] = Enum.UserInputType.MouseButton1,
+		["mousebutton1"] = Enum.UserInputType.MouseButton1,
+		["mouse1"] = Enum.UserInputType.MouseButton1,
 
-    local aliases = {
-        ["0"] = "Zero", ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four",
-        ["5"] = "Five", ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine",
-        ctrl = "LeftControl", lctrl = "LeftControl", rctrl = "RightControl", control = "LeftControl",
-        shift = "LeftShift", lshift = "LeftShift", rshift = "RightShift",
-        alt = "LeftAlt", lalt = "LeftAlt", ralt = "RightAlt",
-        caps = "CapsLock", esc = "Escape", enter = "Return", del = "Delete", ins = "Insert",
-        bksp = "Backspace", pgup = "PageUp", pgdn = "PageDown",
-        ["-"] = "Minus", ["="] = "Equals", [";"] = "Semicolon", ["'"] = "Quote",
-        [","] = "Comma", ["."] = "Period", ["/"] = "Slash", ["\\"] = "BackSlash",
-        ["["] = "LeftBracket", ["]"] = "RightBracket", ["`"] = "Backquote",
-        num0 = "KeypadZero", num1 = "KeypadOne", num2 = "KeypadTwo", num3 = "KeypadThree",
-        num4 = "KeypadFour", num5 = "KeypadFive", num6 = "KeypadSix", num7 = "KeypadSeven",
-        num8 = "KeypadEight", num9 = "KeypadNine"
-    }
+		["m2"] = Enum.UserInputType.MouseButton2,
+		["rmb"] = Enum.UserInputType.MouseButton2,
+		["right"] = Enum.UserInputType.MouseButton2,
+		["rightclick"] = Enum.UserInputType.MouseButton2,
+		["mousebutton2"] = Enum.UserInputType.MouseButton2,
+		["mouse2"] = Enum.UserInputType.MouseButton2,
 
-    for _, item in ipairs(Enum.KeyCode:GetEnumItems()) do
-        if item.Name:lower() == text or item.Name == aliases[text] then
-            lineup.bind_key = item
-            lineup.isKeyBind = true
-            StarterGui:SetCore("SendNotification", {
-                Title = "Lineup Lock Bind",
-                Text = "Bind Set To: " .. item.Name .. ".",
-                Duration = 2
-            })
-            return
-        end
-    end
+		["m3"] = Enum.UserInputType.MouseButton3,
+		["mmb"] = Enum.UserInputType.MouseButton3,
+		["middle"] = Enum.UserInputType.MouseButton3,
+		["middleclick"] = Enum.UserInputType.MouseButton3,
+		["mousebutton3"] = Enum.UserInputType.MouseButton3,
+		["mouse3"] = Enum.UserInputType.MouseButton3,
 
-    StarterGui:SetCore("SendNotification", {
-        Title = "Lineup Lock Bind",
-        Text = "Invalid Key: '" .. text .. "'. Bind not changed.",
-        Duration = 3
-    })
+		["0"] = "Zero", ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four",
+		["5"] = "Five", ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine",
+		ctrl = "LeftControl", lctrl = "LeftControl", rctrl = "RightControl", control = "LeftControl",
+		shift = "LeftShift", lshift = "LeftShift", rshift = "RightShift",
+		alt = "LeftAlt", lalt = "LeftAlt", ralt = "RightAlt",
+		caps = "CapsLock", esc = "Escape", enter = "Return", del = "Delete", ins = "Insert",
+		bksp = "Backspace", pgup = "PageUp", pgdn = "PageDown",
+		["-"] = "Minus", ["="] = "Equals", [";"] = "Semicolon", ["'"] = "Quote",
+		[","] = "Comma", ["."] = "Period", ["/"] = "Slash", ["\\"] = "BackSlash",
+		["["] = "LeftBracket", ["]"] = "RightBracket", ["`"] = "Backquote",
+		num0 = "KeypadZero", num1 = "KeypadOne", num2 = "KeypadTwo", num3 = "KeypadThree",
+		num4 = "KeypadFour", num5 = "KeypadFive", num6 = "KeypadSix", num7 = "KeypadSeven",
+		num8 = "KeypadEight", num9 = "KeypadNine"
+	}
+
+	if typeof(aliases[text]) == "EnumItem" and aliases[text].EnumType == Enum.UserInputType then
+		lineup.bind_key = aliases[text]
+		lineup.isKeyBind = false
+
+		local pretty = ({
+			[Enum.UserInputType.MouseButton1] = "Left Mouse Button (M1)",
+			[Enum.UserInputType.MouseButton2] = "Right Mouse Button (M2)",
+			[Enum.UserInputType.MouseButton3] = "Middle Mouse Button (M3)",
+		})[lineup.bind_key] or tostring(lineup.bind_key)
+
+		StarterGui:SetCore("SendNotification", {
+			Title = "Lineup Lock Bind",
+			Text = "Bind Set To: " .. pretty .. ".",
+			Duration = 2
+		})
+		return
+	end
+
+	for _, item in ipairs(Enum.KeyCode:GetEnumItems()) do
+		if item.Name:lower() == text or item.Name == aliases[text] then
+			lineup.bind_key = item
+			lineup.isKeyBind = true
+			StarterGui:SetCore("SendNotification", {
+				Title = "Lineup Lock Bind",
+				Text = "Bind Set To: " .. item.Name .. ".",
+				Duration = 2
+			})
+			return
+		end
+	end
+
+	StarterGui:SetCore("SendNotification", {
+		Title = "Lineup Lock Bind",
+		Text = "Invalid Key: '" .. text .. "'. Bind not changed.",
+		Duration = 3
+	})
 end
 
 lineup.is_active = function()
-    if lineup.isKeyBind then
-        return UserInputService:IsKeyDown(lineup.bind_key)
-    end
-    return UserInputService:IsMouseButtonPressed(lineup.bind_key)
+	if lineup.isKeyBind then
+		return UserInputService:IsKeyDown(lineup.bind_key)
+	end
+	return UserInputService:IsMouseButtonPressed(lineup.bind_key)
 end
 
 local function updateCharacterRefs(char)
-    character = char
-    hrp = character:WaitForChild("HumanoidRootPart")
-    humanoid = character:WaitForChild("Humanoid")
+	character = char
+	hrp = character:WaitForChild("HumanoidRootPart")
+	humanoid = character:WaitForChild("Humanoid")
 end
 
-if player.Character then 
-    updateCharacterRefs(player.Character) 
+if player.Character then
+	updateCharacterRefs(player.Character)
 end
 player.CharacterAdded:Connect(updateCharacterRefs)
 
-autoline:Dropdown("Lineup Mode", {"Freeze", "Slowness"}, function(v)
-    currentLineupMode = v
-    if lineupLockActive then
-        lineupLockActive = false
-        if humanoid then humanoid.WalkSpeed = 30 end
-        if hrp then hrp.Anchored = false end
-    end
-end)
-
-autoline:Textbox("Lineup Lock Bind", "Enter Key (Example: E, Q, LeftAlt). Blank Or None Resets To M2.", function(v)
-    lineup.set_bind(v)
-end)
-
-local function pad(pos, color)
-    padCount += 1
-    local p = Instance.new("Part")
-    p.Name = "pad" .. padCount
-    p.Size = Vector3.new(4, 4, 4)
-    p.Position = pos
-    p.Transparency = 0.65
-    p.Anchored = true
-    p.CanCollide = false
-    p.Color = color
-    p.Material = Enum.Material.SmoothPlastic
-    p.Parent = Workspace
-end
-
-local function target(pos, color)
-    targetCount += 1
-    local t = Instance.new("Part")
-    t.Name = "target" .. targetCount
-    t.Shape = Enum.PartType.Ball
-    t.Size = Vector3.new(7, 7, 7)
-    t.Position = pos
-    t.Anchored = true
-    t.CanCollide = false
-    t.Color = color
-    t.Material = Enum.Material.Neon
-    t.Parent = Workspace
-end
-
-local function getPadUnderPlayer()
-    if not hrp then return nil end
-    local params = RaycastParams.new()
-    params.FilterDescendantsInstances = {character}
-    params.FilterType = Enum.RaycastFilterType.Blacklist
-    local result = Workspace:Raycast(hrp.Position, Vector3.new(0, -6, 0), params)
-    if result and result.Instance then
-        return result.Instance.Name:match("^pad(%d+)$")
-    end
-    return nil
-end
-
-local function startCamLock(targetPart)
-    activeTarget = targetPart
-    if camLockConnection then camLockConnection:Disconnect() end
-    camLockConnection = RunService.RenderStepped:Connect(function()
-        if not activeTarget then
-            if camLockConnection then
-                camLockConnection:Disconnect()
-                camLockConnection = nil
-            end
-            return
-        end
-        camera.CFrame = CFrame.new(camera.CFrame.Position, activeTarget.Position)
-    end)
-end
-
 local function stopCamLock()
-    activeTarget = nil
-    if camLockConnection then
-        camLockConnection:Disconnect()
-        camLockConnection = nil
-    end
+	activeTarget = nil
+	if camLockConnection then
+		camLockConnection:Disconnect()
+		camLockConnection = nil
+	end
 end
 
 local function resetLineupPhysics()
-    if lineupLockActive then
-        lineupLockActive = false
-        if humanoid then 
-            humanoid.WalkSpeed = 30 
-        end
-        if hrp then 
-            hrp.Anchored = false 
-        end
-    end
+	if humanoid then
+		humanoid.WalkSpeed = 30
+	end
 end
 
 local function applyLineupMode()
-    if not humanoid then return end
-    lineupLockActive = true
-    if currentLineupMode == "Freeze" then
-        humanoid.WalkSpeed = 0
-    elseif currentLineupMode == "Slowness" then
-        humanoid.WalkSpeed = 5
-    end
+	if currentLineupMode == "Freeze" then
+		if humanoid then
+			humanoid.WalkSpeed = 0
+		end
+	elseif currentLineupMode == "Slowness" then
+		if humanoid then
+			humanoid.WalkSpeed = 5
+		end
+	end
+end
+
+autoline:Dropdown("Lineup Mode", {"Freeze", "Slowness"}, function(v)
+	currentLineupMode = v
+	resetLineupPhysics()
+	if lineup.is_active() then
+		applyLineupMode()
+	end
+end)
+
+autoline:Textbox("Lineup Lock Bind", "Enter Key (Example: E, Q, LeftAlt, m1, m2, m3). Blank Or None Resets To M2.", function(v)
+	lineup.set_bind(v)
+	stopCamLock()
+	resetLineupPhysics()
+end)
+
+local function pad(pos, color)
+	padCount += 1
+	local p = Instance.new("Part")
+	p.Name = "pad" .. padCount
+	p.Size = Vector3.new(4, 4, 4)
+	p.Position = pos
+	p.Transparency = 0.65
+	p.Anchored = true
+	p.CanCollide = false
+	p.Color = color
+	p.Material = Enum.Material.SmoothPlastic
+	p.Parent = Workspace
+end
+
+local function target(pos, color)
+	targetCount += 1
+	local t = Instance.new("Part")
+	t.Name = "target" .. targetCount
+	t.Shape = Enum.PartType.Ball
+	t.Size = Vector3.new(7, 7, 7)
+	t.Position = pos
+	t.Anchored = true
+	t.CanCollide = false
+	t.Color = color
+	t.Material = Enum.Material.Neon
+	t.Parent = Workspace
+end
+
+local function getPadUnderPlayer()
+	if not hrp then return nil end
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = {character}
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+	local result = Workspace:Raycast(hrp.Position, Vector3.new(0, -6, 0), params)
+	if result and result.Instance then
+		return result.Instance.Name:match("^pad(%d+)$")
+	end
+	return nil
+end
+
+local function startCamLock(targetPart)
+	activeTarget = targetPart
+	if camLockConnection then
+		camLockConnection:Disconnect()
+	end
+	camLockConnection = RunService.RenderStepped:Connect(function()
+		if not activeTarget then
+			if camLockConnection then
+				camLockConnection:Disconnect()
+				camLockConnection = nil
+			end
+			return
+		end
+		camera.CFrame = CFrame.new(camera.CFrame.Position, activeTarget.Position)
+	end)
 end
 
 if isMobile then
-    RunService.RenderStepped:Connect(function()
-        if not hrp or not character or not humanoid then return end
-        
-        local hasBall = false
-        for _, child in ipairs(character:GetChildren()) do
-            if child:IsA("MeshPart") and child.Name:lower():match("ball") then
-                hasBall = true
-                break
-            end
-        end
+	RunService.RenderStepped:Connect(function()
+		if not hrp or not character then return end
 
-        if not hasBall then
-            resetLineupPhysics()
-            if activeTarget then stopCamLock() end
-            return
-        end
+		local hasBall = false
+		for _, child in ipairs(character:GetChildren()) do
+			if child:IsA("MeshPart") and child.Name:lower():match("ball") then
+				hasBall = true
+				break
+			end
+		end
 
-        local padIndex = getPadUnderPlayer()
-        if padIndex then
-            local targetPart = Workspace:FindFirstChild("target" .. padIndex)
-            if targetPart then
-                if activeTarget ~= targetPart then
-                    startCamLock(targetPart)
-                end
-            else
-                resetLineupPhysics()
-            end
-        else
-            resetLineupPhysics()
-            if activeTarget then stopCamLock() end
-        end
-    end)
+		if not hasBall then
+			if activeTarget then
+				stopCamLock()
+			end
+			return
+		end
+
+		local padIndex = getPadUnderPlayer()
+		if padIndex then
+			local targetPart = Workspace:FindFirstChild("target" .. padIndex)
+			if targetPart and activeTarget ~= targetPart then
+				startCamLock(targetPart)
+			end
+		else
+			if activeTarget then
+				stopCamLock()
+			end
+		end
+	end)
 else
-    RunService.RenderStepped:Connect(function()
-        if not lineup.is_active() or not hrp or not humanoid then
-            resetLineupPhysics()
-            if activeTarget then stopCamLock() end
-            return
-        end
-        
-        local padIndex = getPadUnderPlayer()
-        if not padIndex then
-            resetLineupPhysics()
-            stopCamLock()
-            return
-        end
-        
-        local targetPart = Workspace:FindFirstChild("target" .. padIndex)
-        if not targetPart then
-            resetLineupPhysics()
-            stopCamLock()
-            return
-        end
-        
-        if activeTarget ~= targetPart then
-            startCamLock(targetPart)
-        end
-        
-        applyLineupMode()
-    end)
+	RunService.RenderStepped:Connect(function()
+		if not lineup.is_active() or not hrp or not humanoid then
+			resetLineupPhysics()
+			if activeTarget then
+				stopCamLock()
+			end
+			return
+		end
+
+		local padIndex = getPadUnderPlayer()
+		if not padIndex then
+			resetLineupPhysics()
+			stopCamLock()
+			return
+		end
+
+		local targetPart = Workspace:FindFirstChild("target" .. padIndex)
+		if not targetPart then
+			resetLineupPhysics()
+			return
+		end
+
+		if activeTarget ~= targetPart then
+			startCamLock(targetPart)
+		end
+
+		applyLineupMode()
+	end)
 end
 
 autoline:Toggle("Sae Line Ups", "Sae's Drive Shot Line Ups.", function(s)
