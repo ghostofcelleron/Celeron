@@ -614,7 +614,7 @@ ballfolder:Button("Bring Ball (Aiku)", "Steals The Ball Via Reflex Tackle Then T
     end)
 end)
 
-local nocd = maintab:Folder("No Cooldown Features.", Color3.fromRGB(169, 5, 255), true)
+nocd = maintab:Folder("No Cooldown Features.", Color3.fromRGB(169, 5, 255), true)
 nocd:Label("No Cooldown Features. Please Note This Is Exclusive To PC.")
 
 userInputService = game:GetService("UserInputService")
@@ -802,7 +802,7 @@ if not dashState.dashBindsSetup then
     end)
 end
 
-local breakball = maintab:Folder("Break Ball Features.", Color3.fromRGB(169, 5, 255), true)
+breakball = maintab:Folder("Break Ball Features.", Color3.fromRGB(169, 5, 255), true)
 breakball:Label("Break Ball Features.")
 
 breakball:Button("Break Ball (Player Method, Req. Ball)", "Breaks The Ball By Going Extremely High Up.", function()
@@ -850,7 +850,7 @@ breakball:Button("Permanent Break Ball (Req. Ball)", "Breaks The Ball By Placing
     game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(1, -49999, 1))
 end)
 
-local ballmag = maintab2:Folder("Ball Magnet Features.", Color3.fromRGB(169, 5, 255), true)
+ballmag = maintab2:Folder("Ball Magnet Features.", Color3.fromRGB(169, 5, 255), true)
 ballmag:Label("Original Ball Magnet: Allows You To Grab The Ball From Further Away.")
 
 local ballMagnetState = {
@@ -1070,7 +1070,7 @@ ballmag:Toggle("Ball Magnet Radius Hitbox", "Shows The Magnet's Radius Hitbox.",
     end)
 end)
 
-local autodrib = maintab2:Folder("Auto Dribble / Counter Features.", Color3.fromRGB(169, 5, 255), true)
+autodrib = maintab2:Folder("Auto Dribble / Counter Features.", Color3.fromRGB(169, 5, 255), true)
 autodrib:Label("Set The Auto-Counter Number To Your Character's Counter Move.")
 
 local tick = tick
@@ -1922,7 +1922,7 @@ add:Button("Goalkeeper Anywhere (Rejoin To Disable.)", "Allows You To Do GK Side
     end)
 end)
 
-local oth = maintab:Folder("Other Blatant Features.", Color3.fromRGB(169, 5, 255), true)
+oth = maintab:Folder("Other Blatant Features.", Color3.fromRGB(169, 5, 255), true)
 oth:Label("Other Blatant Features: It's In The Name.")
 
 local blatantState = {
@@ -2216,7 +2216,7 @@ if game:GetService("Players").LocalPlayer.Character then
     killthemNOW()
 end
 
-local th = maintab:Folder("Trap Helper.", Color3.fromRGB(169, 5, 255), true)
+th = maintab:Folder("Trap Helper.", Color3.fromRGB(169, 5, 255), true)
 th:Label("Trap Helper: Automatically Moves Toward Ball During Trap Moves.")
 
 local trapAnims = {
@@ -2994,7 +2994,7 @@ d:Slider("Shadow Step Distance", 0, 0, 50, 1, function(v)
     Distances.shadowDist = v
 end)
 
-local autoact = maintab2:Folder("Auto Activate Features.", Color3.fromRGB(169, 5, 255), true)
+autoact = maintab2:Folder("Auto Activate Features.", Color3.fromRGB(169, 5, 255), true)
 autoact:Label("Auto Activate: Activates The Move When Ball Within Range.")
 
 local auto_activate_state = {
@@ -5981,46 +5981,82 @@ exploittab:Button("Semi-Private Server (Method: 11v11)", "This Feature Creates A
     game:GetService("TeleportService"):Teleport(85946466968831, game.Players.LocalPlayer)
 end)
 
-exploittab:Label("Instant Disconnect: Automatically Disconnects If Other Players Join.")
+exploittab:Label("Farming Safety Mode: Protects Your Account While Farming.")
 
-local disconnectState = {
-    limit = nil,
-    enabled = false
+local players_service = game:GetService("Players")
+local run_service = game:GetService("RunService")
+local starter_gui = game:GetService("StarterGui")
+
+local safe_positions = {
+    goal_farm = Vector3.new(-765, 3, 1304),
+    save_farm = Vector3.new(-805, 3, 1100)
 }
 
-exploittab:Textbox("Instant Disconnect", "If More Than The Entered Number Of Players Join, You Disconnect.", function(v)
+local safety_state = {
+    limit = nil,
+    enabled = false,
+    active = false
+}
+
+local function notify(title, text, duration)
+    starter_gui:SetCore("SendNotification", {Title = title, Text = text, Duration = duration or 2})
+end
+
+local function teleport_to_safe(position)
+    local char = players_service.LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root then
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+        char:PivotTo(CFrame.new(position + Vector3.new(0, 3, 0)))
+    end
+end
+
+exploittab:Textbox("Safety Player Limit", "If Amount Of Players In Server > Set Player Limit, Farms Will Pause.", function(v)
     local n = tonumber(v)
     if n then
-        disconnectState.limit = n
+        safety_state.limit = n
     else
-        disconnectState.limit = nil
+        safety_state.limit = nil
     end
 end)
 
-exploittab:Toggle("Enable Instant Disconnect", "Toggles The Above Feature.", function(v)
-    disconnectState.enabled = v
-    if v then
-        game.StarterGui:SetCore("SendNotification", {Title="Instant Disconnect", Text="Enabled."})
-    else
-        game.StarterGui:SetCore("SendNotification", {Title="Instant Disconnect", Text="Disabled."})
-    end
+exploittab:Toggle("Enable Farming Safety Mode", "Toggles The Above Feature.", function(v)
+    safety_state.enabled = v
+    notify("Farming Safety Mode", v and "Enabled." or "Disabled.", 2)
 end)
 
-game:GetService("RunService").RenderStepped:Connect(function()
-    if disconnectState.enabled and disconnectState.limit and #game.Players:GetPlayers() > disconnectState.limit then
-        game.Players.LocalPlayer:Kick("Instant Disconnect Has Been Triggered.")
+if getgenv().safety_monitor_connection then
+    getgenv().safety_monitor_connection:Disconnect()
+    getgenv().safety_monitor_connection = nil
+end
+
+getgenv().safety_monitor_connection = run_service.Heartbeat:Connect(function()
+    local should_be_active = safety_state.enabled
+        and safety_state.limit ~= nil
+        and #players_service:GetPlayers() > safety_state.limit
+
+    if should_be_active ~= safety_state.active then
+        safety_state.active = should_be_active
+        if should_be_active then
+            notify("Farming Safety Mode", "Too Many Players, Farms Paused.", 3)
+        else
+            notify("Farming Safety Mode", "Clear, Farms Resumed.", 3)
+        end
     end
 end)
 
 exploittab:Label("Goal Farming: Use At Your Own Risk, I Am Not Responsible For Bans.")
 
-local goalFarmState = {
-    Enabled = false,
-    CFConn = nil,
-    RenderConn = nil,
-    StopAt = nil,
+local goal_farm_state = {
+    enabled = false,
+    cf_conn = nil,
+    render_conn = nil,
+    stop_at = nil,
     goal = 0,
-    desc = "not-started"
+    desc = "not-started",
+    busy = false,
+    safe_sent = false
 }
 
 buffer = buffer or {
@@ -6029,77 +6065,92 @@ buffer = buffer or {
     end
 }
 
-GoalPlayers = game:GetService("Players")
-GoalMapFolder = workspace:WaitForChild("map")
-GoalAGoal = GoalMapFolder:WaitForChild("Agoal")
-GoalBGoal = GoalMapFolder:WaitForChild("Bgoal")
-GoalLocalPlayer = GoalPlayers.LocalPlayer
+local goal_players = game:GetService("Players")
+local goal_map_folder = workspace:WaitForChild("map")
+local goal_a_goal = goal_map_folder:WaitForChild("Agoal")
+local goal_b_goal = goal_map_folder:WaitForChild("Bgoal")
+local goal_local_player = goal_players.LocalPlayer
 
-function IsInGame()
-    local char = GoalLocalPlayer.Character
+local function is_in_game()
+    local char = goal_local_player.Character
     local state = char and char:FindFirstChild("state")
     local ingame = state and state:FindFirstChild("ingame")
     return ingame and ingame.Value or false
 end
 
-function DisableCollisionBoxes()
+local function disable_collision_boxes()
     local map = workspace:FindFirstChild("map")
     if not map then return end
     local gk = map:FindFirstChild("gkbarriar")
-    local aGoal = map:FindFirstChild("Agoal")
-    local bGoal = map:FindFirstChild("Bgoal")
+    local a_goal = map:FindFirstChild("Agoal")
+    local b_goal = map:FindFirstChild("Bgoal")
     if gk then
-        local aBar = gk:FindFirstChild("A")
-        local bBar = gk:FindFirstChild("B")
-        if aBar then aBar.CanCollide = false end
-        if bBar then bBar.CanCollide = false end
+        local a_bar = gk:FindFirstChild("A")
+        local b_bar = gk:FindFirstChild("B")
+        if a_bar then a_bar.CanCollide = false end
+        if b_bar then b_bar.CanCollide = false end
     end
-    if aGoal then aGoal.CanCollide = false end
-    if bGoal then bGoal.CanCollide = false end
+    if a_goal then a_goal.CanCollide = false end
+    if b_goal then b_goal.CanCollide = false end
 end
 
-function StealBall()
-    local char = GoalLocalPlayer.Character
+local function steal_ball()
+    local char = goal_local_player.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
     local ball = workspace.Terrain:FindFirstChild("Ball")
     if root and ball then
         task.wait(0.5)
+        if safety_state.active then return end
         root.CFrame = CFrame.new(ball.Position.X, 0, ball.Position.Z)
     end
-    for _, opp in pairs(GoalPlayers:GetPlayers()) do
-        if opp ~= GoalLocalPlayer then
-            local oChar = opp.Character
-            local oBall = oChar and oChar:FindFirstChild("Ball")
-            local oRoot = oChar and oChar:FindFirstChild("HumanoidRootPart")
-            if oBall and oRoot and root then
+    for _, opp in pairs(goal_players:GetPlayers()) do
+        if safety_state.active then return end
+        if opp ~= goal_local_player then
+            local o_char = opp.Character
+            local o_ball = o_char and o_char:FindFirstChild("Ball")
+            local o_root = o_char and o_char:FindFirstChild("HumanoidRootPart")
+            if o_ball and o_root and root then
                 task.wait(0.5)
-                root.CFrame = oBall.CFrame
+                if safety_state.active then return end
+                root.CFrame = o_ball.CFrame
                 NET:FireServer(unpack({buffer.fromstring(buffers["base"]), {{"tackle"}}}))
             end
         end
     end
 end
 
-function HasBall()
-    local char = GoalLocalPlayer.Character
+local function has_ball()
+    local char = goal_local_player.Character
     return char and char:FindFirstChild("Ball") ~= nil
 end
 
-function stopGoalFarm()
-    if not goalFarmState.Enabled then return end
-    goalFarmState.Enabled = false
-    if goalFarmState.CFConn then goalFarmState.CFConn:Disconnect() goalFarmState.CFConn = nil end
-    if goalFarmState.RenderConn then goalFarmState.RenderConn:Disconnect() goalFarmState.RenderConn = nil end
-    game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Goal Farm", Text = "Target Reached! :3", Duration = 2})
+local function disconnect_goal_farm()
+    if goal_farm_state.cf_conn then
+        goal_farm_state.cf_conn:Disconnect()
+        goal_farm_state.cf_conn = nil
+    end
+    if goal_farm_state.render_conn then
+        goal_farm_state.render_conn:Disconnect()
+        goal_farm_state.render_conn = nil
+    end
+    goal_farm_state.busy = false
+    goal_farm_state.safe_sent = false
 end
 
-function trackGoalsLoop()
+local function stop_goal_farm()
+    if not goal_farm_state.enabled then return end
+    goal_farm_state.enabled = false
+    disconnect_goal_farm()
+    notify("Goal Farm", "Target Reached! :3", 2)
+end
+
+local function track_goals_loop()
     task.spawn(function()
-        local goals = GoalLocalPlayer:WaitForChild("leaderstats"):WaitForChild("goals")
-        while goalFarmState.Enabled do
+        local goals = goal_local_player:WaitForChild("leaderstats"):WaitForChild("goals")
+        while goal_farm_state.enabled do
             task.wait(1)
-            if goalFarmState.StopAt and goals.Value >= goalFarmState.StopAt then
-                stopGoalFarm()
+            if goal_farm_state.stop_at and goals.Value >= goal_farm_state.stop_at then
+                stop_goal_farm()
                 return
             end
         end
@@ -6107,97 +6158,104 @@ function trackGoalsLoop()
 end
 
 exploittab:Button("Goal Farm Info", "This Comes With Instructions On How To Use The Feature Below.", function()
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Goal Farm Info",
-        Text = "Turn The Feature On For BOTH ACCOUNTS On SEPERATE TEAMS.",
-        Duration = 10
-    })
+    notify("Goal Farm Info", "Turn The Feature On For BOTH ACCOUNTS On SEPERATE TEAMS.", 10)
 end)
 
 exploittab:Button("Goal Farm", "Automatically Farms Goals For You.", function()
-    goalFarmState.Enabled = not goalFarmState.Enabled
+    goal_farm_state.enabled = not goal_farm_state.enabled
 
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Goal Farm",
-        Text = goalFarmState.Enabled and "Enabled." or "Disabled.",
-        Duration = 1
-    })
+    notify("Goal Farm", goal_farm_state.enabled and "Enabled." or "Disabled.", 1)
 
-    if goalFarmState.Enabled then
-        goalFarmState.CFConn = GoalLocalPlayer.CharacterAdded:Connect(function()
+    if goal_farm_state.enabled then
+        disconnect_goal_farm()
+
+        goal_farm_state.cf_conn = goal_local_player.CharacterAdded:Connect(function()
+            goal_farm_state.safe_sent = false
             task.wait(1)
-            if goalFarmState.Enabled then
+            if goal_farm_state.enabled and not safety_state.active then
                 firePacketsIfNear()
             end
         end)
 
         task.spawn(function()
-            repeat task.wait() until GoalLocalPlayer.Character and GoalLocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if goalFarmState.Enabled then
+            repeat task.wait() until goal_local_player.Character and goal_local_player.Character:FindFirstChild("HumanoidRootPart")
+            if goal_farm_state.enabled and not safety_state.active then
                 firePacketsIfNear()
             end
         end)
 
-        goalFarmState.RenderConn = RunService.RenderStepped:Connect(function()
-            if not goalFarmState.Enabled then return end
+        goal_farm_state.render_conn = run_service.RenderStepped:Connect(function()
+            if not goal_farm_state.enabled or goal_farm_state.busy then return end
+            goal_farm_state.busy = true
+
             pcall(function()
-                if not IsInGame() then return end
-                DisableCollisionBoxes()
-                StealBall()
+                if safety_state.active then
+                    if not goal_farm_state.safe_sent then
+                        goal_farm_state.safe_sent = true
+                        teleport_to_safe(safe_positions.goal_farm)
+                    end
+                    return
+                end
 
-                if HasBall() then
-                    local char = GoalLocalPlayer.Character
+                goal_farm_state.safe_sent = false
+
+                if not is_in_game() then return end
+                disable_collision_boxes()
+                steal_ball()
+
+                if safety_state.active then return end
+
+                if has_ball() then
+                    local char = goal_local_player.Character
                     local root = char and char:FindFirstChild("HumanoidRootPart")
-                    local targetGoal = GoalLocalPlayer.Team.Name == "A" and GoalBGoal or GoalAGoal
+                    local target_goal = goal_local_player.Team.Name == "A" and goal_b_goal or goal_a_goal
 
-                    if root and targetGoal then
+                    if root and target_goal then
                         task.wait(0.75)
-                        root.CFrame = targetGoal.CFrame
+                        if safety_state.active then return end
+                        root.CFrame = target_goal.CFrame
 
                         task.wait(0.175)
+                        if safety_state.active then return end
                         NET:FireServer("base", {{"kick", 50, false, vector.create(0, 1, 0)}})
 
                         firePacketsIfNear()
                     end
                 end
             end)
+
+            goal_farm_state.busy = false
         end)
 
-        trackGoalsLoop()
+        track_goals_loop()
     else
-        stopGoalFarm()
+        disconnect_goal_farm()
     end
 end)
 
 exploittab:Textbox("Goal Target", "Enter A Number Of Goals To Stop Farming At.", function(v)
     local num = tonumber(v)
     if num then
-        goalFarmState.StopAt = num
-        game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Goal Target", Text = "Goal Target: " .. num, Duration = 2})
+        goal_farm_state.stop_at = num
+        notify("Goal Target", "Goal Target: " .. num, 2)
     else
-        goalFarmState.StopAt = math.huge
-        game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Goal Target", Text = "Invalid Target, Farm Will Be Infinite.", Duration = 2})
+        goal_farm_state.stop_at = math.huge
+        notify("Goal Target", "Invalid Target, Farm Will Be Infinite.", 2)
     end
 end)
 
 exploittab:Label("Save Farming: Use At Your Own Risk, I Am Not Responsible For Bans.")
 
 exploittab:Button("Save Farm Info", "This Comes With Instructions On How To Use The Feature Below.", function()
-    local StarterGui = game:GetService("StarterGui")
-
-    StarterGui:SetCore("SendNotification", {
-        Title = "Save Farm Info",
-        Text = "Use When Score Is Tied, Farming Account Must Be GK On TEAM A, And Helper Account As CF On TEAM B.",
-        Duration = 10
-    })
+    notify("Save Farm Info", "Use When Score Is Tied, Farming Account Must Be GK On TEAM A, And Helper Account As CF On TEAM B.", 10)
 end)
 
 exploittab:Button("Farming Account Position TP", "Use This Feature On FARMING ACCOUNT Before Enabling Automatic Kicking.", function()
-game.Players.LocalPlayer.Character:PivotTo(CFrame.new(workspace.map.Agoal.CFrame.Position + Vector3.new(-26.38, -4.69, -20.02)) * CFrame.Angles(-3.14, 1.56, 3.14))
+    game.Players.LocalPlayer.Character:PivotTo(CFrame.new(workspace.map.Agoal.CFrame.Position + Vector3.new(-26.38, -4.69, -20.02)) * CFrame.Angles(-3.14, 1.56, 3.14))
 end)
 
 exploittab:Button("Helper Account Position TP", "Use This Feature On HELPER ACCOUNT Before Enabling Automatic Kicking.", function()
-game.Players.LocalPlayer.Character:PivotTo(CFrame.new(workspace.map.Agoal.CFrame.Position + Vector3.new(-61.76, -4.64, -20.32)) * CFrame.Angles(3.14, -1.56, 3.14))
+    game.Players.LocalPlayer.Character:PivotTo(CFrame.new(workspace.map.Agoal.CFrame.Position + Vector3.new(-61.76, -4.64, -20.32)) * CFrame.Angles(3.14, -1.56, 3.14))
 end)
 
 if getgenv().automatickickingpower == nil then
@@ -6205,22 +6263,14 @@ if getgenv().automatickickingpower == nil then
 end
 
 exploittab:Textbox("Kick Power", "Sets The Power Of The Automatic Kicking (Default: 22)", function(text)
-    local numericPower = tonumber(text)
-    
-    if numericPower then
-        getgenv().automatickickingpower = numericPower
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Kick Power Updated", 
-            Text = "Power: " .. tostring(numericPower), 
-            Duration = 1.5
-        })
+    local numeric_power = tonumber(text)
+
+    if numeric_power then
+        getgenv().automatickickingpower = numeric_power
+        notify("Kick Power Updated", "Power: " .. tostring(numeric_power), 1.5)
     else
         getgenv().automatickickingpower = 22
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Invalid Number", 
-            Text = "Power Set To Default.", 
-            Duration = 1.5
-        })
+        notify("Invalid Number", "Power Set To Default.", 1.5)
     end
 end)
 
@@ -6231,11 +6281,7 @@ exploittab:Button("Automatic Kicking", "Automatically Kicks The Ball Infront Of 
 
     getgenv().automatickickingenabled = not getgenv().automatickickingenabled
 
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Automatic Kicking",
-        Text = getgenv().automatickickingenabled and "Enabled." or "Disabled.",
-        Duration = 1
-    })
+    notify("Automatic Kicking", getgenv().automatickickingenabled and "Enabled." or "Disabled.", 1)
 
     getgenv().automatickickingloopid = (getgenv().automatickickingloopid or 0) + 1
     local loop_id = getgenv().automatickickingloopid
@@ -6249,11 +6295,13 @@ exploittab:Button("Automatic Kicking", "Automatically Kicks The Ball Infront Of 
         return
     end
 
-    local players = game:GetService("Players")
-    local run_service = game:GetService("RunService")
-    local plr = players.LocalPlayer
+    local plr = players_service.LocalPlayer
     local kick_interval = 0.1
     local last_kick = 0
+    local was_safe = false
+    local recovering = false
+    local safe_sent = false
+    local saved_cframe = nil
 
     getgenv().automatickickingconnection = run_service.Heartbeat:Connect(function()
         if not getgenv().automatickickingenabled or getgenv().automatickickingloopid ~= loop_id then
@@ -6266,6 +6314,44 @@ exploittab:Button("Automatic Kicking", "Automatically Kicks The Ball Infront Of 
 
         local char = plr.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
+
+        if safety_state.active then
+            was_safe = true
+            recovering = false
+            if root and not safe_sent then
+                safe_sent = true
+                if not saved_cframe then
+                    saved_cframe = root.CFrame
+                end
+                teleport_to_safe(safe_positions.save_farm)
+            end
+            return
+        end
+
+        if was_safe then
+            was_safe = false
+            safe_sent = false
+            recovering = true
+        end
+
+        if recovering then
+            if not root then
+                return
+            end
+            local loose_ball = workspace.Terrain:FindFirstChild("Ball")
+            if loose_ball then
+                root.CFrame = CFrame.new(loose_ball.Position)
+                return
+            end
+            recovering = false
+            if saved_cframe then
+                root.CFrame = saved_cframe
+            end
+            saved_cframe = nil
+            last_kick = os.clock()
+            return
+        end
+
         local ball = char and char:FindFirstChild("Ball")
 
         if not root or not ball then
