@@ -3206,6 +3206,7 @@ local camLockConnection = nil
 local activeTarget = nil
 local currentLineupMode = "Freeze"
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local isCurrentlyLocked = false
 
 local lineup = {
 	bind_key = Enum.UserInputType.MouseButton2,
@@ -3347,16 +3348,20 @@ end
 
 autoline:Dropdown("Lineup Mode", {"Freeze", "Slowness"}, function(v)
 	currentLineupMode = v
-	resetLineupPhysics()
-	if lineup.is_active() then
+	if isCurrentlyLocked then
 		applyLineupMode()
+	else
+		resetLineupPhysics()
 	end
 end)
 
 autoline:Textbox("Lineup Lock Bind", "Enter Key (Example: E, Q, LeftAlt, m1, m2, m3). Blank Or None Resets To M2.", function(v)
 	lineup.set_bind(v)
 	stopCamLock()
-	resetLineupPhysics()
+	if isCurrentlyLocked then
+		isCurrentlyLocked = false
+		resetLineupPhysics()
+	end
 end)
 
 local function pad(pos, color)
@@ -3449,9 +3454,12 @@ if isMobile then
 	end)
 else
 	RunService.RenderStepped:Connect(function()
-		if not lineup.is_active() or not hrp or not humanoid then
-			resetLineupPhysics()
-			if activeTarget then
+		local shouldBeLocked = lineup.is_active() and hrp and humanoid
+
+		if not shouldBeLocked then
+			if isCurrentlyLocked then
+				isCurrentlyLocked = false
+				resetLineupPhysics()
 				stopCamLock()
 			end
 			return
@@ -3459,15 +3467,25 @@ else
 
 		local padIndex = getPadUnderPlayer()
 		if not padIndex then
-			resetLineupPhysics()
-			stopCamLock()
+			if isCurrentlyLocked then
+				isCurrentlyLocked = false
+				resetLineupPhysics()
+				stopCamLock()
+			end
 			return
 		end
 
 		local targetPart = Workspace:FindFirstChild("target" .. padIndex)
 		if not targetPart then
-			resetLineupPhysics()
+			if isCurrentlyLocked then
+				isCurrentlyLocked = false
+				resetLineupPhysics()
+			end
 			return
+		end
+
+		if not isCurrentlyLocked then
+			isCurrentlyLocked = true
 		end
 
 		if activeTarget ~= targetPart then
