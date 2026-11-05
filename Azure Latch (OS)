@@ -6001,74 +6001,78 @@ exploittab:Button("Semi-Private Server (Method: 11v11)", "This Feature Creates A
     game:GetService("TeleportService"):Teleport(85946466968831, game.Players.LocalPlayer)
 end)
 
-exploittab:Label("Farming Safety Mode: Protects Your Account While Farming.")
+exploittab:Label("Farming Safety Mode: Protects You While Farming.")
 
-local players_service = game:GetService("Players")
-local run_service = game:GetService("RunService")
-local starter_gui = game:GetService("StarterGui")
+players_service_58214 = game:GetService("Players")
+run_service_93071 = game:GetService("RunService")
+starter_gui_41826 = game:GetService("StarterGui")
 
-local safe_positions = {
-    goal_farm = Vector3.new(-765, 3, 1304),
-    save_farm = Vector3.new(-805, 3, 1100)
-}
-
-local safety_state = {
-    limit = nil,
-    enabled = false,
-    active = false
-}
-
-local function notify(title, text, duration)
-    starter_gui:SetCore("SendNotification", {Title = title, Text = text, Duration = duration or 2})
+if workspace:FindFirstChild("sfjusrjgdtriugji") then
+    workspace.sfjusrjgdtriugji:Destroy()
 end
 
-local function teleport_to_safe(position)
-    local char = players_service.LocalPlayer.Character
+Instance.new("Part", workspace).Name = "sfjusrjgdtriugji"; workspace.sfjusrjgdtriugji.Size = Vector3.new(512, 1, 512) ; workspace.sfjusrjgdtriugji.Transparency = 1 ;workspace.sfjusrjgdtriugji.Position = Vector3.new(-426, 1700, 1443); workspace.sfjusrjgdtriugji.Anchored = true
+
+safe_positions_67352 = {
+    goal_farm = Vector3.new(-765, 3, 1304),
+    save_farm = Vector3.new(-805, 3, 1100),
+    kick_spot = Vector3.new(-426, 1705, 1443)
+}
+
+safety_state_20948 = {
+    limit = nil,
+    enabled = false,
+    active = false,
+    resume_goal = false,
+    resume_kick = false,
+    saved_cframe = nil,
+    sequence_id = 0
+}
+
+function notify_85613(title, text, duration)
+    starter_gui_41826:SetCore("SendNotification", {Title = title, Text = text, Duration = duration or 2})
+end
+
+function teleport_exact_31759(position)
+    local char = players_service_58214.LocalPlayer.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
     if root then
         root.AssemblyLinearVelocity = Vector3.zero
         root.AssemblyAngularVelocity = Vector3.zero
-        char:PivotTo(CFrame.new(position + Vector3.new(0, 3, 0)))
+        char:PivotTo(CFrame.new(position))
     end
 end
 
-exploittab:Textbox("Safety Player Limit", "If Amount Of Players In Server > Set Player Limit, Farms Will Pause.", function(v)
+function teleport_to_safe_74280(position)
+    local char = players_service_58214.LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root then
+        local angle = math.random() * math.pi * 2
+        local distance = math.sqrt(math.random()) * 50
+        local offset = Vector3.new(math.cos(angle) * distance, 3, math.sin(angle) * distance)
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+        char:PivotTo(CFrame.new(position + offset))
+    end
+end
+
+exploittab:Textbox("Safety Player Limit", "Set The Limit Of Players Before The Farm Protects You.", function(v)
     local n = tonumber(v)
     if n then
-        safety_state.limit = n
+        safety_state_20948.limit = n
     else
-        safety_state.limit = nil
+        safety_state_20948.limit = nil
     end
 end)
 
 exploittab:Toggle("Enable Farming Safety Mode", "Toggles The Above Feature.", function(v)
-    safety_state.enabled = v
-    notify("Farming Safety Mode", v and "Enabled." or "Disabled.", 2)
-end)
-
-if getgenv().safety_monitor_connection then
-    getgenv().safety_monitor_connection:Disconnect()
-    getgenv().safety_monitor_connection = nil
-end
-
-getgenv().safety_monitor_connection = run_service.Heartbeat:Connect(function()
-    local should_be_active = safety_state.enabled
-        and safety_state.limit ~= nil
-        and #players_service:GetPlayers() > safety_state.limit
-
-    if should_be_active ~= safety_state.active then
-        safety_state.active = should_be_active
-        if should_be_active then
-            notify("Farming Safety Mode", "Too Many Players, Farms Paused.", 3)
-        else
-            notify("Farming Safety Mode", "Clear, Farms Resumed.", 3)
-        end
-    end
+    safety_state_20948.enabled = v
+    notify_85613("Farming Safety Mode", v and "Enabled." or "Disabled.", 2)
 end)
 
 exploittab:Label("Goal Farming: Use At Your Own Risk, I Am Not Responsible For Bans.")
 
-local goal_farm_state = {
+goal_farm_state_52097 = {
     enabled = false,
     cf_conn = nil,
     render_conn = nil,
@@ -6076,7 +6080,7 @@ local goal_farm_state = {
     goal = 0,
     desc = "not-started",
     busy = false,
-    safe_sent = false
+    track_id = 0
 }
 
 buffer = buffer or {
@@ -6085,20 +6089,20 @@ buffer = buffer or {
     end
 }
 
-local goal_players = game:GetService("Players")
-local goal_map_folder = workspace:WaitForChild("map")
-local goal_a_goal = goal_map_folder:WaitForChild("Agoal")
-local goal_b_goal = goal_map_folder:WaitForChild("Bgoal")
-local goal_local_player = goal_players.LocalPlayer
+goal_players_16843 = game:GetService("Players")
+goal_map_folder_89405 = workspace:WaitForChild("map")
+goal_a_goal_37126 = goal_map_folder_89405:WaitForChild("Agoal")
+goal_b_goal_60581 = goal_map_folder_89405:WaitForChild("Bgoal")
+goal_local_player_24730 = goal_players_16843.LocalPlayer
 
-local function is_in_game()
-    local char = goal_local_player.Character
+function is_in_game_95318()
+    local char = goal_local_player_24730.Character
     local state = char and char:FindFirstChild("state")
     local ingame = state and state:FindFirstChild("ingame")
     return ingame and ingame.Value or false
 end
 
-local function disable_collision_boxes()
+function disable_collision_boxes_48267()
     local map = workspace:FindFirstChild("map")
     if not map then return end
     local gk = map:FindFirstChild("gkbarriar")
@@ -6114,24 +6118,28 @@ local function disable_collision_boxes()
     if b_goal then b_goal.CanCollide = false end
 end
 
-local function steal_ball()
-    local char = goal_local_player.Character
+function goal_farm_blocked_71093()
+    return safety_state_20948.active or not goal_farm_state_52097.enabled
+end
+
+function steal_ball_13582()
+    local char = goal_local_player_24730.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
     local ball = workspace.Terrain:FindFirstChild("Ball")
     if root and ball then
         task.wait(0.5)
-        if safety_state.active then return end
+        if goal_farm_blocked_71093() then return end
         root.CFrame = CFrame.new(ball.Position.X, 0, ball.Position.Z)
     end
-    for _, opp in pairs(goal_players:GetPlayers()) do
-        if safety_state.active then return end
-        if opp ~= goal_local_player then
+    for _, opp in pairs(goal_players_16843:GetPlayers()) do
+        if goal_farm_blocked_71093() then return end
+        if opp ~= goal_local_player_24730 then
             local o_char = opp.Character
             local o_ball = o_char and o_char:FindFirstChild("Ball")
             local o_root = o_char and o_char:FindFirstChild("HumanoidRootPart")
             if o_ball and o_root and root then
                 task.wait(0.5)
-                if safety_state.active then return end
+                if goal_farm_blocked_71093() then return end
                 root.CFrame = o_ball.CFrame
                 NET:FireServer(unpack({buffer.fromstring(buffers["base"]), {{"tackle"}}}))
             end
@@ -6139,135 +6147,133 @@ local function steal_ball()
     end
 end
 
-local function has_ball()
-    local char = goal_local_player.Character
+function has_ball_86904()
+    local char = goal_local_player_24730.Character
     return char and char:FindFirstChild("Ball") ~= nil
 end
 
-local function disconnect_goal_farm()
-    if goal_farm_state.cf_conn then
-        goal_farm_state.cf_conn:Disconnect()
-        goal_farm_state.cf_conn = nil
+function disconnect_goal_farm_29671()
+    if goal_farm_state_52097.cf_conn then
+        goal_farm_state_52097.cf_conn:Disconnect()
+        goal_farm_state_52097.cf_conn = nil
     end
-    if goal_farm_state.render_conn then
-        goal_farm_state.render_conn:Disconnect()
-        goal_farm_state.render_conn = nil
+    if goal_farm_state_52097.render_conn then
+        goal_farm_state_52097.render_conn:Disconnect()
+        goal_farm_state_52097.render_conn = nil
     end
-    goal_farm_state.busy = false
-    goal_farm_state.safe_sent = false
+    goal_farm_state_52097.busy = false
 end
 
-local function stop_goal_farm()
-    if not goal_farm_state.enabled then return end
-    goal_farm_state.enabled = false
-    disconnect_goal_farm()
-    notify("Goal Farm", "Target Reached! :3", 2)
+function stop_goal_farm_logic_53748()
+    goal_farm_state_52097.enabled = false
+    goal_farm_state_52097.track_id = goal_farm_state_52097.track_id + 1
+    disconnect_goal_farm_29671()
 end
 
-local function track_goals_loop()
+function stop_goal_farm_80215()
+    if not goal_farm_state_52097.enabled then return end
+    stop_goal_farm_logic_53748()
+    notify_85613("Goal Farm", "Target Reached! :3", 2)
+end
+
+function track_goals_loop_46139()
+    goal_farm_state_52097.track_id = goal_farm_state_52097.track_id + 1
+    local id = goal_farm_state_52097.track_id
     task.spawn(function()
-        local goals = goal_local_player:WaitForChild("leaderstats"):WaitForChild("goals")
-        while goal_farm_state.enabled do
+        local goals = goal_local_player_24730:WaitForChild("leaderstats"):WaitForChild("goals")
+        while goal_farm_state_52097.enabled and goal_farm_state_52097.track_id == id do
             task.wait(1)
-            if goal_farm_state.stop_at and goals.Value >= goal_farm_state.stop_at then
-                stop_goal_farm()
+            if goal_farm_state_52097.stop_at and goals.Value >= goal_farm_state_52097.stop_at then
+                stop_goal_farm_80215()
                 return
             end
         end
     end)
 end
 
+function start_goal_farm_97462()
+    goal_farm_state_52097.enabled = true
+    disconnect_goal_farm_29671()
+
+    goal_farm_state_52097.cf_conn = goal_local_player_24730.CharacterAdded:Connect(function()
+        task.wait(1)
+        if goal_farm_state_52097.enabled and not safety_state_20948.active then
+            firePacketsIfNear()
+        end
+    end)
+
+    task.spawn(function()
+        repeat task.wait() until goal_local_player_24730.Character and goal_local_player_24730.Character:FindFirstChild("HumanoidRootPart")
+        if goal_farm_state_52097.enabled and not safety_state_20948.active then
+            firePacketsIfNear()
+        end
+    end)
+
+    goal_farm_state_52097.render_conn = run_service_93071.RenderStepped:Connect(function()
+        if goal_farm_blocked_71093() or goal_farm_state_52097.busy then return end
+        goal_farm_state_52097.busy = true
+
+        pcall(function()
+            if not is_in_game_95318() then return end
+            disable_collision_boxes_48267()
+            steal_ball_13582()
+
+            if goal_farm_blocked_71093() then return end
+
+            if has_ball_86904() then
+                local char = goal_local_player_24730.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                local target_goal = goal_local_player_24730.Team.Name == "A" and goal_b_goal_60581 or goal_a_goal_37126
+
+                if root and target_goal then
+                    task.wait(0.75)
+                    if goal_farm_blocked_71093() then return end
+                    root.CFrame = target_goal.CFrame
+
+                    task.wait(0.175)
+                    if goal_farm_blocked_71093() then return end
+                    NET:FireServer("base", {{"kick", 50, false, vector.create(0, 1, 0)}})
+
+                    firePacketsIfNear()
+                end
+            end
+        end)
+
+        goal_farm_state_52097.busy = false
+    end)
+
+    track_goals_loop_46139()
+end
+
 exploittab:Button("Goal Farm Info", "This Comes With Instructions On How To Use The Feature Below.", function()
-    notify("Goal Farm Info", "Turn The Feature On For BOTH ACCOUNTS On SEPERATE TEAMS.", 10)
+    notify_85613("Goal Farm Info", "Turn The Feature On For BOTH ACCOUNTS On SEPERATE TEAMS.", 10)
 end)
 
 exploittab:Button("Goal Farm", "Automatically Farms Goals For You.", function()
-    goal_farm_state.enabled = not goal_farm_state.enabled
-
-    notify("Goal Farm", goal_farm_state.enabled and "Enabled." or "Disabled.", 1)
-
-    if goal_farm_state.enabled then
-        disconnect_goal_farm()
-
-        goal_farm_state.cf_conn = goal_local_player.CharacterAdded:Connect(function()
-            goal_farm_state.safe_sent = false
-            task.wait(1)
-            if goal_farm_state.enabled and not safety_state.active then
-                firePacketsIfNear()
-            end
-        end)
-
-        task.spawn(function()
-            repeat task.wait() until goal_local_player.Character and goal_local_player.Character:FindFirstChild("HumanoidRootPart")
-            if goal_farm_state.enabled and not safety_state.active then
-                firePacketsIfNear()
-            end
-        end)
-
-        goal_farm_state.render_conn = run_service.RenderStepped:Connect(function()
-            if not goal_farm_state.enabled or goal_farm_state.busy then return end
-            goal_farm_state.busy = true
-
-            pcall(function()
-                if safety_state.active then
-                    if not goal_farm_state.safe_sent then
-                        goal_farm_state.safe_sent = true
-                        teleport_to_safe(safe_positions.goal_farm)
-                    end
-                    return
-                end
-
-                goal_farm_state.safe_sent = false
-
-                if not is_in_game() then return end
-                disable_collision_boxes()
-                steal_ball()
-
-                if safety_state.active then return end
-
-                if has_ball() then
-                    local char = goal_local_player.Character
-                    local root = char and char:FindFirstChild("HumanoidRootPart")
-                    local target_goal = goal_local_player.Team.Name == "A" and goal_b_goal or goal_a_goal
-
-                    if root and target_goal then
-                        task.wait(0.75)
-                        if safety_state.active then return end
-                        root.CFrame = target_goal.CFrame
-
-                        task.wait(0.175)
-                        if safety_state.active then return end
-                        NET:FireServer("base", {{"kick", 50, false, vector.create(0, 1, 0)}})
-
-                        firePacketsIfNear()
-                    end
-                end
-            end)
-
-            goal_farm_state.busy = false
-        end)
-
-        track_goals_loop()
+    if goal_farm_state_52097.enabled then
+        stop_goal_farm_logic_53748()
+        notify_85613("Goal Farm", "Disabled.", 1)
     else
-        disconnect_goal_farm()
+        start_goal_farm_97462()
+        notify_85613("Goal Farm", "Enabled.", 1)
     end
 end)
 
 exploittab:Textbox("Goal Target", "Enter A Number Of Goals To Stop Farming At.", function(v)
     local num = tonumber(v)
     if num then
-        goal_farm_state.stop_at = num
-        notify("Goal Target", "Goal Target: " .. num, 2)
+        goal_farm_state_52097.stop_at = num
+        notify_85613("Goal Target", "Goal Target: " .. num, 2)
     else
-        goal_farm_state.stop_at = math.huge
-        notify("Goal Target", "Invalid Target, Farm Will Be Infinite.", 2)
+        goal_farm_state_52097.stop_at = math.huge
+        notify_85613("Goal Target", "Invalid Target, Farm Will Be Infinite.", 2)
     end
 end)
 
 exploittab:Label("Save Farming: Use At Your Own Risk, I Am Not Responsible For Bans.")
 
 exploittab:Button("Save Farm Info", "This Comes With Instructions On How To Use The Feature Below.", function()
-    notify("Save Farm Info", "Use When Score Is Tied, Farming Account Must Be GK On TEAM A, And Helper Account As CF On TEAM B.", 10)
+    notify_85613("Save Farm Info", "Use When Score Is Tied, Farming Account Must Be GK On TEAM A, And Helper Account As CF On TEAM B.", 10)
 end)
 
 exploittab:Button("Farming Account Position TP", "Use This Feature On FARMING ACCOUNT Before Enabling Automatic Kicking.", function()
@@ -6287,43 +6293,33 @@ exploittab:Textbox("Kick Power", "Sets The Power Of The Automatic Kicking (Defau
 
     if numeric_power then
         getgenv().automatickickingpower = numeric_power
-        notify("Kick Power Updated", "Power: " .. tostring(numeric_power), 1.5)
+        notify_85613("Kick Power Updated", "Power: " .. tostring(numeric_power), 1.5)
     else
         getgenv().automatickickingpower = 22
-        notify("Invalid Number", "Power Set To Default.", 1.5)
+        notify_85613("Invalid Number", "Power Set To Default.", 1.5)
     end
 end)
 
-exploittab:Button("Automatic Kicking", "Automatically Kicks The Ball Infront Of You.", function()
-    if getgenv().automatickickingenabled == nil then
-        getgenv().automatickickingenabled = false
-    end
-
-    getgenv().automatickickingenabled = not getgenv().automatickickingenabled
-
-    notify("Automatic Kicking", getgenv().automatickickingenabled and "Enabled." or "Disabled.", 1)
-
+function stop_auto_kick_32850()
+    getgenv().automatickickingenabled = false
     getgenv().automatickickingloopid = (getgenv().automatickickingloopid or 0) + 1
-    local loop_id = getgenv().automatickickingloopid
-
     if getgenv().automatickickingconnection then
         getgenv().automatickickingconnection:Disconnect()
         getgenv().automatickickingconnection = nil
     end
+end
 
-    if not getgenv().automatickickingenabled then
-        return
-    end
+function start_auto_kick_61927(recover_first)
+    stop_auto_kick_32850()
+    getgenv().automatickickingenabled = true
+    local loop_id = getgenv().automatickickingloopid
 
-    local plr = players_service.LocalPlayer
+    local plr = players_service_58214.LocalPlayer
     local kick_interval = 0.1
     local last_kick = 0
-    local was_safe = false
-    local recovering = false
-    local safe_sent = false
-    local saved_cframe = nil
+    local recovering = recover_first == true
 
-    getgenv().automatickickingconnection = run_service.Heartbeat:Connect(function()
+    getgenv().automatickickingconnection = run_service_93071.Heartbeat:Connect(function()
         if not getgenv().automatickickingenabled or getgenv().automatickickingloopid ~= loop_id then
             if getgenv().automatickickingconnection then
                 getgenv().automatickickingconnection:Disconnect()
@@ -6332,27 +6328,10 @@ exploittab:Button("Automatic Kicking", "Automatically Kicks The Ball Infront Of 
             return
         end
 
+        if safety_state_20948.active then return end
+
         local char = plr.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
-
-        if safety_state.active then
-            was_safe = true
-            recovering = false
-            if root and not safe_sent then
-                safe_sent = true
-                if not saved_cframe then
-                    saved_cframe = root.CFrame
-                end
-                teleport_to_safe(safe_positions.save_farm)
-            end
-            return
-        end
-
-        if was_safe then
-            was_safe = false
-            safe_sent = false
-            recovering = true
-        end
 
         if recovering then
             if not root then
@@ -6364,10 +6343,10 @@ exploittab:Button("Automatic Kicking", "Automatically Kicks The Ball Infront Of 
                 return
             end
             recovering = false
-            if saved_cframe then
-                root.CFrame = saved_cframe
+            if safety_state_20948.saved_cframe then
+                root.CFrame = safety_state_20948.saved_cframe
             end
-            saved_cframe = nil
+            safety_state_20948.saved_cframe = nil
             last_kick = os.clock()
             return
         end
@@ -6389,6 +6368,108 @@ exploittab:Button("Automatic Kicking", "Automatically Kicks The Ball Infront Of 
 
         NET:FireServer("base", {{"kick", power, false, vector.create(look.X, look.Y, look.Z)}})
     end)
+end
+
+exploittab:Button("Automatic Kicking", "Automatically Kicks The Ball Infront Of You.", function()
+    if getgenv().automatickickingenabled then
+        stop_auto_kick_32850()
+        notify_85613("Automatic Kicking", "Disabled.", 1)
+    else
+        start_auto_kick_61927(false)
+        notify_85613("Automatic Kicking", "Enabled.", 1)
+    end
+end)
+
+function sequence_stale_75384(id)
+    return safety_state_20948.sequence_id ~= id or not safety_state_20948.active
+end
+
+function enter_safety_18603()
+    safety_state_20948.sequence_id = safety_state_20948.sequence_id + 1
+    local id = safety_state_20948.sequence_id
+
+    safety_state_20948.resume_goal = goal_farm_state_52097.enabled
+    safety_state_20948.resume_kick = getgenv().automatickickingenabled == true
+
+    if not safety_state_20948.resume_goal and not safety_state_20948.resume_kick then
+        return
+    end
+
+    local char = players_service_58214.LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if safety_state_20948.resume_kick and root then
+        safety_state_20948.saved_cframe = root.CFrame
+    end
+
+    if safety_state_20948.resume_goal then
+        stop_goal_farm_logic_53748()
+    end
+    if safety_state_20948.resume_kick then
+        stop_auto_kick_32850()
+    end
+
+    local afk_position = safety_state_20948.resume_goal and safe_positions_67352.goal_farm or safe_positions_67352.save_farm
+    local needs_ball = safety_state_20948.resume_kick
+
+    task.spawn(function()
+        task.wait(0.1)
+        if sequence_stale_75384(id) then return end
+
+        if needs_ball then
+            while not has_ball_86904() do
+                task.wait(0.1)
+                if sequence_stale_75384(id) then return end
+            end
+        end
+
+        teleport_exact_31759(safe_positions_67352.kick_spot)
+
+        task.wait(0.3)
+        if sequence_stale_75384(id) then return end
+        NET:FireServer("base", {{"kick", 1, false, vector.create(0, 1, 0)}})
+
+        task.wait(0.3)
+        if sequence_stale_75384(id) then return end
+        teleport_to_safe_74280(afk_position)
+    end)
+end
+
+function exit_safety_44091()
+    safety_state_20948.sequence_id = safety_state_20948.sequence_id + 1
+
+    local resume_goal = safety_state_20948.resume_goal
+    local resume_kick = safety_state_20948.resume_kick
+    safety_state_20948.resume_goal = false
+    safety_state_20948.resume_kick = false
+
+    if resume_goal then
+        start_goal_farm_97462()
+    end
+    if resume_kick then
+        start_auto_kick_61927(true)
+    end
+end
+
+if getgenv().safety_monitor_connection then
+    getgenv().safety_monitor_connection:Disconnect()
+    getgenv().safety_monitor_connection = nil
+end
+
+getgenv().safety_monitor_connection = run_service_93071.Heartbeat:Connect(function()
+    local should_be_active = safety_state_20948.enabled
+        and safety_state_20948.limit ~= nil
+        and #players_service_58214:GetPlayers() > safety_state_20948.limit
+
+    if should_be_active ~= safety_state_20948.active then
+        safety_state_20948.active = should_be_active
+        if should_be_active then
+            notify_85613("Farming Safety Mode", "Too Many Players, Farms Turned Off.", 3)
+            enter_safety_18603()
+        else
+            notify_85613("Farming Safety Mode", "Clear, Farms Resumed.", 3)
+            exit_safety_44091()
+        end
+    end
 end)
 
 exploittab:Label("Anti AFK: Useful For Excess Alts To Allow Farming Goals / Saves.")
