@@ -4848,6 +4848,10 @@ game:GetService("RunService").RenderStepped:Connect(checkQTE)
 sendNotification(qteState.enabled and "Enabled." or "Disabled.")
 end)
 
+othersil:Button("Auto QuickTimeEvent (Mobile Version)", "Automatically Does QuickTimeEvents, Rejoin To Disable.", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/mobile%20autoqte%20thingy"))()
+end)
+
 local teamHighlightActive = false
 local highlightFolder = nil
 
