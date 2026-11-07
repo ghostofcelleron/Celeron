@@ -1,0 +1,73 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local processing = false
+
+local function isShadeOfGreen(color)
+    return color.G > color.R and color.G > color.B
+end
+
+local function clickTargetButton(btn)
+    if firesignal then
+        pcall(function() firesignal(btn.Activated) end)
+        pcall(function() firesignal(btn.MouseButton1Click) end)
+    end
+
+    if getconnections then
+        for _, eventName in ipairs({"Activated", "MouseButton1Click"}) do
+            if btn[eventName] then
+                pcall(function()
+                    for _, conn in ipairs(getconnections(btn[eventName])) do
+                        pcall(function() conn:Fire() end)
+                    end
+                end)
+            end
+        end
+    end
+end
+
+local function checkQTE()
+    if processing then return end
+
+    local player = Players.LocalPlayer
+    if not player or not player:FindFirstChild("PlayerGui") then return end
+
+    local qteGui = player.PlayerGui:FindFirstChild("Qte") or player.PlayerGui:FindFirstChild("QTE")
+
+    if qteGui and qteGui.Enabled then
+        local qteGroup = qteGui:FindFirstChild("QTE") or qteGui:FindFirstChild("CanvasGroup")
+        if not qteGroup then return end
+
+        local isGreen = false
+        for _, descendant in ipairs(qteGroup:GetDescendants()) do
+            if descendant:IsA("Frame") or descendant:IsA("TextLabel") then
+                if isShadeOfGreen(descendant.BackgroundColor3) then
+                    isGreen = true
+                    break
+                end
+            end
+        end
+
+        if isGreen then
+            local targetButton = qteGroup:FindFirstChild("Button")
+
+            if not targetButton then
+                for _, descendant in ipairs(qteGui:GetDescendants()) do
+                    if descendant:IsA("TextButton") and descendant.Name == "Button" then
+                        targetButton = descendant
+                        break
+                    end
+                end
+            end
+
+            if targetButton then
+                processing = true
+                clickTargetButton(targetButton)
+                task.wait(0.5)
+                processing = false
+            end
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(checkQTE)
