@@ -1,0 +1,235 @@
+local ui =  loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local PlaceId = game.PlaceId
+local JobId = game.JobId
+
+local darkUI = CoreGui:FindFirstChild("dark_UI")
+if darkUI and typeof(syn) == "table" and syn.protect_gui then
+    syn.protect_gui(darkUI)
+end
+
+local win = ui:Create({
+    Name = "Celeron's GUI (A Bizarre Run)",
+    ThemeColor = Color3.fromRGB(41, 156, 158),
+    ThemeGradient = Color3.fromRGB(181, 98, 209),
+    StartupSound = "rbxassetid://105517685918463",
+    ThemeFont = Enum.Font.GothamBold
+})
+
+local hometab = win:Tab("Home")
+local maintab = win:Tab("Main")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+hometab:Label("Script Made By Celeron! Check Info For Additional Credits.")
+hometab:Label("Join The Discord Server In Info For Updates / Suggestions.")
+misctab:Label("Other Features.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+hometab:Banner("9336862828", 295)
+
+charbuffs = maintab:Folder("Character Based Features.", Color3.fromRGB(41, 156, 158), true)
+charbuffs:Label("Character Based Features.")
+
+local players = game:GetService("Players")
+local run_service = game:GetService("RunService")
+
+local local_player = players.LocalPlayer
+local is_toggled = false
+local pre_connection = nil
+local post_connection = nil
+local tracked_speed = 0
+
+local function apply_speed(dt, increment)
+	local current_char = local_player.Character
+	local humanoid = current_char and current_char:FindFirstChildOfClass("Humanoid")
+	local root_part = current_char and current_char:FindFirstChild("HumanoidRootPart")
+
+	if humanoid and root_part then
+		local move_dir = humanoid.MoveDirection
+		if move_dir.Magnitude > 0 then
+			local flat_dir = Vector3.new(move_dir.X, 0, move_dir.Z).Unit
+			if increment then
+				tracked_speed = math.max(tracked_speed, humanoid.WalkSpeed) + 0.12
+			end
+			root_part.CFrame = root_part.CFrame + (flat_dir * tracked_speed * dt)
+		else
+			tracked_speed = 0
+		end
+	end
+end
+
+local function update_speed(enabled)
+	if pre_connection then
+		pre_connection:Disconnect()
+		pre_connection = nil
+	end
+	if post_connection then
+		post_connection:Disconnect()
+		post_connection = nil
+	end
+
+	tracked_speed = 0
+
+	if enabled then
+		pre_connection = run_service.PreSimulation:Connect(function(dt)
+			apply_speed(dt, true)
+		end)
+		post_connection = run_service.PostSimulation:Connect(function(dt)
+			apply_speed(dt, false)
+		end)
+	end
+end
+
+charbuffs:Toggle("God Speed (Req. On Foot)", "Greatly Increases Overall Movement Speed While Enabled.", function(v)
+	if typeof(v) == "boolean" then
+		is_toggled = v
+	else
+		is_toggled = not is_toggled
+	end
+
+	update_speed(is_toggled)
+end)
+
+local players = game:GetService("Players")
+local run_service = game:GetService("RunService")
+local user_input_service = game:GetService("UserInputService")
+
+local local_player = players.LocalPlayer
+local is_toggled = false
+local sprint_connection = nil
+
+local function is_mobile()
+	return user_input_service.TouchEnabled and not user_input_service.KeyboardEnabled
+end
+
+local function is_shift_held()
+	return user_input_service:IsKeyDown(Enum.KeyCode.LeftShift) or user_input_service:IsKeyDown(Enum.KeyCode.RightShift)
+end
+
+local function is_moving()
+	local character = local_player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	return humanoid ~= nil and humanoid.MoveDirection.Magnitude > 0
+end
+
+local function get_player_rig()
+	local rigs_folder = workspace:FindFirstChild("Rigs")
+	return rigs_folder and rigs_folder:FindFirstChild(local_player.Name)
+end
+
+local function update_sprint(enabled)
+	if sprint_connection then
+		sprint_connection:Disconnect()
+		sprint_connection = nil
+
+		local player_rig = get_player_rig()
+		if player_rig then
+			player_rig:SetAttribute("SlowMode", 1)
+		end
+	end
+
+	if enabled then
+		sprint_connection = run_service.Heartbeat:Connect(function()
+			local player_rig = get_player_rig()
+			if not player_rig then
+				return
+			end
+
+			local should_boost
+			if is_mobile() then
+				should_boost = is_moving()
+			else
+				should_boost = is_shift_held()
+			end
+
+			if should_boost then
+				player_rig:SetAttribute("SlowMode", 2)
+			else
+				player_rig:SetAttribute("SlowMode", 1)
+			end
+		end)
+	end
+end
+
+charbuffs:Toggle("Infinite Sprint (Req. On Foot)", "When Enabled, You Have Infinite Sprinting. Simple Enough.", function(v)
+	if typeof(v) == "boolean" then
+		is_toggled = v
+	else
+		is_toggled = not is_toggled
+	end
+
+	update_sprint(is_toggled)
+end)
+
+racefeats = maintab:Folder("Race Based Features.", Color3.fromRGB(41, 156, 158), true)
+racefeats:Label("Race Based Features.")
+
+racefeats:Button("Instant Complete Race (Stage One)", "Instantly Completes Stage One Race.", function()
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(3318, -228, 2044))
+end)
+
+racefeats:Button("Instant Complete Race (Stage Two)", "Instantly Completes Stage Two Race.", function()
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(8603, 28, -1292))
+end)
+
+misctab:Button("Infinite Yield", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+misctab:Button("Rejoin Server", function()
+    TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
+end)
+
+misctab:Button("Switch Servers", function()
+    local servers = {}
+    local success, req = pcall(function()
+        return game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+    end)
+    if success then
+        local body = HttpService:JSONDecode(req)
+        if body and body.data then
+            for _, v in next, body.data do
+                if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= JobId then
+                    table.insert(servers, 1, v.id)
+                end
+            end
+        end
+    end
+    if #servers > 0 then
+        TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], player)
+    end
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Username",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("celeronstilltuff")
+end)
+
+helptab:Button("Copy Discord Server Invite", function()
+    StarterGui:SetCore("SendNotification", {
+        Title = "Discord Invite",
+        Text = "Copied to your clipboard!",
+        Duration = 3,
+        Button1 = "alright fella",
+    })
+    setclipboard("https://discord.gg/mFusYUmyry")
+end)
+
+helptab:Label("Script Credits.")
+helptab:Label("Main Scripter: Celeron.")
+helptab:Label("Custom UI + Some Features: Daffy.")
