@@ -2,7 +2,7 @@ local StarterGui = game:GetService("StarterGui")
     StarterGui:SetCore("SendNotification", {
         Title = "auto gk",
         Text = "v1",
-        Duration = 3,
+        Duration = 333,
     })
 
 --- buffers brrrrrr
