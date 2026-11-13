@@ -1,0 +1,302 @@
+local RunService        = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players           = game:GetService("Players")
+
+local buffers = setmetatable({}, {__index = function(_, k) return k end})
+
+NET = (function()
+    local Packets = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+    local warned = {}
+
+    local function warnOnce(key, message)
+        if not warned[key] then
+            warned[key] = true
+            warn("[net shim] " .. message)
+        end
+    end
+
+    local function convertToString(inputData)
+        if type(inputData) == "string" then return inputData end
+        if typeof(inputData) == "buffer" then return buffer.tostring(inputData) end
+    end
+
+    local netShim = {}
+
+    function netShim.FireServer(_, dataBuffer, actionsList)
+        local bufferType = convertToString(dataBuffer)
+
+        if bufferType == "base" then
+            if type(actionsList) ~= "table" then return end
+
+            for _, primaryAction in ipairs(actionsList) do
+                if type(primaryAction) == "table" then
+                    local success = pcall(Packets.bytenet_use.send, primaryAction)
+                    if not success then
+                        warnOnce("use_" .. tostring(primaryAction), "bytenet_use execution failed for: '" .. tostring(primaryAction) .. "'")
+                    end
+                end
+            end
+
+        elseif bufferType == "grabball" then
+            local success = pcall(Packets.bytenet_findBall.send, actionsList)
+            if not success then
+                warnOnce("grab", "bytenet_findBall execution channel failed.")
+            end
+        end
+    end
+
+    netShim.fireServer = netShim.FireServer
+    return netShim
+end)()
+
+local Config = {
+    TackleDistance = _G.TackleDistance or 16,
+    MaxDist = _G.MaxDist or 80,
+    MaxJump = _G.MaxJump or 22,
+    SegmentCount = _G.SegmentCount or 150,
+    TimeStep = _G.TimeStep or 0.02,
+    LineWidth = _G.LineWidth or 0.25,
+    LMode = _G.LMode or false,
+    AutoD = _G.AutoD or false,
+    JumpHeightTrigger = _G.JumpHeightTrigger or 7,
+    Keybinds = _G.Keybinds,
+}
+
+local gkKeybinds = {
+    metav  = "Y",
+    autogkfuncs    = "V",
+    toggleuicorner = "LeftAlt",
+}
+
+local Gravity      = Vector3.new(0, -workspace.Gravity, 0)
+local SegmentCount = Config.SegmentCount
+local TimeStep     = Config.TimeStep
+local LineWidth    = Config.LineWidth
+
+local function getKey(name)
+    local binds = Config.Keybinds or {}
+    local keyName = binds[name] or gkKeybinds[name]
+    local keyCode = Enum.KeyCode[keyName]
+    if not keyCode then
+        warn("Invalid keybind:", keyName)
+        return Enum.KeyCode[gkKeybinds[name]]
+    end
+    return keyCode
+end
+
+local justReleasedBall = false
+local ballHolder = ReplicatedStorage.workspace.ballHolder
+local lastHolder = ballHolder.Value
+
+ballHolder.Changed:Connect(function()
+    if Config.AutoD then
+        return
+    end
+    local newHolder = ballHolder.Value
+    if lastHolder == Players.LocalPlayer.Character and newHolder == nil then
+        justReleasedBall = true
+    else
+        justReleasedBall = false
+    end
+    lastHolder = newHolder
+end)
+
+local indicator = (function()
+    local gui = Instance.new("ScreenGui")
+    gui.Parent = game.Players.LocalPlayer.PlayerGui
+    gui.IgnoreGuiInset = true
+    gui.ResetOnSpawn = false
+
+    local frame = Instance.new("Frame", gui)
+    frame.Size = UDim2.new(0.034, 0, 0.1, 0)
+    frame.BackgroundColor3 = Color3.new(1, 0, 0.0156863)
+    frame.Position = UDim2.new(0.965, 0, 0.898, 0)
+    return frame
+end)()
+
+local function createSegmentPart()
+    local p = Instance.new("Part")
+    p.Anchored = true
+    p.CanCollide = false
+    p.Material = Enum.Material.Neon
+    p.Color = Color3.new(1, 1, 1)
+    p.Transparency = 1
+    p.Size = Vector3.new(LineWidth, LineWidth, 1)
+    p.Parent = workspace
+    return p
+end
+
+local segments = nil
+if not Config.LMode then
+    segments = {}
+    for i = 1, SegmentCount do
+        segments[i] = createSegmentPart()
+    end
+end
+
+local function hideSegments()
+    if not segments then
+        return
+    end
+    for _, part in ipairs(segments) do
+        part.Transparency = 1
+    end
+end
+
+local function shouldShowTrajectory()
+    return _G.metav and not Config.LMode
+end
+
+_G.metav = true
+_G.autogkfuncs = false
+if Config.LMode then
+    _G.metavison = false
+end
+
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then
+        return
+    end
+
+    if input.KeyCode == getKey("metav") then
+        _G.metav = not _G.metav
+
+    elseif input.KeyCode == getKey("autogkfuncs") then
+        _G.autogkfuncs = not _G.autogkfuncs
+        if _G.autogkfuncs then
+            indicator.BackgroundColor3 = Color3.new(0, 1, 0)
+        else
+            indicator.BackgroundColor3 = Color3.new(1, 0, 0)
+        end
+
+    elseif input.KeyCode == getKey("toggleuicorner") then
+        indicator.Visible = not indicator.Visible
+    end
+end)
+
+local function faceTowards(hrp, point)
+    local dir = (point - hrp.Position).Unit
+    local target = hrp.Position + dir
+    hrp.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(target.X, hrp.Position.Y, target.Z))
+end
+
+local function sendSkill(name)
+    NET:FireServer(buffer.fromstring(buffers.base), { { name } })
+end
+
+local terrain = workspace.Terrain
+local ballCache = nil
+local ballSearchAt = 0
+
+local function getBall()
+    local ball = terrain:FindFirstChild("Ball")
+    if ball then
+        ballCache = ball
+        return ball
+    end
+    if ballCache and ballCache.Parent then
+        return ballCache
+    end
+    local now = os.clock()
+    if now - ballSearchAt >= 0.5 then
+        ballSearchAt = now
+        ballCache = workspace:FindFirstChild("Ball", true)
+    end
+    return ballCache
+end
+
+local function getBallVelocity(ball)
+    if ball.Parent == terrain then
+        local cf = ReplicatedStorage:FindFirstChild("CFBall")
+        local vv = cf and cf:FindFirstChild("velocity")
+        local sv = cf and cf:FindFirstChild("speed")
+        if vv and sv then
+            return vv.Value * sv.Value
+        end
+    end
+    return ball.AssemblyLinearVelocity
+end
+
+RunService.Heartbeat:Connect(function()
+    local show = shouldShowTrajectory()
+    if not show then
+        hideSegments()
+    end
+
+    local ball = getBall()
+    if not ball then hideSegments() return end
+
+    local character = Players.LocalPlayer.Character
+    if not character then hideSegments() return end
+
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then hideSegments() return end
+
+    if (ball.Position - hrp.Position).Magnitude >= Config.MaxDist then
+        hideSegments()
+        return
+    end
+
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not humanoid then hideSegments() return end
+
+    local velocity = getBallVelocity(ball)
+    if velocity.Magnitude == 0 then hideSegments() return end
+
+    local startPos = ball.Position
+    local prevPoint = startPos
+    local hrpPos = hrp.Position
+
+    local reachSpeed = 0
+    if _G.autogkfuncs then reachSpeed = 155 end
+
+    for i = 1, SegmentCount do
+        local t = i * TimeStep
+        local point = startPos + velocity * t + 0.5 * Gravity * t * t
+        local seg = segments and segments[i]
+        local segLen = (point - prevPoint).Magnitude
+
+        if segLen > 0 then
+            local toPoint = point - hrpPos
+            local reachPoint = hrpPos + toPoint.Unit * math.min(reachSpeed * t, toPoint.Magnitude)
+            local gap = (point - reachPoint).Magnitude
+
+            local dash = gap <= Config.TackleDistance
+                and _G.autogkfuncs
+                and not justReleasedBall
+
+            if dash then
+                if show then
+                    seg.Color = Color3.new(0, 0, 1)
+                end
+                if point.Y <= Config.MaxJump then
+                    if point.Y >= hrp.Position.Y + Config.JumpHeightTrigger
+                        and humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
+                        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                    end
+                    faceTowards(hrp, point)
+                    sendSkill("tackle")
+                    return
+                end
+            else
+                if show then
+                    seg.Color = Color3.new(1, 1, 1)
+                end
+            end
+
+            if show and seg then
+                seg.Transparency = 0
+                seg.Size = Vector3.new(LineWidth, LineWidth, segLen)
+                seg.CFrame = CFrame.lookAt(prevPoint, point) * CFrame.new(0, 0, -segLen / 2)
+            elseif seg then
+                seg.Transparency = 1
+            end
+        else
+            if seg then
+                seg.Transparency = 1
+            end
+        end
+
+        prevPoint = point
+    end
+end)
