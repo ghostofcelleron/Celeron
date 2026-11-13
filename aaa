@@ -1,7 +1,7 @@
 local StarterGui = game:GetService("StarterGui")
     StarterGui:SetCore("SendNotification", {
         Title = "auto gk",
-        Text = "v2",
+        Text = "v3",
         Duration = 3,
     })
 
@@ -110,12 +110,19 @@ task.spawn(function()
         traj_gravity = -196.2,
         sim_step = 0.05,
         sim_max_time = 2,
-        max_step_dist = 6,
-        min_step = 0.02,
-        max_iter = 120,
+        max_step_dist = 4,
+        min_step = 0.01,
+        max_iter = 200,
+        hist = {},
+        hist_window = 0.24,
+        hist_min_span = 0.14,
+        hist_reset_dv = 120,
+        curve_smooth_rate = 20,
+        max_turn = 10,
+        turn = 0,
         intercept_reach = 6,
         goal_half_width = 22,
-        stand_depth = 14,
+        catch_depth = 6,
         shot_speed = 25,
         home_radius = 50,
         home_radius_far = 30,
@@ -311,16 +318,27 @@ task.spawn(function()
         gk_state.last_holder = cur
     end)
 
-    local function trajectory(p0, v0, t, use_gravity, floor_y)
+    local function trajectory(p0, v0, t, use_gravity, floor_y, turn)
         local p, v
         if use_gravity then
             local gy = gk_state.traj_gravity
-            p = Vector3.new(
-                p0.X + v0.X * t,
-                p0.Y + v0.Y * t + 0.5 * gy * t * t,
-                p0.Z + v0.Z * t
-            )
-            v = Vector3.new(v0.X, v0.Y + gy * t, v0.Z)
+            local x, z, vx, vz
+            local ang = (turn or 0) * t
+            if math.abs(ang) > 1e-4 then
+                local s = math.sin(ang)
+                local c = math.cos(ang)
+                x = p0.X + (v0.X * s - v0.Z * (1 - c)) / turn
+                z = p0.Z + (v0.X * (1 - c) + v0.Z * s) / turn
+                vx = v0.X * c - v0.Z * s
+                vz = v0.X * s + v0.Z * c
+            else
+                x = p0.X + v0.X * t
+                z = p0.Z + v0.Z * t
+                vx = v0.X
+                vz = v0.Z
+            end
+            p = Vector3.new(x, p0.Y + v0.Y * t + 0.5 * gy * t * t, z)
+            v = Vector3.new(vx, v0.Y + gy * t, vz)
         else
             p = p0 + v0 * t
             v = v0
@@ -331,7 +349,83 @@ task.spawn(function()
         return p, v
     end
 
-    local function forecast(pos, vel, use_gravity, floor_y, gp, fwd, horizon, record)
+    local function update_curve(ball, dt, floor_y)
+        local hist = gk_state.hist
+        local now = os.clock()
+        local pos = ball.Position
+        local raw = ball.AssemblyLinearVelocity
+        local last = hist[#hist]
+        if last and (raw - last.vel).Magnitude > gk_state.hist_reset_dv then
+            table.clear(hist)
+            last = nil
+        end
+        if not last or (pos - last.pos).Magnitude > 0.001 then
+            hist[#hist + 1] = {t = now, pos = pos, vel = raw}
+        end
+        while #hist > 0 and now - hist[1].t > gk_state.hist_window do
+            table.remove(hist, 1)
+        end
+
+        local n = #hist
+        if n < 4 or hist[n].t - hist[1].t < gk_state.hist_min_span then
+            gk_state.turn = 0
+            return nil
+        end
+
+        local span = hist[n].t - hist[1].t
+        local mid = hist[1].t + span * 0.5
+        local split = 1
+        for i = 1, n do
+            if hist[i].t <= mid then split = i end
+        end
+        if split < 2 or n - split < 1 then
+            gk_state.turn = 0
+            return nil
+        end
+
+        local old_dt = hist[split].t - hist[1].t
+        local new_dt = hist[n].t - hist[split].t
+        if old_dt < 0.02 or new_dt < 0.02 then
+            gk_state.turn = 0
+            return nil
+        end
+
+        local v_old = (hist[split].pos - hist[1].pos) / old_dt
+        local v_new = (hist[n].pos - hist[split].pos) / new_dt
+        local t_old = (hist[1].t + hist[split].t) * 0.5
+        local t_new = (hist[split].t + hist[n].t) * 0.5
+        local g = t_new - t_old
+        if g < 0.02 then
+            gk_state.turn = 0
+            return nil
+        end
+
+        local turn = 0
+        local ah = Vector3.new(v_old.X, 0, v_old.Z)
+        local bh = Vector3.new(v_new.X, 0, v_new.Z)
+        if ah.Magnitude > 5 and bh.Magnitude > 5 then
+            local da = math.atan2(bh.Z, bh.X) - math.atan2(ah.Z, ah.X)
+            da = (da + math.pi) % (2 * math.pi) - math.pi
+            turn = math.clamp(da / g, -gk_state.max_turn, gk_state.max_turn)
+        end
+
+        local a = 1 - math.exp(-dt * gk_state.curve_smooth_rate)
+        gk_state.turn = gk_state.turn + (turn - gk_state.turn) * a
+
+        local lag = math.max(now - t_new, 0)
+        local ang = gk_state.turn * lag
+        local c = math.cos(ang)
+        local s = math.sin(ang)
+        local vx = v_new.X * c - v_new.Z * s
+        local vz = v_new.X * s + v_new.Z * c
+        local vy = v_new.Y
+        if pos.Y > floor_y + 1.5 then
+            vy = vy + gk_state.traj_gravity * lag
+        end
+        return Vector3.new(vx, vy, vz)
+    end
+
+    local function forecast(pos, vel, use_gravity, floor_y, gp, fwd, horizon, record, turn)
         local origin = hrp.Position
         local speed = math.max(hum.WalkSpeed, 1)
         local right = fwd and Vector3.new(-fwd.Z, 0, fwd.X)
@@ -339,7 +433,7 @@ task.spawn(function()
         local intercept, t_int
         local best, best_t, best_slack = pos, 0, math.huge
         local close_p, close_t, close_dist = pos, 0, (pos - origin).Magnitude
-        local stand_p, stand_t
+        local catch_p, catch_t
         local reach_p, cross_p
         local pass_p, pass_t, pass_flat = nil, nil, math.huge
         local height_p, height_t
@@ -357,11 +451,17 @@ task.spawn(function()
         local max_pts = gk_state.path_max_points
         local jump_reach = gk_state.jump_reach
         local jump_y = gk_state.stand_y + gk_state.jump_height_offset
+        local catch_depth = gk_state.catch_depth
+        local prev_p = pos
+        local prev_depth
+        if gp then
+            prev_depth = (pos.X - gp.X) * fwd.X + (pos.Z - gp.Z) * fwd.Z
+        end
 
         while t < horizon and iter < max_iter do
             iter = iter + 1
             t = t + h
-            p, v = trajectory(pos, vel, t, use_gravity, floor_y)
+            p, v = trajectory(pos, vel, t, use_gravity, floor_y, turn)
 
             if record and #points < max_pts and (p - last_rec).Magnitude >= sample_d then
                 points[#points + 1] = p
@@ -404,14 +504,27 @@ task.spawn(function()
                 local rx = p.X - gp.X
                 local rz = p.Z - gp.Z
                 local depth = rx * fwd.X + rz * fwd.Z
-                if not stand_p and depth <= gk_state.stand_depth then
-                    stand_p, stand_t = p, t
+                if not catch_p and depth <= catch_depth then
+                    local f = 1
+                    if prev_depth > catch_depth then
+                        f = (prev_depth - catch_depth) / (prev_depth - depth)
+                    end
+                    catch_p = prev_p:Lerp(p, f)
+                    catch_t = t - h * (1 - f)
                 end
                 if depth <= 0 then
-                    cross_p = p
-                    shot = math.abs(rx * right.X + rz * right.Z) <= gk_state.goal_half_width
+                    local f = 1
+                    if prev_depth > 0 then
+                        f = prev_depth / (prev_depth - depth)
+                    end
+                    cross_p = prev_p:Lerp(p, f)
+                    local cx = cross_p.X - gp.X
+                    local cz = cross_p.Z - gp.Z
+                    shot = math.abs(cx * right.X + cz * right.Z) <= gk_state.goal_half_width
                     break
                 end
+                prev_p = p
+                prev_depth = depth
             end
         end
         if record and (p - last_rec).Magnitude > 0.01 then
@@ -426,8 +539,8 @@ task.spawn(function()
             close_p = close_p,
             close_t = close_t,
             close_dist = close_dist,
-            stand_p = stand_p,
-            stand_t = stand_t,
+            catch_p = catch_p,
+            catch_t = catch_t,
             high_t = height_t,
             high_p = height_p,
             pass_p = pass_p,
@@ -502,6 +615,8 @@ task.spawn(function()
         gk_state.smooth_target = nil
         gk_state.moving = false
         gk_state.move_dir = Vector3.zero
+        gk_state.turn = 0
+        table.clear(gk_state.hist)
         clear_path()
     end
 
@@ -559,21 +674,25 @@ task.spawn(function()
         if holder_root then
             local holder_vel = holder_root.AssemblyLinearVelocity
             subject_pos = holder_root.Position + holder_vel * ping
-            fc = forecast(subject_pos, holder_vel, false, nil, nil, nil, gk_state.sim_max_time, false)
+            fc = forecast(subject_pos, holder_vel, false, nil, nil, nil, gk_state.sim_max_time, false, 0)
             clear_path()
             gk_state.ball_vel = Vector3.zero
+            gk_state.turn = 0
+            table.clear(gk_state.hist)
         else
             local floor_y = ground_y + ball.Size.Y * 0.5
-            local start_vel = get_ball_velocity(ball)
+            local derived = update_curve(ball, dt, floor_y)
+            local start_vel = derived or get_ball_velocity(ball)
+            local turn = derived and gk_state.turn or 0
             ball_speed = start_vel.Magnitude
             gk_state.ball_vel = start_vel
 
             local now = os.clock()
             local draw_now = gk_state.show_path and now - gk_state.last_path_draw >= gk_state.path_draw_interval
 
-            local ball_pos, ball_vel = trajectory(ball.Position, start_vel, ping, true, floor_y)
+            local ball_pos, ball_vel = trajectory(ball.Position, start_vel, ping, true, floor_y, turn)
             subject_pos = ball_pos
-            fc = forecast(ball_pos, ball_vel, true, floor_y, fwd and goal_pos, fwd, horizon, draw_now)
+            fc = forecast(ball_pos, ball_vel, true, floor_y, fwd and goal_pos, fwd, horizon, draw_now, turn)
             if draw_now then
                 gk_state.last_path_draw = now
                 draw_path(ball.Position, fc)
@@ -616,7 +735,7 @@ task.spawn(function()
         local jump_ok = (not need_jump) or fast_ball or (os.clock() - gk_state.jump_started_at >= gk_state.jump_wait)
 
         local shot_mode = false
-        if not holder_root and fwd and fc.shot and fc.stand_p then
+        if not holder_root and fwd and fc.shot and fc.catch_p then
             local toward = -gk_state.ball_vel:Dot(fwd)
             shot_mode = toward > gk_state.shot_speed
         end
@@ -624,7 +743,7 @@ task.spawn(function()
         local w = 1
         local desired = fc.intercept
         if shot_mode then
-            desired = Vector3.new(fc.stand_p.X, hrp.Position.Y, fc.stand_p.Z)
+            desired = Vector3.new(fc.catch_p.X, hrp.Position.Y, fc.catch_p.Z)
         elseif holder_root and goal then
             w = math.clamp((gk_state.blend_radius - subject_dist) / (gk_state.blend_radius - gk_state.commit_radius), 0, 1)
             local guard_pos = guard_position(goal, holder_root.Position, holder_root.AssemblyLinearVelocity, fc.intercept)
