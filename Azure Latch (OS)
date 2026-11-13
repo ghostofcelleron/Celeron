@@ -4322,7 +4322,58 @@ end)
 local autogk = maintab2:Folder("Auto Goalkeeper Features.", Color3.fromRGB(169, 5, 255), true)
 autogk:Label("Auto Goalkeeper: Automatically Plays As GK For You.")
 
-autogk:Button("Celeron's Auto GK V3", "Click V To Toggle, Reset To Disable.", function()
+autogk:Button("Celeron's Auto GK", "Click V To Toggle Auto GK, Y To Toggle Metavision, LeftAlt To Hide Corner Gui, F4 To Disable.", function()
+local RunService        = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players           = game:GetService("Players")
+
+local buffers = setmetatable({}, {__index = function(_, k) return k end})
+
+NET = (function()
+    local Packets = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+    local warned = {}
+
+    local function warnOnce(key, message)
+        if not warned[key] then
+            warned[key] = true
+            warn("[net shim] " .. message)
+        end
+    end
+
+    local function convertToString(inputData)
+        if type(inputData) == "string" then return inputData end
+        if typeof(inputData) == "buffer" then return buffer.tostring(inputData) end
+    end
+
+    local netShim = {}
+
+    function netShim.FireServer(_, dataBuffer, actionsList)
+        local bufferType = convertToString(dataBuffer)
+
+        if bufferType == "base" then
+            if type(actionsList) ~= "table" then return end
+
+            for _, primaryAction in ipairs(actionsList) do
+                if type(primaryAction) == "table" then
+                    local success = pcall(Packets.bytenet_use.send, primaryAction)
+                    if not success then
+                        warnOnce("use_" .. tostring(primaryAction), "bytenet_use execution failed for: '" .. tostring(primaryAction) .. "'")
+                    end
+                end
+            end
+
+        elseif bufferType == "grabball" then
+            local success = pcall(Packets.bytenet_findBall.send, actionsList)
+            if not success then
+                warnOnce("grab", "bytenet_findBall execution channel failed.")
+            end
+        end
+    end
+
+    netShim.fireServer = netShim.FireServer
+    return netShim
+end)()
+
 local RunService        = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players           = game:GetService("Players")
@@ -4344,12 +4395,16 @@ local gkKeybinds = {
     metav  = "Y",
     autogkfuncs    = "V",
     toggleuicorner = "LeftAlt",
+    unload = "F4",
 }
 
 local Gravity      = Vector3.new(0, -workspace.Gravity, 0)
 local SegmentCount = Config.SegmentCount
 local TimeStep     = Config.TimeStep
 local LineWidth    = Config.LineWidth
+
+local holderConn, inputConn, heartbeatConn
+local unload
 
 local function getKey(name)
     local binds = Config.Keybinds or {}
@@ -4366,7 +4421,7 @@ local justReleasedBall = false
 local ballHolder = ReplicatedStorage.workspace.ballHolder
 local lastHolder = ballHolder.Value
 
-ballHolder.Changed:Connect(function()
+holderConn = ballHolder.Changed:Connect(function()
     if Config.AutoD then
         return
     end
@@ -4379,18 +4434,15 @@ ballHolder.Changed:Connect(function()
     lastHolder = newHolder
 end)
 
-local indicator = (function()
-    local gui = Instance.new("ScreenGui")
-    gui.Parent = game.Players.LocalPlayer.PlayerGui
-    gui.IgnoreGuiInset = true
-    gui.ResetOnSpawn = false
+local indicatorGui = Instance.new("ScreenGui")
+indicatorGui.Parent = game.Players.LocalPlayer.PlayerGui
+indicatorGui.IgnoreGuiInset = true
+indicatorGui.ResetOnSpawn = false
 
-    local frame = Instance.new("Frame", gui)
-    frame.Size = UDim2.new(0.012, 0, 0.025, 0)
-    frame.BackgroundColor3 = Color3.new(1, 0, 0.0156863)
-    frame.Position = UDim2.new(0.988, 0, 0.975, 0)
-    return frame
-end)()
+local indicator = Instance.new("Frame", indicatorGui)
+indicator.Size = UDim2.new(0.012, 0, 0.025, 0)
+indicator.BackgroundColor3 = Color3.new(1, 0, 0.0156863)
+indicator.Position = UDim2.new(0.988, 0, 0.975, 0)
 
 local function createSegmentPart()
     local p = Instance.new("Part")
@@ -4431,12 +4483,15 @@ if Config.LMode then
     _G.metav = false
 end
 
-game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+inputConn = game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then
         return
     end
 
-    if input.KeyCode == getKey("metav") then
+    if input.KeyCode == getKey("unload") then
+        unload()
+
+    elseif input.KeyCode == getKey("metav") then
         _G.metav = not _G.metav
 
     elseif input.KeyCode == getKey("autogkfuncs") then
@@ -4495,7 +4550,7 @@ local function getBallVelocity(ball)
     return ball.AssemblyLinearVelocity
 end
 
-RunService.Heartbeat:Connect(function()
+heartbeatConn = RunService.Heartbeat:Connect(function()
     local show = shouldShowTrajectory()
     if not show then
         hideSegments()
@@ -4583,6 +4638,31 @@ RunService.Heartbeat:Connect(function()
         prevPoint = point
     end
 end)
+
+unload = function()
+    if heartbeatConn then heartbeatConn:Disconnect() heartbeatConn = nil end
+    if holderConn then holderConn:Disconnect() holderConn = nil end
+    if inputConn then inputConn:Disconnect() inputConn = nil end
+
+    if segments then
+        for _, part in ipairs(segments) do
+            part:Destroy()
+        end
+        segments = nil
+    end
+
+    if indicatorGui then
+        indicatorGui:Destroy()
+        indicatorGui = nil
+    end
+
+    ballCache = nil
+    justReleasedBall = false
+    lastHolder = nil
+
+    _G.metav = nil
+    _G.autogkfuncs = nil
+end
 end)
 
 autogk:Button("Daffy's Auto GK", "Reset Or Click F4 To Disable.", function()
