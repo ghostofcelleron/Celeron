@@ -4,7 +4,6 @@ local StarterGui = game:GetService("StarterGui")
         Text = "v1",
         Duration = 3,
     })
-end)
 
 --- buffers brrrrrr
 local buffers = setmetatable({}, {__index = function(_, k) return k end})
