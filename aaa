@@ -1,0 +1,701 @@
+--- buffers brrrrrr
+local buffers = setmetatable({}, {__index = function(_, k) return k end})
+
+NET = (function()
+    local Packets = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+    local warned = {}
+    
+    local function warnOnce(key, message)
+        if not warned[key] then 
+            warned[key] = true
+            warn("[net shim] " .. message) 
+        end
+    end
+    
+    local function convertToString(inputData)
+        if type(inputData) == "string" then return inputData end
+        if typeof(inputData) == "buffer" then return buffer.tostring(inputData) end
+    end
+    
+    local netShim = {}
+    
+    function netShim.FireServer(_, dataBuffer, actionsList)
+        local bufferType = convertToString(dataBuffer)
+        
+        if bufferType == "base" then
+            if type(actionsList) ~= "table" then return end
+            
+            for _, primaryAction in ipairs(actionsList) do
+                if type(primaryAction) == "table" then
+                    local success = pcall(Packets.bytenet_use.send, primaryAction)
+                    if not success then 
+                        warnOnce("use_" .. tostring(primaryAction), "bytenet_use execution failed for: '" .. tostring(primaryAction) .. "'") 
+                    end
+                end
+            end
+            
+        elseif bufferType == "grabball" then
+            local success = pcall(Packets.bytenet_findBall.send, actionsList)
+            if not success then 
+                warnOnce("grab", "bytenet_findBall execution channel failed.") 
+            end
+        end
+    end
+    
+    netShim.fireServer = netShim.FireServer
+    return netShim
+end)()
+---
+
+task.spawn(function()
+    local Players = game:GetService("Players")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local Workspace = game:GetService("Workspace")
+    local RunService = game:GetService("RunService")
+    local UserInputService = game:GetService("UserInputService")
+
+    local plr = Players.LocalPlayer
+    local char = plr.Character or plr.CharacterAdded:Wait()
+    local hum = char:WaitForChild("Humanoid")
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    local gui = Instance.new("ScreenGui")
+    gui.ResetOnSpawn = false
+    gui.Parent = plr.PlayerGui
+
+    local dot = Instance.new("Frame")
+    dot.Size = UDim2.new(0.012, 0, 0.025, 0)
+    dot.Position = UDim2.new(0.988, 0, 0.975, 0)
+    dot.BorderSizePixel = 0
+    dot.Parent = gui
+
+    local gk_state = {
+        enabled = true,
+        pause = false,
+        look = nil,
+        ball_holder = ReplicatedStorage.workspace.ballHolder,
+        last_holder = nil,
+        remote = NET,
+        map = Workspace:WaitForChild("map"),
+        ball_vel = Vector3.zero,
+        tackle_args = {buffer.fromstring(buffers.base), {{"tackle"}}},
+        tackle_radius = 35,
+        tackle_interval = 0.05,
+        last_tackle = 0,
+        tackle_lead = 0.4,
+        tackle_hold = 0.25,
+        shot_tackle_dist = 70,
+        last_want = -100,
+        lock_radius = 15,
+        jump_wait = 0.05,
+        jump_started_at = nil,
+        jump_height_offset = 4,
+        jump_early = 0.15,
+        jump_reach = 14,
+        jump_horizon = 3,
+        low_ball_rise = 15,
+        fast_speed = 100,
+        stand_y = hrp.Position.Y,
+        ping_scale = 1.5,
+        ping_max = 0.3,
+        traj_gravity = -196.2,
+        sim_step = 0.05,
+        sim_max_time = 2,
+        max_step_dist = 6,
+        min_step = 0.02,
+        max_iter = 120,
+        intercept_reach = 6,
+        goal_half_width = 22,
+        stand_depth = 14,
+        shot_speed = 25,
+        home_radius = 50,
+        home_radius_far = 30,
+        far_distance = 140,
+        max_lateral = 10,
+        lateral_free_radius = 27,
+        stop_distance = 1.5,
+        guard_min = 10,
+        guard_max = 30,
+        guard_far = 90,
+        commit_radius = 24,
+        blend_radius = 50,
+        guard_smooth_rate = 7,
+        holder_lead = 0.2,
+        sway_amount = 0,
+        sway_speed = 0.5,
+        smooth_target = nil,
+        idle_start_distance = 4,
+        idle_stop_distance = 1.5,
+        idle_smooth_rate = 6,
+        engaged_smooth_rate = 60,
+        moving = false,
+        move_dir = Vector3.zero,
+        show_path = true,
+        path_sample_dist = 8,
+        path_max_points = 40,
+        path_thickness = 0.3,
+        path_draw_interval = 0.05,
+        last_path_draw = 0,
+        marker_size = 2.5,
+        path_folder = nil,
+        path_segments = {},
+        path_used = 0,
+        markers = {},
+        terrain = Workspace.Terrain,
+        ball_cache = nil,
+        ball_search_at = 0,
+        input_conn = nil,
+        holder_conn = nil,
+        died_conn = nil,
+        char_added_conn = nil
+    }
+
+    local function get_ball()
+        local ball = gk_state.terrain:FindFirstChild("Ball")
+        if ball then
+            gk_state.ball_cache = ball
+            return ball
+        end
+        local cached = gk_state.ball_cache
+        if cached and cached.Parent then
+            return cached
+        end
+        local now = os.clock()
+        if now - gk_state.ball_search_at >= 0.5 then
+            gk_state.ball_search_at = now
+            gk_state.ball_cache = Workspace:FindFirstChild("Ball", true)
+        end
+        return gk_state.ball_cache
+    end
+
+    local function get_ball_velocity(ball)
+        if ball.Parent == gk_state.terrain then
+            local cf = ReplicatedStorage:FindFirstChild("CFBall")
+            local vv = cf and cf:FindFirstChild("velocity")
+            local sv = cf and cf:FindFirstChild("speed")
+            if vv and sv then
+                return vv.Value * sv.Value
+            end
+        end
+        return ball.AssemblyLinearVelocity
+    end
+
+    local function make_part(size, color, is_ball)
+        local part = Instance.new("Part")
+        part.Anchored = true
+        part.CanCollide = false
+        part.CanQuery = false
+        part.CanTouch = false
+        part.CastShadow = false
+        part.Material = Enum.Material.Neon
+        part.Color = color
+        part.Transparency = 0.2
+        part.Size = size
+        if is_ball then
+            part.Shape = Enum.PartType.Ball
+        end
+        return part
+    end
+
+    gk_state.path_folder = Instance.new("Folder")
+    gk_state.path_folder.Name = "AutoGKPath"
+    gk_state.path_folder.Parent = Workspace.CurrentCamera or Workspace
+
+    local marker_size = Vector3.new(gk_state.marker_size, gk_state.marker_size, gk_state.marker_size)
+    gk_state.markers.reach = make_part(marker_size, Color3.fromRGB(255, 220, 0), true)
+    gk_state.markers.jump = make_part(marker_size, Color3.fromRGB(0, 220, 255), true)
+    gk_state.markers.cross = make_part(marker_size, Color3.fromRGB(255, 60, 60), true)
+
+    local function clear_path()
+        if gk_state.path_used == 0 then
+            for _, marker in pairs(gk_state.markers) do
+                if marker.Parent then marker.Parent = nil end
+            end
+            return
+        end
+        for i = 1, gk_state.path_used do
+            gk_state.path_segments[i].Parent = nil
+        end
+        gk_state.path_used = 0
+        for _, marker in pairs(gk_state.markers) do
+            marker.Parent = nil
+        end
+    end
+
+    local function place_marker(name, pos)
+        local marker = gk_state.markers[name]
+        if pos then
+            marker.CFrame = CFrame.new(pos)
+            if marker.Parent ~= gk_state.path_folder then
+                marker.Parent = gk_state.path_folder
+            end
+        elseif marker.Parent then
+            marker.Parent = nil
+        end
+    end
+
+    local function draw_path(origin, fc)
+        local prev = origin
+        local count = 0
+        local thick = gk_state.path_thickness
+        for _, pt in ipairs(fc.path) do
+            local delta = pt - prev
+            local len = delta.Magnitude
+            if len > 0.01 then
+                count = count + 1
+                local seg = gk_state.path_segments[count]
+                if not seg then
+                    seg = make_part(Vector3.new(thick, thick, 1), Color3.fromRGB(255, 255, 255), false)
+                    gk_state.path_segments[count] = seg
+                end
+                seg.Size = Vector3.new(thick, thick, len)
+                seg.CFrame = CFrame.lookAt(prev + delta * 0.5, pt)
+                if seg.Parent ~= gk_state.path_folder then
+                    seg.Parent = gk_state.path_folder
+                end
+            end
+            prev = pt
+        end
+        for i = count + 1, gk_state.path_used do
+            gk_state.path_segments[i].Parent = nil
+        end
+        gk_state.path_used = count
+        place_marker("reach", fc.reach_p)
+        place_marker("jump", fc.high_p)
+        place_marker("cross", fc.cross_p)
+    end
+
+    gk_state.look = Instance.new("AlignOrientation")
+    gk_state.look.Name = "AutoGKLook"
+    gk_state.look.Mode = Enum.OrientationAlignmentMode.OneAttachment
+    gk_state.look.Attachment0 = hrp:WaitForChild("RootAttachment")
+    gk_state.look.Responsiveness = 2000
+    gk_state.look.MaxTorque = math.huge
+    gk_state.look.Enabled = false
+    gk_state.look.Parent = hrp
+
+    gk_state.last_holder = gk_state.ball_holder.Value
+
+    local function update_indicator()
+        dot.BackgroundColor3 = gk_state.enabled and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
+    end
+
+    local function cleanup()
+        gk_state.enabled = false
+        RunService:UnbindFromRenderStep("AutoGK")
+        if gk_state.input_conn then gk_state.input_conn:Disconnect() end
+        if gk_state.holder_conn then gk_state.holder_conn:Disconnect() end
+        if gk_state.died_conn then gk_state.died_conn:Disconnect() end
+        if gk_state.char_added_conn then gk_state.char_added_conn:Disconnect() end
+        if gk_state.look then gk_state.look:Destroy() end
+        if gk_state.path_folder then gk_state.path_folder:Destroy() end
+        if gui then gui:Destroy() end
+    end
+
+    gk_state.holder_conn = gk_state.ball_holder.Changed:Connect(function(cur)
+        if gk_state.last_holder == char and cur == nil then
+            gk_state.pause = true
+            task.delay(2.6, function()
+                gk_state.pause = false
+            end)
+        end
+        gk_state.last_holder = cur
+    end)
+
+    local function trajectory(p0, v0, t, use_gravity, floor_y)
+        local p, v
+        if use_gravity then
+            local gy = gk_state.traj_gravity
+            p = Vector3.new(
+                p0.X + v0.X * t,
+                p0.Y + v0.Y * t + 0.5 * gy * t * t,
+                p0.Z + v0.Z * t
+            )
+            v = Vector3.new(v0.X, v0.Y + gy * t, v0.Z)
+        else
+            p = p0 + v0 * t
+            v = v0
+        end
+        if floor_y and p.Y < floor_y then
+            p = Vector3.new(p.X, floor_y, p.Z)
+        end
+        return p, v
+    end
+
+    local function forecast(pos, vel, use_gravity, floor_y, gp, fwd, horizon, record)
+        local origin = hrp.Position
+        local speed = math.max(hum.WalkSpeed, 1)
+        local right = fwd and Vector3.new(-fwd.Z, 0, fwd.X)
+        local p, v = pos, vel
+        local intercept, t_int
+        local best, best_t, best_slack = pos, 0, math.huge
+        local close_p, close_t, close_dist = pos, 0, (pos - origin).Magnitude
+        local stand_p, stand_t
+        local reach_p, cross_p
+        local pass_p, pass_t, pass_flat = nil, nil, math.huge
+        local shot = false
+        local points = record and {pos} or nil
+        local last_rec = pos
+        local t = 0
+        local iter = 0
+        local h = math.clamp(gk_state.max_step_dist / math.max(vel.Magnitude, 1), gk_state.min_step, gk_state.sim_step)
+        local tackle_r = gk_state.tackle_radius
+        local reach = gk_state.intercept_reach
+        local max_t = gk_state.sim_max_time
+        local max_iter = gk_state.max_iter
+        local sample_d = gk_state.path_sample_dist
+        local max_pts = gk_state.path_max_points
+
+        while t < horizon and iter < max_iter do
+            iter = iter + 1
+            t = t + h
+            p, v = trajectory(pos, vel, t, use_gravity, floor_y)
+
+            if record and #points < max_pts and (p - last_rec).Magnitude >= sample_d then
+                points[#points + 1] = p
+                last_rec = p
+            end
+
+            local dx = p.X - origin.X
+            local dz = p.Z - origin.Z
+            local flat = math.sqrt(dx * dx + dz * dz)
+
+            if not intercept and t <= max_t then
+                local slack = math.max(flat - reach, 0) / speed - t
+                if slack <= 0 then
+                    intercept, t_int = p, t
+                elseif slack < best_slack then
+                    best, best_t, best_slack = p, t, slack
+                end
+            end
+
+            local dy = p.Y - origin.Y
+            local d3 = math.sqrt(flat * flat + dy * dy)
+            if d3 < close_dist then
+                close_p, close_t, close_dist = p, t, d3
+            end
+            if not reach_p and d3 <= tackle_r then
+                reach_p = p
+            end
+
+            if (not floor_y or p.Y > floor_y + 0.05) and flat < pass_flat then
+                pass_p, pass_t, pass_flat = p, t, flat
+            end
+
+            if gp then
+                local rx = p.X - gp.X
+                local rz = p.Z - gp.Z
+                local depth = rx * fwd.X + rz * fwd.Z
+                if not stand_p and depth <= gk_state.stand_depth then
+                    stand_p, stand_t = p, t
+                end
+                if depth <= 0 then
+                    cross_p = p
+                    shot = math.abs(rx * right.X + rz * right.Z) <= gk_state.goal_half_width
+                    break
+                end
+            end
+        end
+        if record and (p - last_rec).Magnitude > 0.01 then
+            points[#points + 1] = p
+        end
+        if not intercept then
+            intercept, t_int = best, best_t
+        end
+        return {
+            intercept = intercept,
+            t_int = t_int,
+            close_p = close_p,
+            close_t = close_t,
+            close_dist = close_dist,
+            stand_p = stand_p,
+            stand_t = stand_t,
+            high_t = pass_t,
+            high_p = pass_p,
+            pass_p = pass_p,
+            pass_t = pass_t,
+            pass_flat = pass_flat,
+            reach_p = reach_p,
+            cross_p = cross_p,
+            path = points,
+            shot = shot
+        }
+    end
+
+    local function jump_apex_time()
+        local g = Workspace.Gravity
+        local v0
+        if hum.UseJumpPower then
+            v0 = hum.JumpPower
+        else
+            v0 = math.sqrt(2 * g * hum.JumpHeight)
+        end
+        return v0 / g
+    end
+
+    local function clamp_to_home(target, goal, other_goal, subject_pos, lateral_on)
+        if not goal then return target end
+        local gp = goal.Position
+        local subject_off = Vector3.new(subject_pos.X - gp.X, 0, subject_pos.Z - gp.Z).Magnitude
+        local radius = subject_off > gk_state.far_distance and gk_state.home_radius_far or gk_state.home_radius
+        local result = target
+        local off = Vector3.new(target.X - gp.X, 0, target.Z - gp.Z)
+        if off.Magnitude > radius then
+            local c = off.Unit * radius
+            result = Vector3.new(gp.X + c.X, target.Y, gp.Z + c.Z)
+        end
+        if other_goal and lateral_on then
+            local fwd = Vector3.new(other_goal.Position.X - gp.X, 0, other_goal.Position.Z - gp.Z)
+            if fwd.Magnitude > 0.001 then
+                fwd = fwd.Unit
+                local right = Vector3.new(-fwd.Z, 0, fwd.X)
+                local rel = Vector3.new(result.X - gp.X, 0, result.Z - gp.Z)
+                local lateral = rel:Dot(right)
+                local limited = math.clamp(lateral, -gk_state.max_lateral, gk_state.max_lateral)
+                result = result + right * (limited - lateral)
+            end
+        end
+        return result
+    end
+
+    local function guard_position(goal, holder_pos, holder_vel, fallback)
+        if not goal then return fallback end
+        local gp = goal.Position
+        local led = holder_pos + holder_vel * gk_state.holder_lead
+        local to_holder = Vector3.new(led.X - gp.X, 0, led.Z - gp.Z)
+        local dist = to_holder.Magnitude
+        if dist < 0.001 then return fallback end
+        local dir = to_holder.Unit
+        local alpha = math.clamp(dist / gk_state.guard_far, 0, 1)
+        local depth = gk_state.guard_max - (gk_state.guard_max - gk_state.guard_min) * alpha
+        local right = Vector3.new(-dir.Z, 0, dir.X)
+        local sway = math.noise(os.clock() * gk_state.sway_speed, 0.5, 0) * gk_state.sway_amount
+        return Vector3.new(
+            gp.X + dir.X * depth + right.X * sway,
+            hrp.Position.Y,
+            gp.Z + dir.Z * depth + right.Z * sway
+        )
+    end
+
+    local function reset_timers()
+        gk_state.ball_vel = Vector3.zero
+        gk_state.jump_started_at = nil
+        gk_state.smooth_target = nil
+        gk_state.moving = false
+        gk_state.move_dir = Vector3.zero
+        clear_path()
+    end
+
+    RunService:BindToRenderStep("AutoGK", Enum.RenderPriority.Input.Value + 1, function(dt)
+        if not gk_state.enabled or gk_state.pause or plr.Team == game.Teams.lobby then
+            gk_state.look.Enabled = false
+            reset_timers()
+            return
+        end
+
+        local current_holder = gk_state.ball_holder.Value
+
+        if current_holder == char then
+            gk_state.look.Enabled = false
+            reset_timers()
+            return
+        end
+
+        local ball = get_ball()
+        local holder_root = current_holder and current_holder:FindFirstChild("HumanoidRootPart")
+
+        if not holder_root and not ball then
+            gk_state.look.Enabled = false
+            reset_timers()
+            return
+        end
+
+        if hum.FloorMaterial ~= Enum.Material.Air then
+            gk_state.stand_y = hrp.Position.Y
+        end
+
+        local goal = (plr.Team == game.Teams.B and gk_state.map.Bgoal) or (plr.Team == game.Teams.A and gk_state.map.Agoal)
+        local other_goal = (plr.Team == game.Teams.B and gk_state.map.Agoal) or (plr.Team == game.Teams.A and gk_state.map.Bgoal)
+        local ground_y = gk_state.stand_y - hum.HipHeight - hrp.Size.Y * 0.5
+
+        local goal_pos
+        local fwd
+        if goal and other_goal then
+            goal_pos = goal.Position
+            local f = Vector3.new(other_goal.Position.X - goal_pos.X, 0, other_goal.Position.Z - goal_pos.Z)
+            if f.Magnitude > 0.001 then
+                fwd = f.Unit
+            end
+        end
+
+        local ping = math.min(plr:GetNetworkPing() * gk_state.ping_scale, gk_state.ping_max)
+
+        local in_terrain = ball ~= nil and ball.Parent == gk_state.terrain
+        local horizon = in_terrain and gk_state.jump_horizon or gk_state.sim_max_time
+
+        local subject_pos
+        local fc
+        local ball_speed = 0
+
+        if holder_root then
+            local holder_vel = holder_root.AssemblyLinearVelocity
+            subject_pos = holder_root.Position + holder_vel * ping
+            fc = forecast(subject_pos, holder_vel, false, nil, nil, nil, gk_state.sim_max_time, false)
+            clear_path()
+            gk_state.ball_vel = Vector3.zero
+        else
+            local floor_y = ground_y + ball.Size.Y * 0.5
+            local start_vel = get_ball_velocity(ball)
+            ball_speed = start_vel.Magnitude
+            gk_state.ball_vel = start_vel
+
+            local now = os.clock()
+            local draw_now = gk_state.show_path and now - gk_state.last_path_draw >= gk_state.path_draw_interval
+
+            local ball_pos, ball_vel = trajectory(ball.Position, start_vel, ping, true, floor_y)
+            subject_pos = ball_pos
+            fc = forecast(ball_pos, ball_vel, true, floor_y, fwd and goal_pos, fwd, horizon, draw_now)
+            if draw_now then
+                gk_state.last_path_draw = now
+                draw_path(ball.Position, fc)
+            end
+        end
+
+        local subject_dist = (hrp.Position - subject_pos).Magnitude
+        local ball_dist = ball and (hrp.Position - ball.Position).Magnitude
+
+        local need_jump = false
+        if ball then
+            if holder_root then
+                need_jump = ball_dist <= gk_state.tackle_radius
+                    and ball.Position.Y > gk_state.stand_y + gk_state.jump_height_offset
+            else
+                local low_ball = ball.Position.Y < gk_state.stand_y and gk_state.ball_vel.Y < gk_state.low_ball_rise
+                need_jump = not low_ball
+                    and fc.pass_p ~= nil
+                    and fc.pass_flat <= gk_state.jump_reach
+                    and fc.pass_p.Y >= gk_state.stand_y + gk_state.jump_height_offset
+                    and fc.pass_t <= jump_apex_time() + gk_state.jump_early
+            end
+        end
+
+        if need_jump then
+            hum.Jump = true
+            if not gk_state.jump_started_at then
+                gk_state.jump_started_at = os.clock()
+            end
+        else
+            gk_state.jump_started_at = nil
+        end
+
+        local fast_ball = ball_speed >= gk_state.fast_speed
+        local jump_ok = (not need_jump) or fast_ball or (os.clock() - gk_state.jump_started_at >= gk_state.jump_wait)
+
+        local shot_mode = false
+        if not holder_root and fwd and fc.shot and fc.stand_p then
+            local toward = -gk_state.ball_vel:Dot(fwd)
+            shot_mode = toward > gk_state.shot_speed
+        end
+
+        local w = 1
+        local desired = fc.intercept
+        if shot_mode then
+            desired = Vector3.new(fc.stand_p.X, hrp.Position.Y, fc.stand_p.Z)
+        elseif holder_root and goal then
+            w = math.clamp((gk_state.blend_radius - subject_dist) / (gk_state.blend_radius - gk_state.commit_radius), 0, 1)
+            local guard_pos = guard_position(goal, holder_root.Position, holder_root.AssemblyLinearVelocity, fc.intercept)
+            desired = guard_pos:Lerp(fc.intercept, w)
+        end
+
+        local lateral_on = subject_dist > gk_state.lateral_free_radius and not shot_mode
+        local target = clamp_to_home(desired, goal, other_goal, subject_pos, lateral_on)
+        local follow_rate = gk_state.guard_smooth_rate + (60 - gk_state.guard_smooth_rate) * w
+        if gk_state.smooth_target then
+            gk_state.smooth_target = gk_state.smooth_target:Lerp(target, 1 - math.exp(-dt * follow_rate))
+        else
+            gk_state.smooth_target = target
+        end
+        local move_target = gk_state.smooth_target
+
+        local move_flat = Vector3.new(move_target.X - hrp.Position.X, 0, move_target.Z - hrp.Position.Z)
+        local move_dist = move_flat.Magnitude
+        local idle = w < 0.5
+        local start_d = idle and gk_state.idle_start_distance or gk_state.stop_distance
+        local stop_d = idle and gk_state.idle_stop_distance or gk_state.stop_distance
+
+        if gk_state.moving then
+            if move_dist < stop_d then
+                gk_state.moving = false
+            end
+        elseif move_dist > start_d then
+            gk_state.moving = true
+        end
+
+        local want = Vector3.zero
+        if gk_state.moving and move_dist > 0.001 then
+            want = move_flat.Unit
+        end
+
+        local rate = idle and gk_state.idle_smooth_rate or gk_state.engaged_smooth_rate
+        gk_state.move_dir = gk_state.move_dir:Lerp(want, 1 - math.exp(-dt * rate))
+
+        if gk_state.move_dir.Magnitude < 0.05 then
+            hum:Move(Vector3.zero, false)
+        else
+            hum:Move(gk_state.move_dir, false)
+        end
+
+        local aim_pos
+        if subject_dist <= gk_state.lock_radius or w < 0.5 or shot_mode then
+            aim_pos = subject_pos
+        else
+            aim_pos = move_target
+        end
+
+        gk_state.look.Enabled = true
+        gk_state.look.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(aim_pos.X, hrp.Position.Y, aim_pos.Z))
+
+        local reach_now = math.min(ball_dist or math.huge, subject_dist)
+        local want_tackle = false
+        if holder_root then
+            want_tackle = subject_dist <= gk_state.tackle_radius
+        elseif ball then
+            local incoming = fc.close_dist <= gk_state.tackle_radius and fc.close_t <= gk_state.tackle_lead
+            want_tackle = reach_now <= gk_state.tackle_radius
+                or incoming
+                or (shot_mode and ball_dist <= gk_state.shot_tackle_dist)
+        end
+
+        if want_tackle then
+            gk_state.last_want = os.clock()
+        end
+        local fire = want_tackle or os.clock() - gk_state.last_want <= gk_state.tackle_hold
+
+        if fire and jump_ok and os.clock() - gk_state.last_tackle >= gk_state.tackle_interval then
+            gk_state.last_tackle = os.clock()
+            gk_state.remote:FireServer(unpack(gk_state.tackle_args))
+        end
+    end)
+
+    gk_state.input_conn = UserInputService.InputBegan:Connect(function(input, game_processed)
+        if game_processed then return end
+        if input.KeyCode == Enum.KeyCode.V then
+            gk_state.enabled = not gk_state.enabled
+            update_indicator()
+            if not gk_state.enabled then
+                gk_state.look.Enabled = false
+                reset_timers()
+            end
+        elseif input.KeyCode == Enum.KeyCode.X then
+            gk_state.show_path = not gk_state.show_path
+            if not gk_state.show_path then
+                clear_path()
+            end
+        end
+    end)
+
+    gk_state.died_conn = hum.Died:Connect(cleanup)
+    gk_state.char_added_conn = plr.CharacterAdded:Connect(cleanup)
+
+    update_indicator()
+end)
