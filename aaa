@@ -1,3 +1,5 @@
+print('auto gk but v35')
+
 --- buffers brrrrrr
 local buffers = setmetatable({}, {__index = function(_, k) return k end})
 
@@ -93,7 +95,7 @@ task.spawn(function()
         jump_early = 0.15,
         jump_reach = 14,
         jump_horizon = 3,
-        low_ball_rise = 15,
+        low_ball_rise = 5,
         fast_speed = 100,
         stand_y = hrp.Position.Y,
         ping_scale = 1.5,
