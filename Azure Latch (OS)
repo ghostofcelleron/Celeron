@@ -4322,7 +4322,7 @@ end)
 local autogk = maintab2:Folder("Auto Goalkeeper Features.", Color3.fromRGB(169, 5, 255), true)
 autogk:Label("Auto Goalkeeper: Automatically Plays As GK For You.")
 
-autogk:Button("Celeron's Auto GK", "Click V To Toggle Auto GK, Y Toggles Metavision, LeftAlt Toggles Corner Gui, F4 To Disable.", function()
+autogk:Button("Celeron's Auto GK", "V Toggles Auto GK, Y Toggles Metavision, LeftAlt Toggles Corner Gui & F4 To Disable.", function()
 local RunService        = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players           = game:GetService("Players")
