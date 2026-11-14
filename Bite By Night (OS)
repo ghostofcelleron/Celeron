@@ -468,27 +468,39 @@ survivor:Toggle("Auto Barricade", "Forces Barricading Dot In The Middle.",functi
     dotEnabled = s
     local player = game:GetService("Players").LocalPlayer
     local gui = player:WaitForChild("PlayerGui")
+
+    if dotConn then
+        dotConn:Disconnect()
+        dotConn = nil
+    end
+
     if s then
         dotConn = game:GetService("RunService").RenderStepped:Connect(function()
+            local frame
+
             local dot = gui:FindFirstChild("Dot")
             if dot and dot:IsA("ScreenGui") then
                 local container = dot:FindFirstChild("Container")
-                if container then
-                    local frame = container:FindFirstChild("Frame")
-                    if frame and frame:IsA("GuiObject") then
-                        if not dot.Enabled then
-                            dot:Destroy()
-                            return
-                        end
-                        frame.AnchorPoint = Vector2.new(0.5,0.5)
-                        frame.Position = UDim2.new(0.5,0,0.5,0)
-                    end
+                frame = container and container:FindFirstChild("Frame")
+                if frame and frame:IsA("GuiObject") and not dot.Enabled then
+                    dot:Destroy()
+                    return
                 end
+            end
+
+            if not (frame and frame:IsA("GuiObject")) then
+                local barricade = gui:FindFirstChild("DoorBarricade")
+                local container = barricade and barricade:FindFirstChild("Container")
+                frame = container and container:FindFirstChild("Frame")
+            end
+
+            if frame and frame:IsA("GuiObject") then
+                frame.AnchorPoint = Vector2.new(0.5,0.5)
+                frame.Position = UDim2.new(0.5,0,0.5,0)
             end
         end)
         notify2("Auto Barricade", "Enabled.")
     else
-        if dotConn then dotConn:Disconnect() end
         notify2("Auto Barricade", "Disabled.")
     end
 end)
@@ -697,6 +709,10 @@ survivor:Toggle("Auto Parry", "Automatically Attempts To Parry Killer Attacks.",
         "rbxassetid://112503015929213",
         "rbxassetid://120428956410756",
         "rbxassetid://133752270724243",
+        "rbxassetid://113529874603122",
+        "rbxassetid://87010349213767",
+        "rbxassetid://112216710292453",
+        "rbxassetid://73874961376513"
     }
 
     local connection
@@ -1393,11 +1409,11 @@ local function lerpTo(targetCFrame)
         local currentPos = root.Position
         local direction = (targetPos - currentPos)
         local distance = direction.Magnitude
-        
+
         if distance <= 0.5 then
             break
         end
-        
+
         local step = math.min(speed * RunService.RenderStepped:Wait(), distance)
         root.CFrame = CFrame.new(currentPos + direction.Unit * step, targetPos)
     end
@@ -1418,23 +1434,57 @@ local function TeleportTo(model)
     lerpTo(frontCFrame)
 end
 
-local function getOrderedGenerators()
+local function getGameMap()
     local mapsFolder = workspace:FindFirstChild("MAPS")
-    if not mapsFolder then return {} end
-    
-    local gameMap = mapsFolder:FindFirstChild("GAME MAP")
-    if not gameMap then return {} end
-    
-    local tasksFolder = gameMap:FindFirstChild("Tasks")
-    if not tasksFolder then return {} end
-    
-    local generators = tasksFolder:FindFirstChild("Generators")
-    if not generators then return {} end
+    return mapsFolder and mapsFolder:FindFirstChild("GAME MAP")
+end
 
+local function findInMap(name)
+    local gameMap = getGameMap()
+    return gameMap and gameMap:FindFirstChild(name, true)
+end
+
+local function hasAncestorNamed(inst, name)
+    local p = inst.Parent
+    while p do
+        if p.Name == name then return true end
+        p = p.Parent
+    end
+    return false
+end
+
+local function getTasksFolder()
+    local gameMap = getGameMap()
+    if not gameMap then return nil end
+    return gameMap:FindFirstChild("Tasks") or gameMap:FindFirstChild("Tasks", true)
+end
+
+local function getFolder(name)
+    local tasks = getTasksFolder()
+    local folder = tasks and tasks:FindFirstChild(name)
+    return folder or findInMap(name)
+end
+
+local function getOrderedGenerators()
     local models = {}
-    for _, v in ipairs(generators:GetChildren()) do
-        if v:IsA("Model") then 
-            table.insert(models, v) 
+    local generators = getFolder("Generators")
+
+    if generators then
+        for _, v in ipairs(generators:GetChildren()) do
+            if v:IsA("Model") then
+                table.insert(models, v)
+            end
+        end
+    end
+
+    if #models == 0 then
+        local gameMap = getGameMap()
+        if gameMap then
+            for _, v in ipairs(gameMap:GetDescendants()) do
+                if v:IsA("Model") and v.Name:lower():find("generator") and not v.Parent:IsA("Model") then
+                    table.insert(models, v)
+                end
+            end
         end
     end
 
@@ -1445,6 +1495,62 @@ local function getOrderedGenerators()
     end)
 
     return models
+end
+
+local function getBatteries()
+    local batteries = {}
+
+    local ignore = workspace:FindFirstChild("IGNORE")
+    if ignore then
+        for _, v in ipairs(ignore:GetDescendants()) do
+            if v:IsA("MeshPart") and v.Name == "Battery" then
+                table.insert(batteries, v)
+            end
+        end
+    end
+
+    if #batteries == 0 then
+        local gameMap = getGameMap()
+        if gameMap then
+            for _, v in ipairs(gameMap:GetDescendants()) do
+                if v:IsA("BasePart") and v.Name == "Battery" and not hasAncestorNamed(v, "FuseBoxes") then
+                    table.insert(batteries, v)
+                end
+            end
+        end
+    end
+
+    return batteries
+end
+
+local function getFuseBoxBatteries()
+    local batteries = {}
+    local fuseBoxes = getFolder("FuseBoxes")
+
+    if fuseBoxes then
+        for _, fuseBox in ipairs(fuseBoxes:GetChildren()) do
+            local battery = fuseBox:FindFirstChild("Battery") or fuseBox:FindFirstChildWhichIsA("BasePart", true)
+            if battery and battery:IsA("BasePart") then
+                table.insert(batteries, battery)
+            end
+        end
+    end
+
+    if #batteries == 0 then
+        local gameMap = getGameMap()
+        if gameMap then
+            for _, v in ipairs(gameMap:GetDescendants()) do
+                if v:IsA("Model") and v.Name:lower():find("fusebox") and not v.Parent:IsA("Model") then
+                    local battery = v:FindFirstChild("Battery", true) or v:FindFirstChildWhichIsA("BasePart", true)
+                    if battery and battery:IsA("BasePart") then
+                        table.insert(batteries, battery)
+                    end
+                end
+            end
+        end
+    end
+
+    return batteries
 end
 
 local generatorIndex = 1
@@ -1460,10 +1566,10 @@ tpstab:Button("Generator TP", "Teleports To A Generator. Click Again To Cancel."
     if not model then return end
 
     TeleportTo(model)
-    
+
     generatorIndex += 1
-    if generatorIndex > #models then 
-        generatorIndex = 1 
+    if generatorIndex > #models then
+        generatorIndex = 1
     end
 end)
 
@@ -1474,18 +1580,7 @@ tpstab:Button("Battery TP", "Teleports To A Battery. Click Again To Cancel.", fu
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
-    local ignore = workspace:FindFirstChild("IGNORE")
-    if not ignore then
-        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there are no batteries.")
-        return
-    end
-
-    local batteries = {}
-    for _, v in ipairs(ignore:GetDescendants()) do
-        if v:IsA("MeshPart") and v.Name == "Battery" then
-            table.insert(batteries, v)
-        end
-    end
+    local batteries = getBatteries()
 
     if #batteries == 0 then
         notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there are no batteries.")
@@ -1502,13 +1597,11 @@ tpstab:Button("Battery TP", "Teleports To A Battery. Click Again To Cancel.", fu
     local battery = batteries[batteryIndex]
     if not battery then return end
 
-    local targetCFrame = battery.CFrame * CFrame.new(0, 3, 0)
-
-    lerpTo(targetCFrame)
+    lerpTo(battery.CFrame * CFrame.new(0, 3, 0))
 
     batteryIndex += 1
-    if batteryIndex > #batteries then 
-        batteryIndex = 1 
+    if batteryIndex > #batteries then
+        batteryIndex = 1
     end
 end)
 
@@ -1520,37 +1613,7 @@ tpstab:Button("Fuse Box TP", "Teleports To A Fuse Box. Click Again To Cancel.", 
     local root = char:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
-    local mapsFolder = workspace:FindFirstChild("MAPS")
-    if not mapsFolder then
-        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
-        return
-    end
-
-    local gameMap = mapsFolder:FindFirstChild("GAME MAP")
-    if not gameMap then
-        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
-        return
-    end
-
-    local tasksFolder = gameMap:FindFirstChild("Tasks")
-    if not tasksFolder then
-        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
-        return
-    end
-
-    local fuseBoxes = tasksFolder:FindFirstChild("FuseBoxes")
-    if not fuseBoxes then
-        notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
-        return
-    end
-
-    local batteries = {}
-    for _, fuseBox in ipairs(fuseBoxes:GetChildren()) do
-        local battery = fuseBox:FindFirstChild("Battery") or fuseBox:FindFirstChildWhichIsA("BasePart", true)
-        if battery and battery:IsA("BasePart") then
-            table.insert(batteries, battery)
-        end
-    end
+    local batteries = getFuseBoxBatteries()
 
     if #batteries == 0 then
         notify2("error", "wait for match to start or wait for ur game to load fully. if loaded, there is no fusebox.")
@@ -1567,13 +1630,11 @@ tpstab:Button("Fuse Box TP", "Teleports To A Fuse Box. Click Again To Cancel.", 
     local battery = batteries[fuseIndex]
     if not battery then return end
 
-    local targetCFrame = battery.CFrame * CFrame.new(0, 3, 0)
-
-    lerpTo(targetCFrame)
+    lerpTo(battery.CFrame * CFrame.new(0, 3, 0))
 
     fuseIndex += 1
-    if fuseIndex > #batteries then 
-        fuseIndex = 1 
+    if fuseIndex > #batteries then
+        fuseIndex = 1
     end
 end)
 
