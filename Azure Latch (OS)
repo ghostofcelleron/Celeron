@@ -5193,7 +5193,7 @@ _G.clear_trajectory_lines = function()
 	folder:Destroy()
 end
 
-othersil:Toggle("Shot Trajectory", "Shows The Shot Trajectory Of Style's Base Curve Shot.", function(state)
+othersil:Toggle("Shot Predictor", "Shows Predicted (NOT EXACT) Trajectory Of Style's Base Curve Shot.", function(state)
 	enabled = state
 	if enabled then
 		rebuild()
@@ -5201,7 +5201,7 @@ othersil:Toggle("Shot Trajectory", "Shows The Shot Trajectory Of Style's Base Cu
 	else
 		folder.Parent = nil
 	end
-		game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Shot Trajectory", Text = enabled and "Enabled." or "Disabled.", Duration = 3})
+		game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Shot Predictor", Text = enabled and "Enabled." or "Disabled.", Duration = 3})
 end)
 
 local qteState = {
