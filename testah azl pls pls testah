@@ -1,3 +1,10 @@
+local executor = identifyexecutor and string.lower(identifyexecutor()) or "" 
+
+if string.find(executor, "xeno") or string.find(executor, "solara") or Solara or Xeno then 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/Azure%20Latch%3A%20Solara%20Edition%20(OS)"))()
+    return
+end
+
 if game.PlaceId == 139609232261520 then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/hgghhghghhgg"))()
 else
@@ -7,15 +14,16 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcel
 local win = ui:Create({
     Name = "Celeron's GUI (Azure Latch)",
     ThemeColor = Color3.fromRGB(152, 58, 201),
-    ThemeGradient = Color3.fromRGB(95, 11, 143),
+	ThemeGradient = Color3.fromRGB(95, 11, 143),
     StartupSound = "rbxassetid://6958727243",
     ThemeFont = Enum.Font.GothamBold,
-    ToggledSideBar = true
+	ToggledSideBar = true
 })
 
 local hometab = win:Tab("Home")
 local maintab = win:Tab("Blatant")
 local maintab2 = win:Tab("Silent")
+local funtab = win:Tab("Movesets")
 local teleporttab = win:Tab("Teleports")
 local exploittab = win:Tab("Exploits")
 local misctab = win:Tab("Others")
@@ -28,58 +36,57 @@ teleporttab:Label("Map Teleports, No Prerequisites To Use!")
 misctab:Label("Miscellaneous Features, They Give No Advantages In-Game!")
 exploittab:Label("This Tab Comes With Useful Features.")
 
-local VIM = game:GetService("VirtualInputManager")
-local Workspace = game:GetService("Workspace")
-local camera = Workspace.CurrentCamera
+--- buffers brrrrrr
+local buffers = setmetatable({}, {__index = function(_, k) return k end})
 
-local function sendMouseClick()
-    local viewportSize = camera.ViewportSize
-    local x = viewportSize.X / 2
-    local y = viewportSize.Y / 2
-
-    VIM:SendMouseButtonEvent(x, y, 0, true, game, 1)
-    task.wait(0.05)
-    VIM:SendMouseButtonEvent(x, y, 0, false, game, 1)
-end
-
-local function sendKeyPress(keyName)
-    if keyName == "leftmouseclick" then
-        sendMouseClick()
-        return
+NET = (function()
+    local Packets = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+    local warned = {}
+    
+    local function warnOnce(key, message)
+        if not warned[key] then 
+            warned[key] = true
+            warn("[net shim] " .. message) 
+        end
     end
-
-    local keyCode = Enum.KeyCode[keyName]
-    if not keyCode then
-        return
+    
+    local function convertToString(inputData)
+        if type(inputData) == "string" then return inputData end
+        if typeof(inputData) == "buffer" then return buffer.tostring(inputData) end
     end
-
-    VIM:SendKeyEvent(true, keyCode, false, game)
-    task.wait(0.05)
-    VIM:SendKeyEvent(false, keyCode, false, game)
-end
-
-local ACTION_TO_VIM = { 
-    dribble = "E", 
-    tackle = "Q", 
-    kick = "leftmouseclick", 
-    skill1 = "One", 
-    skill2 = "Two", 
-    skill3 = "Three", 
-    skill4 = "Four", 
-    skill5 = "Five", 
-    tspecialer = "T", 
-    Tspecialer = "T", 
-}
-
-local function pressAction(actionName)
-    local mapped = ACTION_TO_VIM[actionName]
-    if not mapped then
-        return
+    
+    local netShim = {}
+    
+    function netShim.FireServer(_, dataBuffer, actionsList)
+        local bufferType = convertToString(dataBuffer)
+        
+        if bufferType == "base" then
+            if type(actionsList) ~= "table" then return end
+            
+            for _, primaryAction in ipairs(actionsList) do
+                if type(primaryAction) == "table" then
+                    local success = pcall(Packets.bytenet_use.send, primaryAction)
+                    if not success then 
+                        warnOnce("use_" .. tostring(primaryAction), "bytenet_use execution failed for: '" .. tostring(primaryAction) .. "'") 
+                    end
+                end
+            end
+            
+        elseif bufferType == "grabball" then
+            local success = pcall(Packets.bytenet_findBall.send, actionsList)
+            if not success then 
+                warnOnce("grab", "bytenet_findBall execution channel failed.") 
+            end
+        end
     end
+    
+    netShim.fireServer = netShim.FireServer
+    return netShim
+end)()
+---
 
-    sendKeyPress(mapped)
-end
-
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -113,7 +120,6 @@ helptab:Label("Script Credits.")
 helptab:Label("Main Scripter: Celeron.")
 helptab:Label("Custom UI + Some Features: Daffy.")
 helptab:Label("GK Anywhere Feature: Ashura.")
-helptab:Label("Auto Config: Serlicia.")
 
 if math.random(1,50) == 1 then
     hometab:Banner("17327779381", 385)
@@ -137,9 +143,9 @@ end)
 
 local spawns = {}
 for _, obj in ipairs(workspace:GetDescendants()) do
-    if obj:IsA("SpawnLocation") then
-        table.insert(spawns, obj)
-    end
+	if obj:IsA("SpawnLocation") then
+		table.insert(spawns, obj)
+	end
 end
 
 meta = maintab:Folder("Metavision Features.", Color3.fromRGB(169, 5, 255), true)
@@ -153,11 +159,8 @@ meta:Button("Metavision V2", "Similar To V1, Only Can Be Used Below 1:30 On Cloc
     loadstring(game:HttpGet("https://pastebin.com/raw/HfpQBAsF"))()
 end)
 
-local ballfolder = maintab:Folder("Ball Features.", Color3.fromRGB(169, 5, 255), true)
+ballfolder = maintab:Folder("Ball Features.", Color3.fromRGB(169, 5, 255), true)
 ballfolder:Label("Ball Features.")
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 
 local autoGoalState = {
     enabled = false,
@@ -171,19 +174,20 @@ ballfolder:Toggle("Auto Goal", "Attempts To Steal The Ball And Score.", function
         Text = autoGoalState.enabled and "Enabled." or "Disabled.",
         Duration = 1
     })
-
+    
     if autoGoalState.enabled then
         local players = game:GetService("Players")
         local runservice = game:GetService("RunService")
+        local replicatedstorage = game:GetService("ReplicatedStorage")
         local map = workspace:WaitForChild("map")
         local agoal, bgoal = map:WaitForChild("Agoal"), map:WaitForChild("Bgoal")
         local localplayer = players.LocalPlayer
-
+        
         local function ingame()
             local state = localplayer.Character and localplayer.Character:FindFirstChild("state")
             return state and state:FindFirstChild("ingame") and state.ingame.Value
         end
-
+        
         local function disablecollisions()
             local gk = map:FindFirstChild("gkbarriar")
             if gk then
@@ -193,7 +197,7 @@ ballfolder:Toggle("Auto Goal", "Attempts To Steal The Ball And Score.", function
             if agoal then agoal.CanCollide = false end
             if bgoal then bgoal.CanCollide = false end
         end
-
+        
         local function stealball()
             local root = localplayer.Character and localplayer.Character:FindFirstChild("HumanoidRootPart")
             local ball = workspace.Terrain:FindFirstChild("Ball")
@@ -207,16 +211,19 @@ ballfolder:Toggle("Auto Goal", "Attempts To Steal The Ball And Score.", function
                     local localroot = localplayer.Character:FindFirstChild("HumanoidRootPart")
                     if otherball and otherroot and localroot then
                         localroot.CFrame = otherball.CFrame
-                        pressAction("tackle")
+                        NET:FireServer(
+                            buffer.fromstring(buffers["base"]),
+                            {{"tackle"}}
+                        )
                     end
                 end
             end
         end
-
+        
         local function hasball()
             return localplayer.Character and localplayer.Character:FindFirstChild("Ball") ~= nil
         end
-
+        
         autoGoalState.conn = runservice.RenderStepped:Connect(function()
             if not autoGoalState.enabled then return end
             pcall(function()
@@ -229,7 +236,10 @@ ballfolder:Toggle("Auto Goal", "Attempts To Steal The Ball And Score.", function
                     if root and goal then
                         root.CFrame = goal.CFrame
                         task.wait(0.185)
-                        pressAction("kick")
+                        NET:FireServer(
+                            buffer.fromstring(buffers["base"]),
+                            {{"kick", 20, false, vector.create(0, 1, 0)}}
+                        )
                     end
                 end
             end)
@@ -254,23 +264,26 @@ ballfolder:Toggle("Always Ball", "Attempts To Always Hold The Ball (zero gravity
         Text = alwaysBallState.enabled and "Enabled." or "Disabled.",
         Duration = 1
     })
-
+    
     if alwaysBallState.enabled then
         workspace.Gravity = 0
         alwaysBallState.conn = coroutine.wrap(function()
             while alwaysBallState.enabled do
-                local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                 local ball = workspace.Terrain:FindFirstChild("Ball")
                 if root and ball then
                     root.CFrame = CFrame.new(ball.Position)
                 end
                 for _, plr in pairs(game.Players:GetPlayers()) do
-                    if plr ~= LocalPlayer and plr.Character then
+                    if plr ~= game.Players.LocalPlayer and plr.Character then
                         local otherball = plr.Character:FindFirstChild("Ball")
                         local otherroot = plr.Character:FindFirstChild("HumanoidRootPart")
                         if otherball and otherroot and root then
                             root.CFrame = otherball.CFrame
-                            pressAction("tackle")
+                            NET:FireServer(
+                                buffer.fromstring(buffers["base"]),
+                                {{"tackle"}}
+                            )
                         end
                     end
                 end
@@ -283,7 +296,8 @@ ballfolder:Toggle("Always Ball", "Attempts To Always Hold The Ball (zero gravity
 end)
 
 local flowPartData = {
-    LocalPlayer = LocalPlayer,
+    LocalPlayer = game:GetService("Players").LocalPlayer,
+    ByteNetReliable = NET,
     flowPart = nil,
     flowActive = false,
     flowConnection = nil,
@@ -384,7 +398,10 @@ ballfolder:Button("Get Flow (Req. Ball)", "Click To Attempt Getting Flow. Click 
         while flowPartData.flowActive and flow.Value < 100 do
             for i = 1, 25 do
                 if not flowPartData.flowActive or flow.Value >= 100 then break end
-                pressAction("kick")
+                flowPartData.ByteNetReliable:FireServer(
+                    buffer.fromstring(buffers["base"]),
+                    { { "kick", 1, false, vector.create(0, 1, 0) } }
+                )
                 task.wait(0.15)
             end
 
@@ -402,7 +419,10 @@ ballfolder:Button("Get Flow (Req. Ball)", "Click To Attempt Getting Flow. Click 
 
             for i = 1, 2 do
                 if not flowPartData.flowActive or flow.Value >= 100 then break end
-                pressAction("kick")
+                flowPartData.ByteNetReliable:FireServer(
+                    buffer.fromstring(buffers["base"]),
+                    { { "kick", 1, false, vector.create(0, 1, 0) } }
+                )
                 task.wait(0.12)
             end
 
@@ -461,7 +481,7 @@ ballfolder:Button("Steal Ball", "Repeatedly Attempts To Get The Ball. Click Agai
                     local b = p.Character and p.Character:FindFirstChild("Ball")
                     if b then
                         hrp.CFrame = b.CFrame
-                        pressAction("tackle")
+                        flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"tackle"}})
                     end
                 end
             end
@@ -499,7 +519,7 @@ ballfolder:Button("Bring Ball", "Steals The Ball Then Teleports Back. Click Agai
                     local ob = p.Character and p.Character:FindFirstChild("Ball")
                     if ob then
                         hrp.CFrame = ob.CFrame
-                        pressAction("tackle")
+                        flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"tackle"}})
                     end
                 end
             end
@@ -514,6 +534,7 @@ ballfolder:Button("Bring Ball", "Steals The Ball Then Teleports Back. Click Agai
         stealActive = false
     end)
 end)
+
 
 ballfolder:Button("Steal Ball (Aiku)", "Repeatedly Attempts To Get The Ball Via Reflex Tackle. Click Again To Cancel.", function()
     local hrp = flowPartData.LocalPlayer.Character and flowPartData.LocalPlayer.Character.HumanoidRootPart
@@ -539,7 +560,7 @@ ballfolder:Button("Steal Ball (Aiku)", "Repeatedly Attempts To Get The Ball Via 
                     local b = p.Character and p.Character:FindFirstChild("Ball")
                     if b then
                         hrp.CFrame = b.CFrame
-                        pressAction("skill2")
+                        flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"skill2"}})
                     end
                 end
             end
@@ -577,7 +598,7 @@ ballfolder:Button("Bring Ball (Aiku)", "Steals The Ball Via Reflex Tackle Then T
                     local ob = p.Character and p.Character:FindFirstChild("Ball")
                     if ob then
                         hrp.CFrame = ob.CFrame
-                        pressAction("skill2")
+                        flowPartData.ByteNetReliable:FireServer(buffer.fromstring(buffers["base"]), {{"skill2"}})
                     end
                 end
             end
@@ -593,7 +614,7 @@ ballfolder:Button("Bring Ball (Aiku)", "Steals The Ball Via Reflex Tackle Then T
     end)
 end)
 
-local nocd = maintab:Folder("No Cooldown Features.", Color3.fromRGB(169, 5, 255), true)
+nocd = maintab:Folder("No Cooldown Features.", Color3.fromRGB(169, 5, 255), true)
 nocd:Label("No Cooldown Features. Please Note This Is Exclusive To PC.")
 
 userInputService = game:GetService("UserInputService")
@@ -781,7 +802,7 @@ if not dashState.dashBindsSetup then
     end)
 end
 
-local breakball = maintab:Folder("Break Ball Features.", Color3.fromRGB(169, 5, 255), true)
+breakball = maintab:Folder("Break Ball Features.", Color3.fromRGB(169, 5, 255), true)
 breakball:Label("Break Ball Features.")
 
 breakball:Button("Break Ball (Player Method, Req. Ball)", "Breaks The Ball By Going Extremely High Up.", function()
@@ -810,12 +831,15 @@ breakball:Button("Break Ball (Ball Method, Req. Ball)", "Breaks The Ball By Kick
     local lplr = game.Players.LocalPlayer
     local character = lplr.Character or lplr.CharacterAdded:Wait()
     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    local virtualInputManager = game:GetService("VirtualInputManager")
 
     if humanoidRootPart then
         local originalPosition = humanoidRootPart.Position
         humanoidRootPart.CFrame = CFrame.new(Vector3.new(-390, 475, 354))
         task.wait(0.3)
-        pressAction("kick")
+        virtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+        task.wait(0.1)
+        virtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
         task.wait(0.3)
         humanoidRootPart.CFrame = CFrame.new(originalPosition)
     end
@@ -826,7 +850,247 @@ breakball:Button("Permanent Break Ball (Req. Ball)", "Breaks The Ball By Placing
     game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(1, -49999, 1))
 end)
 
-local autodrib = maintab2:Folder("Auto Dribble / Counter Features.", Color3.fromRGB(169, 5, 255), true)
+ballmag = maintab2:Folder("Ball Magnet Features.", Color3.fromRGB(169, 5, 255), true)
+ballmag:Label("Original Ball Magnet: Allows You To Grab The Ball From Further Away.")
+
+local ballMagnetState = {
+    active = false,
+    conn = nil,
+    lastFire = 0,
+    fire_intrv = 0.01,
+    radius = 1,
+    hrp = nil,
+    use_bind_held = false,
+    vizEnabled = false,
+    hitbox = nil,
+    vizLoop = nil,
+    bind_key = nil,
+    input_conn = nil,
+    toggle = nil,
+    set_bind = nil,
+    aliases = {
+        ["0"] = "Zero", ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four",
+        ["5"] = "Five", ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine",
+        ctrl = "LeftControl", lctrl = "LeftControl", rctrl = "RightControl", control = "LeftControl",
+        shift = "LeftShift", lshift = "LeftShift", rshift = "RightShift",
+        alt = "LeftAlt", lalt = "LeftAlt", ralt = "RightAlt",
+        caps = "CapsLock", esc = "Escape", enter = "Return", del = "Delete", ins = "Insert",
+        bksp = "Backspace", pgup = "PageUp", pgdn = "PageDown",
+        ["-"] = "Minus", ["="] = "Equals", [";"] = "Semicolon", ["'"] = "Quote",
+        [","] = "Comma", ["."] = "Period", ["/"] = "Slash", ["\\"] = "BackSlash",
+        ["["] = "LeftBracket", ["]"] = "RightBracket", ["`"] = "Backquote",
+        num0 = "KeypadZero", num1 = "KeypadOne", num2 = "KeypadTwo", num3 = "KeypadThree",
+        num4 = "KeypadFour", num5 = "KeypadFive", num6 = "KeypadSix", num7 = "KeypadSeven",
+        num8 = "KeypadEight", num9 = "KeypadNine",
+        mouse1 = "MouseButton1", m1 = "MouseButton1",
+        mouse2 = "MouseButton2", m2 = "MouseButton2",
+        mouse3 = "MouseButton3", m3 = "MouseButton3"
+    }
+}
+
+ballMagnetState.set_bind = function(text)
+    text = tostring(text or ""):match("^%s*(.-)%s*$"):lower()
+
+    if text == "" or text == "none" or text == "clear" then
+        ballMagnetState.bind_key = nil
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Ball Magnet Bind",
+            Text = "Bind Is Currently Unbound.",
+            Duration = 1
+        })
+        return
+    end
+
+    for _, item in ipairs(Enum.KeyCode:GetEnumItems()) do
+        if item.Name:lower() == text or item.Name == ballMagnetState.aliases[text] then
+            ballMagnetState.bind_key = item
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "Ball Magnet Bind",
+                Text = "Bind Set To: " .. item.Name .. ".",
+                Duration = 2
+            })
+            return
+        end
+    end
+
+    for _, item in ipairs(Enum.UserInputType:GetEnumItems()) do
+        if item.Name:lower() == text or item.Name == ballMagnetState.aliases[text] then
+            ballMagnetState.bind_key = item
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "Ball Magnet Bind",
+                Text = "Bind Set To: " .. item.Name .. ".",
+                Duration = 2
+            })
+            return
+        end
+    end
+
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Ball Magnet Bind",
+        Text = "Invalid Key Detected:'" .. text .. "'. Bind Was Not Bound.",
+        Duration = 3
+    })
+end
+
+ballMagnetState.toggle = function()
+    ballMagnetState.active = not ballMagnetState.active
+
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Ball Magnet",
+        Text = ballMagnetState.active and "Enabled." or "Disabled.",
+        Duration = 1
+    })
+
+    if ballMagnetState.active then
+        if ballMagnetState.conn then
+            ballMagnetState.conn:Disconnect()
+        end
+
+        ballMagnetState.conn = RunService.Heartbeat:Connect(function()
+            local radius = ballMagnetState.radius or 1
+            if radius < 2 then return end
+
+            local ball = Workspace.Terrain:FindFirstChild("Ball")
+            if not ball then return end
+
+            if ballMagnetState.hrp then
+                local dist = (ballMagnetState.hrp.Position - ball.Position).Magnitude
+
+                if ballMagnetState.use_bind_held then
+                    if not ballMagnetState.bind_key then return end
+                    if ballMagnetState.bind_key.EnumType == Enum.KeyCode then
+                        if not game:GetService("UserInputService"):IsKeyDown(ballMagnetState.bind_key) then return end
+                    elseif ballMagnetState.bind_key.EnumType == Enum.UserInputType then
+                        if not game:GetService("UserInputService"):IsMouseButtonPressed(ballMagnetState.bind_key) then return end
+                    else
+                        return
+                    end
+                end
+
+                if dist <= radius and (time() - ballMagnetState.lastFire) >= ballMagnetState.fire_intrv then
+                    ballMagnetState.lastFire = time()
+                    pcall(function()
+                        NET:FireServer(buffer.fromstring(buffers["grabball"]))
+                    end)
+                end
+            end
+        end)
+    else
+        if ballMagnetState.conn then
+            ballMagnetState.conn:Disconnect()
+            ballMagnetState.conn = nil
+        end
+    end
+end
+
+ballmag:Toggle("Ball Magnet", "Ball Magnet, Uses Set Radius As Range.", function()
+    ballMagnetState.toggle()
+end)
+
+ballmag:Textbox("Ball Magnet Bind", "Enter Key (Example: E, M1, Mouse2). Blank Or None Unbinds.", function(v)
+    ballMagnetState.set_bind(v)
+end)
+
+ballmag:Slider("Ball Magnet Radius", 7, 7, 15, 0.5, function(v)
+    ballMagnetState.radius = v
+end)
+
+ballmag:Toggle("Ball Magnet On Bind Held", "If Enabled, Ball Magnet Only Grabs While The Bind Key Is Held Down.", function()
+    ballMagnetState.use_bind_held = not ballMagnetState.use_bind_held
+
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Ball Magnet On Bind Held",
+        Text = ballMagnetState.use_bind_held and "Enabled." or "Disabled.",
+        Duration = 1
+    })
+end)
+
+local function setupCharacter(char)
+    ballMagnetState.hrp = char:WaitForChild("HumanoidRootPart", 10)
+end
+
+if Players.LocalPlayer.Character then
+    setupCharacter(Players.LocalPlayer.Character)
+end
+
+Players.LocalPlayer.CharacterAdded:Connect(function(char)
+    setupCharacter(char)
+end)
+
+ballmag:Toggle("Ball Magnet Radius Hitbox", "Shows The Magnet's Radius Hitbox.", function()
+    ballMagnetState.vizEnabled = not ballMagnetState.vizEnabled
+
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Ball Magnet Radius Hitbox",
+        Text = ballMagnetState.vizEnabled and "Enabled." or "Disabled.",
+        Duration = 1
+    })
+
+    local function removeHitbox()
+        if ballMagnetState.hitbox then
+            ballMagnetState.hitbox:Destroy()
+            ballMagnetState.hitbox = nil
+        end
+    end
+
+    local function stopVizLoop()
+        if ballMagnetState.vizLoop then
+            ballMagnetState.vizLoop:Disconnect()
+            ballMagnetState.vizLoop = nil
+        end
+    end
+
+    if not ballMagnetState.vizEnabled then
+        stopVizLoop()
+        removeHitbox()
+        return
+    end
+
+    stopVizLoop()
+
+    ballMagnetState.vizLoop = RunService.Heartbeat:Connect(function()
+        if not ballMagnetState.vizEnabled or not ballMagnetState.active then
+            removeHitbox()
+            return
+        end
+
+        local terrain = workspace:FindFirstChild("Terrain")
+        local ball = terrain and terrain:FindFirstChild("Ball")
+        if not ball or not ball:IsA("MeshPart") then
+            removeHitbox()
+            return
+        end
+
+        local radius = ballMagnetState.radius or 1
+        if radius < 2 then
+            removeHitbox()
+            return
+        end
+
+        if not ballMagnetState.hitbox then
+            local hitbox = Instance.new("Part")
+            hitbox.Name = "BallMagnetRange"
+            hitbox.Shape = Enum.PartType.Ball
+            hitbox.Material = Enum.Material.Neon
+            hitbox.Color = Color3.fromRGB(15, 155, 155)
+            hitbox.Transparency = 0.9
+            hitbox.CanCollide = false
+            hitbox.CanTouch = false
+            hitbox.CanQuery = false
+            hitbox.Anchored = true
+            hitbox.Massless = true
+            hitbox.Parent = workspace
+            ballMagnetState.hitbox = hitbox
+        end
+
+        local d = radius * 2
+        local hitbox = ballMagnetState.hitbox
+        hitbox.Size = Vector3.new(d, d, d)
+        hitbox.CFrame = ball.CFrame
+    end)
+end)
+
+autodrib = maintab2:Folder("Auto Dribble / Counter Features.", Color3.fromRGB(169, 5, 255), true)
 autodrib:Label("Set The Auto-Counter Number To Your Character's Counter Move.")
 
 local tick = tick
@@ -843,7 +1107,7 @@ local autoSkillState = {
         ["toggleCounter3"] = "skill3",
         ["toggleCounter4"] = "skill4",
         ["toggleCounter5"] = "skill5",
-        ["toggleTSpecial"] = "tspecialer"
+        ["toggleTSpecial"] = "Tspecialer"
     },
     toggleDribble = false,
     toggleCounter1 = false,
@@ -862,13 +1126,13 @@ local autoSkillState = {
     playerCooldown = 0.33,
 }
 
-local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local localplayer = player
 local playerGui = player:WaitForChild("PlayerGui")
 
 local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local extraHud = playerGui:WaitForChild("ExtraHud")
 local fpsCounter = extraHud:WaitForChild("FPSCounter")
@@ -885,9 +1149,9 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 local cubesizeeee = 15
-local gapbetweenuisyesireallylikelongvariablenameshowdyouknow = 3
-local icantrememberwhatthisisgapxtho = 10
-local offsetfrompingui = 30
+local gapbetweenuisyesireallylikelongvariablenameshowdyouknow = 3           
+local icantrememberwhatthisisgapxtho = 10    
+local offsetfrompingui = 30 
 
 local layoutCounters = {
     {key = "toggleDribble", labelText = "Z"},
@@ -904,9 +1168,9 @@ local visualCubeElements = {}
 local positionCubes
 
 local function updcounterui()
-    if not autoSkillState.showActiveCounters then
+    if not autoSkillState.showActiveCounters then 
         screenGui.Enabled = false
-        return
+        return 
     else
         screenGui.Enabled = true
         if #screenGui:GetChildren() == 0 then
@@ -931,31 +1195,31 @@ end
 function positionCubes()
     local iconPos = icon.AbsolutePosition
     local iconSize = icon.AbsoluteSize
-
+    
     local startX = iconPos.X
     local startY = iconPos.Y + iconSize.Y + offsetfrompingui
-
+    
     screenGui:ClearAllChildren()
     visualCubeElements = {}
-
+    
     for i, configuration in ipairs(layoutCounters) do
         local labelText = configuration.labelText
         local frame = Instance.new("Frame")
         frame.Name = "Cube_" .. labelText
-
+        
         local posX = startX
         local posY = startY + ((i - 1) * (cubesizeeee + gapbetweenuisyesireallylikelongvariablenameshowdyouknow))
-
+        
         frame.Size = UDim2.new(0, cubesizeeee, 0, cubesizeeee)
         frame.Position = UDim2.new(0, posX, 0, posY)
         frame.BorderSizePixel = 0
         frame.Parent = screenGui
-
+        
         visualCubeElements[i] = frame
-
+        
         local label = Instance.new("TextLabel")
         label.Name = "Label_" .. labelText
-
+        
         local labelX = posX + cubesizeeee + icantrememberwhatthisisgapxtho
         label.Size = UDim2.new(0, cubesizeeee, 0, cubesizeeee)
         label.Position = UDim2.new(0, labelX, 0, posY)
@@ -968,7 +1232,7 @@ function positionCubes()
         label.TextYAlignment = Enum.TextYAlignment.Center
         label.Parent = screenGui
     end
-
+    
     for idx, configuration in ipairs(layoutCounters) do
         local frameElement = visualCubeElements[idx]
         if frameElement then
@@ -996,6 +1260,7 @@ end)
 
 icon:GetPropertyChangedSignal("AbsolutePosition"):Connect(positionCubes)
 
+
 local steal_anims = {
     "rbxassetid://109744655458082",
     "rbxassetid://113088324958896",
@@ -1010,7 +1275,9 @@ local function notify2(title, text, duration)
     end
 end
 
+local buffer = buffer or { fromstring = function(str) return str end }
 local connections = {}
+local byteNetReliable = NET
 
 local function hasball()
     return localplayer.Character and localplayer.Character:FindFirstChild("Ball") ~= nil
@@ -1040,13 +1307,14 @@ end
 
 local function fireSkill(skillName, targetPlayer)
     if not hasball() then return end
-    if type(skillName) == "string" then
-        if skillName:lower() == "tspecialer" then
-            pressAction("tspecialer")
-        else
-            pressAction(skillName)
-        end
+    local args
+    if autoSkillState.useClosestTeammate and targetPlayer then
+        local targetChar = targetPlayer.Character
+        args = { buffer.fromstring(buffers["base"]), {{ skillName, targetChar }} }
+    else
+        args = { buffer.fromstring(buffers["base"]), {{ skillName }} }
     end
+    byteNetReliable:FireServer(unpack(args))
 end
 
 local toggleKeys = {"toggleCounter1", "toggleCounter2", "toggleCounter3", "toggleCounter4", "toggleCounter5"}
@@ -1081,7 +1349,7 @@ function montackleanim(animator, targetPlayer)
                 return
             end
             if now - lastFire < autoSkillState.fireRate then return end
-
+            
             lastFire = now
 
             local myChar = localplayer.Character
@@ -1240,14 +1508,17 @@ autogoal:Button("Isagi U-20 Goal", "Attempts To Do Isagi's U-20 Auto Goal By Tel
     local plr = game.Players.LocalPlayer
     if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = plr.Character.HumanoidRootPart
-
+        
         if plr.Team == game.Teams:FindFirstChild("A") then
             hrp.CFrame = CFrame.new(-536, 3, 999)
         elseif plr.Team == game.Teams:FindFirstChild("B") then
             hrp.CFrame = CFrame.new(-537, 3, 1549)
         end
         task.wait(0.2)
-        pressAction("skill3")
+        NET:FireServer(
+            buffer.fromstring(buffers["base"]),
+            { { "skill3"} }
+        )
     end
 end)
 
@@ -1255,7 +1526,7 @@ autogoal:Button("Nagi Dream Goal", "Attempts To Do Nagi's Control Move Auto Goal
     local plr = game.Players.LocalPlayer
     if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = plr.Character.HumanoidRootPart
-
+        
         if plr.Team == game.Teams:FindFirstChild("A") then
             hrp.CFrame = CFrame.new(-459, 3, 862)
         elseif plr.Team == game.Teams:FindFirstChild("B") then
@@ -1266,7 +1537,10 @@ autogoal:Button("Nagi Dream Goal", "Attempts To Do Nagi's Control Move Auto Goal
             plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
         end
         task.wait(0.2)
-        pressAction("skill2")
+        NET:FireServer(
+            buffer.fromstring(buffers["base"]),
+            { { "skill2", true } }
+        )
     end
 end)
 
@@ -1286,20 +1560,20 @@ autogoal:Button("Barou Devour Goal", "Attempts To Do Barou's Devour Auto Goal By
         end
         return count
     end
-
+    
     local function getTwoRandomEnemies()
         local enemies = {}
         local op = game.Teams:FindFirstChild("A")
         if plr.Team == game.Teams:FindFirstChild("A") then
             op = game.Teams:FindFirstChild("B")
         end
-
+        
         for _, player in ipairs(game.Players:GetPlayers()) do
             if player ~= plr and player.Team == op then
                 table.insert(enemies, player)
             end
         end
-
+        
         for i = #enemies, 2, -1 do
             local j = math.random(1, i)
             enemies[i], enemies[j] = enemies[j], enemies[i]
@@ -1307,7 +1581,7 @@ autogoal:Button("Barou Devour Goal", "Attempts To Do Barou's Devour Auto Goal By
 
         return enemies[1], enemies[2]
     end
-
+    
     if countEnemyTeamMembers() >= 2 then
         local p1, p2 = getTwoRandomEnemies()
         if not p1 or not p2 then return end
@@ -1325,9 +1599,9 @@ autogoal:Button("Barou Devour Goal", "Attempts To Do Barou's Devour Auto Goal By
         tpToPlayer(p1)
         task.wait(0.3)
         tpToPlayer(p2)
-
+        
         task.wait(0.3)
-
+        
         if plr.Team == game.Teams:FindFirstChild("A") then
             plr.Character.HumanoidRootPart.Position = Vector3.new(-625, 3, 925)
         elseif plr.Team == game.Teams:FindFirstChild("B") then
@@ -1339,10 +1613,15 @@ end)
 local add = maintab:Folder("Fun Features.", Color3.fromRGB(169, 5, 255), true)
 add:Label("Fun Features: Pretty Fun Features I'd Say.")
 
-local AnimationId = "rbxassetid://113098409724280"
+local AnimationId = "rbxassetid://106978014114973"
 local safety = Vector3.new(-540, 3, 1274)
+mapFolmain = workspace.map.map.sanam.main
+local floorAie = workspace.map.map.sanam.main.Size
 
-local invisState = {
+workspace.map.map.sanam.main.Size = Vector3.new(floorAie.X, 2, floorAie.Z)
+workspace.map.map.sanam.main.Position += Vector3.new(0, (floorAie.Y - 2) / 2, 0)
+
+invisState = {
     active = false,
     character = nil,
     humanoid = nil,
@@ -1383,7 +1662,6 @@ local function setupCharacter(char)
         startInvisibility()
     end
 end
-
 RunService.RenderStepped:Connect(function()
     if not invisState.active then return end
     if not invisState.humanoid or not invisState.character then return end
@@ -1398,6 +1676,15 @@ RunService.RenderStepped:Connect(function()
 
         if not raycastResult then
             rootPart.CFrame = CFrame.new(safety)
+            return
+        end
+        
+        local floorTop = mapFolmain.Position.Y + mapFolmain.Size.Y / 2
+        if rootPart.Position.Y > floorTop + 20 then
+            local _, yaw, _ = rootPart.CFrame:ToOrientation()
+            rootPart.CFrame = CFrame.new(rootPart.Position.X, floorTop + 3, rootPart.Position.Z) * CFrame.Angles(0, yaw, 0)
+            rootPart.AssemblyLinearVelocity = Vector3.zero
+            rootPart.AssemblyAngularVelocity = Vector3.zero
         end
     end
 end)
@@ -1408,7 +1695,7 @@ if player.Character then
     setupCharacter(player.Character)
 end
 
-add:Toggle("Invisibility V1 (Method: Animation)", "Makes You Almost Fully Invisible To Other Players Using An Animation.", function(v)
+add:Toggle("Invisibility (Method: Animation)", "Makes You Almost Fully Invisible To Other Players Using An Animation.", function(v)
     invisState.active = v
     if v then
         startInvisibility()
@@ -1417,175 +1704,87 @@ add:Toggle("Invisibility V1 (Method: Animation)", "Makes You Almost Fully Invisi
     end
 end)
 
-add:Button("Invisibility V2 (Method: Clone)", "Makes You Almost Fully Invisible To Other Players Using Cloning. Click Z To Disable." , function(v)
-    local Players = game:GetService("Players")
-    local RunService = game:GetService("RunService")
-    local UserInputService = game:GetService("UserInputService")
+passingState = {
+    InfiniteRangePassing = false,
+    busy = false
+}
 
-    local player = Players.LocalPlayer
-    local enabled = true
+local plr = Players.LocalPlayer
+local mouse = plr:GetMouse()
+local Camera = workspace.CurrentCamera
+local passpass = NET
 
-    local charactersfolder = workspace:WaitForChild("characters", 10)
-    if not charactersfolder then return end
+local keyToSkill = {
+    [Enum.KeyCode.One]   = "skill1",
+    [Enum.KeyCode.Two]   = "skill2",
+    [Enum.KeyCode.Three] = "skill3",
+    [Enum.KeyCode.Four]  = "skill4",
+}
 
-    local character = charactersfolder:WaitForChild(player.Name, 15)
-    if not character then return end
+local function getClosestPlayerToCursor()
+    local mousePos = UserInputService:GetMouseLocation()
+    local closestChar, closestDist = nil, math.huge
+    local char, hum, hrp, screenPos, onScreen, dist
 
-    if not character:FindFirstChild("Humanoid") or not character:FindFirstChild("HumanoidRootPart") then return end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= plr and p.Team == plr.Team then
+            char = p.Character
+            if not char then continue end
+            hum = char:FindFirstChild("Humanoid")
+            hrp = char:FindFirstChild("HumanoidRootPart")
 
-    character.Archivable = true
-    local characterroot = character:WaitForChild("HumanoidRootPart")
-    characterroot.Transparency = 1
-
-    local clone = character:Clone()
-    if not clone then return end
-
-    clone.Name = player.Name .. "_Ghost"
-    clone.Parent = workspace
-
-    for _, obj in ipairs(clone:GetDescendants()) do
-        if obj:IsA("BasePart") or obj:IsA("MeshPart") or obj:IsA("Part") then
-            if obj.Name == "HumanoidRootPart" then
-                obj.Transparency = 1
-            else
-                obj.Transparency = 0.4
-            end
-            obj.CanCollide = true
-        elseif obj:IsA("Decal") or obj:IsA("Texture") or obj:IsA("ShirtGraphic") then
-            obj.Transparency = 0
-        end
-    end
-
-    local cloneroot = clone:WaitForChild("HumanoidRootPart", 5)
-    if cloneroot then
-        cloneroot.Transparency = 1
-    end
-
-    local clonehumanoid = clone:WaitForChild("Humanoid", 5)
-    if not cloneroot or not clonehumanoid then
-        clone:Destroy()
-        return
-    end
-
-    cloneroot.CFrame = character.HumanoidRootPart.CFrame + Vector3.new(0, 5, 0)
-    clonehumanoid.PlatformStand = false
-    clonehumanoid.WalkSpeed = 75
-    clonehumanoid.JumpPower = 50
-
-    player.Character = clone
-    workspace.CurrentCamera.CameraSubject = clonehumanoid
-
-    local animations = {
-        Run  = "rbxassetid://90801998022970",
-        Jump = "rbxassetid://80330677678466"
-    }
-
-    local runanim = Instance.new("Animation")
-    runanim.AnimationId = animations.Run
-    local runtrack = clonehumanoid:LoadAnimation(runanim)
-    runtrack.Looped = true
-    runtrack.Priority = Enum.AnimationPriority.Movement
-
-    local jumpanim = Instance.new("Animation")
-    jumpanim.AnimationId = animations.Jump
-    local jumptrack = clonehumanoid:LoadAnimation(jumpanim)
-    jumptrack.Looped = false
-    jumptrack.Priority = Enum.AnimationPriority.Action
-
-    local isrunning = false
-
-    local teleportconn
-    local speedenforceconn
-
-    UserInputService.InputBegan:Connect(function(input, gameprocessed)
-        if gameprocessed then return end
-        if input.KeyCode == Enum.KeyCode.Z and enabled then
-            enabled = false
-
-            if teleportconn then teleportconn:Disconnect() end
-            if speedenforceconn then speedenforceconn:Disconnect() end
-            teleportconn = nil
-            speedenforceconn = nil
-
-            player.Character = character
-            workspace.CurrentCamera.CameraSubject = character:FindFirstChild("Humanoid")
-
-            if clone then clone:Destroy() end
-            clone = nil
-
-            for _, part in ipairs(character:GetDescendants()) do
-                if part:IsA("BasePart") or part:IsA("MeshPart") then
-                    if part.Name == "HumanoidRootPart" then
-                        part.Transparency = 1
-                    else
-                        part.Transparency = 0
+            if hum and hrp and hum.Health > 0 then
+                screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+                if onScreen then
+                    dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                    if dist < closestDist then
+                        closestDist = dist
+                        closestChar = char
                     end
-                    part.CanCollide = true
-                elseif part:IsA("Decal") or part:IsA("Texture") or part:IsA("ShirtGraphic") then
-                    part.Transparency = 0
                 end
             end
-
-            runtrack:Stop(0.2)
-            jumptrack:Stop(0.2)
-            isrunning = false
         end
-    end)
+    end
 
-    teleportconn = RunService.Heartbeat:Connect(function()
-        if not enabled then return end
-        if not cloneroot or not cloneroot.Parent or not characterroot or not characterroot.Parent then return end
-        local clonepos = cloneroot.Position
-        local underpos = clonepos - Vector3.new(0, 15, 0)
-        characterroot.CFrame = CFrame.new(underpos, clonepos)
-        for _, part in ipairs(character:GetDescendants()) do
-            if part:IsA("BasePart") or part:IsA("MeshPart") then
-                part.Transparency = 1
-                part.CanCollide = false
-            end
-        end
-    end)
+    return closestChar
+end
 
-    speedenforceconn = RunService.RenderStepped:Connect(function()
-        if not enabled then return end
-        if not clonehumanoid or not clonehumanoid.Parent then return end
-        clonehumanoid.WalkSpeed = 75
-        clonehumanoid.JumpPower = 50
-    end)
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if not passingState.InfiniteRangePassing then return end
+    if passingState.busy then return end
+    if plr.Team == game.Teams.lobby then return end
 
-    RunService.Heartbeat:Connect(function()
-        if not enabled or not clonehumanoid or not clonehumanoid.Parent then return end
-        local moving = clonehumanoid.MoveDirection.Magnitude > 0.01
-        local currentstate = clonehumanoid:GetState()
-        if moving and currentstate ~= Enum.HumanoidStateType.Jumping then
-            if not isrunning then
-                runtrack:Play(0.1)
-                isrunning = true
-            end
-        else
-            if isrunning then
-                runtrack:Stop(0.3)
-                isrunning = false
-            end
-        end
-        if currentstate == Enum.HumanoidStateType.Jumping or currentstate == Enum.HumanoidStateType.Freefall then
-            if not jumptrack.IsPlaying then
-                jumptrack:Play(0.15)
-            end
-        elseif jumptrack.IsPlaying then
-            jumptrack:Stop(0.2)
-        end
-    end)
+    local skillName = keyToSkill[input.KeyCode]
+    if not skillName then return end
 
-    player.CharacterRemoving:Connect(function()
-        enabled = false
-        if teleportconn then teleportconn:Disconnect() end
-        if speedenforceconn then speedenforceconn:Disconnect() end
-        runtrack:Stop(0)
-        jumptrack:Stop(0)
-        isrunning = false
-        if clone then clone:Destroy() end
+    local targetChar = getClosestPlayerToCursor()
+    if not targetChar then return end
+
+    passingState.busy = true
+
+    passpass:FireServer(
+        buffer.fromstring(buffers["base"]),
+        {
+            {
+                skillName,
+                targetChar
+            }
+        }
+    )
+
+    task.delay(0.1, function()
+        passingState.busy = false
     end)
+end)
+
+add:Toggle("Infinite Range Passing", "Pass To The Closest Teammate To Your Mouse From Anywhere.", function(v)
+    passingState.InfiniteRangePassing = v
+    StarterGui:SetCore("SendNotification", {
+        Title = "Infinite Pass",
+        Text = v and "Enabled." or "Disabled.",
+        Duration = 5
+    })
 end)
 
 add:Toggle("Auto Break Server (Demon's Contract)", "When Using Demon's Contract With Kunigami, It Will Automatically Reset.", function(v)
@@ -1725,11 +1924,25 @@ add:Button("Steal Screen Time (funny)", "Click Z To Disable, Steals Screen Time.
     end)
 end)
 
-add:Button("Shachoko GK Catch (Req. GK Position.)", "Makes It Almost Impossible To Be Scored On As GK And Does Shachoko Kick.", function()
-    loadstring(game:HttpGet("https://pastebin.com/raw/Hr1HnK38"))()
+add:Button("Goalkeeper Anywhere (Rejoin To Disable.)", "Allows You To Do GK Side Dashes Instead!", function()
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Goalkeeper Anywhere",
+        Text = "If You Don't See GK Animations, Your Executor Doesn't Support The Required Functions.",
+        Duration = 10,
+        Button1 = "ok my executor is fine",
+        Button2 = "aw man my executor sucks"
+    })
+
+    local module = game:GetService("ReplicatedStorage").util.actionUtil
+    local env = require(module)
+
+    local oldfunc
+    oldfunc = hookfunction(env.checkGK, function (...)
+        return true
+    end)
 end)
 
-local oth = maintab:Folder("Other Blatant Features.", Color3.fromRGB(169, 5, 255), true)
+oth = maintab:Folder("Other Blatant Features.", Color3.fromRGB(169, 5, 255), true)
 oth:Label("Other Blatant Features: It's In The Name.")
 
 local blatantState = {
@@ -1843,7 +2056,18 @@ oth:Toggle("Spam Brick Sound (5v5 + GK Only.)", "This SHOULD Be Self Explanatory
                     root.CFrame = CFrame.new(targetPos)
                     task.wait(0.1)
 
-                    pressAction("kick")
+                    local args = {
+                        buffer.fromstring(buffers["base"]),
+                        {
+                            {
+                                "kick",
+                                27,
+                                false,
+                                vector.create(0, 1, 0)
+                            }
+                        }
+                    }
+                    NET:FireServer(unpack(args))
 
                     task.wait(0.05)
                 end
@@ -1883,7 +2107,7 @@ murder:Button("Evil Info", "This Comes With Instructions On How To Use The Featu
         Title = "Evil Info",
         Text = "KILL, KILL, KILL! will kill the victim.",
         Duration = 10
-    })
+    }) 
     task.wait(0.5)
     StarterGui:SetCore("SendNotification", {
         Title = "Evil Info",
@@ -1898,7 +2122,7 @@ grabz = {
     "rbxassetid://114866946968143",
     "rbxassetid://88690614253524",
     "rbxassetid://107389719253201",
-    "rbxassetid://133382731392749"
+	"rbxassetid://133382731392749"
 }
 
 function isgrabbing(animTrack)
@@ -1917,23 +2141,23 @@ function killthemNOW()
         connection:Disconnect()
         connection = nil
     end
-
+    
     local character = game:GetService("Players").LocalPlayer.Character
     if not character then return end
-
+    
     local humanoid = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid", 5)
     if not humanoid then return end
-
+    
     connection = humanoid.AnimationPlayed:Connect(function(animTrack)
         if not youareamurderer then return end
         if not isgrabbing(animTrack) then return end
-
+        
         local root = character:FindFirstChild("HumanoidRootPart")
         if not root then return end
-
+        
         local originalCFrame = root.CFrame
         task.wait(0.2)
-
+        
         local targetPos
         if attackmode == "KILL, KILL, KILL!" then
             targetPos = Vector3.new(5000, 760, 5000)
@@ -1946,14 +2170,14 @@ function killthemNOW()
         else
             return
         end
-
+        
         local isAnimPlaying = true
         local teleportLoop = game:GetService("RunService").Heartbeat:Connect(function()
             if isAnimPlaying and root and root.Parent then
                 root.CFrame = CFrame.new(targetPos)
             end
         end)
-
+        
         local killConn
         killConn = animTrack.Stopped:Connect(function()
             if killConn then killConn:Disconnect() end
@@ -1963,7 +2187,7 @@ function killthemNOW()
                 root.CFrame = originalCFrame
             end
         end)
-
+        
         task.delay(10, function()
             if killConn then killConn:Disconnect() end
             if teleportLoop then teleportLoop:Disconnect() end
@@ -1974,7 +2198,7 @@ end
 
 murder:Toggle("THIS ISN'T SOCCER ANYMORE!", "When Using Certain Grab Moves, This Will DEVOUR The Victim.", function(state)
     youareamurderer = state
-
+    
     game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = "evil ass soccer mode",
         Text = youareamurderer and "you're a dead man!! im sending you straight to hell!" or "you're a good man arthur morgan.",
@@ -1986,7 +2210,7 @@ murder:Toggle("THIS ISN'T SOCCER ANYMORE!", "When Using Certain Grab Moves, This
     end
 end)
 
-murder:Dropdown("Attack Method", {"KILL, KILL, KILL!", "New Commentator?", "PrisonA", "PrisonB"}, function(v)
+murder:Dropdown("Attack Method", {"KILL, KILL, KILL!", "New Commentator?", "PrisonA", "PrisonB"}, function(v) 
     attackmode = v
     game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = "Attack Method",
@@ -2000,9 +2224,9 @@ game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
         connection:Disconnect()
         connection = nil
     end
-
+    
     task.wait(1)
-
+    
     if youareamurderer then
         killthemNOW()
     end
@@ -2012,7 +2236,7 @@ if game:GetService("Players").LocalPlayer.Character then
     killthemNOW()
 end
 
-local th = maintab:Folder("Trap Helper.", Color3.fromRGB(169, 5, 255), true)
+th = maintab:Folder("Trap Helper.", Color3.fromRGB(169, 5, 255), true)
 th:Label("Trap Helper: Automatically Moves Toward Ball During Trap Moves.")
 
 local trapAnims = {
@@ -2049,16 +2273,16 @@ local function findBall()
 end
 
 local function cleanupTrap()
-    if trapState.conn then
-        trapState.conn:Disconnect()
-        trapState.conn = nil
+    if trapState.conn then 
+        trapState.conn:Disconnect() 
+        trapState.conn = nil 
     end
     trapState.active = false
     trapState.track = nil
     trapState.ball = nil
-    if trapState.alignOri then
-        trapState.alignOri:Destroy()
-        trapState.alignOri = nil
+    if trapState.alignOri then 
+        trapState.alignOri:Destroy() 
+        trapState.alignOri = nil 
     end
 end
 
@@ -2534,7 +2758,7 @@ local function updateDashes(dt)
             table.remove(ActiveDashes, i)
         end
     end
-
+    
     if #ActiveDashes == 0 and renderConn then
         renderConn:Disconnect()
         renderConn = nil
@@ -2550,17 +2774,17 @@ end
 local function startDash(hrp, cfg, track, directionName)
     local dist = Distances[cfg.sliderVar]
     if dist <= 0 then return end
-
+    
     task.delay(cfg.wait or 0, function()
         if not hrp or not hrp.Parent then return end
-
+        
         local dash = {
             hrp = hrp,
             remaining = dist,
             cfg = cfg,
             isDirectional = cfg.isDirectional == true
         }
-
+        
         if dash.isDirectional and directionName then
             dash.offset = DirectionOffsets[directionName] or Vector3.new(0,0,1)
         end
@@ -2578,7 +2802,7 @@ local function startDash(hrp, cfg, track, directionName)
         else
             dash.speed = dist / cfg.duration
         end
-
+        
         table.insert(ActiveDashes, dash)
         startUpdateIfNeeded()
     end)
@@ -2587,11 +2811,11 @@ end
 local function onAnimationPlayed(track)
     if not track.Animation then return end
     local id = track.Animation.AnimationId
-
+    
     for _, cfg in pairs(DashConfigs) do
         local match = false
         local directionName = nil
-
+        
         if cfg.animId and id == cfg.animId then
             match = true
         elseif cfg.animIds then
@@ -2602,7 +2826,7 @@ local function onAnimationPlayed(track)
                 match = true
             end
         end
-
+        
         if match then
             if cachedHRP and cachedHRP.Parent then
                 if cfg.requiresBall then
@@ -2790,70 +3014,154 @@ d:Slider("Shadow Step Distance", 0, 0, 50, 1, function(v)
     Distances.shadowDist = v
 end)
 
-local autoact = maintab2:Folder("Auto Activate Features.", Color3.fromRGB(169, 5, 255), true)
+autoact = maintab2:Folder("Auto Activate Features.", Color3.fromRGB(169, 5, 255), true)
 autoact:Label("Auto Activate: Activates The Move When Ball Within Range.")
 
-local autoActivateState = {
+local auto_activate_state = {
     distance = 10,
-    toggleState = false,
-    moveNumber = 1,
+    toggle_state = false,
+    move_number = 1,
     db = true,
     mode = "Hold",
-    minHeight = 0
+    min_height = 0,
+    use_bind_held = false,
+    bind_key = nil,
+    input_conn = nil,
+    toggle = nil,
+    set_bind = nil,
+    aliases = {
+        ["0"] = "Zero", ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four",
+        ["5"] = "Five", ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine",
+        ctrl = "LeftControl", lctrl = "LeftControl", rctrl = "RightControl", control = "LeftControl",
+        shift = "LeftShift", lshift = "LeftShift", rshift = "RightShift",
+        alt = "LeftAlt", lalt = "LeftAlt", ralt = "RightAlt",
+        caps = "CapsLock", esc = "Escape", enter = "Return", del = "Delete", ins = "Insert",
+        bksp = "Backspace", pgup = "PageUp", pgdn = "PageDown",
+        ["-"] = "Minus", ["="] = "Equals", [";"] = "Semicolon", ["'"] = "Quote",
+        [","] = "Comma", ["."] = "Period", ["/"] = "Slash", ["\\"] = "BackSlash",
+        ["["] = "LeftBracket", ["]"] = "RightBracket", ["`"] = "Backquote",
+        num0 = "KeypadZero", num1 = "KeypadOne", num2 = "KeypadTwo", num3 = "KeypadThree",
+        num4 = "KeypadFour", num5 = "KeypadFive", num6 = "KeypadSix", num7 = "KeypadSeven",
+        num8 = "KeypadEight", num9 = "KeypadNine"
+    }
 }
 
+auto_activate_state.set_bind = function(text)
+    text = tostring(text or ""):match("^%s*(.-)%s*$"):lower()
+
+    if text == "" or text == "none" or text == "clear" then
+        auto_activate_state.bind_key = nil
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Auto Activate Bind",
+            Text = "Bind Is Currently Unbound.",
+            Duration = 1
+        })
+        return
+    end
+
+    for _, item in ipairs(Enum.KeyCode:GetEnumItems()) do
+        if item.Name:lower() == text or item.Name == auto_activate_state.aliases[text] then
+            auto_activate_state.bind_key = item
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Auto Activate Bind",
+                Text = "Bind Set To: " .. item.Name .. ".",
+                Duration = 2
+            })
+            return
+        end
+    end
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Auto Activate Bind",
+        Text = "Invalid Key Detected:'" .. text .. "'. Bind Was Not Bound.",
+        Duration = 3
+    })
+end
+
+auto_activate_state.toggle = function()
+    auto_activate_state.toggle_state = not auto_activate_state.toggle_state
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Auto Activate",
+        Text = auto_activate_state.toggle_state and "Enabled." or "Disabled.",
+        Duration = 1
+    })
+end
+
 autoact:Toggle("Auto Activate", "Toggles The Feature On.", function(v)
-    autoActivateState.toggleState = v
+    auto_activate_state.toggle_state = v
+end)
+
+autoact:Textbox("Auto Activate Bind", "Enter Key (Example: E, Q, LeftAlt). Blank Or None Unbinds.", function(v)
+    auto_activate_state.set_bind(v)
+end)
+
+autoact:Toggle("Auto Activate On Bind Held", "If Enabled, Auto Activate Only Runs While The Bind Key Is Held Down.", function(v)
+    auto_activate_state.use_bind_held = v
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Auto Activate On Bind Held",
+        Text = v and "Enabled." or "Disabled.",
+        Duration = 1
+    })
 end)
 
 autoact:Textbox("Auto Activate Move Number", "Example: 1, 2, 3, 4, 5.", function(v)
-    nsdv = tonumber(v)
-    if nsdv and nsdv <= 5 and nsdv > 0 then
-        autoActivateState.moveNumber = nsdv
+    local num = tonumber(v)
+    if num and num <= 5 and num > 0 then
+        auto_activate_state.move_number = num
     end
 end)
 
 autoact:Slider("Auto Activate Distance", 10, 3, 70, 0.5, function(v)
-    autoActivateState.distance = v
+    auto_activate_state.distance = v
 end)
 
 autoact:Slider("Auto Activate Ball Height", 0, 0, 50, 0.5, function(v)
-    autoActivateState.minHeight = v
+    auto_activate_state.min_height = v
 end)
 
 autoact:Dropdown("Auto Activate Mode", {"Hold", "Toggle"}, function(v)
-    autoActivateState.mode = v
-    if autoActivateState.toggleState ~= nil then
+    auto_activate_state.mode = v
+    if auto_activate_state.toggle_state ~= nil then
         game:GetService("StarterGui"):SetCore("SendNotification", {
             Title = "Auto Activate Mode",
-            Text = "Current Mode: " .. autoActivateState.mode,
+            Text = "Current Mode: " .. auto_activate_state.mode,
             Duration = 3
         })
     end
 end)
 
-game.UserInputService.InputBegan:Connect(function(input, bg)
+auto_activate_state.input_conn = game:GetService("UserInputService").InputBegan:Connect(function(input, bg)
     if bg then return end
+
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        if autoActivateState.mode == "Hold" then
-            autoActivateState.db = false
+        if auto_activate_state.mode == "Hold" then
+            auto_activate_state.db = false
         else
-            autoActivateState.db = not autoActivateState.db
+            auto_activate_state.db = not auto_activate_state.db
         end
+    end
+
+    if auto_activate_state.bind_key and input.KeyCode == auto_activate_state.bind_key and not auto_activate_state.use_bind_held then
+        auto_activate_state.toggle()
     end
 end)
 
-game.UserInputService.InputEnded:Connect(function(input, bg)
+game:GetService("UserInputService").InputEnded:Connect(function(input, bg)
     if bg then return end
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        if autoActivateState.mode == "Hold" then
-            autoActivateState.db = true
+        if auto_activate_state.mode == "Hold" then
+            auto_activate_state.db = true
         end
     end
 end)
 
 game:GetService("RunService").RenderStepped:Connect(function()
-    if not autoActivateState.toggleState or autoActivateState.db then
+    local held_ok = not auto_activate_state.use_bind_held
+        or (auto_activate_state.bind_key ~= nil and game:GetService("UserInputService"):IsKeyDown(auto_activate_state.bind_key))
+
+    if not auto_activate_state.toggle_state or not held_ok or auto_activate_state.db then
         if game.CoreGui:FindFirstChild("AutoActGui") then
             game.CoreGui.AutoActGui:Destroy()
         end
@@ -2861,10 +3169,10 @@ game:GetService("RunService").RenderStepped:Connect(function()
     end
 
     if not game.CoreGui:FindFirstChild("AutoActGui") then
-        gui = Instance.new("ScreenGui")
+        local gui = Instance.new("ScreenGui")
         gui.Name = "AutoActGui"
 
-        dot = Instance.new("Frame")
+        local dot = Instance.new("Frame")
         dot.Name = "IndicatorDot"
         dot.Size = UDim2.new(0, 20, 0, 20)
         dot.Position = UDim2.new(0, 20, 1, -40)
@@ -2872,31 +3180,31 @@ game:GetService("RunService").RenderStepped:Connect(function()
         dot.BorderSizePixel = 0
         dot.Parent = gui
 
-        corner = Instance.new("UICorner")
+        local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(1, 0)
         corner.Parent = dot
 
         gui.Parent = game.CoreGui
     end
 
-    char = game.Players.LocalPlayer.Character
-    hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local char = game.Players.LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    ball = game.Workspace.Terrain:FindFirstChild("Ball")
+    local ball = game.Workspace.Terrain:FindFirstChild("Ball")
     if not ball then return end
 
-    distance = (hrp.Position - ball.Position).Magnitude
+    local distance = (hrp.Position - ball.Position).Magnitude
 
-    if distance <= autoActivateState.distance then
-        if autoActivateState.minHeight > 0 then
-            local relativeHeight = ball.Position.Y - (hrp.Position.Y - 2)
-            if relativeHeight < autoActivateState.minHeight then
+    if distance <= auto_activate_state.distance then
+        if auto_activate_state.min_height > 0 then
+            local relative_height = ball.Position.Y - (hrp.Position.Y - 2)
+            if relative_height < auto_activate_state.min_height then
                 return
             end
         end
 
-        pressAction("skill" .. tostring(autoActivateState.moveNumber))
+        NET:FireServer("base", {{"skill" .. auto_activate_state.move_number}})
     end
 end)
 
@@ -2907,202 +3215,305 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
-local character = player.Character
-local hrp = character and character:FindFirstChild("HumanoidRootPart")
-local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-
+local character, hrp, humanoid
 local padCount = 0
 local targetCount = 0
-local holdingRMB = false
 local camLockConnection = nil
 local activeTarget = nil
-local lineupLockActive = false
-local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-
 local currentLineupMode = "Freeze"
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local isCurrentlyLocked = false
 
-local function updateCharacterRefs(char)
-    character = char
-    hrp = character:WaitForChild("HumanoidRootPart")
-    humanoid = character:WaitForChild("Humanoid")
+local lineup = {
+	bind_key = Enum.UserInputType.MouseButton2,
+	isKeyBind = false
+}
+
+lineup.set_bind = function(text)
+	text = tostring(text or ""):match("^%s*(.-)%s*$"):lower()
+
+	if text == "" or text == "none" or text == "clear" then
+		lineup.bind_key = Enum.UserInputType.MouseButton2
+		lineup.isKeyBind = false
+		StarterGui:SetCore("SendNotification", {
+			Title = "Lineup Lock Bind",
+			Text = "Reset to Right Mouse Button (M2).",
+			Duration = 2
+		})
+		return
+	end
+
+	local aliases = {
+		["m1"] = Enum.UserInputType.MouseButton1,
+		["lmb"] = Enum.UserInputType.MouseButton1,
+		["left"] = Enum.UserInputType.MouseButton1,
+		["leftclick"] = Enum.UserInputType.MouseButton1,
+		["mousebutton1"] = Enum.UserInputType.MouseButton1,
+		["mouse1"] = Enum.UserInputType.MouseButton1,
+
+		["m2"] = Enum.UserInputType.MouseButton2,
+		["rmb"] = Enum.UserInputType.MouseButton2,
+		["right"] = Enum.UserInputType.MouseButton2,
+		["rightclick"] = Enum.UserInputType.MouseButton2,
+		["mousebutton2"] = Enum.UserInputType.MouseButton2,
+		["mouse2"] = Enum.UserInputType.MouseButton2,
+
+		["m3"] = Enum.UserInputType.MouseButton3,
+		["mmb"] = Enum.UserInputType.MouseButton3,
+		["middle"] = Enum.UserInputType.MouseButton3,
+		["middleclick"] = Enum.UserInputType.MouseButton3,
+		["mousebutton3"] = Enum.UserInputType.MouseButton3,
+		["mouse3"] = Enum.UserInputType.MouseButton3,
+
+		["0"] = "Zero", ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four",
+		["5"] = "Five", ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine",
+		ctrl = "LeftControl", lctrl = "LeftControl", rctrl = "RightControl", control = "LeftControl",
+		shift = "LeftShift", lshift = "LeftShift", rshift = "RightShift",
+		alt = "LeftAlt", lalt = "LeftAlt", ralt = "RightAlt",
+		caps = "CapsLock", esc = "Escape", enter = "Return", del = "Delete", ins = "Insert",
+		bksp = "Backspace", pgup = "PageUp", pgdn = "PageDown",
+		["-"] = "Minus", ["="] = "Equals", [";"] = "Semicolon", ["'"] = "Quote",
+		[","] = "Comma", ["."] = "Period", ["/"] = "Slash", ["\\"] = "BackSlash",
+		["["] = "LeftBracket", ["]"] = "RightBracket", ["`"] = "Backquote",
+		num0 = "KeypadZero", num1 = "KeypadOne", num2 = "KeypadTwo", num3 = "KeypadThree",
+		num4 = "KeypadFour", num5 = "KeypadFive", num6 = "KeypadSix", num7 = "KeypadSeven",
+		num8 = "KeypadEight", num9 = "KeypadNine"
+	}
+
+	if typeof(aliases[text]) == "EnumItem" and aliases[text].EnumType == Enum.UserInputType then
+		lineup.bind_key = aliases[text]
+		lineup.isKeyBind = false
+
+		local pretty = ({
+			[Enum.UserInputType.MouseButton1] = "Left Mouse Button (M1)",
+			[Enum.UserInputType.MouseButton2] = "Right Mouse Button (M2)",
+			[Enum.UserInputType.MouseButton3] = "Middle Mouse Button (M3)",
+		})[lineup.bind_key] or tostring(lineup.bind_key)
+
+		StarterGui:SetCore("SendNotification", {
+			Title = "Lineup Lock Bind",
+			Text = "Bind Set To: " .. pretty .. ".",
+			Duration = 2
+		})
+		return
+	end
+
+	for _, item in ipairs(Enum.KeyCode:GetEnumItems()) do
+		if item.Name:lower() == text or item.Name == aliases[text] then
+			lineup.bind_key = item
+			lineup.isKeyBind = true
+			StarterGui:SetCore("SendNotification", {
+				Title = "Lineup Lock Bind",
+				Text = "Bind Set To: " .. item.Name .. ".",
+				Duration = 2
+			})
+			return
+		end
+	end
+
+	StarterGui:SetCore("SendNotification", {
+		Title = "Lineup Lock Bind",
+		Text = "Invalid Key: '" .. text .. "'. Bind not changed.",
+		Duration = 3
+	})
 end
 
-if player.Character then 
-    updateCharacterRefs(player.Character) 
+lineup.is_active = function()
+	if lineup.isKeyBind then
+		return UserInputService:IsKeyDown(lineup.bind_key)
+	end
+	return UserInputService:IsMouseButtonPressed(lineup.bind_key)
+end
+
+local function updateCharacterRefs(char)
+	character = char
+	hrp = character:WaitForChild("HumanoidRootPart")
+	humanoid = character:WaitForChild("Humanoid")
+end
+
+if player.Character then
+	updateCharacterRefs(player.Character)
 end
 player.CharacterAdded:Connect(updateCharacterRefs)
 
-autoline:Dropdown("Lineup Mode", {"Freeze", "Slowness"}, function(v)
-    currentLineupMode = v
-    if lineupLockActive then
-        lineupLockActive = false
-        if humanoid then humanoid.WalkSpeed = 30 end
-        if hrp then hrp.Anchored = false end
-    end
-end)
-
-local function pad(pos, color)
-    padCount += 1
-    local p = Instance.new("Part")
-    p.Name = "pad" .. padCount
-    p.Size = Vector3.new(4, 4, 4)
-    p.Position = pos
-    p.Transparency = 0.65
-    p.Anchored = true
-    p.CanCollide = false
-    p.Color = color
-    p.Material = Enum.Material.SmoothPlastic
-    p.Parent = Workspace
-end
-
-local function target(pos, color)
-    targetCount += 1
-    local t = Instance.new("Part")
-    t.Name = "target" .. targetCount
-    t.Shape = Enum.PartType.Ball
-    t.Size = Vector3.new(7, 7, 7)
-    t.Position = pos
-    t.Anchored = true
-    t.CanCollide = false
-    t.Color = color
-    t.Material = Enum.Material.Neon
-    t.Parent = Workspace
-end
-
-UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        holdingRMB = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        holdingRMB = false
-        activeTarget = nil
-        lineupLockActive = false
-        
-        if camLockConnection then
-            camLockConnection:Disconnect()
-            camLockConnection = nil
-        end
-        
-        if humanoid then humanoid.WalkSpeed = 30 end
-        if hrp then hrp.Anchored = false end
-    end
-end)
-
-local function getPadUnderPlayer()
-    if not hrp then return nil end
-    local params = RaycastParams.new()
-    params.FilterDescendantsInstances = {character}
-    params.FilterType = Enum.RaycastFilterType.Blacklist
-    local result = Workspace:Raycast(hrp.Position, Vector3.new(0, -6, 0), params)
-    if result and result.Instance then
-        return result.Instance.Name:match("^pad(%d+)$")
-    end
-    return nil
-end
-
-local function startCamLock(targetPart)
-    activeTarget = targetPart
-    if camLockConnection then camLockConnection:Disconnect() end
-    camLockConnection = RunService.RenderStepped:Connect(function()
-        if not activeTarget then
-            if camLockConnection then
-                camLockConnection:Disconnect()
-                camLockConnection = nil
-            end
-            return
-        end
-        camera.CFrame = CFrame.new(camera.CFrame.Position, activeTarget.Position)
-    end)
-end
-
 local function stopCamLock()
-    activeTarget = nil
-    if camLockConnection then
-        camLockConnection:Disconnect()
-        camLockConnection = nil
-    end
+	activeTarget = nil
+	if camLockConnection then
+		camLockConnection:Disconnect()
+		camLockConnection = nil
+	end
 end
 
 local function resetLineupPhysics()
-    if lineupLockActive then
-        lineupLockActive = false
-        if currentLineupMode == "Freeze" then
-            if hrp then humanoid.WalkSpeed = 0 end
-        elseif currentLineupMode == "Slowness" then
-            if humanoid then humanoid.WalkSpeed = 30 end
-        end
-    end
+	if humanoid then
+		humanoid.WalkSpeed = 30
+	end
 end
 
 local function applyLineupMode()
-    lineupLockActive = true
-    if currentLineupMode == "Freeze" then
-        if hrp then humanoid.WalkSpeed = 0 end
-    elseif currentLineupMode == "Slowness" then
-        if humanoid then humanoid.WalkSpeed = 5 end
-    end
+	if currentLineupMode == "Freeze" then
+		if humanoid then
+			humanoid.WalkSpeed = 0
+		end
+	elseif currentLineupMode == "Slowness" then
+		if humanoid then
+			humanoid.WalkSpeed = 5
+		end
+	end
+end
+
+autoline:Dropdown("Lineup Mode", {"Freeze", "Slowness"}, function(v)
+	currentLineupMode = v
+	if isCurrentlyLocked then
+		applyLineupMode()
+	else
+		resetLineupPhysics()
+	end
+end)
+
+autoline:Textbox("Lineup Lock Bind", "Enter Key (Example: E, Q, LeftAlt, m1, m2, m3). Blank Or None Resets To M2.", function(v)
+	lineup.set_bind(v)
+	stopCamLock()
+	if isCurrentlyLocked then
+		isCurrentlyLocked = false
+		resetLineupPhysics()
+	end
+end)
+
+local function pad(pos, color)
+	padCount += 1
+	local p = Instance.new("Part")
+	p.Name = "pad" .. padCount
+	p.Size = Vector3.new(4, 4, 4)
+	p.Position = pos
+	p.Transparency = 0.65
+	p.Anchored = true
+	p.CanCollide = false
+	p.Color = color
+	p.Material = Enum.Material.SmoothPlastic
+	p.Parent = Workspace
+end
+
+local function target(pos, color)
+	targetCount += 1
+	local t = Instance.new("Part")
+	t.Name = "target" .. targetCount
+	t.Shape = Enum.PartType.Ball
+	t.Size = Vector3.new(7, 7, 7)
+	t.Position = pos
+	t.Anchored = true
+	t.CanCollide = false
+	t.Color = color
+	t.Material = Enum.Material.Neon
+	t.Parent = Workspace
+end
+
+local function getPadUnderPlayer()
+	if not hrp then return nil end
+	local params = RaycastParams.new()
+	params.FilterDescendantsInstances = {character}
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+	local result = Workspace:Raycast(hrp.Position, Vector3.new(0, -6, 0), params)
+	if result and result.Instance then
+		return result.Instance.Name:match("^pad(%d+)$")
+	end
+	return nil
+end
+
+local function startCamLock(targetPart)
+	activeTarget = targetPart
+	if camLockConnection then
+		camLockConnection:Disconnect()
+	end
+	camLockConnection = RunService.RenderStepped:Connect(function()
+		if not activeTarget then
+			if camLockConnection then
+				camLockConnection:Disconnect()
+				camLockConnection = nil
+			end
+			return
+		end
+		camera.CFrame = CFrame.new(camera.CFrame.Position, activeTarget.Position)
+	end)
 end
 
 if isMobile then
-    RunService.RenderStepped:Connect(function()
-        if not hrp or not character then return end
-        
-        local hasBall = false
-        for _, child in ipairs(character:GetChildren()) do
-            if child:IsA("MeshPart") and child.Name:lower():match("ball") then
-                hasBall = true
-                break
-            end
-        end
+	RunService.RenderStepped:Connect(function()
+		if not hrp or not character then return end
 
-        if not hasBall then
-            if activeTarget then stopCamLock() end
-            return
-        end
+		local hasBall = false
+		for _, child in ipairs(character:GetChildren()) do
+			if child:IsA("MeshPart") and child.Name:lower():match("ball") then
+				hasBall = true
+				break
+			end
+		end
 
-        local padIndex = getPadUnderPlayer()
-        if padIndex then
-            local targetPart = Workspace:FindFirstChild("target" .. padIndex)
-            if targetPart and activeTarget ~= targetPart then
-                startCamLock(targetPart)
-            end
-        else
-            if activeTarget then stopCamLock() end
-        end
-    end)
+		if not hasBall then
+			if activeTarget then
+				stopCamLock()
+			end
+			return
+		end
+
+		local padIndex = getPadUnderPlayer()
+		if padIndex then
+			local targetPart = Workspace:FindFirstChild("target" .. padIndex)
+			if targetPart and activeTarget ~= targetPart then
+				startCamLock(targetPart)
+			end
+		else
+			if activeTarget then
+				stopCamLock()
+			end
+		end
+	end)
 else
-    RunService.RenderStepped:Connect(function()
-        if not holdingRMB or not hrp or not humanoid then
-            resetLineupPhysics()
-            return
-        end
-        
-        local padIndex = getPadUnderPlayer()
-        if not padIndex then
-            resetLineupPhysics()
-            stopCamLock()
-            return
-        end
-        
-        local targetPart = Workspace:FindFirstChild("target" .. padIndex)
-        if not targetPart then
-            resetLineupPhysics()
-            return
-        end
-        
-        if activeTarget ~= targetPart then
-            startCamLock(targetPart)
-        end
-        
-        applyLineupMode()
-    end)
+	RunService.RenderStepped:Connect(function()
+		local shouldBeLocked = lineup.is_active() and hrp and humanoid
+
+		if not shouldBeLocked then
+			if isCurrentlyLocked then
+				isCurrentlyLocked = false
+				resetLineupPhysics()
+				stopCamLock()
+			end
+			return
+		end
+
+		local padIndex = getPadUnderPlayer()
+		if not padIndex then
+			if isCurrentlyLocked then
+				isCurrentlyLocked = false
+				resetLineupPhysics()
+				stopCamLock()
+			end
+			return
+		end
+
+		local targetPart = Workspace:FindFirstChild("target" .. padIndex)
+		if not targetPart then
+			if isCurrentlyLocked then
+				isCurrentlyLocked = false
+				resetLineupPhysics()
+			end
+			return
+		end
+
+		if not isCurrentlyLocked then
+			isCurrentlyLocked = true
+		end
+
+		if activeTarget ~= targetPart then
+			startCamLock(targetPart)
+		end
+
+		applyLineupMode()
+	end)
 end
 
 autoline:Toggle("Sae Line Ups", "Sae's Drive Shot Line Ups.", function(s)
@@ -3812,66 +4223,1600 @@ linecreator:Textbox("Enter Lineup Code(s)", "Enter Lineup Codes (seperated by co
     })
 end)
 
+local autopos = maintab2:Folder("Auto Position Features.", Color3.fromRGB(169, 5, 255), true)
+autopos:Label("Auto Position: Automatically Sets Certain Positions.")
+
+local autoPositionState = {
+    CF = false,
+    GK = false,
+    CFConn = nil,
+    GKConn = nil
+}
+
+buffer = buffer or {
+    fromstring = function(str)
+        return str
+    end
+}
+
+local function firePacketsIfNear()
+    local char = game:GetService("Players").LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+
+    if (root.Position - Vector3.new(-371, 13, -1599)).Magnitude <= 15 or
+       (root.Position - Vector3.new(-196, 13, -1599)).Magnitude <= 15 then
+
+        local P = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+
+
+        pcall(function() P.bytenet_selectRole.send({index = 1, t = "A"}) end)
+        pcall(function() P.bytenet_selectRole.send({index = 1, t = "B"}) end)
+    end
+end
+
+local function fireGKPackets()
+    local P = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+
+
+    pcall(function() P.bytenet_selectRole.send({index = 5, t = "A"}) end)
+    pcall(function() P.bytenet_selectRole.send({index = 5, t = "B"}) end)
+end
+
+autopos:Toggle("Auto Pick CF", "Automatically Picks Center Field Position On Respawn Or Enable.", function()
+    autoPositionState.CF = not autoPositionState.CF
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Auto Pick CF",
+        Text = autoPositionState.CF and "Enabled." or "Disabled.",
+        Duration = 1
+    })
+
+    if autoPositionState.CF then
+        autoPositionState.CFConn = game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function()
+            task.wait(0.3)
+            firePacketsIfNear()
+        end)
+
+        task.spawn(function()
+            repeat task.wait() until game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            firePacketsIfNear()
+        end)
+    else
+        if autoPositionState.CFConn then
+            autoPositionState.CFConn:Disconnect()
+            autoPositionState.CFConn = nil
+        end
+    end
+end)
+
+autopos:Toggle("Auto Pick GK", "Automatically Picks Goalkeeper Position On Respawn Or Enable.", function()
+    autoPositionState.GK = not autoPositionState.GK
+
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Auto Pick GK",
+        Text = autoPositionState.GK and "Enabled." or "Disabled.",
+        Duration = 1
+    })
+
+    if autoPositionState.GK then
+        autoPositionState.GKConn = game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function()
+            task.wait(0.3)
+            fireGKPackets()
+        end)
+
+        task.spawn(function()
+            repeat task.wait() until game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            fireGKPackets()
+        end)
+    else
+        if autoPositionState.GKConn then
+            autoPositionState.GKConn:Disconnect()
+            autoPositionState.GKConn = nil
+        end
+    end
+end)
+
+local autogk = maintab2:Folder("Auto Goalkeeper Features.", Color3.fromRGB(169, 5, 255), true)
+autogk:Label("Auto Goalkeeper: Automatically Plays As GK For You.")
+
+autogk:Button("Celeron's Auto GK", "V Toggles Auto GK, Y Toggles Metavision, LeftAlt Toggles Corner Gui & F4 To Disable.", function()
+local RunService        = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players           = game:GetService("Players")
+
+local buffers = setmetatable({}, {__index = function(_, k) return k end})
+
+NET = (function()
+    local Packets = require(game:GetService("ReplicatedStorage"):WaitForChild("packets"))
+    local warned = {}
+
+    local function warnOnce(key, message)
+        if not warned[key] then
+            warned[key] = true
+            warn("[net shim] " .. message)
+        end
+    end
+
+    local function convertToString(inputData)
+        if type(inputData) == "string" then return inputData end
+        if typeof(inputData) == "buffer" then return buffer.tostring(inputData) end
+    end
+
+    local netShim = {}
+
+    function netShim.FireServer(_, dataBuffer, actionsList)
+        local bufferType = convertToString(dataBuffer)
+
+        if bufferType == "base" then
+            if type(actionsList) ~= "table" then return end
+
+            for _, primaryAction in ipairs(actionsList) do
+                if type(primaryAction) == "table" then
+                    local success = pcall(Packets.bytenet_use.send, primaryAction)
+                    if not success then
+                        warnOnce("use_" .. tostring(primaryAction), "bytenet_use execution failed for: '" .. tostring(primaryAction) .. "'")
+                    end
+                end
+            end
+
+        elseif bufferType == "grabball" then
+            local success = pcall(Packets.bytenet_findBall.send, actionsList)
+            if not success then
+                warnOnce("grab", "bytenet_findBall execution channel failed.")
+            end
+        end
+    end
+
+    netShim.fireServer = netShim.FireServer
+    return netShim
+end)()
+
+local RunService        = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players           = game:GetService("Players")
+
+local Config = {
+    TackleDistance = _G.TackleDistance or 16,
+    MaxDist = _G.MaxDist or 80,
+    MaxJump = _G.MaxJump or 22,
+    SegmentCount = _G.SegmentCount or 150,
+    TimeStep = _G.TimeStep or 0.02,
+    LineWidth = _G.LineWidth or 0.25,
+    LMode = _G.LMode or false,
+    AutoD = _G.AutoD or false,
+    JumpHeightTrigger = _G.JumpHeightTrigger or 7,
+    Keybinds = _G.Keybinds,
+}
+
+local gkKeybinds = {
+    metav  = "Y",
+    autogkfuncs    = "V",
+    toggleuicorner = "LeftAlt",
+    unload = "F4",
+}
+
+local Gravity      = Vector3.new(0, -workspace.Gravity, 0)
+local SegmentCount = Config.SegmentCount
+local TimeStep     = Config.TimeStep
+local LineWidth    = Config.LineWidth
+
+local holderConn, inputConn, heartbeatConn
+local unload
+
+local function getKey(name)
+    local binds = Config.Keybinds or {}
+    local keyName = binds[name] or gkKeybinds[name]
+    local keyCode = Enum.KeyCode[keyName]
+    if not keyCode then
+        return Enum.KeyCode[gkKeybinds[name]]
+    end
+    return keyCode
+end
+
+local justReleasedBall = false
+local ballHolder = ReplicatedStorage.workspace.ballHolder
+local lastHolder = ballHolder.Value
+
+holderConn = ballHolder.Changed:Connect(function()
+    if Config.AutoD then
+        return
+    end
+    local newHolder = ballHolder.Value
+    if lastHolder == Players.LocalPlayer.Character and newHolder == nil then
+        justReleasedBall = true
+    else
+        justReleasedBall = false
+    end
+    lastHolder = newHolder
+end)
+
+local indicatorGui = Instance.new("ScreenGui")
+indicatorGui.Parent = game.Players.LocalPlayer.PlayerGui
+indicatorGui.IgnoreGuiInset = true
+indicatorGui.ResetOnSpawn = false
+
+local indicator = Instance.new("Frame", indicatorGui)
+indicator.Size = UDim2.new(0.012, 0, 0.025, 0)
+indicator.BackgroundColor3 = Color3.new(1, 0, 0.0156863)
+indicator.Position = UDim2.new(0.988, 0, 0.975, 0)
+
+local function createSegmentPart()
+    local p = Instance.new("Part")
+    p.Anchored = true
+    p.CanCollide = false
+    p.Material = Enum.Material.Neon
+    p.Color = Color3.new(1, 1, 1)
+    p.Transparency = 1
+    p.Size = Vector3.new(LineWidth, LineWidth, 1)
+    p.Parent = workspace
+    return p
+end
+
+local segments = nil
+if not Config.LMode then
+    segments = {}
+    for i = 1, SegmentCount do
+        segments[i] = createSegmentPart()
+    end
+end
+
+local function hideSegments()
+    if not segments then
+        return
+    end
+    for _, part in ipairs(segments) do
+        part.Transparency = 1
+    end
+end
+
+local function shouldShowTrajectory()
+    return _G.metav and not Config.LMode
+end
+
+_G.metav = true
+_G.autogkfuncs = false
+if Config.LMode then
+    _G.metav = false
+end
+
+inputConn = game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then
+        return
+    end
+
+    if input.KeyCode == getKey("unload") then
+        unload()
+
+    elseif input.KeyCode == getKey("metav") then
+        _G.metav = not _G.metav
+
+    elseif input.KeyCode == getKey("autogkfuncs") then
+        _G.autogkfuncs = not _G.autogkfuncs
+        if _G.autogkfuncs then
+            indicator.BackgroundColor3 = Color3.new(0, 1, 0)
+        else
+            indicator.BackgroundColor3 = Color3.new(1, 0, 0)
+        end
+
+    elseif input.KeyCode == getKey("toggleuicorner") then
+        indicator.Visible = not indicator.Visible
+    end
+end)
+
+local function faceTowards(hrp, point)
+    local dir = (point - hrp.Position).Unit
+    local target = hrp.Position + dir
+    hrp.CFrame = CFrame.lookAt(hrp.Position, Vector3.new(target.X, hrp.Position.Y, target.Z))
+end
+
+local function sendSkill(name)
+    NET:FireServer(buffer.fromstring(buffers.base), { { name } })
+end
+
+local terrain = workspace.Terrain
+local ballCache = nil
+local ballSearchAt = 0
+
+local function getBall()
+    local ball = terrain:FindFirstChild("Ball")
+    if ball then
+        ballCache = ball
+        return ball
+    end
+    if ballCache and ballCache.Parent then
+        return ballCache
+    end
+    local now = os.clock()
+    if now - ballSearchAt >= 0.5 then
+        ballSearchAt = now
+        ballCache = workspace:FindFirstChild("Ball", true)
+    end
+    return ballCache
+end
+
+local function getBallVelocity(ball)
+    if ball.Parent == terrain then
+        local cf = ReplicatedStorage:FindFirstChild("CFBall")
+        local vv = cf and cf:FindFirstChild("velocity")
+        local sv = cf and cf:FindFirstChild("speed")
+        if vv and sv then
+            return vv.Value * sv.Value
+        end
+    end
+    return ball.AssemblyLinearVelocity
+end
+
+heartbeatConn = RunService.Heartbeat:Connect(function()
+    local show = shouldShowTrajectory()
+    if not show then
+        hideSegments()
+    end
+
+    local ball = getBall()
+    if not ball then hideSegments() return end
+
+    local character = Players.LocalPlayer.Character
+    if not character then hideSegments() return end
+
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then hideSegments() return end
+
+    if ballHolder.Value == character or ball:IsDescendantOf(character) then
+        hideSegments()
+        return
+    end
+
+    if (ball.Position - hrp.Position).Magnitude >= Config.MaxDist then
+        hideSegments()
+        return
+    end
+
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not humanoid then hideSegments() return end
+
+    local velocity = getBallVelocity(ball)
+    if velocity.Magnitude == 0 then hideSegments() return end
+
+    local startPos = ball.Position
+    local prevPoint = startPos
+    local hrpPos = hrp.Position
+
+    local reachSpeed = 0
+    if _G.autogkfuncs then reachSpeed = 155 end
+
+    for i = 1, SegmentCount do
+        local t = i * TimeStep
+        local point = startPos + velocity * t + 0.5 * Gravity * t * t
+        local seg = segments and segments[i]
+        local segLen = (point - prevPoint).Magnitude
+
+        if segLen > 0 then
+            local toPoint = point - hrpPos
+            local reachPoint = hrpPos + toPoint.Unit * math.min(reachSpeed * t, toPoint.Magnitude)
+            local gap = (point - reachPoint).Magnitude
+
+            local dash = gap <= Config.TackleDistance
+                and _G.autogkfuncs
+                and not justReleasedBall
+
+            if dash then
+                if show then
+                    seg.Color = Color3.new(0, 0, 1)
+                end
+                if point.Y <= Config.MaxJump then
+                    if point.Y >= hrp.Position.Y + Config.JumpHeightTrigger
+                        and humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
+                        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                    end
+                    faceTowards(hrp, point)
+                    sendSkill("tackle")
+                    return
+                end
+            else
+                if show then
+                    seg.Color = Color3.new(1, 1, 1)
+                end
+            end
+
+            if show and seg then
+                seg.Transparency = 0
+                seg.Size = Vector3.new(LineWidth, LineWidth, segLen)
+                seg.CFrame = CFrame.lookAt(prevPoint, point) * CFrame.new(0, 0, -segLen / 2)
+            elseif seg then
+                seg.Transparency = 1
+            end
+        else
+            if seg then
+                seg.Transparency = 1
+            end
+        end
+
+        prevPoint = point
+    end
+end)
+
+unload = function()
+    if heartbeatConn then heartbeatConn:Disconnect() heartbeatConn = nil end
+    if holderConn then holderConn:Disconnect() holderConn = nil end
+    if inputConn then inputConn:Disconnect() inputConn = nil end
+
+    if segments then
+        for _, part in ipairs(segments) do
+            part:Destroy()
+        end
+        segments = nil
+    end
+
+    if indicatorGui then
+        indicatorGui:Destroy()
+        indicatorGui = nil
+    end
+
+    ballCache = nil
+    justReleasedBall = false
+    lastHolder = nil
+
+    _G.metav = nil
+    _G.autogkfuncs = nil
+end
+end)
+
+autogk:Button("Daffy's Auto GK", "Reset Or Click F4 To Disable.", function()
+    local gkPlayerState = {
+        plr = Players.LocalPlayer,
+        char = nil,
+        cam = workspace.CurrentCamera,
+        hum = nil,
+        hrp = nil,
+        originalCamType = nil,
+        originalCamCFrame = nil,
+        guii = nil,
+        cambu = nil,
+        gerg = nil,
+        dot = nil,
+        kind = "",
+        align = nil,
+        onn = true,
+        pause = false,
+        ballHolder = nil,
+        lastHolder = nil,
+        remote = nil,
+        con = nil,
+        kill = nil
+    }
+
+    gkPlayerState.char = gkPlayerState.plr.Character or gkPlayerState.plr.CharacterAdded:Wait()
+    gkPlayerState.hum = gkPlayerState.char:WaitForChild("Humanoid")
+    gkPlayerState.hrp = gkPlayerState.char:WaitForChild("HumanoidRootPart")
+
+    gkPlayerState.originalCamType = gkPlayerState.cam.CameraType
+    gkPlayerState.originalCamCFrame = gkPlayerState.cam.CFrame
+
+    gkPlayerState.guii = Instance.new("ScreenGui")
+    gkPlayerState.guii.Parent = gkPlayerState.plr.PlayerGui
+
+    gkPlayerState.cambu = Instance.new("TextButton")
+    gkPlayerState.cambu.Text = "Camera Mode"
+    gkPlayerState.cambu.Size = UDim2.new(0.159,0,0.109,0)
+    gkPlayerState.cambu.Position = UDim2.new(0.317,0,0.444,0)
+    gkPlayerState.cambu.TextScaled = true
+    gkPlayerState.cambu.Parent = gkPlayerState.guii
+
+    gkPlayerState.gerg = Instance.new("TextButton")
+    gkPlayerState.gerg.Text = "Body Mode"
+    gkPlayerState.gerg.Size = UDim2.new(0.159,0,0.109,0)
+    gkPlayerState.gerg.Position = UDim2.new(0.524,0,0.444,0)
+    gkPlayerState.gerg.TextScaled = true
+    gkPlayerState.gerg.Parent = gkPlayerState.guii
+
+    gkPlayerState.dot = Instance.new("Frame")
+    gkPlayerState.dot.Size = UDim2.new(0.012,0,0.025,0)
+    gkPlayerState.dot.Position = UDim2.new(0.988,0,0.975,0)
+    gkPlayerState.dot.BackgroundColor3 = Color3.fromRGB(0,255,0)
+    gkPlayerState.dot.BorderSizePixel = 0
+    gkPlayerState.dot.Parent = gkPlayerState.guii
+
+    gkPlayerState.cambu.MouseButton1Up:Connect(function()
+        gkPlayerState.kind = "cam"
+    end)
+    gkPlayerState.gerg.MouseButton1Up:Connect(function()
+        gkPlayerState.kind = "body"
+    end)
+
+    repeat task.wait() until gkPlayerState.kind ~= ""
+    gkPlayerState.cambu:Destroy()
+    gkPlayerState.gerg:Destroy()
+
+    local function getBall()
+        return workspace.Terrain:FindFirstChild("Ball")
+    end
+
+    if gkPlayerState.kind == "body" then
+        gkPlayerState.hum.AutoRotate = false
+        gkPlayerState.align = Instance.new("AlignOrientation")
+        gkPlayerState.align.Mode = Enum.OrientationAlignmentMode.OneAttachment
+        gkPlayerState.align.Attachment0 = gkPlayerState.hrp:WaitForChild("RootAttachment")
+        gkPlayerState.align.Responsiveness = 300
+        gkPlayerState.align.MaxTorque = math.huge
+        gkPlayerState.align.Enabled = false
+        gkPlayerState.align.Parent = gkPlayerState.hrp
+    end
+
+    gkPlayerState.ballHolder = ReplicatedStorage.workspace.ballHolder
+    gkPlayerState.lastHolder = gkPlayerState.ballHolder.Value
+
+    gkPlayerState.ballHolder.Changed:Connect(function()
+        local cur = gkPlayerState.ballHolder.Value
+        if gkPlayerState.lastHolder == gkPlayerState.char and cur == nil then
+            gkPlayerState.pause = true
+            task.delay(0.7, function()
+                gkPlayerState.pause = false
+            end)
+        end
+        gkPlayerState.lastHolder = cur
+    end)
+
+    gkPlayerState.remote = NET
+
+    local function cleanup()
+        gkPlayerState.onn = false
+
+        if gkPlayerState.align then
+            gkPlayerState.align:Destroy()
+        end
+
+        gkPlayerState.cam.CameraType = gkPlayerState.originalCamType
+        gkPlayerState.cam.CFrame = gkPlayerState.originalCamCFrame
+
+        if gkPlayerState.guii then
+            gkPlayerState.guii:Destroy()
+        end
+    end
+
+    gkPlayerState.con = RunService.RenderStepped:Connect(function()
+        if not gkPlayerState.onn then
+            gkPlayerState.con:Disconnect()
+            return
+        end
+
+        local ball = getBall()
+        if not ball or gkPlayerState.plr.Team == game.Teams.lobby or gkPlayerState.pause then
+            if gkPlayerState.align then gkPlayerState.align.Enabled = false end
+            return
+        end
+
+        if gkPlayerState.kind == "cam" then
+            gkPlayerState.cam.CameraType = Enum.CameraType.Scriptable
+            gkPlayerState.cam.CFrame = CFrame.lookAt(gkPlayerState.cam.CFrame.Position, ball.Position)
+
+        elseif gkPlayerState.kind == "body" then
+            gkPlayerState.align.Enabled = true
+            local dir = ball.Position - gkPlayerState.hrp.Position
+            dir = Vector3.new(dir.X, 0, dir.Z)
+            if dir.Magnitude > 0.01 then
+                gkPlayerState.align.CFrame = CFrame.lookAt(Vector3.zero, dir)
+            end
+        end
+
+        local dist = (gkPlayerState.hrp.Position - ball.Position).Magnitude
+        if dist <= 60 then
+            if ball.Position.Y >= gkPlayerState.hrp.Position.Y + 6 then
+                gkPlayerState.hum.Jump = true
+            else
+                gkPlayerState.hum.Jump = false
+            end
+
+            gkPlayerState.remote:FireServer(
+                buffer.fromstring(buffers.base),
+                {
+                    { "tackle" }
+                }
+            )
+        end
+    end)
+
+    gkPlayerState.kill = UserInputService.InputBegan:Connect(function(input, gp)
+        if gp then return end
+        if input.KeyCode == Enum.KeyCode.F4 then
+            cleanup()
+            gkPlayerState.kill:Disconnect()
+            gkPlayerState.con:Disconnect()
+        end
+    end)
+
+    repeat task.wait() until gkPlayerState.hum.Health <= 0 or gkPlayerState.plr.Team == game.Teams.lobby
+    cleanup()
+    gkPlayerState.kill:Disconnect()
+    gkPlayerState.con:Disconnect()
+end)
+
+local airdr = maintab2:Folder("Air Dribble Features.", Color3.fromRGB(169, 5, 255), true)
+airdr:Label("Air Dribble: Dribbles The Ball Through The Air.")
+
+local bindKey = Enum.KeyCode.LeftAlt
+
+local airDribbleState = {
+    enabled = false,
+    isHolding = false,
+    lastKick = 0
+}
+
+local cooldown = 0.255
+
+local function notiy(text)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Air Dribble",
+        Text = text,
+        Duration = 2
+    })
+end
+
+airdr:Toggle("Air Dribble", "Kicks The Ball Forward Infront Of You And Up.", function()
+    airDribbleState.enabled = not airDribbleState.enabled
+    notiy(airDribbleState.enabled and "Enabled." or "Disabled.")
+end)
+
+airdr:Textbox("Air Dribble Bind", "Enter Key (Example: E, Q, LeftAlt.)", function(text)
+    if typeof(text) ~= "string" then
+        bindKey = Enum.KeyCode.LeftAlt
+        notiy("Invalid Key. Bind Is Now LeftAlt.")
+        return
+    end
+
+    local formatted = text:gsub("%s+", "")
+    local success, key = pcall(function()
+        return Enum.KeyCode[formatted]
+    end)
+
+    if success and key then
+        bindKey = key
+        notiy("Bind Set To: " .. key.Name)
+    else
+        bindKey = Enum.KeyCode.LeftAlt
+        notiy("Invalid Key. Bind Is Now LeftAlt.")
+    end
+end)
+
+local player = Players.LocalPlayer
+local holdingConnection = nil
+
+local function performAirDribble()
+    local now = tick()
+    if now - airDribbleState.lastKick < cooldown then
+        return
+    end
+
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not (hum and root) then return end
+
+    airDribbleState.lastKick = now
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://76587445975710"
+    local track = hum:LoadAnimation(anim)
+    track:Play()
+
+    local dir = root.CFrame.LookVector
+    local kickVec = Vector3.new(dir.X * 0.75, 0.65, dir.Z * 0.75)
+
+    NET:FireServer(buffer.fromstring(buffers["base"]), {
+        { "kick", 28, false, kickVec }
+    })
+end
+
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp or input.KeyCode ~= bindKey then return end
+    if not airDribbleState.enabled then return end
+
+    airDribbleState.isHolding = true
+
+    performAirDribble()
+
+    if holdingConnection then holdingConnection:Disconnect() end
+    holdingConnection = RunService.Heartbeat:Connect(function()
+        if airDribbleState.isHolding and airDribbleState.enabled then
+            performAirDribble()
+        else
+            holdingConnection:Disconnect()
+            holdingConnection = nil
+        end
+    end)
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == bindKey then
+        airDribbleState.isHolding = false
+        if holdingConnection then
+            holdingConnection:Disconnect()
+            holdingConnection = nil
+        end
+    end
+end)
+
 local othersil = maintab2:Folder("Other Features.", Color3.fromRGB(169, 5, 255), true)
 othersil:Label("Other Features: Self Explanatory, Other Silent Features.")
+
+local run_service = game:GetService("RunService")
+local player = game:GetService("Players").LocalPlayer
+local starter_gui = game:GetService("StarterGui")
+pcall(function() run_service:UnbindFromRenderStep("shot_predictor") end)
+for _, name in ipairs({"clear_trajectory_lines", "ClearTrajectoryLines"}) do
+	if _G[name] then pcall(_G[name]) end
+end
+for _, child in ipairs(workspace:GetChildren()) do
+	if child.Name == "DecodedTrajectories" or child.Name == "TrajectoryRings" then child:Destroy() end
+end
+
+st_mode = "follow"
+st_linethickness = 0.2
+st_styleconfig = {
+	sae = {length = 135, mindist = 125, maxdist = 135, maxentry = 75, skill = "skill3", aiminset = 0.25, aimdrop = 0.75},
+	kaiser = {length = 160, mindist = 145, maxdist = 160, maxentry = 95, skill = "skill2", aiminset = 0.25, aimdrop = 0.5},
+	yukimiya = {length = 185, mindist = 175, maxdist = 185, maxentry = 50, skill = "skill1", aiminset = 0.5, aimdrop = 1},
+	rin = {length = 180, mindist = 164, maxdist = 182, maxentry = 75, skill = "skill3", aiminset = 4, aimdrop = 4},
+	karasu = {length = 125, mindist = 115, maxdist = 125, maxentry = 100, skill = "skill3", aiminset = 1, aimdrop = -6},
+}
+st_defaultconfig = {length = 60, mindist = 0, maxdist = 200, maxentry = 75}
+st_currentconfig = st_defaultconfig
+st_currentlinelength = 60
+st_pitchoffset = 3
+st_linecolors = {Color3.fromRGB(255,170,0), Color3.fromRGB(0,200,255), Color3.fromRGB(255,80,200)}
+st_autotop = false
+st_snapdist = 100
+st_requirefacing = false
+st_cornerinset = 1.5
+st_aiminset = 4
+st_aimdrop = 4
+st_locktol = 6
+st_requirereach = true
+st_wallsize = 5
+st_wallstart = 6
+st_wallend = 6
+st_wallstep = 2
+st_slowfactor = 0
+st_slowcooldown = 3
+st_hidemarkers = true
+st_autofire = true
+st_showrings = true
+st_ringthickness = 1.2
+st_ringheight = 0.5
+st_ringcolor = Color3.fromRGB(1, 1, 1)
+st_firecooldown = 3
+st_firecount = 10
+st_fireduration = 1
+st_freeze = true
+st_goals = nil
+st_goalnames = {"goal"}
+st_goalexclude = {"keeper", "gk", "barri", "zone", "area", "line", "sign", "box"}
+st_goalminwidth = 10
+
+st_shotsbystyle = {
+	sae = [=[
+TRJ1|-8000|-54383,301,127243|-1736,-7|44|7qsD2ak83H59BqG_chrCuGvhBhxCmF9hBnoCmDtcr7BsB1VxlCArX5hC5B5Tj9BrDnQztB1DxK1yBvF9J1uBvGpHltB1HnFrwB7JxDplBhCd7oB2DcpiB8CyC7hB6BiEphBK-F7elBuHnbjCgI_ejEqLxb9CkMrakB6MhXWsL5UJoKnbpCwN3SCoJ_RA8IxUVkK7SCqJlRHwIvPB2HtPAyHpOAiHlOAiHtNA0G_IAuEtMAkG_LA-FxKAmFhKAgFvJA2EAAA,
+TRJ1|8000|-41412,301,120644|-1736,-60|44|5v5C2qG08mHzuB-b1X5wB6b9W9wByapV_vBwY9SzqBuUhPpoBiS1MntBsS3LlpBkPzInkB4LzF5f-InD_gB8HvBlgBmGQndkEqCjd0CoExbegGnaV4HxV3B6H5WpDmKhX5E-L9WxGsMzRnGyJzShIgKrQrI8IjRlKoJ_P7K2IxNxKqH9O_MkIlO7N0HzM3N6GpLxNkG7L1PuGrLvQkGtKxQ2FpKhSyFxJ_RmF9JtUsFlH9P8DtIjUyEhI_UsEvH9UiE1H_WkEpGzUuDjD1K2B,
+TRJ1|5263|-42489,301,120830|-6064,-258|42|540Cy2BkorHp9BylBzlBpzBuelep4BigBxf16BkgBjf18B0fjet2B2a7Y79BkctZ32BoXrU16BgWjS9mBqNrKnwBmO9J3oBwKtGpqB4I9D7oB-FRpa6CevbyB4C1cIyE3bnBsGpZvC0H3e_E2L1WpF4KlZvH2M9TzHmKtT1I8JrTjK8JtT7L8JnShNsJzQrNuIvP_N-HhOlOkHhP_Q4H1M5PuGnNlS4G7L_RiGrL3S6FxK_SsF9M1Z0GhIxRiE9G_PyDzIrVsElDtI2B
+]=],
+    kaiser = [=[TRJ1|-8000|-54309,301,123885|-1493,-887|44|jusDub8txH7-C-I1Il4CiH9Jz-CmGxMh1CmEnNp1C2CzP5pCY1P9lCX9Q3mCvC3Tt9B5DvT7tBhEnQvzBhGvU_vBjHjVrwBhJjYtnBlJnWllB7HpXvjBmD7YnhBiFlanfsD_b3ayB7a1UAvX_SLnW5EB1FdBfDAFn2BrJ3zC7VPvhB5PI9XhNZ3TpM9BxS1MTnTpMBxS_LVjS3JD5O9IFtNhKDnPzIA_MxIA_MzHAxL3IAlNtHAnLjGAnJhGAjJhCAlD,TRJ1|8000|-54309,301,123885|-1125,-1323|44|57rD-8BmgxH9kBkX3M_tCwwB7czxCoyBrgBtrC8tBngB_8B2kBjcl5B-hBzc53BygBjejvBibzblyBoc_fvjBwT9Ylb2OpUztB0XjmB3Z-MzXxc4NjdrXwK9arWqJld1R6G7ZzR6F7d9MuD9ZvMoC7dzJQxcpHhBpchFnC7ZxFvEpflE1E5X7DzF5V_DvH9WtDpHpT1DxJhVlDpJ3R1DzM7UtDtNxTlD1OpS5ChO3PrClNrNxC3PzOvCjRlOlClQpM9B1P_K_B7RvL9BnS5K3B_R9Jb1J9E,
+TRJ1|2170|-52677,301,125277|4276,8249|44|1mlD4qBgp2H-9ByWwsB6kCmYm0BykCwX81B4kC4W24Bm_B-Ti3BqyBiPsuBi1B8Og0B4uBgMkxBkoBsJktBimB4HwuBygByFirB8f-D8uBmUwB4gB0XMwqBkXxB6vBoN1C8gB2L5DwhB8I3EqfuHnGkhBsFtHghBmDpI6fuBpMgpBI9IuZI3KsbIpMsbGjNoaI9O0aI1TkfE3L0QG9P4UG_PkTExQmSExP6PGrL4UEuG4PEsIuPEkH2OEwFmOEwDgMCkCqMEQqMEdmLAAA,
+TRJ1|894|-53540,301,127267|-2913,-9439|43|5irDokBws1HzzBkJj4B5jCoKxuC75B2H3lC52BiGrlCh0BiEnmCvrBiCl-B5jBK92B5fd9zBve5C92Bja9D9yBhWlF7vB9U_GhzBlR1IzxBxNtJ_tBxI3IlkBjHzKjnB5E7I7nBvCkC1jBJ0E3iB6B-DxiBsDoC5e0EgBnfgFV_gBsEjCxcuF3EpjBiErFra8D5CrZoDoB7UkDuBvUiDG1TsDpB_V2ClCvRyCRzQqCGrPyCZxQoCN1OoCGxO8BFjM-BD1M-BB1M4BAtLqBAnI,
+TRJ1|2550|-53596,301,125279|5031,-7494|44|ljoD6tB6uyHoH2Uh9BoP6jBntD8Ngbz1CgO2WprCgR2WjvCoSoU3qC4RiQ7_BoTqOt9B4T6L53BuU0JxzByS-GjqB8VkG1sBsXwE5qBgUsC3gB0dmB9qBgYV1eoYjCtbqb1Dzb2crFrZ6Y3FnT0Z9GtRmd7IpR4b5JtP-X7JnN2YzLxN2WhMvMyUtMpLqWhPpM2T7O5K6S1PrKkR3PtJgRlRrJ2NhPvHoPnStIoP7TrImN1SnHgN5RlHmM0C1G4LqKvG0K6I5F6L-HvG8KmG_FAAA,
+TRJ1|5072|-53596,301,125279|5660,-2837|44|tonD-6BgkzHgqB4oBn-BmsBipB9-B6qB4lBj6B6mB6gB3yBorBqiBt1BiuBmiBv1ByoBwc9sBqiBiWjjBolBqW5jBwoBqWnkBmmBmTvf2jB-P1awiB4NtXkhBwLlU2hBiKlSmjB0ItQqjB8G7N8eqE7J4lBmDhJwgBgBrFokBdjDudnCL-jB7E2BsZ7EqB0VrFmBsX7GoBuZlJsB2Y3KqB2StJgBuW_MoBiQxKa6S7NiBwQ1Nc8StRgBoQ5Qc4MrOW8OzSaoMxQUwNhUYyJvPQgM7UU2LjWWAAA]=],
+    yukimiya = [=[TRJ1|-8000|-64006,301,109665|1701,-350|44|315DqiB-70GuyBsGhVw-BuGrXuiDwH5f8hC4CjRizCaxQukC3BhJm6BhD3E8wBzEHo7BpHkD49BlK8HmrBzIsIkvBnLyMgvBXoQoiCkGudqiB8BsS4iBQkVilBrBwZomB3DiequBlH0mB4fgB2akdyBwY8eAgakdvC0YsYLwUiWB0SwXT6TqULkRwbDmXuTAsQqOAiMiSAmP4RAgPuMAuKyMA0K8JAqI0PAmN2KAgJ-JAsIkIA8GuIAiHkKAyIkIA6GiBAe,
+TRJ1|8000|-64006,301,109665|1653,-531|44|tt6DgzC220GyemXzSw0B0lB1cyiC6sBlgB87B0lB9YonC6nBrWg1BoblNg0BsXhIqsBgS9Dm3B2SOoyB0OiEwnB8IgH8lB-GgJunB8E8M62B-CwXwnBLyUsjBnCoVgb9CiSktBhI6iBuiBpI4bmerJwY0a_JyV-Z1LkVykBlU2d6TxMiQqZ1SyUiRpO8N-SzRsPuV3WuRoRhUgOuO5S4LiNxS0K8RrcwOgOpYsL-L5W2JmLlXkJuKpXuIkNxgB0K6IjLmH4IoKkH2HuLoGuI-K6GsJiK2H8E-E-D,
+TRJ1|2518|-64006,301,109665|8448,-3245|42|lk6Dg7But0G-6BiY9kBizByT7d41BwS9bq9B4Tzdi5CoX5hBogCgO1Ti9BoK1NswBwG_H-pCwF7E40BwBU8uBZmE2vBlDmI89BlH4PgvB3H8P0uBhK4TiiB_ImRyqBhNyYmsB1PybghBxN8UqnB5S-Y0gB9R4U-gB7U8Uid3UuSkYnTqP4XjOiPgaqJyQ0b6LwRiTiGkMgS8DuL8RqBqL4TfyMqQ5DsK0NlF0IiNnHqI0Q_MyKgLnEgHiLkEgH2JoDkGkKYuGsJpB-F0DpBqC,
+TRJ1|3271|-64006,301,109665|7854,-3019|42|ln6DuiCyu0G8jB0SxXwhCmfzmB47B0angBo5C6iBnoBogCyVrXo-BkSjSi7BoOxMkmC2MhI81B6GvBi1BkE2C6pBuBiFimBNuHk3B1DwPgxBvFuRwlBlGyQymB_H0TmhC5RkoBsfrKkU2e9LgUyjBjQqX0hBjSgWuclR0Ssf5VyU8XzS0P-Z9WgRiX_WkPkZ5buQyShQkM4QqHgL0VsNmO4O2H2JyP4FkKsMwCmI-OG4JyL7ByH4JvDsG-I7E8FqJ5GiGsM7MkI0JxKqGgFqBoD,
+TRJ1|5505|-64006,301,109665|5163,-2482|43|_x6DyuCuq0GogBkY7ZozC45Bn8BmnBsYpY0gB-SpSyrCooB_kB80B-YrVgvB0TnP6vBuR9LymC2UpKsuB4KzC6uBiIoB-wB0FyFmrBuCsIgvBE8MsmB7BqN6mB3DkQ-xB1HgZoxBnK-bgiBrJ4Tmd3JiRue5L8RskBpRqV-iBtTwUwanRwPoT9NqLwU3QgMkehc2R2TvUwLwTrWuLuU7agM0R1ZqK8OzX4IsNnX6HqMlXoHsLpK0GsQuQ0J2K4KoGwJgIyF4I2FkFkMwEkHgJeoF8CL2B,
+TRJ1|2359|-64006,301,109665|8543,-3317|42|3j6Dm5B8s0Gu7B-WxlBwwByRzc49B-TngB4-BuS5d8_C8WrkB-xB4JnP20BmIxMg8B6GhKs7BgElFuoCcMmqBtByD2rBpD4Gs3B_GsNq0B5IuQgzB3LqVsnBvKgT2iB7KsTq1B7TghBgoB7QgZ-YpMyPuc1P6R-kBnXiXmdxUqSsYjQmP4T8CsM-UsIiN6d4K2SiQyEgKoUsD2MsPgB0JiSjBoLoXvFyO8OjGqJwOlIiJwPpJ2JgOK4I-K4C6G4KkB4G0KpB0G4KhE4GuHtC0E,
+TRJ1|1006|-64006,301,109665|8938,-4131|43|vi6D4kB8k0G-wBkI9iB-1CsLz3B8nCqHpqB-3C0EjrBiiCcnb6zBjB5Ro0B3C3OwyBjErLkiCrIhJ2qB3GlDygCvMJmsBnKoDsqBrLiGq8B0BuNmuBiEuNs5B2DiVqdIkN0mBnBkTwvBhEuYwmBzF2T-mB1D8TmcsCuO6mBe6Tmf1B8P6YtD2MkY2BqMgbH6N8ZNmNmUJqKmSHqJqUDsKiTA2JqQAsIkMAmG0LA-FgQAkI4KAwFgMAkGqKAqFuJA6EyLA8F0DA8B,
+TRJ1|5502|-64006,301,109665|5409,-1898|43|9r6DyuCuz0Gy4BomB1iBiqBmb7XonC0qBpjB-jCmkB7awkC0hB_W6yBgWxMsvBiSjI2sBiPzE44B4PZ4tBuK0CyvBiI-G2mB0E0I01BkD4Q-yBH4UwtBrDoXmgB_D8SmkBvGoY2rBrKggB2gBzJmYgiBxMsZkW5JwQ-pBtWofkYhPgSqUrOmPwVlRgQkX9UqRmY7YgS6S1ViO-QzV0MsPzVuL6S5diOsMlVmJwMrXsJ4L9X4IoO5B0K2M0MuJ8JoKsH-H4G-F4HoF4FyJ8DkHwIesG8FbsE]=],
+    rin = [=[TRJ1|3134|-45834,301,99436|-7476,4130|43|577CqzB0yiG3rC0d4CrxCifiFjhD0jB4Jz0D0oByRtmCgYiMpHwCoBpBOIruCmVqc7lEkiB21B7gCuO0fryB2HiiBzgBmD4ajiByB8gBziBpB-oB_VxC4exRzD2cvR1FqiBvPtHykBlN_IsmBrOpN0uBhLtMokB3HnKuZzJvOufhMnVynBlHpOyXjItS2arIpVsbnG3RuU5GxVsWvGzWsVrFzUyRlF7ViRzFxXsSvEC2OjE0JwNhEkKqNlE0I6N1D2FkM1DwDiM_CiB8JlDVsKpBhBsE,TRJ1|-7988|-55163,301,104390|66,1755|43|xusD2jB4puGhWwK2yBvuB8V41DtfyOy5C3eiOqkDlW4J63CpOgG6oC9IsDm8B1G-B0qCnBP65BoCrCm4BuF9DwyBsGjEklBwNlIg4BmOpIipB0RjKkqByXnN0sBgX5M-jBgWlMigB8G5DgKoBX8Bk9BrN-9BgoB_B0oBkckE8csXqDgY-UqBwVoUP6U-SvCuTwSxEgT8ShHuT4N5GkOmOxByOyNgD-N2M8BiN-NDqOsNnC4NgJrDoJmMKwMkHSsHuIN0IsHtByHsIK0IwHL2H,TRJ1|8000|-54842,301,112978|114,1733|43|j7rDw_Bw2-GrhB-qB4gCtjBswByrC_vB8mC2zD1V2jBs9B7VopBirCxO-hBkiClJ2e2gC_D-V2xBe4W65B6C0MgjBgIgPqvB2MmMuuBmOmIsmBuRmF-iBiUkDkhBwVeydmZdyd0YxC2Y4alE6XodvGqZ0ZzHkWuX5ImUmYjL8U0T5K-Q4TvMgR2VhQ4SuQ7NmOgQrP4NoRxS8O8V_a8SwM1R4KoM5SyK4M3VgL-MvYmL6KpWqJyJxVoI8IxV0H4J_ZuIyJ3boIqF3Q0EiHxXiGmFvSuE,TRJ1|6857|-54842,301,112978|480,3622|44|v0rDm-Bs4-G7S-c0uB3lB0_BuqDrZmuB0vCpW4vBw2ClOukBilC3JiiBwkC5E4bm7BRiVowBoDiXi5BsDsQ2pBuL-N8sB-M2LqpBwRiKwqBuRsG4hBiVoE-gBkYkCmfuYA2akiBtC0fgd9DyWkhBrG-XscrHqU8cxJ2Uqa5K8S2WnLqQwVnMsPgUpNqO0S_NsN0RjP0MmRrQqMuM_M-IuU5X2O-MjRoJgP5V4K8L5SwI6NlY-JuL7VmIiLjX8HkKnXqHuK7ZwH8I5XqGuI1YiGuHtXsFAAA,TRJ1|5662|-54842,301,112978|826,5440|44|hzrDs8B-5-GpQoZwrB3b6rBksC5ZmxB07C5Q0iBiiCxR2qBi1CjNsqBs5C7DmckhCPwUgyBiD8SmyBqGuQ6vBkIiNypBwK8JykBuR8LsxBsGkEwRqBc2DIEUuyCkFyrD4hB9BkiByfpE8Z0dzFsV-fhIwW8c1JoU0bnLuT-WlLkQqY5NiR8VrOsPoX1RqQsPpN6KqRtQmMiTtUsN2Q_T4LwOnTkKuOjVmK0PrZgL2K_SuH0MvY8IsKjWqHuK9XqHkKtZkHiJtYsGmI9X4FgG_PoEAAA,TRJ1|5220|-54842,301,112978|1240,6002|43|xvrD87Bk8-GjOoZ6tB3aq0BgiD5T-rBi1C5S0yBumD_I-hByoC3DsZy5BPmc8jC0C-RuuBwF2R-wB2JkRi0BkL2M-qBmOsK4oB4SyImpBiY0GmqBiYmDgiBuba8fwbjBmbod_CwYmjBtFmZ2epG4T2gBzI2UwcvJgS-YjK6PyarM6QsbvPqRsfhV6TkT_OkMkQlOmKsQ5PsKiUzV0M6S1W-LqMtQ6H6OxVsJsOjXiJ4NpY2IwJ_RgG0MnagIiK9WsG4Kta6G6JhamG8IpN0F-DqDwC,TRJ1|2752|-54842,301,112978|1838,8676|44|turD8wB6h_GpNkS6wBlZslBupDlQibqwCnO0b82ClLwe6oDhEsS2kCSyQwmCoDsNy-BwG8IqyBkK6Hm1BiO4F00B6PiD4sB-UiB8uB-c7B0yBqU9CidygBrGqnB6WtFoXwdhImaiiBnKka8dlK-Uwc9K4TyhBvPoX2etQmVuXvOmQsVzO6O4U7PqO0fnb8V8SvSgNoQ3RqLuS3V2MmSzX0MoOvK6JkN8FiJyMgJ2I4O8JmK2N6GuJmL8D4HyJ0B0GsJGwG0J3B0G0IlD-FmI5E2F0BjBkB]=],
+    karasu = [=[TRJ1|8000|-54942,301,119074|-1469,-926|44|r9sDktC8kmH1RmW1hB9f6kBz4Bhb8dtuBrhB8hBx1B9hBwf3yB5cyYroBjeoXnnBjnBobrvB7emSlhB5S-J5SxdyNjbhkB6NxdvX6GxQ7XyFjP3XkErNxX2CtL_ZoBzKtYFlIpRJzF5CBdZAHndnGxCr2B1MnEzd_JtB9U7IXvRjJTnRpKRxUrOT7RjOR9OrNPhQlQPjN1ON_MhQN1MjRLxJhOJrM9TNjKzRJ9J5SJ5H7PH1I_SJhHvQFlIxUH3BvEB,TRJ1|-8000|-54942,301,119074|-1618,-630|44|x9sDygBopnHliB6J3lBlvBqL_wBxvBuK_vB5wBuJrvBl3B6IhzBvtB4F7nBxuBmErmBvoBqCtf_mBgBzcpmBP_Z1mB3BtY1tBhEhaxjBxElSxlBrGjR_hBnHrN5kBrJnMnhB_J9I5hBzLhH1arK3D1cpMtC7Y3IV_a0Dahb-FmCrXqEgCtXkDgC5SsB0B5YEkCtUtB4BnT7C2BhSjEwBvRvFwBvP3FsB5PoBsBpOgCmBxOaoBzLNgBpNhCmB_LvCgBxLMgBtKCepJfYpKHexEDM,TRJ1|5090|-54942,301,119074|-5777,-2529|43|7rtDioCwrmH_cmYxlBnpBogB5yB1sBihB30B51B2kBz7BtlBqX7mBpxBwbjvBziB2Rhf1fqOlajqByQ1fzcyJvTndsIlSrnB6IvVjgBsFlPta0CpK7ZmBvI3aBhHzaxBpF_Z9CpD1ZrExBtYvFI9Y_G8BrVpHiC7V9ImCxVpKmC5StK8BhRzK2BtU1OiCjQ_M0BzS7Q8B1O_OuBnPhRyB7LxOmBtOvTuB1LjRmB7KzRiB1J3QgBvJ1RezJlTe9JxVgB1J1WgBpInIaAAA,TRJ1|4207|-54942,301,119074|-6887,-2769|42|1wtD4kCgsmH7boUthB_sBwepzBl5BokB_9B5eqS7f1xBobvwB_sBkW7oB3iBuPrd3wBiTjmBjd8J7UnfsJ5U1tB-K_a9bkFzOhnB6EvR5hBiCtM1iBErKrZlB_F1YxC_DrahE1ChiBpHZxXtGkBpXzHwChYtJ8CzWrK4CtS3JmC5T7LsCjT_MqC5RxNkChRzOiClQnP-BtRrSkC9L3NuBlQ1U-BzKzOqBpN9TyBpMnUwB3MhXyBtJlSkBtIxMgBxKmGoB1J4KmB_CmDM,TRJ1|2129|-54942,301,119074|-8883,-2813|43|n_sD0nBqsnHvlByPplB_kCiZ9_B1hBwLre1nCmWr9BrqByLniB3zBmMrnBh0BsKhlBlsBmHrd1uBuFncvjB-C7ThlByB5S9jBErQ3jBpBrO3yB3E1QzfrEvI3blF3FndxGxErgB_I5CrY9HTpctKc_YpKoCzarMgEnY1M8DpZ9OkEjSzLgD7SxNkDnSpO-CtS9NiD5WgD4D7OuGuC_RmH-CpQmF0CzPmDyC5OoBuCnNNmC3MhCiCtLtD8B9LpFgC_LtH-BnJ7GwBhHzFmBAAA,TRJ1|6545|-54942,301,119074|-3929,-1351|43|z2sD42BgunHhkBgftpBtqByiBtuB5lBsd3nB9sBmhBntBn1BukBhyB7uBud9oBvrBoZxjBzjBsStazjB4QtY7vByTrdpc4JlPhiBkKrQ5ZoG3KnjBsGjM_c6DlI_f8BpGrYAlDvWjBxBjiB9DMxTvD0BhalGgE3UjG-D5V_HoE3T1I8DpSrJyDzShL0DpLvHoCpW3QsE5OzM8CjNvMyCjP9P-CjMhOsCjMtPsChLnPkC5MrTwChKxQgC3KnTkC9HnPwBxKjWiCxIlT2BjJpW6BpElLa,TRJ1|5428|-54942,301,119074|-5521,-1898|43|x3sDi1B4tnHziBoc5nBxpBkfpsBx_ButBnhCr1BmjBpzBrjB2V_f9jByU3eroBuVvgBvlBkShcvrB6S7dxdkLpSlgB2KnSvhBuJ9QnhB2H3OnemFpL5dwDnJ7c8BhHtaI1EtanB9C3ZzCjBnZ_DUlYlFmCnZ7GgE3T1G2DzV1IgE3TlJ2DhRpJmD_QtKmD_U5O-D3S_OwDnS3QuDjRzRmDnNnPuC_N3R0ClKhO-B7L3RmCrLtSkC1K7SgC5K5UgCxJ9T6BvI_SyBzJvX6BvCnGQ,TRJ1|4960|-54942,301,119074|-6115,-2146|42|53sDg0BstnHjgB8YvkBjkB0atnBt0BukBv2BhrBwchrBnqBia9nBrqBmY3lBtnB6U_gBvmBwS_dnlBmQ_avkBiOlY1jB8LtVvkBuK7TnfmH7OvnBwG1PtiB-DvL3XmBjG3aApFjgB3BlEnWtCrBjY5DFvbhGgCjV5F8C5X9HkExVzI4DnV_J4DhYnNoErS5LmDtR1MiD7NnLuCpWlU-DpO1OwC9OjR0CrN7QqClR7XiD3M1TmC_K5S-BvIpPwB5LtXiCxJrU2B7KrZ-B1EhJa,TRJ1|4648|-54942,301,119074|-6511,-2241|42|r4sDkzB0tnH7lBicjqBvxBuiBp0B51BojBl2BxyB-enwBxnBsWxjB5mBsU7gB1lBmShe3qB6S7fhlBuOrZxiB4LvVztBmNzZzgBsH3P7euFjNnjBqEzM3a-B9HtdS5GvfrB7E1e9C5CjY7DL1ZvFsBjYtG6CtXzHgE9VxI8DvUtJ2D9UhL2DjTzLuD1S9MqD9QlNgD5P3N6CxP7O6ChMzMkCtQlT-CjO_RwCxLnQiCpNpUsC5NtXuCzKvT-BjLtW-BxJ1U2B3J5N4BxD0DU,TRJ1|4102|-54942,301,119074|-7163,-2369|42|h6sD6xButnH9jBuYvmB7zBqhBj1Bh0Bsf5yBlvBuaxrB7nB6U_iBrtBgW1lBnwBoVtlBvqBwQne7kB2MnY_lBqL5WzwB2L3Z9dyF7N5fuE9MprBwDtO5aWjHndX7F3mBtD7E3d7Ef_azFUxXpGoCvXxH4DjdvLqF3V_JgE3U_K4DlT5LyD_SnNuDxR1NoDpQhO-C5PjP-CrOnP0C5O9Q2CtRxWmDtM1RqCnK1P8BhMhUmCpLvUkCxJzS2BhLnGiCnI8HwB9I2J0BAAA
+]=],
+}
+
+local alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+local alphabet_index = {}
+for i = 1, #alphabet do alphabet_index[alphabet:sub(i, i)] = i - 1 end
+
+function st_decode(tok)
+	local p = tok:split("|")
+	local n, pp, lk = tonumber(p[5]), p[3]:split(","), p[4]:split(",")
+	if p[1] ~= "TRJ1" or not n then return end
+	local pos = Vector3.new(tonumber(pp[1]), tonumber(pp[2]), tonumber(pp[3])) / 100
+	local f = Vector3.new(tonumber(lk[1]) / 1e4, 0, tonumber(lk[2]) / 1e4)
+	f = f.Magnitude < 1e-3 and Vector3.new(0, 0, -1) or f.Unit
+	local r = Vector3.new(-f.Z, 0, f.X)
+
+	local values, v, m = {}, 0, 1
+	for c in p[6]:gmatch(".") do
+		local d = alphabet_index[c]
+		if not d then return end
+		v += (d % 32) * m
+		if d >= 32 then m *= 32
+		else values[#values + 1] = v % 2 == 1 and -(v + 1) / 2 or v / 2; v, m = 0, 1 end
+	end
+	if m ~= 1 or #values ~= n * 3 then return end
+
+	local w, rel, x, y, z = {}, {}, 0, 0, 0
+	for i = 1, n do
+		x, y, z = x + values[i * 3 - 2], y + values[i * 3 - 1], z + values[i * 3]
+		local pt = Vector3.new(x, y, z) / 100
+		local d = pt - pos
+		w[i], rel[i] = pt, Vector3.new(d:Dot(r), d.Y, d:Dot(f))
+	end
+	return {pitch = tonumber(p[2]) / 100, world = w, rel = rel}
+end
+
+local folder = Instance.new("Folder")
+folder.Name = "DecodedTrajectories"
+
+function st_make_part(color, ball)
+	local p = Instance.new("Part")
+	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.CastShadow = true, false, false, false, false
+	p.Material, p.Color = Enum.Material.Neon, color
+	if ball then p.Shape, p.Size = Enum.PartType.Ball, Vector3.one * 0.8 end
+	p.Parent = folder
+	return p
+end
+
+function st_layout(l, pts)
+	local line_alpha = st_autotop and 1 or 0
+	for i = 1, #pts - 1 do
+		local a, b = pts[i], pts[i + 1]
+		local d = (b - a).Magnitude
+		local seg = l.segments[i]
+		seg.Transparency = line_alpha
+		seg.Size = Vector3.new(st_linethickness, st_linethickness, math.max(d, 0.01))
+		seg.CFrame = d > 0.01 and CFrame.lookAt(a:Lerp(b, 0.5), b) or CFrame.new(b)
+	end
+	for i = #pts, #l.segments do l.segments[i].Transparency = 1 end
+	l.start_marker.Position, l.end_marker.Position = pts[1], pts[#pts]
+	local marker_alpha = (st_autotop and st_hidemarkers) and 1 or 0
+	l.start_marker.Transparency = marker_alpha
+	l.end_marker.Transparency = marker_alpha
+end
+
+local ray_params = RaycastParams.new()
+ray_params.FilterType = Enum.RaycastFilterType.Exclude
+ray_params.RespectCanCollide = true
+local ignore = {}
+
+function st_cast(a, b)
+	for _ = 1, 5 do
+		local hit = workspace:Raycast(a, b - a, ray_params)
+		if not hit or hit.Instance.Parent ~= workspace.Terrain then return hit end
+		table.insert(ignore, hit.Instance)
+		ray_params.FilterDescendantsInstances = ignore
+	end
+end
+
+anchors, live, enabled, path_count = {}, nil, false, nil
+
+function st_find_style()
+	for _, holder in ipairs({player, player.Character}) do
+		for name, value in pairs(holder:GetAttributes()) do
+			if name:lower() == "style" then return value end
+		end
+		for _, child in ipairs(holder:GetChildren()) do
+			if child.Name:lower() == "style" and child:IsA("ValueBase") then return child.Value end
+		end
+	end
+end
+
+function st_sample(rel, u)
+	local x = u * (#rel - 1) + 1
+	local i = math.min(math.floor(x), #rel - 1)
+	return rel[i]:Lerp(rel[i + 1], x - i)
+end
+
+function st_new_line(color, count)
+	local l = {segments = {}, start_marker = st_make_part(Color3.fromRGB(0, 255, 0), true), end_marker = st_make_part(Color3.fromRGB(255, 0, 0), true)}
+	for i = 1, count - 1 do l.segments[i] = st_make_part(color) end
+	return l
+end
+
+function st_rebuild()
+	folder:ClearAllChildren()
+	anchors, live = {}, nil
+	local style = tostring(st_find_style()):lower()
+	st_currentconfig = st_styleconfig[style] or st_defaultconfig
+	st_currentlinelength = st_currentconfig.length
+	local data = st_shotsbystyle[style]
+	if not data then
+		task.wait(1)
+		starter_gui:SetCore("SendNotification", {
+			Title = "invalid style",
+			Text = "this style doesnt have base curve shot or isnt added yet.",
+			Duration = 3,
+			Button1 = "alright fella",
+		})
+		return
+	end
+	data = data:gsub(",%s*TRJ1", "\nTRJ1")
+	local count = 0
+	for tok in data:gmatch("TRJ1|[%w%-_|,]+") do
+		local shot = st_decode(tok)
+		if shot then
+			shot.pitch = math.max(shot.pitch, st_pitchoffset)
+			table.insert(anchors, shot)
+			count = math.max(count, #shot.world)
+		end
+	end
+	if #anchors == 0 then return end
+	table.sort(anchors, function(a, b) return a.pitch < b.pitch end)
+	path_count = count
+	for _, shot in ipairs(anchors) do
+		shot.pts = {}
+		for k = 1, count do shot.pts[k] = st_sample(shot.rel, (k - 1) / (count - 1)) end
+	end
+	if st_mode == "world" then
+		for i, shot in ipairs(anchors) do
+			st_layout(st_new_line(st_linecolors[(i - 1) % #st_linecolors + 1], #shot.world), shot.world)
+		end
+	else
+		live = st_new_line(st_linecolors[1], count)
+	end
+end
+
+function st_plane_hit(q, dc, h)
+	local best, bk, bs = math.huge, 1, 0
+	local ax, ay = math.sqrt(q[1].X ^ 2 + q[1].Z ^ 2), q[1].Y
+	for k = 1, #q - 1 do
+		local b = q[k + 1]
+		local bx, by = math.sqrt(b.X ^ 2 + b.Z ^ 2), b.Y
+		local vx, vy = bx - ax, by - ay
+		local l2 = vx * vx + vy * vy
+		local s = l2 > 1e-9 and math.clamp(((dc - ax) * vx + (h - ay) * vy) / l2, 0, 1) or 0
+		local ex, ey = ax + vx * s - dc, ay + vy * s - h
+		local e = ex * ex + ey * ey
+		if e < best then best, bk, bs = e, k, s end
+		ax, ay = bx, by
+	end
+	return math.sqrt(best), bk, bs
+end
+
+function st_blend_for(pitch)
+	local lo, hi = anchors[1], anchors[1]
+	for i = 1, #anchors - 1 do
+		if pitch <= anchors[i + 1].pitch then
+			lo, hi = anchors[i], anchors[i + 1]
+			break
+		end
+	end
+	local t = hi.pitch > lo.pitch and (pitch - lo.pitch) / (hi.pitch - lo.pitch) or 0
+	return lo, hi, t
+end
+
+function st_path_q(pitch, n)
+	local lo, hi, t = st_blend_for(pitch)
+	local q = {}
+	for k = 1, n do q[k] = lo.pts[k]:Lerp(hi.pts[k], t) end
+	return q
+end
+
+local goals, goals_time = {}, 0
+local fire_ready_at = 0
+local fire_hold = nil
+
+slow_active, slow_end, slow_ready_at, slow_base, slow_hum, was_locked = false, 0, 0, nil, nil, false
+
+function st_slow_stop(start_cooldown)
+	if slow_active and slow_hum and slow_hum.Parent and slow_base then
+		slow_hum.WalkSpeed = slow_base
+	end
+	if slow_active and start_cooldown then
+		slow_ready_at = os.clock() + st_slowcooldown
+	end
+	slow_active, slow_base, slow_hum = false, nil, nil
+end
+
+function st_slow_tick()
+	if not slow_active then return end
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if not hum or hum ~= slow_hum then
+		slow_active, slow_base, slow_hum = false, nil, nil
+		return
+	end
+	if os.clock() >= slow_end then
+		st_slow_stop(true)
+		return
+	end
+	hum.WalkSpeed = slow_base * st_slowfactor
+end
+
+function st_slow_begin()
+	if slow_active or os.clock() < slow_ready_at then return end
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
+	slow_active = true
+	slow_hum = hum
+	slow_base = hum.WalkSpeed
+	slow_end = os.clock() + st_fireduration
+	hum.WalkSpeed = slow_base * st_slowfactor
+end
+
+function st_fire_skill()
+	local skill = st_currentconfig.skill
+	if not skill or os.clock() < fire_ready_at then return end
+	if not NET or not buffers then
+		return
+	end
+	fire_ready_at = os.clock() + st_fireduration + st_firecooldown
+	task.spawn(function()
+		for i = 1, st_firecount do
+			pcall(function()
+				NET:FireServer(buffer.fromstring(buffers["base"]), {{skill}})
+			end)
+			if i < st_firecount then task.wait(st_fireduration / st_firecount) end
+		end
+	end)
+	return true
+end
+
+function st_hold_end()
+	fire_hold = nil
+end
+
+function st_hold_freeze(h)
+	h.root.CFrame = h.cf
+	h.root.AssemblyLinearVelocity = Vector3.zero
+	h.root.AssemblyAngularVelocity = Vector3.zero
+end
+
+function st_hold_begin(lock, root)
+	local h = {lock = lock, root = root, stop_at = os.clock() + st_fireduration, cf = root.CFrame}
+	fire_hold = h
+	if st_freeze then st_hold_freeze(h) end
+	task.delay(st_fireduration, function()
+		if fire_hold == h then st_hold_end() end
+	end)
+end
+
+function st_target_goal()
+	local team = player.Team and player.Team.Name
+	local map = workspace:FindFirstChild("map")
+	if not map then return nil end
+	if team == "A" then return map:FindFirstChild("Bgoal") end
+	if team == "B" then return map:FindFirstChild("Agoal") end
+	return nil
+end
+
+function st_goal_name_ok(name)
+	name = name:lower()
+	local ok = false
+	for _, k in ipairs(st_goalnames) do
+		if name:find(k, 1, true) then ok = true end
+	end
+	if not ok then return false end
+	for _, k in ipairs(st_goalexclude) do
+		if name:find(k, 1, true) then return false end
+	end
+	return true
+end
+
+function st_goal_info(inst)
+	local cf, size
+	if inst:IsA("Model") then cf, size = inst:GetBoundingBox() else cf, size = inst.CFrame, inst.Size end
+	local axes = {{cf.RightVector, size.X}, {cf.UpVector, size.Y}, {cf.LookVector, size.Z}}
+	table.sort(axes, function(a, b) return math.abs(a[1].Y) > math.abs(b[1].Y) end)
+	local wa, da = axes[2], axes[3]
+	if da[2] > wa[2] then wa, da = da, wa end
+	return {
+		inst = inst,
+		center = cf.Position,
+		height = axes[1][2],
+		width = wa[2],
+		depth = da[2],
+		wdir = Vector3.new(wa[1].X, 0, wa[1].Z).Unit,
+		ddir = Vector3.new(da[1].X, 0, da[1].Z).Unit,
+	}
+end
+
+function st_find_goals()
+	if os.clock() - goals_time < 3 then return goals end
+	goals_time, goals = os.clock(), {}
+	local list = {}
+	if st_goals then
+		for _, g in ipairs(st_goals) do table.insert(list, g) end
+	else
+		local root = workspace:FindFirstChild("map") or workspace
+		local picked = {}
+		for _, d in ipairs(root:GetDescendants()) do
+			if (d:IsA("Model") or d:IsA("BasePart")) and st_goal_name_ok(d.Name) and not d:IsDescendantOf(workspace.Terrain) then
+				local nested, a = false, d.Parent
+				while a and a ~= root do
+					if picked[a] then nested = true end
+					a = a.Parent
+				end
+				local container = false
+				if d:IsA("Model") then
+					for _, c in ipairs(d:GetChildren()) do
+						if c:IsA("Model") and st_goal_name_ok(c.Name) then container = true end
+					end
+				end
+				if not nested and not container then
+					picked[d] = true
+					table.insert(list, d)
+				end
+			end
+		end
+	end
+	for _, inst in ipairs(list) do
+		local ok, info = pcall(st_goal_info, inst)
+		if ok and info.width >= st_goalminwidth then table.insert(goals, info) end
+	end
+	return goals
+end
+
+function st_goal_corners(g, from)
+	local s = (from - g.center):Dot(g.ddir) >= 0 and 1 or -1
+	local front = g.center + g.ddir * (s * g.depth / 2)
+	local aimdrop = st_currentconfig.aimdrop or st_aimdrop
+	local aiminset = st_currentconfig.aiminset or st_aiminset
+	local top = Vector3.new(front.X, g.center.Y + g.height / 2 - 1 - st_cornerinset - aimdrop, front.Z)
+	local w = g.width / 2 - 1 - st_cornerinset - aiminset
+	return {top + g.wdir * w, top - g.wdir * w}, front, g.ddir * -s
+end
+
+function st_near_dist(pts, pos)
+	local best = math.huge
+	for k = 1, #pts - 1 do
+		local a, b = pts[k], pts[k + 1]
+		local v = b - a
+		local l2 = v:Dot(v)
+		local s = l2 > 1e-9 and math.clamp((pos - a):Dot(v) / l2, 0, 1) or 0
+		best = math.min(best, (a + v * s - pos).Magnitude)
+	end
+	return best
+end
+
+function st_build_wall_list()
+	local list = {}
+	for _, v in ipairs(ignore) do table.insert(list, v) end
+	for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+		if p.Character then table.insert(list, p.Character) end
+	end
+	for _, g in ipairs(st_find_goals()) do
+		if g.inst then table.insert(list, g.inst) end
+	end
+	return list
+end
+
+function st_wall_clear(pts, pos, base_list)
+	local list = {}
+	for i = 1, #base_list do list[i] = base_list[i] end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.RespectCanCollide = true
+	params.FilterDescendantsInstances = list
+
+	local origin = pts[1]
+	local first = #pts
+	for k = 1, #pts do
+		if (pts[k] - origin).Magnitude >= st_wallstart then
+			first = k
+			break
+		end
+	end
+
+	local size = Vector3.new(st_wallsize, st_wallsize, 0.2)
+	local step = math.max(1, st_wallstep)
+	local k = first
+	local a = pts[first]
+	while k < #pts do
+		local nk = math.min(k + step, #pts)
+		local b = pts[nk]
+		local dir = b - a
+		if dir.Magnitude > 0.05 then
+			local cf = CFrame.lookAt(a, b)
+			for _ = 1, 6 do
+				local hit = workspace:Blockcast(cf, size, dir, params)
+				if not hit then break end
+				if (hit.Position - pos).Magnitude <= st_wallend then return true end
+				if hit.Instance.Parent == workspace.Terrain or hit.Normal.Y > 0.7 then
+					table.insert(list, hit.Instance)
+					params.FilterDescendantsInstances = list
+				else
+					return false
+				end
+			end
+		end
+		a, k = b, nk
+	end
+	return true
+end
+
+function st_find_lock(origin, look)
+	local flat = Vector3.new(look.X, 0, look.Z)
+	if #anchors == 0 or not path_count then return end
+	if flat.Magnitude < 1e-3 then
+		if st_requirefacing then return end
+		flat = Vector3.new(0, 0, 1)
+	end
+	flat = flat.Unit
+
+	local target_goal = st_target_goal()
+	if not target_goal then return end
+
+	local corners = {}
+	for _, g in ipairs(st_find_goals()) do
+		if g.inst ~= target_goal and not g.inst:IsDescendantOf(target_goal) then continue end
+		local pts, front, into = st_goal_corners(g, origin)
+		local to = Vector3.new(front.X - origin.X, 0, front.Z - origin.Z)
+		if to.Magnitude > 1 and to.Magnitude >= st_currentconfig.mindist and to.Magnitude <= st_currentconfig.maxdist and (not st_requirefacing or to.Unit:Dot(flat) > 0.2) then
+			local mid = (pts[1] + pts[2]) / 2
+			local half = (pts[1] - pts[2]).Magnitude / 2
+			for _, c in ipairs(pts) do
+				local inward = Vector3.new(mid.X - c.X, 0, mid.Z - c.Z)
+				table.insert(corners, {
+					pos = c,
+					inward = inward.Magnitude > 1e-6 and inward.Unit or Vector3.zero,
+					maxslide = math.min(half, 10),
+					into = into,
+				})
+			end
+		end
+	end
+	if #corners == 0 then return end
+
+	local wall_list = st_build_wall_list()
+
+	local pmin, pmax, n = anchors[1].pitch, anchors[#anchors].pitch, path_count
+	local steps = math.max(1, math.ceil(pmax - pmin))
+	local paths = {}
+	for i = 0, steps do
+		local p = pmin + (pmax - pmin) * i / steps
+		paths[i] = {p = p, q = st_path_q(p, n)}
+	end
+
+	local cur_r = Vector3.new(-flat.Z, 0, flat.X)
+	local cur_pitch = math.clamp(math.deg(math.asin(math.clamp(look.Y, -1, 1))), pmin, pmax)
+	local cur_q = st_path_q(cur_pitch, n)
+	local cur_pts = {}
+	for k = 1, #cur_q do
+		cur_pts[k] = origin + cur_r * cur_q[k].X + Vector3.new(0, cur_q[k].Y, 0) + flat * cur_q[k].Z
+	end
+
+	function solve(pos)
+		local dc = Vector3.new(pos.X - origin.X, 0, pos.Z - origin.Z).Magnitude
+		local h = pos.Y - origin.Y
+		local best
+		for i = 0, steps do
+			local e, k, s = st_plane_hit(paths[i].q, dc, h)
+			if not best or e < best.err then best = {err = e, p = paths[i].p, k = k, s = s, q = paths[i].q} end
+		end
+		local c = best.p
+		for i = -10, 10 do
+			local p = math.clamp(c + i * 0.1, pmin, pmax)
+			local q = st_path_q(p, n)
+			local e, k, s = st_plane_hit(q, dc, h)
+			if e < best.err then best = {err = e, p = p, k = k, s = s, q = q} end
+		end
+		return best
+	end
+
+	function evaluate(pos, sol, into)
+		if sol.err > st_locktol then return end
+		if st_requirefacing and st_near_dist(cur_pts, pos) > st_snapdist then return end
+		local qs = sol.q[sol.k]:Lerp(sol.q[sol.k + 1], sol.s)
+		local dx, dz = pos.X - origin.X, pos.Z - origin.Z
+		local fx, fz = dx * qs.Z + dz * qs.X, dz * qs.Z - dx * qs.X
+		local m = math.sqrt(fx * fx + fz * fz)
+		if m < 1e-6 then return end
+		fx, fz = fx / m, fz / m
+		local f, r = Vector3.new(fx, 0, fz), Vector3.new(-fz, 0, fx)
+		local seg = sol.q[sol.k + 1] - sol.q[sol.k]
+		local hdir = f * seg.Z + r * seg.X
+		local entry = hdir.Magnitude > 1e-6 and hdir.Unit:Dot(into) or 0
+		if entry < math.cos(math.rad(st_currentconfig.maxentry)) then return end
+
+		local pts, len = {}, 0
+		for j = 1, sol.k do pts[j] = origin + r * sol.q[j].X + Vector3.new(0, sol.q[j].Y, 0) + f * sol.q[j].Z end
+		pts[sol.k + 1] = pos
+		for j = 2, #pts do len += (pts[j] - pts[j - 1]).Magnitude end
+		if st_requirereach and len > st_currentlinelength then return end
+		if not st_wall_clear(pts, pos, wall_list) then return end
+
+		local rad = math.rad(sol.p)
+		return {dir = Vector3.new(fx * math.cos(rad), math.sin(rad), fz * math.cos(rad)), k = sol.k, s = sol.s, pos = pos}
+	end
+
+	local best
+	for _, c in ipairs(corners) do
+		local slide = 0
+		while slide <= c.maxslide do
+			local pos = c.pos + c.inward * slide
+			local res = evaluate(pos, solve(pos), c.into)
+			if res then
+				res.slide = slide
+				res.near = st_near_dist(cur_pts, pos)
+				if not best or res.slide < best.slide - 1e-6 or (math.abs(res.slide - best.slide) < 1e-6 and res.near < best.near) then
+					best = res
+				end
+				break
+			end
+			slide += 1.5
+		end
+	end
+	return best
+end
+
+local ring_folder = Instance.new("Folder")
+ring_folder.Name = "TrajectoryRings"
+local ring_key = nil
+
+function st_clear_rings()
+	if ring_key then
+		ring_folder:ClearAllChildren()
+		ring_key = nil
+	end
+end
+
+function st_make_ring(center, radius, color)
+	local count = math.clamp(math.ceil(radius / 3), 24, 120)
+	local prev
+	for i = 0, count do
+		local a = i / count * math.pi * 2
+		local pt = center + Vector3.new(math.cos(a) * radius, 0, math.sin(a) * radius)
+		if prev then
+			local seg = Instance.new("Part")
+			seg.Anchored, seg.CanCollide, seg.CanQuery, seg.CanTouch, seg.CastShadow = true, false, false, false, false
+			seg.Material, seg.Color = Enum.Material.SmoothPlastic, color
+			seg.Size = Vector3.new(st_ringthickness, st_ringthickness, (pt - prev).Magnitude + 0.2)
+			seg.CFrame = CFrame.lookAt(prev:Lerp(pt, 0.5), pt)
+			seg.Parent = ring_folder
+		end
+		prev = pt
+	end
+end
+
+function st_update_rings(origin)
+	local target = st_target_goal()
+	local goal
+	if target then
+		for _, g in ipairs(st_find_goals()) do
+			if g.inst == target or g.inst:IsDescendantOf(target) then
+				goal = g
+				break
+			end
+		end
+	end
+	if not goal then
+		st_clear_rings()
+		return
+	end
+	local _, front = st_goal_corners(goal, origin)
+	local style = tostring(st_find_style()):lower()
+	local cfg = st_styleconfig[style] or st_defaultconfig
+
+	local ex = {ring_folder, folder, goal.inst}
+	for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+		if p.Character then table.insert(ex, p.Character) end
+	end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.RespectCanCollide = true
+	params.FilterDescendantsInstances = ex
+	local hit = workspace:Raycast(Vector3.new(front.X, goal.center.Y + 5, front.Z), Vector3.new(0, -200, 0), params)
+	local ground = hit and hit.Position.Y or (goal.center.Y - goal.height / 2)
+
+	local center = Vector3.new(front.X, ground + st_ringheight, front.Z)
+	local key = string.format("%d,%d,%d,%d,%d", math.floor(center.X + 0.5), math.floor(center.Z + 0.5), math.floor(center.Y * 10), cfg.mindist, cfg.maxdist)
+	if key ~= ring_key then
+		st_clear_rings()
+		ring_key = key
+		if cfg.mindist > 0 then st_make_ring(center, cfg.mindist, st_ringcolor) end
+		st_make_ring(center, cfg.maxdist, st_ringcolor)
+	end
+	if ring_folder.Parent ~= workspace then ring_folder.Parent = workspace end
+end
+
+local ring_last = 0
+local ring_conn = run_service.Heartbeat:Connect(function()
+	if os.clock() - ring_last < 0.25 then return end
+	ring_last = os.clock()
+	if not (st_autotop and st_showrings) then
+		st_clear_rings()
+		return
+	end
+	local char = player.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if root then st_update_rings(root.Position) end
+end)
+
+function st_render()
+	st_slow_tick()
+	local cam, root = workspace.CurrentCamera, player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if not enabled or not live or not cam or not root then
+		was_locked = false
+		return
+	end
+
+	ignore = {
+		folder,
+		player.Character,
+		workspace.map.gkbarriar.Abarriar,
+		workspace.map.gkbarriar.Bbarriar,
+	}
+	ray_params.FilterDescendantsInstances = ignore
+
+	local look = cam.CFrame.LookVector
+	local lock
+	if fire_hold and fire_hold.root.Parent and os.clock() < fire_hold.stop_at then
+		lock = fire_hold.lock
+		if st_freeze then st_hold_freeze(fire_hold) end
+	else
+		if fire_hold then st_hold_end() end
+		lock = st_autotop and st_find_lock(root.Position, look)
+	end
+	local rising = lock and not was_locked
+	if rising then st_slow_begin() end
+	was_locked = lock and true or false
+	if lock then
+		look = lock.dir
+		cam.CFrame = CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + look)
+		if rising and st_autofire and st_fire_skill() then st_hold_begin(lock, root) end
+	end
+
+	local f = Vector3.new(look.X, 0, look.Z)
+	if f.Magnitude < 1e-3 then return end
+	f = f.Unit
+	local r = Vector3.new(-f.Z, 0, f.X)
+
+	local pitch = math.clamp(math.deg(math.asin(math.clamp(look.Y, -1, 1))), anchors[1].pitch, anchors[#anchors].pitch)
+	local q = st_path_q(pitch, #live.segments + 1)
+	local pts = {}
+	for k = 1, #q do
+		pts[k] = root.Position + r * q[k].X + Vector3.new(0, q[k].Y, 0) + f * q[k].Z
+	end
+
+	if lock then
+		pts[lock.k + 1] = pts[lock.k]:Lerp(pts[lock.k + 1], lock.s)
+		for j = #pts, lock.k + 2, -1 do pts[j] = nil end
+	end
+
+	local travelled = 0
+	for k = 2, #pts do
+		local step = pts[k] - pts[k - 1]
+		if travelled + step.Magnitude > st_currentlinelength then
+			pts[k] = pts[k - 1] + step.Unit * (st_currentlinelength - travelled)
+			for j = #pts, k + 1, -1 do pts[j] = nil end
+			break
+		end
+		travelled += step.Magnitude
+	end
+
+	for k = 2, #pts do
+		local hit = st_cast(pts[k - 1], pts[k])
+		if hit then
+			for j = #pts, k + 1, -1 do pts[j] = nil end
+			pts[k] = hit.Position
+			break
+		end
+	end
+	st_layout(live, pts)
+end
+
+run_service:BindToRenderStep("shot_predictor", Enum.RenderPriority.Camera.Value + 1, st_render)
+local render_conn = {Disconnect = function() run_service:UnbindFromRenderStep("shot_predictor") end}
+
+local connections = {}
+
+function watch(holder)
+	table.insert(connections, holder.AttributeChanged:Connect(function(name)
+		if enabled and name:lower() == "style" then st_rebuild() end
+	end))
+end
+
+watch(player)
+if player.Character then watch(player.Character) end
+table.insert(connections, player.CharacterAdded:Connect(function(char)
+	watch(char)
+	if enabled then st_rebuild() end
+end))
+
+_G.clear_trajectory_lines = function()
+	st_hold_end()
+	render_conn:Disconnect()
+	ring_conn:Disconnect()
+	ring_folder:Destroy()
+	st_slow_stop(false)
+	for _, c in ipairs(connections) do c:Disconnect() end
+	folder:Destroy()
+end
+
+othersil:Toggle("Shot Predictor", "Shows Predicted (NOT EXACT) Trajectory Of Style's Base Curve Shot.", function(state)
+	enabled = state
+	if enabled then
+		st_rebuild()
+		folder.Parent = workspace
+	else
+		folder.Parent = nil
+	end
+	starter_gui:SetCore("SendNotification", {Title = "Shot Predictor", Text = enabled and "Enabled." or "Disabled.", Duration = 3})
+end)
+
+othersil:Toggle("Auto Top Bins", "Req. Shot Predictor On, Automatically Locks Onto Top Bins If Theres An Angle.", function(state)
+	st_autotop = state
+	if not state then
+		st_hold_end()
+		st_slow_stop(false)
+		st_clear_rings()
+	end
+	goals_time = 0
+	local n = #st_find_goals()
+	local msg = not state and "Disabled." or n == 0 and "No Goal Found. Disable The Feature, Pick A Team, & Re-Enable." or "Enabled."
+	starter_gui:SetCore("SendNotification", {Title = "Auto Top Bins", Text = msg, Duration = 3})
+end)
 
 local qteState = {
     enabled = false
 }
 
 othersil:Toggle("Auto QuickTimeEvent", "Automatically Does QuickTimeEvents, How Else Can I Explain It?", function()
-    qteState.enabled = not qteState.enabled
+qteState.enabled = not qteState.enabled
 
-    local function sendNotification(status)
-        if not autoSkillState.suppressNotifs then
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "QuickTimeEvent",
-                Text = status,
-                Duration = 1
-            })
-        end
+local function sendNotification(status)
+    if not autoSkillState.suppressNotifs then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "QuickTimeEvent",
+            Text = status,
+            Duration = 1
+        })
     end
+end
 
-    local function convertNumberToKeyText(text)
-        local numberMap = {
-            ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
-            ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
-        }
-        return numberMap[text] or text
-    end
+local function convertNumberToKeyText(text)
+    local numberMap = {
+        ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
+        ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine", ["0"] = "Zero"
+    }
+    return numberMap[text] or text
+end
 
-    local function isShadeOfGreen(color)
-        return color.G > color.R and color.G > color.B
-    end
+local function isShadeOfGreen(color)
+    return color.G > color.R and color.G > color.B
+end
 
-    local function checkQTE()
-        local player = game:GetService("Players").LocalPlayer
-        if qteState.enabled and player and player:FindFirstChild("PlayerGui") then
-            local qteGui = player.PlayerGui:FindFirstChild("Qte")
-            if qteGui and qteGui:FindFirstChild("QTE") then
-                for _, descendant in ipairs(qteGui.QTE:GetDescendants()) do
-                    if descendant:IsA("Frame") or descendant:IsA("TextLabel") then
-                        if isShadeOfGreen(descendant.BackgroundColor3) then
-                            local textLabel = qteGui.QTE:FindFirstChild("TextLabel")
-                            if textLabel then
-                                local keyText = convertNumberToKeyText(textLabel.Text)
-                                local keyCode = Enum.KeyCode[keyText]
-                                if keyCode then
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(true, keyCode, false, game)
-                                    game:GetService("VirtualInputManager"):SendKeyEvent(false, keyCode, false, game)
-                                end
+local function checkQTE()
+    local player = game:GetService("Players").LocalPlayer
+    if qteState.enabled and player and player:FindFirstChild("PlayerGui") then
+        local qteGui = player.PlayerGui:FindFirstChild("Qte")
+        if qteGui and qteGui:FindFirstChild("QTE") then
+            for _, descendant in ipairs(qteGui.QTE:GetDescendants()) do
+                if descendant:IsA("Frame") or descendant:IsA("TextLabel") then
+                    if isShadeOfGreen(descendant.BackgroundColor3) then
+                        local textLabel = qteGui.QTE:FindFirstChild("TextLabel")
+                        if textLabel then
+                            local keyText = convertNumberToKeyText(textLabel.Text)
+                            local keyCode = Enum.KeyCode[keyText]
+                            if keyCode then
+                                game:GetService("VirtualInputManager"):SendKeyEvent(true, keyCode, false, game)
+                                game:GetService("VirtualInputManager"):SendKeyEvent(false, keyCode, false, game)
                             end
-                            break
                         end
+                        break
                     end
                 end
             end
         end
     end
+end
 
-    game:GetService("RunService").RenderStepped:Connect(checkQTE)
+game:GetService("RunService").RenderStepped:Connect(checkQTE)
 
-    sendNotification(qteState.enabled and "Enabled." or "Disabled.")
+sendNotification(qteState.enabled and "Enabled." or "Disabled.")
+end)
+
+othersil:Button("Auto QuickTimeEvent (Mobile Version)", "Automatically Does QuickTimeEvents, Rejoin To Disable.", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/mobile%20autoqte%20thingy"))()
 end)
 
 local teamHighlightActive = false
@@ -3906,7 +5851,7 @@ local function applyHighlights()
     for _, p in pairs(game:GetService("Players"):GetPlayers()) do
         if p ~= localPlayer and p.Character then
             local color = (p.Team == localPlayer.Team) and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(255, 50, 50)
-
+            
             local hl = Instance.new("Highlight")
             hl.Name = p.Name .. "_Highlight"
             hl.FillColor = color
@@ -3922,10 +5867,10 @@ end
 othersil:Toggle("Team Highlighting", "Highlights Your Teammates / Enemies Accordingly.", function()
     teamHighlightActive = not teamHighlightActive
     notiy(teamHighlightActive and "Enabled." or "Disabled.")
-
+    
     if teamHighlightActive then
         applyHighlights()
-
+        
         getgenv().HighlightConn1 = game:GetService("Players").PlayerAdded:Connect(function(p)
             p.CharacterAdded:Connect(function()
                 task.wait(0.5)
@@ -3933,7 +5878,7 @@ othersil:Toggle("Team Highlighting", "Highlights Your Teammates / Enemies Accord
             end)
             p:GetPropertyChangedSignal("Team"):Connect(applyHighlights)
         end)
-
+        
         for _, p in pairs(game:GetService("Players"):GetPlayers()) do
             if p ~= game:GetService("Players").LocalPlayer then
                 p.CharacterAdded:Connect(function()
@@ -3963,86 +5908,90 @@ othersil:Toggle("Team Highlighting", "Highlights Your Teammates / Enemies Accord
     end
 end)
 
-getgenv().AutoStealState = getgenv().AutoStealState or { enabled = false, connections = {} }
-state = getgenv().AutoStealState
+getgenv().AutoStealState = getgenv().AutoStealState or { enabled = false, connections = {} } 
+state = getgenv().AutoStealState 
 
-othersil:Toggle("Auto Steal Ball", "Automatically Attempts To Steal When Opponent Normal Kicks The Ball.", function(v)
-    Players = game:GetService("Players")
-    RunService = game:GetService("RunService")
-    lp = Players.LocalPlayer
-    state.enabled = v
-    animId = "rbxassetid://87049473772388"
-
-    function getHRP(char)
-        return char and char:FindFirstChild("HumanoidRootPart")
-    end
-
-    function stareAt(targetHRP, opponentPlayer)
-        char = lp.Character
-        hrp = getHRP(char)
-        if not hrp or not targetHRP then return end
-
+othersil:Toggle("Auto Steal Ball", "Automatically Attempts To Steal When Opponent Whiffs A Counter.", function(v) 
+    Players = game:GetService("Players") 
+    RunService = game:GetService("RunService") 
+    lp = Players.LocalPlayer 
+    state.enabled = v 
+    animId = "rbxassetid://87049473772388" 
+    
+    function getHRP(char) 
+        return char and char:FindFirstChild("HumanoidRootPart") 
+    end 
+    
+    function stareAt(targetHRP, opponentPlayer) 
+        char = lp.Character 
+        hrp = getHRP(char) 
+        if not hrp or not targetHRP then return end 
+        
         if (hrp.Position - targetHRP.Position).Magnitude > 30 then return end
+        
+        start = tick() 
+        conn = RunService.RenderStepped:Connect(function() 
+            if not state.enabled or tick() - start > 0.5 then 
+                conn:Disconnect() 
+                return 
+            end 
+            pos = hrp.Position 
+            tpos = targetHRP.Position 
+            hrp.CFrame = CFrame.lookAt(pos, Vector3.new(tpos.X, pos.Y, tpos.Z)) 
 
-        start = tick()
-        conn = RunService.RenderStepped:Connect(function()
-            if not state.enabled or tick() - start > 0.5 then
-                conn:Disconnect()
-                return
-            end
-            pos = hrp.Position
-            tpos = targetHRP.Position
-            hrp.CFrame = CFrame.lookAt(pos, Vector3.new(tpos.X, pos.Y, tpos.Z))
-            pressAction("tackle")
-        end)
-    end
+			local args = {
+    			buffer.fromstring(buffers["base"]),{{"tackle"}}}
+			NET:FireServer(unpack(args)) 
 
-    function hookCharacter(plr, char)
-        hum = char:WaitForChild("Humanoid")
-        animator = hum:WaitForChild("Animator")
-        conn = animator.AnimationPlayed:Connect(function(track)
-            if not state.enabled then return end
-            if track.Animation and track.Animation.AnimationId == animId then
-                stareAt(getHRP(char), plr)
-            end
-        end)
-        table.insert(state.connections, conn)
-    end
-
-    function hookPlayer(plr)
-        if plr == lp then return end
-        if plr.Character then
-            hookCharacter(plr, plr.Character)
-        end
-        table.insert(state.connections, plr.CharacterAdded:Connect(function(char)
-            hookCharacter(plr, char)
-        end))
-    end
-
-    if not v then
-        for _, c in ipairs(state.connections) do
-            c:Disconnect()
-        end
-        table.clear(state.connections)
-
+        end) 
+    end 
+    
+    function hookCharacter(plr, char) 
+        hum = char:WaitForChild("Humanoid") 
+        animator = hum:WaitForChild("Animator") 
+        conn = animator.AnimationPlayed:Connect(function(track) 
+            if not state.enabled then return end 
+            if track.Animation and track.Animation.AnimationId == animId then 
+                stareAt(getHRP(char), plr) 
+            end 
+        end) 
+        table.insert(state.connections, conn) 
+    end 
+    
+    function hookPlayer(plr) 
+        if plr == lp then return end 
+        if plr.Character then 
+            hookCharacter(plr, plr.Character) 
+        end 
+        table.insert(state.connections, plr.CharacterAdded:Connect(function(char) 
+            hookCharacter(plr, char) 
+        end)) 
+    end 
+    
+    if not v then 
+        for _, c in ipairs(state.connections) do 
+            c:Disconnect() 
+        end 
+        table.clear(state.connections) 
+        
         game:GetService("StarterGui"):SetCore("SendNotification", {
             Title = "Auto Steal",
             Text = "Disabled.",
             Duration = 2
         })
-        return
-    end
-
+        return 
+    end 
+    
     game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = "Auto Steal",
         Text = "Enabled.",
         Duration = 2
     })
-
-    for _, p in ipairs(Players:GetPlayers()) do
-        hookPlayer(p)
-    end
-    table.insert(state.connections, Players.PlayerAdded:Connect(hookPlayer))
+    
+    for _, p in ipairs(Players:GetPlayers()) do 
+        hookPlayer(p) 
+    end 
+    table.insert(state.connections, Players.PlayerAdded:Connect(hookPlayer)) 
 end)
 
 local cutsceneState = {
@@ -4178,6 +6127,339 @@ othersil:Button("Fix Duplicate Ball", "I Don't Know If This Is Still An Issue Bu
     end
 end)
 
+local bindKey = Enum.KeyCode.Y
+
+local formlessState = {
+    enabled = false
+}
+
+local function notiy(text)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Auto Formless",
+        Text = text,
+        Duration = 2
+    })
+end
+
+othersil:Toggle("Auto Formless", "Shidou Only Formless Macro.", function()
+    formlessState.enabled = not formlessState.enabled
+    notiy(formlessState.enabled and "Enabled." or "Disabled.")
+
+    if formlessState.inputConnection then
+        formlessState.inputConnection:Disconnect()
+        formlessState.inputConnection = nil
+    end
+
+    if formlessState.enabled then
+        formlessState.inputConnection = game:GetService("UserInputService").InputBegan:Connect(function(input, gp)
+            if gp or input.KeyCode ~= bindKey then return end
+            if game:GetService("UserInputService").MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
+
+            local LP = game:GetService("Players").LocalPlayer
+            local char = LP.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if not hrp or not hum then return end
+
+            hum.AutoRotate = false
+
+            local Camera = workspace.CurrentCamera
+            local camType = Camera.CameraType
+            local camSubject = Camera.CameraSubject
+            local camCF = Camera.CFrame
+            local flipped = camCF * CFrame.Angles(0, math.rad(180), 0)
+
+            Camera.CameraType = Enum.CameraType.Scriptable
+            Camera.CFrame = flipped
+
+            task.delay(0.1, function()
+                if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
+                    Camera.CameraSubject = LP.Character:FindFirstChildOfClass("Humanoid")
+                    Camera.CameraType = Enum.CameraType.Custom
+                else
+                    Camera.CameraSubject = camSubject
+                    Camera.CameraType = camType
+                end
+                hum.AutoRotate = true
+            end)
+
+            task.wait(0.15)
+
+            local anim = Instance.new("Animation")
+            anim.AnimationId = "rbxassetid://76587445975710"
+            local track = hum:LoadAnimation(anim)
+            track:Play()
+
+            local dir = hrp.CFrame.LookVector
+            local kickVec = vector.create(dir.X * 0.5, 1, dir.Z * 0.5)
+
+            local remote = NET
+            remote:FireServer(buffer.fromstring(buffers["base"]), { { "kick", 25, false, kickVec } })
+            NET:FireServer(
+                buffer.fromstring(buffers["base"]), { { "skill1" } }
+            )
+        end)
+    end
+end)
+
+othersil:Textbox("Formless Keybind", "Enter Key (Example: Y, V, L.)", function(text)
+    if typeof(text) ~= "string" then
+        bindKey = Enum.KeyCode.Y
+        notiy("Invalid Key. Bind Is Now Y.")
+        return
+    end
+
+    local formatted = text:gsub("%s+", "")
+    local success, key = pcall(function()
+        return Enum.KeyCode[formatted]
+    end)
+
+    if success and key then
+        bindKey = key
+        notiy("Bind Set To: " .. key.Name)
+    else
+        bindKey = Enum.KeyCode.Y
+        notiy("Invalid Key. Bind Is Now Y.")
+    end
+end)
+
+local mobile = maintab2:Folder("Mobile Silent Features.", Color3.fromRGB(169, 5, 255), true)
+mobile:Label("Mobile Silent Features: Silent Features Ported To Mobile.")
+
+local mobform = {
+    gui = nil,
+    active = false
+}
+
+local function trigger()
+    if game:GetService("UserInputService").MouseBehavior ~= Enum.MouseBehavior.LockCenter then return end
+    local lp = game:GetService("Players").LocalPlayer
+    local char = lp.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum then return end
+
+    hum.AutoRotate = false
+    local cam = workspace.CurrentCamera
+    local camType = cam.CameraType
+    local camSubject = cam.CameraSubject
+    local camCF = cam.CFrame
+    local flipped = camCF * CFrame.Angles(0, math.rad(180), 0)
+
+    cam.CameraType = Enum.CameraType.Scriptable
+    cam.CFrame = flipped
+
+    task.delay(0.1, function()
+        if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
+            cam.CameraSubject = lp.Character:FindFirstChildOfClass("Humanoid")
+            cam.CameraType = Enum.CameraType.Custom
+        else
+            cam.CameraSubject = camSubject
+            cam.CameraType = camType
+        end
+        if hum and hum.Parent then
+            hum.AutoRotate = true
+        end
+    end)
+
+    task.wait(0.15)
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://76587445975710"
+    local track = hum:LoadAnimation(anim)
+    track:Play()
+
+    local dir = hrp.CFrame.LookVector
+    local kickVec = Vector3.new(dir.X * 0.5, 1, dir.Z * 0.5)
+
+    NET:FireServer(buffer.fromstring(buffers["base"]), { { "kick", 25, false, kickVec } })
+    NET:FireServer(buffer.fromstring(buffers["base"]), { { "skill1" } })
+end
+
+local function makeDraggable(frame)
+    local dragging, dragInput, dragStart, startPos
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+local function show()
+    if mobform.gui then return end
+    local pg = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    local sg = Instance.new("ScreenGui")
+    sg.Name = "FormlessMobile"
+    sg.ResetOnSpawn = false
+    sg.Parent = pg
+    mobform.gui = sg
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 60, 0, 60)
+    btn.Position = UDim2.new(0.5, -50, 0.5, -50)
+    btn.AnchorPoint = Vector2.new(0.5, 0.5)
+    btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    btn.BorderSizePixel = 0
+    btn.Text = "Formless"
+    btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 20
+    btn.AutoButtonColor = true
+    btn.Parent = sg
+
+    local cr = Instance.new("UICorner")
+    cr.CornerRadius = UDim.new(0, 8)
+    cr.Parent = btn
+
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    end)
+
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    end)
+
+    btn.Activated:Connect(trigger)
+
+    makeDraggable(btn)
+end
+
+local function hide()
+    if mobform.gui then
+        mobform.gui:Destroy()
+        mobform.gui = nil
+    end
+end
+
+mobile:Button("Auto Formless (Mobile Button.)", "Click Again To Remove Button.", function()
+    mobform.active = not mobform.active
+    if mobform.active then
+        show()
+    else
+        hide()
+    end
+end)
+
+local airDribble = {
+    gui = nil,
+    active = false,
+    enabled = true
+}
+
+local function trigger()
+    if not airDribble.enabled then return end
+    local char = game:GetService("Players").LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum then return end
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://76587445975710"
+    hum:LoadAnimation(anim):Play()
+
+    local dir = hrp.CFrame.LookVector
+    local kickVec = Vector3.new(dir.X * 0.75, 0.65, dir.Z * 0.75)
+
+    NET:FireServer(
+        buffer.fromstring(buffers["base"]),
+        { { "kick", 28, false, kickVec } }
+    )
+end
+
+local function makeDraggable(frame)
+    local dragging, dragInput, dragStart, startPos
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+local function show()
+    if airDribble.gui then return end
+    local sg = Instance.new("ScreenGui")
+    sg.Name = "AirDribbleMobile"
+    sg.ResetOnSpawn = false
+    sg.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    airDribble.gui = sg
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 60, 0, 60)
+    btn.Position = UDim2.new(0.5, -50, 0.5, -50)
+    btn.AnchorPoint = Vector2.new(0.5, 0.5)
+    btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    btn.BorderSizePixel = 0
+    btn.Text = "Air Dribble"
+    btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 20
+    btn.AutoButtonColor = true
+    btn.Parent = sg
+
+    local cr = Instance.new("UICorner")
+    cr.CornerRadius = UDim.new(0, 8)
+    cr.Parent = btn
+
+    btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35) end)
+    btn.MouseLeave:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15) end)
+    btn.Activated:Connect(trigger)
+    makeDraggable(btn)
+end
+
+local function hide()
+    if airDribble.gui then
+        airDribble.gui:Destroy()
+        airDribble.gui = nil
+    end
+end
+
+mobile:Button("Air Dribble (Mobile Button)", "Click Again To Remove Button.", function()
+    airDribble.active = not airDribble.active
+    if airDribble.active then show() else hide() end
+end)
+
 mobilessss = maintab2:Folder("Mobile Simulation Features.", Color3.fromRGB(169, 5, 255), true)
 
 getgenv().MobileKeySystem = getgenv().MobileKeySystem or {
@@ -4286,7 +6568,7 @@ mobilessss:Button("Create Mobile PC Key", "Creates A Mobile PC Key.", function()
     btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     btn.BorderSizePixel = 0
     btn.Text = key
-    btn.Transparency = 0.4
+	btn.Transparency = 0.4
     btn.TextColor3 = Color3.fromRGB(220, 220, 220)
     btn.Font = Enum.Font.GothamSemibold
     btn.TextSize = 20
@@ -4321,6 +6603,80 @@ mobilessss:Button("Remove Mobile PC Keys", "Removes All Mobile PC Keys.", functi
         if v then v:Destroy() end
     end
     table.clear(getgenv().MobileKeySystem.buttons)
+end)
+
+funtab:Label("Celeron's Movesets, Recommend Using In Normal Servers.")
+
+funtab:Button("Goku Moveset (Req. Isagi)", "Click F4 To Disable.", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Credits",
+        Text = "brought to you by celeron!",
+        Duration = 5,
+        Button1 = "OK",
+    })
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/goku%20moveset%20(azl)",true))()
+end)
+
+funtab:Button("Aizen Moveset (Req. Isagi)", "Click F4 To Disable.", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Credits",
+        Text = "brought to you by celeron!",
+        Duration = 5,
+        Button1 = "OK",
+    })
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/aizen%20moveset",true))()
+end)
+
+funtab:Button("Loki Moveset (V2) (Req. Isagi.)", "Click F4 To Disable, Rejoin To Fix Isagi Music.", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Credits",
+        Text = "brought to you by celeron!",
+        Duration = 5,
+        Button1 = "OK",
+    })
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/loki%20v2"))()
+end)
+
+funtab:Button("Ronaldo Moveset (V3) (Req. Shidou)", "Click F4 To Disable.", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/ronaldov3"))()
+end)
+
+funtab:Label("Daffy's Movesets.")
+
+funtab:Button("Gojo Moveset (Req. Isagi.)", "Click F4 To Disable.", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Credits",
+        Text = "brought to you by daffy!",
+        Duration = 5,
+        Button1 = "OK",
+    })
+    loadstring(game:HttpGet("https://pastebin.com/raw/TH8xDy9X"))()
+end)
+
+funtab:Button("Hugo Moveset (Early Access.) (Req. Kunigami)", "Click F4 To Disable, Rejoin To Fix Kunigami Music.", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Credits",
+        Text = "brought to you by daffy!",
+        Duration = 5,
+        Button1 = "OK",
+    })
+loadstring(game:HttpGet("https://pastebin.com/raw/ND6yrPyk"))()
+end)
+
+funtab:Button("Naoya Moveset (Req. Sae)", "Click F4 To Disable.", function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("SendNotification", {
+        Title = "Credits",
+        Text = "brought to you by daffy!",
+        Duration = 5,
+        Button1 = "OK",
+    })
+    loadstring(game:HttpGet("https://pastebin.com/raw/PDwm0ZcF"))()
 end)
 
 misctab:Button("Infinite Yield", function()
@@ -4615,4 +6971,509 @@ end)
 exploittab:Button("Semi-Private Server (Method: 11v11)", "This Feature Creates A Server Where You Can Farm Goals / Quests!", function()
     game:GetService("TeleportService"):Teleport(85946466968831, game.Players.LocalPlayer)
 end)
+
+exploittab:Label("Farming Safety Mode: Protects You While Farming.")
+
+players_service_58214 = game:GetService("Players")
+run_service_93071 = game:GetService("RunService")
+starter_gui_41826 = game:GetService("StarterGui")
+
+if workspace:FindFirstChild("sfjusrjgdtriugji") then
+    workspace.sfjusrjgdtriugji:Destroy()
+end
+
+Instance.new("Part", workspace).Name = "sfjusrjgdtriugji"; workspace.sfjusrjgdtriugji.Size = Vector3.new(512, 1, 512) ; workspace.sfjusrjgdtriugji.Transparency = 1 ;workspace.sfjusrjgdtriugji.Position = Vector3.new(-426, 1700, 1443); workspace.sfjusrjgdtriugji.Anchored = true
+
+safe_positions_67352 = {
+    goal_farm = Vector3.new(-765, 3, 1304),
+    save_farm = Vector3.new(-805, 3, 1100),
+    kick_spot = Vector3.new(-426, 1705, 1443)
+}
+
+safety_state_20948 = {
+    limit = nil,
+    enabled = false,
+    active = false,
+    resume_goal = false,
+    resume_kick = false,
+    saved_cframe = nil,
+    sequence_id = 0
+}
+
+function notify_85613(title, text, duration)
+    starter_gui_41826:SetCore("SendNotification", {Title = title, Text = text, Duration = duration or 2})
+end
+
+function teleport_exact_31759(position)
+    local char = players_service_58214.LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root then
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+        char:PivotTo(CFrame.new(position))
+    end
+end
+
+function teleport_to_safe_74280(position)
+    local char = players_service_58214.LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if root then
+        local angle = math.random() * math.pi * 2
+        local distance = math.sqrt(math.random()) * 50
+        local offset = Vector3.new(math.cos(angle) * distance, 3, math.sin(angle) * distance)
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+        char:PivotTo(CFrame.new(position + offset))
+    end
+end
+
+exploittab:Textbox("Safety Player Limit", "Set The Limit Of Players Before The Farm Protects You.", function(v)
+    local n = tonumber(v)
+    if n then
+        safety_state_20948.limit = n
+    else
+        safety_state_20948.limit = nil
+    end
+end)
+
+exploittab:Toggle("Enable Farming Safety Mode", "Toggles The Above Feature.", function(v)
+    safety_state_20948.enabled = v
+    notify_85613("Farming Safety Mode", v and "Enabled." or "Disabled.", 2)
+end)
+
+exploittab:Label("Goal Farming: Use At Your Own Risk, I Am Not Responsible For Bans.")
+
+goal_farm_state_52097 = {
+    enabled = false,
+    cf_conn = nil,
+    render_conn = nil,
+    stop_at = nil,
+    goal = 0,
+    desc = "not-started",
+    busy = false,
+    track_id = 0
+}
+
+buffer = buffer or {
+    fromstring = function(str)
+        return str
+    end
+}
+
+goal_players_16843 = game:GetService("Players")
+goal_map_folder_89405 = workspace:WaitForChild("map")
+goal_a_goal_37126 = goal_map_folder_89405:WaitForChild("Agoal")
+goal_b_goal_60581 = goal_map_folder_89405:WaitForChild("Bgoal")
+goal_local_player_24730 = goal_players_16843.LocalPlayer
+
+function is_in_game_95318()
+    local char = goal_local_player_24730.Character
+    local state = char and char:FindFirstChild("state")
+    local ingame = state and state:FindFirstChild("ingame")
+    return ingame and ingame.Value or false
+end
+
+function disable_collision_boxes_48267()
+    local map = workspace:FindFirstChild("map")
+    if not map then return end
+    local gk = map:FindFirstChild("gkbarriar")
+    local a_goal = map:FindFirstChild("Agoal")
+    local b_goal = map:FindFirstChild("Bgoal")
+    if gk then
+        local a_bar = gk:FindFirstChild("A")
+        local b_bar = gk:FindFirstChild("B")
+        if a_bar then a_bar.CanCollide = false end
+        if b_bar then b_bar.CanCollide = false end
+    end
+    if a_goal then a_goal.CanCollide = false end
+    if b_goal then b_goal.CanCollide = false end
+end
+
+function goal_farm_blocked_71093()
+    return safety_state_20948.active or not goal_farm_state_52097.enabled
+end
+
+function steal_ball_13582()
+    local char = goal_local_player_24730.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local ball = workspace.Terrain:FindFirstChild("Ball")
+    if root and ball then
+        task.wait(0.5)
+        if goal_farm_blocked_71093() then return end
+        root.CFrame = CFrame.new(ball.Position.X, 0, ball.Position.Z)
+    end
+    for _, opp in pairs(goal_players_16843:GetPlayers()) do
+        if goal_farm_blocked_71093() then return end
+        if opp ~= goal_local_player_24730 then
+            local o_char = opp.Character
+            local o_ball = o_char and o_char:FindFirstChild("Ball")
+            local o_root = o_char and o_char:FindFirstChild("HumanoidRootPart")
+            if o_ball and o_root and root then
+                task.wait(0.5)
+                if goal_farm_blocked_71093() then return end
+                root.CFrame = o_ball.CFrame
+                NET:FireServer(unpack({buffer.fromstring(buffers["base"]), {{"tackle"}}}))
+            end
+        end
+    end
+end
+
+function has_ball_86904()
+    local char = goal_local_player_24730.Character
+    return char and char:FindFirstChild("Ball") ~= nil
+end
+
+function disconnect_goal_farm_29671()
+    if goal_farm_state_52097.cf_conn then
+        goal_farm_state_52097.cf_conn:Disconnect()
+        goal_farm_state_52097.cf_conn = nil
+    end
+    if goal_farm_state_52097.render_conn then
+        goal_farm_state_52097.render_conn:Disconnect()
+        goal_farm_state_52097.render_conn = nil
+    end
+    goal_farm_state_52097.busy = false
+end
+
+function stop_goal_farm_logic_53748()
+    goal_farm_state_52097.enabled = false
+    goal_farm_state_52097.track_id = goal_farm_state_52097.track_id + 1
+    disconnect_goal_farm_29671()
+end
+
+function stop_goal_farm_80215()
+    if not goal_farm_state_52097.enabled then return end
+    stop_goal_farm_logic_53748()
+    notify_85613("Goal Farm", "Target Reached! :3", 2)
+end
+
+function track_goals_loop_46139()
+    goal_farm_state_52097.track_id = goal_farm_state_52097.track_id + 1
+    local id = goal_farm_state_52097.track_id
+    task.spawn(function()
+        local goals = goal_local_player_24730:WaitForChild("leaderstats"):WaitForChild("goals")
+        while goal_farm_state_52097.enabled and goal_farm_state_52097.track_id == id do
+            task.wait(1)
+            if goal_farm_state_52097.stop_at and goals.Value >= goal_farm_state_52097.stop_at then
+                stop_goal_farm_80215()
+                return
+            end
+        end
+    end)
+end
+
+function start_goal_farm_97462()
+    goal_farm_state_52097.enabled = true
+    disconnect_goal_farm_29671()
+
+    goal_farm_state_52097.cf_conn = goal_local_player_24730.CharacterAdded:Connect(function()
+        task.wait(1)
+        if goal_farm_state_52097.enabled and not safety_state_20948.active then
+            firePacketsIfNear()
+        end
+    end)
+
+    task.spawn(function()
+        repeat task.wait() until goal_local_player_24730.Character and goal_local_player_24730.Character:FindFirstChild("HumanoidRootPart")
+        if goal_farm_state_52097.enabled and not safety_state_20948.active then
+            firePacketsIfNear()
+        end
+    end)
+
+    goal_farm_state_52097.render_conn = run_service_93071.RenderStepped:Connect(function()
+        if goal_farm_blocked_71093() or goal_farm_state_52097.busy then return end
+        goal_farm_state_52097.busy = true
+
+        pcall(function()
+            if not is_in_game_95318() then return end
+            disable_collision_boxes_48267()
+            steal_ball_13582()
+
+            if goal_farm_blocked_71093() then return end
+
+            if has_ball_86904() then
+                local char = goal_local_player_24730.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                local target_goal = goal_local_player_24730.Team.Name == "A" and goal_b_goal_60581 or goal_a_goal_37126
+
+                if root and target_goal then
+                    task.wait(0.75)
+                    if goal_farm_blocked_71093() then return end
+                    root.CFrame = target_goal.CFrame
+
+                    task.wait(0.175)
+                    if goal_farm_blocked_71093() then return end
+                    NET:FireServer("base", {{"kick", 50, false, vector.create(0, 1, 0)}})
+
+                    firePacketsIfNear()
+                end
+            end
+        end)
+
+        goal_farm_state_52097.busy = false
+    end)
+
+    track_goals_loop_46139()
+end
+
+exploittab:Button("Goal Farm Info", "This Comes With Instructions On How To Use The Feature Below.", function()
+    notify_85613("Goal Farm Info", "Turn The Feature On For BOTH ACCOUNTS On SEPERATE TEAMS.", 10)
+end)
+
+exploittab:Button("Goal Farm", "Automatically Farms Goals For You.", function()
+    if goal_farm_state_52097.enabled then
+        stop_goal_farm_logic_53748()
+        notify_85613("Goal Farm", "Disabled.", 1)
+    else
+        start_goal_farm_97462()
+        notify_85613("Goal Farm", "Enabled.", 1)
+    end
+end)
+
+exploittab:Textbox("Goal Target", "Enter A Number Of Goals To Stop Farming At.", function(v)
+    local num = tonumber(v)
+    if num then
+        goal_farm_state_52097.stop_at = num
+        notify_85613("Goal Target", "Goal Target: " .. num, 2)
+    else
+        goal_farm_state_52097.stop_at = math.huge
+        notify_85613("Goal Target", "Invalid Target, Farm Will Be Infinite.", 2)
+    end
+end)
+
+exploittab:Label("Save Farming: Use At Your Own Risk, I Am Not Responsible For Bans.")
+
+exploittab:Button("Save Farm Info", "This Comes With Instructions On How To Use The Feature Below.", function()
+    notify_85613("Save Farm Info", "Use When Score Is Tied, Farming Account Must Be GK On TEAM A, And Helper Account As CF On TEAM B.", 10)
+end)
+
+exploittab:Button("Farming Account Position TP", "Use This Feature On FARMING ACCOUNT Before Enabling Automatic Kicking.", function()
+    game.Players.LocalPlayer.Character:PivotTo(CFrame.new(workspace.map.Agoal.CFrame.Position + Vector3.new(-26.38, -4.69, -20.02)) * CFrame.Angles(-3.14, 1.56, 3.14))
+end)
+
+exploittab:Button("Helper Account Position TP", "Use This Feature On HELPER ACCOUNT Before Enabling Automatic Kicking.", function()
+    game.Players.LocalPlayer.Character:PivotTo(CFrame.new(workspace.map.Agoal.CFrame.Position + Vector3.new(-61.76, -4.64, -20.32)) * CFrame.Angles(3.14, -1.56, 3.14))
+end)
+
+if getgenv().automatickickingpower == nil then
+    getgenv().automatickickingpower = 22
+end
+
+exploittab:Textbox("Kick Power", "Sets The Power Of The Automatic Kicking (Default: 22)", function(text)
+    local numeric_power = tonumber(text)
+
+    if numeric_power then
+        getgenv().automatickickingpower = numeric_power
+        notify_85613("Kick Power Updated", "Power: " .. tostring(numeric_power), 1.5)
+    else
+        getgenv().automatickickingpower = 22
+        notify_85613("Invalid Number", "Power Set To Default.", 1.5)
+    end
+end)
+
+function stop_auto_kick_32850()
+    getgenv().automatickickingenabled = false
+    getgenv().automatickickingloopid = (getgenv().automatickickingloopid or 0) + 1
+    if getgenv().automatickickingconnection then
+        getgenv().automatickickingconnection:Disconnect()
+        getgenv().automatickickingconnection = nil
+    end
+end
+
+function start_auto_kick_61927(recover_first)
+    stop_auto_kick_32850()
+    getgenv().automatickickingenabled = true
+    local loop_id = getgenv().automatickickingloopid
+
+    local plr = players_service_58214.LocalPlayer
+    local kick_interval = 0.1
+    local last_kick = 0
+    local recovering = recover_first == true
+
+    getgenv().automatickickingconnection = run_service_93071.Heartbeat:Connect(function()
+        if not getgenv().automatickickingenabled or getgenv().automatickickingloopid ~= loop_id then
+            if getgenv().automatickickingconnection then
+                getgenv().automatickickingconnection:Disconnect()
+                getgenv().automatickickingconnection = nil
+            end
+            return
+        end
+
+        if safety_state_20948.active then return end
+
+        local char = plr.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+
+        if recovering then
+            if not root then
+                return
+            end
+            local loose_ball = workspace.Terrain:FindFirstChild("Ball")
+            if loose_ball then
+                root.CFrame = CFrame.new(loose_ball.Position)
+                return
+            end
+            recovering = false
+            if safety_state_20948.saved_cframe then
+                root.CFrame = safety_state_20948.saved_cframe
+            end
+            safety_state_20948.saved_cframe = nil
+            last_kick = os.clock()
+            return
+        end
+
+        local ball = char and char:FindFirstChild("Ball")
+
+        if not root or not ball then
+            return
+        end
+
+        local now = os.clock()
+        if now - last_kick < kick_interval then
+            return
+        end
+        last_kick = now
+
+        local look = root.CFrame.LookVector
+        local power = getgenv().automatickickingpower or 22
+
+        NET:FireServer("base", {{"kick", power, false, vector.create(look.X, look.Y, look.Z)}})
+    end)
+end
+
+exploittab:Button("Automatic Kicking", "Automatically Kicks The Ball Infront Of You.", function()
+    if getgenv().automatickickingenabled then
+        stop_auto_kick_32850()
+        notify_85613("Automatic Kicking", "Disabled.", 1)
+    else
+        start_auto_kick_61927(false)
+        notify_85613("Automatic Kicking", "Enabled.", 1)
+    end
+end)
+
+function sequence_stale_75384(id)
+    return safety_state_20948.sequence_id ~= id or not safety_state_20948.active
+end
+
+function enter_safety_18603()
+    safety_state_20948.sequence_id = safety_state_20948.sequence_id + 1
+    local id = safety_state_20948.sequence_id
+
+    safety_state_20948.resume_goal = goal_farm_state_52097.enabled
+    safety_state_20948.resume_kick = getgenv().automatickickingenabled == true
+
+    if not safety_state_20948.resume_goal and not safety_state_20948.resume_kick then
+        return
+    end
+
+    local char = players_service_58214.LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if safety_state_20948.resume_kick and root then
+        safety_state_20948.saved_cframe = root.CFrame
+    end
+
+    if safety_state_20948.resume_goal then
+        stop_goal_farm_logic_53748()
+    end
+    if safety_state_20948.resume_kick then
+        stop_auto_kick_32850()
+    end
+
+    local afk_position = safety_state_20948.resume_goal and safe_positions_67352.goal_farm or safe_positions_67352.save_farm
+    local needs_ball = safety_state_20948.resume_kick
+
+    task.spawn(function()
+        task.wait(0.1)
+        if sequence_stale_75384(id) then return end
+
+        if needs_ball then
+            while not has_ball_86904() do
+                task.wait(0.1)
+                if sequence_stale_75384(id) then return end
+            end
+        end
+
+        teleport_exact_31759(safe_positions_67352.kick_spot)
+
+        task.wait(0.3)
+        if sequence_stale_75384(id) then return end
+        NET:FireServer("base", {{"kick", 1, false, vector.create(0, 1, 0)}})
+
+        task.wait(0.3)
+        if sequence_stale_75384(id) then return end
+        teleport_to_safe_74280(afk_position)
+    end)
+end
+
+function exit_safety_44091()
+    safety_state_20948.sequence_id = safety_state_20948.sequence_id + 1
+
+    local resume_goal = safety_state_20948.resume_goal
+    local resume_kick = safety_state_20948.resume_kick
+    safety_state_20948.resume_goal = false
+    safety_state_20948.resume_kick = false
+
+    if resume_goal then
+        start_goal_farm_97462()
+    end
+    if resume_kick then
+        start_auto_kick_61927(true)
+    end
+end
+
+if getgenv().safety_monitor_connection then
+    getgenv().safety_monitor_connection:Disconnect()
+    getgenv().safety_monitor_connection = nil
+end
+
+getgenv().safety_monitor_connection = run_service_93071.Heartbeat:Connect(function()
+    local should_be_active = safety_state_20948.enabled
+        and safety_state_20948.limit ~= nil
+        and #players_service_58214:GetPlayers() > safety_state_20948.limit
+
+    if should_be_active ~= safety_state_20948.active then
+        safety_state_20948.active = should_be_active
+        if should_be_active then
+            notify_85613("Farming Safety Mode", "Too Many Players, Farms Turned Off.", 3)
+            enter_safety_18603()
+        else
+            notify_85613("Farming Safety Mode", "Clear, Farms Resumed.", 3)
+            exit_safety_44091()
+        end
+    end
+end)
+
+exploittab:Label("Anti AFK: Useful For Excess Alts To Allow Farming Goals / Saves.")
+
+getgenv().antiAFK = false
+lastInputTime = tick()
+
+game:GetService("UserInputService").InputBegan:Connect(function()
+	lastInputTime = tick()
+end)
+
+task.spawn(function()
+	while true do
+		if getgenv().antiAFK and tick() - lastInputTime >= 60 then
+			game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+			task.wait(0.1)
+			game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+			lastInputTime = tick()
+		end
+		task.wait(1)
+	end
+end)
+
+exploittab:Toggle("Anti AFK", function()
+	getgenv().antiAFK = not getgenv().antiAFK
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Anti AFK",
+		Text = getgenv().antiAFK and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+end)
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Scripts/refs/heads/main/oldthingyep",true))()
+loadstring(game:HttpGet("https://pastebin.com/raw/rQMS2B9R",true))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/owner_anti_abuse_from_users"))()
 end
