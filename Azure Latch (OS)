@@ -6724,16 +6724,11 @@ end)
 
 mobilessss = maintab2:Folder("Mobile Simulation Features.", Color3.fromRGB(169, 5, 255), true)
 
-getgenv().MobileKeySystem = getgenv().MobileKeySystem or {
-    key = "",
-    buttons = {}
-}
+getgenv().MobileKeySystem = getgenv().MobileKeySystem or { key = "", buttons = {} }
 
 local function normalizeKey(key)
     if not key then return nil end
-
     key = tostring(key):gsub("%s+", ""):lower()
-
     local map = {
         leftalt = "LeftAlt",
         rightalt = "RightAlt",
@@ -6741,7 +6736,6 @@ local function normalizeKey(key)
         rightshift = "RightShift",
         leftctrl = "LeftControl",
         rightctrl = "RightControl",
-
         enter = "Return",
         returnkey = "Return",
         space = "Space",
@@ -6750,37 +6744,20 @@ local function normalizeKey(key)
         tab = "Tab",
         escape = "Escape",
     }
-
-    if map[key] then
-        return map[key]
-    end
-
-    if key:find("mouse") then
-        return nil
-    end
-
-    if #key == 1 and key:match("%a") then
-        return key:upper()
-    end
-
-    if key:match("^%d$") then
-        return key
-    end
-
+    if map[key] then return map[key] end
+    if key:find("mouse") then return nil end
+    if #key == 1 and key:match("%a") then return key:upper() end
+    if key:match("^%d$") then return key end
     return key:sub(1,1):upper() .. key:sub(2)
 end
 
 local function makeDraggable(frame)
     local dragging, dragInput, dragStart, startPos
-
     frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
-
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -6788,14 +6765,11 @@ local function makeDraggable(frame)
             end)
         end
     end)
-
     frame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
-
     game:GetService("UserInputService").InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
@@ -6826,11 +6800,10 @@ mobilessss:Button("Create Mobile PC Key", "Creates A Mobile PC Key.", function()
     btn.Size = UDim2.new(0, 60, 0, 60)
     btn.Position = UDim2.new(0.5, math.random(-150, 150), 0.5, math.random(-150, 150))
     btn.AnchorPoint = Vector2.new(0.5, 0.5)
-
     btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     btn.BorderSizePixel = 0
     btn.Text = key
-	btn.Transparency = 0.4
+    btn.BackgroundTransparency = 0.4
     btn.TextColor3 = Color3.fromRGB(220, 220, 220)
     btn.Font = Enum.Font.GothamSemibold
     btn.TextSize = 20
@@ -6840,23 +6813,30 @@ mobilessss:Button("Create Mobile PC Key", "Creates A Mobile PC Key.", function()
     corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = btn
 
-    btn.MouseEnter:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    local vim = game:GetService("VirtualInputManager")
+    local holding = false
+
+    btn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if not holding then
+                holding = true
+                btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+                vim:SendKeyEvent(true, Enum.KeyCode[key], false, game)
+            end
+        end
     end)
 
-    btn.MouseLeave:Connect(function()
-        btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    end)
-
-    btn.Activated:Connect(function()
-        local vim = game:GetService("VirtualInputManager")
-        vim:SendKeyEvent(true, key, false, game)
-        task.wait()
-        vim:SendKeyEvent(false, key, false, game)
+    btn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if holding then
+                holding = false
+                btn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+                vim:SendKeyEvent(false, Enum.KeyCode[key], false, game)
+            end
+        end
     end)
 
     makeDraggable(btn)
-
     table.insert(getgenv().MobileKeySystem.buttons, sg)
 end)
 
