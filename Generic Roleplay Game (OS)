@@ -1,4 +1,4 @@
-local ui = loadstring(game:HttpGet("https://pastebin.com/raw/wk7ZrGyr"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/ghostofcelleron/Celeron/refs/heads/main/ui"))() -- yo ts ui :rofl:
 
 local win = ui:Create({
     Name = "Celeron's GUI (Generic RP)",
@@ -21,7 +21,7 @@ helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
 helptab:Label("Show / Hide GUI: Right Alt")
 
 local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-325, 10, -536)
 end
 
 getgenv().lastSliderSet = nil
@@ -89,89 +89,101 @@ getgenv().applySpeed = function()
     end)()
 end
 
-maintab:Slider("Player Speed", 20, 0, 45, function(v)
+maintab:Slider("Player Speed", 20, 0, 55, 1, function(v)
     getgenv().lastSliderSet = (v == 8) and 16 or v
     getgenv().applySpeed()
 end)
 
-getgenv().lastJumpSet = nil
-getgenv().jumpBoostEnabled = true
-getgenv().jumpConn = nil
+getgenv().last_jump_set = getgenv().last_jump_set or 50
+getgenv().jump_boost_enabled = true
+getgenv().jump_conn = nil
 
 local players = game:GetService("Players")
 local debris = game:GetService("Debris")
+local starter_gui = game:GetService("StarterGui")
+local user_input_service = game:GetService("UserInputService")
 local lp = players.LocalPlayer
 
-local function applyJumpBoost(hum, hrp)
-    if getgenv().jumpConn then
-        getgenv().jumpConn:Disconnect()
-        getgenv().jumpConn = nil
-    end
-    getgenv().jumpConn = hum.StateChanged:Connect(function(_, new)
-        if new == Enum.HumanoidStateType.Jumping and getgenv().jumpBoostEnabled then
-            local boost = Instance.new("BodyVelocity")
-            boost.MaxForce = Vector3.new(0, 1e5, 0)
-            boost.Velocity = Vector3.new(0, getgenv().lastJumpSet or hum.JumpPower, 0)
-            boost.P = 1e4
-            boost.Parent = hrp
-            debris:AddItem(boost, 0.2)
-        end
-    end)
+local infinite_jump_enabled = false
+local original_settings = setmetatable({}, {__mode = "k"})
+
+local function apply_jump_boost(hum, hrp)
+	if getgenv().jump_conn then
+		getgenv().jump_conn:Disconnect()
+		getgenv().jump_conn = nil
+	end
+
+	getgenv().jump_conn = hum.StateChanged:Connect(function(_, new_state)
+		if new_state == Enum.HumanoidStateType.Jumping and getgenv().jump_boost_enabled and getgenv().last_jump_set > 0 then
+			local jump_velocity = math.sqrt(2 * workspace.Gravity * getgenv().last_jump_set)
+			local boost = Instance.new("BodyVelocity")
+			boost.MaxForce = Vector3.new(0, 1e5, 0)
+			boost.Velocity = Vector3.new(0, jump_velocity, 0)
+			boost.P = 1e4
+			boost.Parent = hrp
+			debris:AddItem(boost, 0.2)
+		end
+	end)
 end
 
-getgenv().applyJump = function()
-    local char = lp.Character
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if hum and hrp then
-        hum.UseJumpPower = false
-        hum.JumpHeight = 50
-        applyJumpBoost(hum, hrp)
-    end
+getgenv().apply_jump = function()
+	local char = lp.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if hum and hrp then
+		if not original_settings[hum] then
+			original_settings[hum] = {
+				use_jump_power = hum.UseJumpPower,
+				jump_height = hum.JumpHeight,
+				jump_power = hum.JumpPower,
+			}
+		end
+
+		local saved = original_settings[hum]
+		if getgenv().last_jump_set > 0 then
+			hum.UseJumpPower = false
+			hum.JumpHeight = getgenv().last_jump_set
+		else
+			hum.JumpHeight = saved.jump_height
+			hum.JumpPower = saved.jump_power
+			hum.UseJumpPower = saved.use_jump_power
+		end
+
+		apply_jump_boost(hum, hrp)
+	end
 end
 
-maintab:Slider("Jump Boost", 50, 0, 200, function(v)
-    getgenv().lastJumpSet = v
-    getgenv().applyJump()
+maintab:Slider("Jump Boost", 50, 0, 60, 1, function(v)
+	getgenv().last_jump_set = v
+	getgenv().apply_jump()
 end)
 
-players.LocalPlayer.CharacterAdded:Connect(function(char)
-    char:WaitForChild("Humanoid")
-    char:WaitForChild("HumanoidRootPart")
-    getgenv().applyJump()
-end)
-
-players.LocalPlayer.CharacterAdded:Connect(function(char)
+lp.CharacterAdded:Connect(function(char)
 	char:WaitForChild("Humanoid")
 	char:WaitForChild("HumanoidRootPart")
-	getgenv().applyJump()
+	getgenv().apply_jump()
 end)
 
-local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-local UIS = game:GetService("UserInputService")
+getgenv().apply_jump()
 
-local InfiniteJumpEnabled = false
+maintab:Toggle("Infinite Jump", function(v)
+	infinite_jump_enabled = v
 
-maintab:Button("Infinite Jump", function(v)
-    InfiniteJumpEnabled = not InfiniteJumpEnabled
-
-    StarterGui:SetCore("SendNotification", {
-        Title = "Infinite Jump",
-        Text = InfiniteJumpEnabled and "Infinite Jump Enabled." or "Infinite Jump Disabled.",
-        Duration = 3,
-    })
+	starter_gui:SetCore("SendNotification", {
+		Title = "Infinite Jump",
+		Text = infinite_jump_enabled and "Enabled." or "Disabled.",
+		Duration = 3,
+	})
 end)
 
-UIS.JumpRequest:Connect(function()
-    if InfiniteJumpEnabled then
-        local Player = game.Players.LocalPlayer
-        local Character = Player.Character or Player.CharacterAdded:Wait()
-        local Humanoid = Character:FindFirstChild("Humanoid")
-        if Humanoid then
-            Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-    end
+user_input_service.JumpRequest:Connect(function()
+	if infinite_jump_enabled then
+		local character = lp.Character or lp.CharacterAdded:Wait()
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+		end
+	end
 end)
 
 maintab:Button("GRG Teleport Tool", function()
@@ -182,10 +194,6 @@ local teleportTool = Instance.new("Tool")
 teleportTool.Name = "GRG Teleport"
 teleportTool.RequiresHandle = false
 teleportTool.Parent = Backpack
-
-local function WorkingTp()
-    Player.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-end
 
 teleportTool.Activated:Connect(function()
     local mouse = Player:GetMouse()
@@ -200,7 +208,7 @@ local ESPEnabled = false
 local Players = game:GetService("Players")
 local StarterGui = game:GetService("StarterGui")
 
-esptab:Button("Player ESP", function()
+esptab:Toggle("Player ESP", function()
     ESPEnabled = not ESPEnabled
 
     if ESPEnabled then
@@ -241,19 +249,6 @@ esptab:Button("Player ESP", function()
             Duration = 3,
         })
     end
-end)
-
-maintab:Button("Escape Jail (Once Per Server, Instant.)", function()
-local args = { [1] = "Peasant" }
-game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 9e9):WaitForChild("FriendSpawn", 9e9):FireServer(unpack(args))
-end)
-
-maintab:Button("Suspicion Points", function(v)
-game:GetService("StarterGui"):SetCore("SendNotification",{
- Title="Suspicion Points",
- Text=string.format("%.2f",game.Players.LocalPlayer:GetAttribute("SuspicionPoints")),
- Duration=3
-})
 end)
 
 tpstab:Button("Spawn", function()
@@ -303,9 +298,6 @@ tpstab:Button("Doctor Store", function()
 end)
 
 tpstab:Button("Mountains", function()
-    local function WorkingTp()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-49, 28, 255)
-    end
     WorkingTp()
     task.wait(0.25)
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-407, 159, 181)
@@ -346,30 +338,3 @@ StarterGui:SetCore("SendNotification", {
 })
 setclipboard("https://discord.gg/xSDwMhae")
 end)
-
-local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-local player = Players.LocalPlayer
-
-local function startCheck()
-    local function checkSuspicious()
-        local val = player:GetAttribute("IsSuspicious")
-        if val == true then
-            StarterGui:SetCore("SendNotification", {
-                Title = "Alert",
-                Text = "You are currently marked as suspicious. Please switch servers to fix.",
-                Duration = 5
-            })
-        end
-        task.delay(5, checkSuspicious)
-    end
-    checkSuspicious()
-end
-
-player.CharacterAdded:Connect(function()
-    startCheck()
-end)
-
-if player.Character then
-    startCheck()
-end
