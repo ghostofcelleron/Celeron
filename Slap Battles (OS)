@@ -1916,7 +1916,7 @@ local character = nil
 local root = nil
 local floating = false
 
-local referencePosition = Vector3.new(6500, 760, 4785)
+local referencePosition = Vector3.new(150000, 228, 150000)
 
 local function floatEffect()
 	if root then
@@ -2646,6 +2646,38 @@ end
 glovel_farm = farmtab:Folder("Glovel Farm.", Color3.fromRGB(41, 156, 158), true)
 glovel_farm:Label("Glovel Farm: Recommended To Join Small Servers.")
 
+local rs = game:GetService("ReplicatedStorage")
+local GlovelFunc = rs:WaitForChild("GlovelFunc")
+local GlovelCancel = rs:WaitForChild("GlovelCancel")
+
+local interval = 0.05
+local running = false
+local run_id = 0
+
+glovel_farm:Toggle("Auto Glovel Quest #1 (Main Account.)", function()
+	running = not running
+
+	if running then
+		run_id += 1
+		local my_id = run_id
+		task.spawn(function()
+			while running and run_id == my_id do
+				pcall(function()
+					GlovelFunc:InvokeServer()
+					GlovelCancel:FireServer()
+				end)
+				task.wait(interval)
+			end
+		end)
+	end
+
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Auto Farm Glovel (Quest #1)",
+		Text = running and "Enabled." or "Disabled.",
+		Duration = 3
+	})
+end)
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
@@ -2770,29 +2802,6 @@ glovel_farm:Toggle("Glovel Crit Farm (Main Account.)", function()
 		Text = critfarm.enabled and "Enabled." or "Disabled.",
 		Duration = 3
 	})
-end)
-
-glovel_farm:Button("Glovel Instant Quest #1 (Main Account.)", function()
-local GlovelFunc = game:GetService("ReplicatedStorage"):WaitForChild("GlovelFunc")
-local RunService = game:GetService("RunService")
-
-local startTime = os.clock()
-local duration = 3
-local connections = {}
-
-for i = 1, 10 do
-    task.spawn(function()
-        local conn
-        conn = RunService.Heartbeat:Connect(function()
-            if os.clock() - startTime > duration then
-                conn:Disconnect()
-                return
-            end
-            GlovelFunc:InvokeServer()
-        end)
-        table.insert(connections, conn)
-    end)
-end
 end)
 
 ultra_farm = farmtab:Folder("Ultra Instinct Farm.", Color3.fromRGB(41, 156, 158), true)
@@ -3056,7 +3065,7 @@ end
 end)
 
 
-flash_farm:Button("Auto-Complete Flash Quests #1 & #3", function()
+flash_farm:Button("Auto-Complete Flash Quests #1 & #2", function()
 local rs = game:GetService("ReplicatedStorage")
 local flashTeleport = rs:WaitForChild("FlashTeleport")
 
@@ -7058,7 +7067,6 @@ task.spawn(function()
 	end
 end)
 end)
-
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
