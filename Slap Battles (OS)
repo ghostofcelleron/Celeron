@@ -558,37 +558,45 @@ end)
 getgenv().legitslapaura = {
 	enabled = false,
 	connection = nil,
-	cachedRemotes = {},
-	animationId = "rbxassetid://13526154547",
-	slapCount = 0,
-	slapWindowStart = 0,
-	cooldownActive = false,
-	maxSlapsPerWindow = 5,
-	windowDuration = 3,
-	cooldownTime = 0.7,
-	maxDistance = 13,
-	yBlockMin = 314,
-	yBlockMax = 350
+	cached_remotes = {},
+	click_hold_time = 0.02,
+	slap_count = 0,
+	slap_window_start = 0,
+	cooldown_active = false,
+	max_slaps_per_window = 2,
+	window_duration = 2,
+	cooldown_time = 0.65,
+	max_distance = 14,
+	y_block_min = 314,
+	y_block_max = 350,
+	flick_tween_time = 0.1,
+	flick_tween_jitter = 0.02,
+	flick_return_time = 0.075,
+	align_responsiveness = 200,
+	pause_animation_id = "16102747569",
+	pause_duration = 15,
+	paused_until = 0,
+	anim_connections = {}
 }
 
-local function findLegitRemotes(gloveName)
-	if getgenv().legitslapaura.cachedRemotes[gloveName] then
-		return getgenv().legitslapaura.cachedRemotes[gloveName]
+local function find_legit_remotes(glove_name)
+	if getgenv().legitslapaura.cached_remotes[glove_name] then
+		return getgenv().legitslapaura.cached_remotes[glove_name]
 	end
 
 	local hits = {}
 	local rs = game:GetService("ReplicatedStorage")
-	local n = string.lower(gloveName or "")
+	local n = string.lower(glove_name or "")
 
-	local specialCases = {
+	local special_cases = {
 		killstreak = { "KSHit" },
 		zahando = { "zhramt" },
 		trap = { "traphi" }
 	}
 
-	if specialCases[n] then
-		for _, remoteName in ipairs(specialCases[n]) do
-			local remote = rs:FindFirstChild(remoteName)
+	if special_cases[n] then
+		for _, remote_name in ipairs(special_cases[n]) do
+			local remote = rs:FindFirstChild(remote_name)
 			if remote and remote:IsA("RemoteEvent") then
 				table.insert(hits, remote)
 			end
@@ -615,33 +623,156 @@ local function findLegitRemotes(gloveName)
 		end
 	end
 
-	getgenv().legitslapaura.cachedRemotes[gloveName] = hits
+	getgenv().legitslapaura.cached_remotes[glove_name] = hits
 	return hits
+end
+
+local function is_shiftlock_active()
+	return game:GetService("UserInputService").MouseBehavior == Enum.MouseBehavior.LockCenter
+end
+
+local function get_aim_rotation(my_root, torso)
+	local direction = Vector3.new(torso.Position.X - my_root.Position.X, 0, torso.Position.Z - my_root.Position.Z)
+	if direction.Magnitude < 0.001 then
+		return my_root.CFrame.Rotation
+	end
+	return CFrame.lookAt(Vector3.zero, direction)
+end
+
+local function get_camera_rotation(fallback_rotation)
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return fallback_rotation
+	end
+	local look = camera.CFrame.LookVector
+	local flat_look = Vector3.new(look.X, 0, look.Z)
+	if flat_look.Magnitude < 0.001 then
+		return fallback_rotation
+	end
+	return CFrame.lookAt(Vector3.zero, flat_look)
+end
+
+local function is_ragdolled()
+	local lp = game:GetService("Players").LocalPlayer
+	local model = workspace:FindFirstChild(lp.Name)
+	if not model then return false end
+	local flag = model:FindFirstChild("Ragdolled")
+	if flag and flag:IsA("ValueBase") then
+		return flag.Value == true
+	end
+	return model:GetAttribute("Ragdolled") == true
+end
+
+local function is_paused()
+	return os.clock() < getgenv().legitslapaura.paused_until
+end
+
+local function watch_animator(animator)
+	local cfg = getgenv().legitslapaura
+	local conn = animator.AnimationPlayed:Connect(function(track)
+		local anim = track.Animation
+		if anim and string.find(anim.AnimationId, cfg.pause_animation_id, 1, true) then
+			cfg.paused_until = os.clock() + cfg.pause_duration
+		end
+	end)
+	table.insert(cfg.anim_connections, conn)
+end
+
+local function stop_pause_watcher()
+	local cfg = getgenv().legitslapaura
+	for _, conn in ipairs(cfg.anim_connections) do
+		conn:Disconnect()
+	end
+	cfg.anim_connections = {}
+end
+
+local function watch_character(character)
+	local cfg = getgenv().legitslapaura
+
+	for _, obj in ipairs(character:GetDescendants()) do
+		if obj:IsA("Animator") then
+			watch_animator(obj)
+		end
+	end
+
+	table.insert(cfg.anim_connections, character.DescendantAdded:Connect(function(obj)
+		if obj:IsA("Animator") then
+			watch_animator(obj)
+		end
+	end))
+end
+
+local function watch_player(player)
+	local cfg = getgenv().legitslapaura
+	if player == game:GetService("Players").LocalPlayer then return end
+
+	if player.Character then
+		watch_character(player.Character)
+	end
+
+	table.insert(cfg.anim_connections, player.CharacterAdded:Connect(watch_character))
+end
+
+local function start_pause_watcher()
+	stop_pause_watcher()
+	local cfg = getgenv().legitslapaura
+	local players = game:GetService("Players")
+
+	for _, player in ipairs(players:GetPlayers()) do
+		watch_player(player)
+	end
+
+	table.insert(cfg.anim_connections, players.PlayerAdded:Connect(watch_player))
+end
+
+local function has_spectator(player)
+	local function check(container)
+		if not container then return false end
+		for _, item in ipairs(container:GetChildren()) do
+			if item:IsA("Tool") and string.lower(item.Name) == "spectator" then
+				return true
+			end
+		end
+		return false
+	end
+
+	return check(player.Character) or check(player:FindFirstChildOfClass("Backpack"))
 end
 
 combat:Toggle("Slap Aura (Legit)", function()
 	getgenv().legitslapaura.enabled = not getgenv().legitslapaura.enabled
 
 	if getgenv().legitslapaura.enabled and not getgenv().legitslapaura.connection then
+		start_pause_watcher()
+
 		getgenv().legitslapaura.connection = game:GetService("RunService").Heartbeat:Connect(function()
 			local now = os.clock()
-			if now - getgenv().legitslapaura.slapWindowStart > getgenv().legitslapaura.windowDuration then
-				getgenv().legitslapaura.slapWindowStart = now
-				getgenv().legitslapaura.slapCount = 0
+			if now - getgenv().legitslapaura.slap_window_start > getgenv().legitslapaura.window_duration then
+				getgenv().legitslapaura.slap_window_start = now
+				getgenv().legitslapaura.slap_count = 0
 			end
-			if getgenv().legitslapaura.slapCount >= getgenv().legitslapaura.maxSlapsPerWindow or getgenv().legitslapaura.cooldownActive then return end
+			if getgenv().legitslapaura.slap_count >= getgenv().legitslapaura.max_slaps_per_window or getgenv().legitslapaura.cooldown_active then return end
+
+			if is_paused() then return end
+			if is_ragdolled() then return end
 
 			local char = game:GetService("Players").LocalPlayer.Character
 			local glove = char and char:FindFirstChildOfClass("Tool")
 			if not glove then return end
 
-			local myRoot = char:FindFirstChild("HumanoidRootPart")
-			if not myRoot then return end
+			local my_root = char:FindFirstChild("HumanoidRootPart")
+			if not my_root then return end
+
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
+			if not humanoid then return end
 
 			local closest, dist = nil, math.huge
 			for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
-				if p ~= game:GetService("Players").LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-					local mag = (p.Character.HumanoidRootPart.Position - myRoot.Position).Magnitude
+				if p ~= game:GetService("Players").LocalPlayer
+					and p.Character
+					and p.Character:FindFirstChild("HumanoidRootPart")
+					and not has_spectator(p) then
+					local mag = (p.Character.HumanoidRootPart.Position - my_root.Position).Magnitude
 					if mag < dist then
 						dist = mag
 						closest = p
@@ -653,37 +784,102 @@ combat:Toggle("Slap Aura (Legit)", function()
 			local torso = closest.Character:FindFirstChild("Torso") or closest.Character:FindFirstChild("UpperTorso") or closest.Character:FindFirstChild("HumanoidRootPart")
 			if not torso then return end
 
-			if dist > getgenv().legitslapaura.maxDistance then return end
-			local y = myRoot.Position.Y
-			if y >= getgenv().legitslapaura.yBlockMin and y <= getgenv().legitslapaura.yBlockMax then return end
+			if dist > getgenv().legitslapaura.max_distance then return end
+			local y = my_root.Position.Y
+			if y >= getgenv().legitslapaura.y_block_min and y <= getgenv().legitslapaura.y_block_max then return end
 
-			getgenv().legitslapaura.cooldownActive = true
-			task.delay(getgenv().legitslapaura.cooldownTime, function()
-				getgenv().legitslapaura.cooldownActive = false
+			getgenv().legitslapaura.cooldown_active = true
+			task.delay(getgenv().legitslapaura.cooldown_time, function()
+				getgenv().legitslapaura.cooldown_active = false
 			end)
 
-			local remotes = findLegitRemotes(glove.Name)
+			local remotes = find_legit_remotes(glove.Name)
 
-			myRoot.CFrame = CFrame.new(myRoot.Position) * CFrame.Angles(0, math.atan2(-(torso.Position - myRoot.Position).Unit.Z, (torso.Position - myRoot.Position).Unit.X), 0)
-			task.wait(0.05)
-			myRoot.CFrame = CFrame.new(myRoot.Position)
+			local original_rotation = my_root.CFrame.Rotation
+			local original_auto_rotate = humanoid.AutoRotate
+			humanoid.AutoRotate = false
 
-			for _, r in ipairs(remotes) do
-				r:FireServer(torso)
+			local attachment = Instance.new("Attachment")
+			attachment.Name = "legitslapaura_attachment"
+			attachment.Parent = my_root
+
+			local align = Instance.new("AlignOrientation")
+			align.Name = "legitslapaura_align"
+			align.Mode = Enum.OrientationAlignmentMode.OneAttachment
+			align.Attachment0 = attachment
+			align.MaxTorque = math.huge
+			align.Responsiveness = getgenv().legitslapaura.align_responsiveness
+			align.RigidityEnabled = false
+			align.CFrame = original_rotation
+			align.Parent = my_root
+
+			local jitter = getgenv().legitslapaura.flick_tween_jitter
+			local flick_time = math.max(getgenv().legitslapaura.flick_tween_time + math.random() * jitter, 0.001)
+
+			local state = {
+				get_goal = function()
+					return get_aim_rotation(my_root, torso)
+				end,
+				from_rotation = original_rotation,
+				phase_start = os.clock(),
+				phase_duration = flick_time
+			}
+
+			local step_name = "legitslapaura_orientation"
+			game:GetService("RunService"):BindToRenderStep(step_name, Enum.RenderPriority.Camera.Value + 1, function()
+				if not my_root.Parent then return end
+				local alpha = math.clamp((os.clock() - state.phase_start) / state.phase_duration, 0, 1)
+				local goal = state.get_goal()
+				align.CFrame = goal
+				if is_shiftlock_active() then
+					my_root.CFrame = CFrame.new(my_root.Position) * state.from_rotation:Lerp(goal, alpha)
+				end
+			end)
+
+			task.wait(flick_time)
+
+			local blocked_now = is_ragdolled() or is_paused()
+
+			if not blocked_now then
+				for _, r in ipairs(remotes) do
+					r:FireServer(torso)
+				end
 			end
 
-			local h = char:FindFirstChildOfClass("Humanoid")
-			if h and (y < getgenv().legitslapaura.yBlockMin or y > getgenv().legitslapaura.yBlockMax) then
-				local a = Instance.new("Animation")
-				a.AnimationId = getgenv().legitslapaura.animationId
-				h:LoadAnimation(a):Play()
+			if not blocked_now and (y < getgenv().legitslapaura.y_block_min or y > getgenv().legitslapaura.y_block_max) then
+				local virtual_input = game:GetService("VirtualInputManager")
+				local mouse_location = game:GetService("UserInputService"):GetMouseLocation()
+				virtual_input:SendMouseButtonEvent(mouse_location.X, mouse_location.Y, 0, true, game, 0)
+				task.wait(getgenv().legitslapaura.click_hold_time)
+				virtual_input:SendMouseButtonEvent(mouse_location.X, mouse_location.Y, 0, false, game, 0)
 			end
 
-			getgenv().legitslapaura.slapCount += 1
+			if my_root.Parent then
+				state.from_rotation = my_root.CFrame.Rotation
+				state.get_goal = function()
+					if is_shiftlock_active() then
+						return get_camera_rotation(original_rotation)
+					end
+					return original_rotation
+				end
+				state.phase_start = os.clock()
+				state.phase_duration = math.max(getgenv().legitslapaura.flick_return_time, 0.001)
+				task.wait(getgenv().legitslapaura.flick_return_time)
+			end
+
+			game:GetService("RunService"):UnbindFromRenderStep(step_name)
+			align:Destroy()
+			attachment:Destroy()
+			if humanoid.Parent then
+				humanoid.AutoRotate = original_auto_rotate
+			end
+
+			getgenv().legitslapaura.slap_count += 1
 		end)
 	elseif not getgenv().legitslapaura.enabled and getgenv().legitslapaura.connection then
 		getgenv().legitslapaura.connection:Disconnect()
 		getgenv().legitslapaura.connection = nil
+		stop_pause_watcher()
 	end
 
 	game:GetService("StarterGui"):SetCore("SendNotification", {
