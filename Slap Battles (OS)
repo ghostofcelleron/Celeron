@@ -4775,18 +4775,19 @@ end
 
 local function applyESP(plr)
 	if not espEnabled or plr == LocalPlayer then return end
-	
+
 	local char = plr.Character
 	if not char then return end
 
-	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	local humanoid = char:FindFirstChildOfClass("Humanoid") or char:WaitForChild("Humanoid", 5)
 	if not humanoid or humanoid.Health <= 0 then return end
+	if not espEnabled then return end
 
 	removeESP(plr)
 
 	local highlight = Instance.new("Highlight")
-	highlight.FillColor = Color3.new(1, 1, 1)
-	highlight.OutlineColor = Color3.new(1, 1, 1)
+	highlight.FillColor = Color3.new(255, 0, 0)
+	highlight.OutlineColor = Color3.new(255, 255, 255)
 	highlight.FillTransparency = 0.5
 	highlight.OutlineTransparency = 0
 	highlight.Adornee = char
@@ -4803,7 +4804,7 @@ local function setupPlayer(plr)
 	if plr == LocalPlayer then return end
 
 	if plr.Character then
-		applyESP(plr)
+		task.spawn(applyESP, plr)
 	end
 
 	connections[plr] = plr.CharacterAdded:Connect(function()
@@ -4824,10 +4825,10 @@ local function clearESP()
 	table.clear(connections)
 end
 
-maintab:Toggle("Player ESP", false, function(v)
-	espEnabled = v
+maintab:Toggle("Player ESP", function()
+	espEnabled = not espEnabled
 
-	if v then
+	if espEnabled then
 		for _, plr in ipairs(Players:GetPlayers()) do
 			setupPlayer(plr)
 		end
