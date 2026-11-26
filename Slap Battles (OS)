@@ -3056,7 +3056,7 @@ end
 end)
 
 
-flash_farm:Button("Auto-Complete Flash Quests #1 & #2", function()
+flash_farm:Button("Auto-Complete Flash Quests #1 & #3", function()
 local rs = game:GetService("ReplicatedStorage")
 local flashTeleport = rs:WaitForChild("FlashTeleport")
 
