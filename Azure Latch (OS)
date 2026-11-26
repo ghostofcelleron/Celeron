@@ -4961,6 +4961,8 @@ st_styleconfig = {
 	rin = {length = 180, mindist = 164, maxdist = 182, maxentry = 75, skill = "skill3", aiminset = 4, aimdrop = 4},
 	karasu = {length = 125, mindist = 115, maxdist = 125, maxentry = 100, skill = "skill3", aiminset = 1, aimdrop = -6},
 }
+
+st_styleconfig.mkaiser = st_styleconfig.kaiser
 st_defaultconfig = {length = 60, mindist = 0, maxdist = 200, maxentry = 75}
 st_currentconfig = st_defaultconfig
 st_currentlinelength = 60
