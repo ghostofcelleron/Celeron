@@ -25,6 +25,7 @@ local toh = 115782629143468
 local elude = 11828384869
 local plate = 106620300132058
 local guide = 18550498098
+local pimboss = 77963332815593
 
 local currentPlaceId = game.PlaceId
 
@@ -566,7 +567,7 @@ getgenv().legitslapaura = {
 	max_slaps_per_window = 2,
 	window_duration = 2,
 	cooldown_time = 0.65,
-	max_distance = 14,
+	max_distance = 11,
 	y_block_min = 314,
 	y_block_max = 350,
 	flick_tween_time = 0.1,
@@ -7986,6 +7987,241 @@ end)
 
 maintab:Toggle("Auto Slap Guide (Req. Glove Equipped)", function()
     toggle_target("Auto Slap Guide", "GuideNPC")
+end)
+
+misctab:Button("Infinite Yield", function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+end)
+
+helptab:Button("Copy Owner Discord Username", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Username",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("ghostofcelleron")
+end)
+helptab:Button("Copy Discord Server Invite", function()
+local StarterGui = game:GetService("StarterGui")
+
+StarterGui:SetCore("SendNotification", {
+    Title = "Discord Invite",
+    Text = "Copied to your clipboard!",
+    Duration = 3,
+    Button1 = "alright fella",
+})
+setclipboard("https://discord.gg/mFusYUmyry")
+end)
+elseif currentPlaceId == pimboss then
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/Daffy734/code/refs/heads/main/yep"))()
+
+local win = ui:Create({
+    Name = "Celeron's GUI (SB: Pim Boss)",
+    ThemeColor = Color3.fromRGB(111, 111, 111),
+    ThemeGradient = Color3.fromRGB(13, 13, 13),
+    StartupSound = "rbxassetid://6958727243",
+    ThemeFont = Enum.Font.FredokaOne,
+	ToggledSideBar = true
+})
+
+local maintab = win:Tab("Main")
+local misctab = win:Tab("Others")
+local helptab = win:Tab("Info")
+
+maintab:Label("Script Made By Celeron + Daffy!")
+misctab:Label("Other Features.")
+helptab:Label("GUI Controls Are Below, Script Credits Are At The Bottom!")
+helptab:Label("Show / Hide GUI: Right Alt")
+
+local part = Instance.new("Part")
+part.Size = Vector3.new(200, 1, 200)
+part.Position = Vector3.new(181, 1, -338)
+part.Anchored = true
+part.Transparency = 1
+part.CanCollide = true
+part.Parent = workspace
+
+maintab:Label("Door Activating Part.")
+
+maintab:Button("Final Room", function()
+game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-149, 4, -130)
+end)
+
+maintab:Button("Red Key Room", function()
+game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(178, 4, -338)
+end)
+
+maintab:Button("Pink Key Room", function()
+game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-172, 25, -235)
+end)
+
+maintab:Button("Green Key Room", function()
+game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-232, 4, -74)
+end)
+
+maintab:Button("Blue Key Room", function()
+game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-283, 22, -141)
+end)
+
+maintab:Button("Dark Red Key Room", function()
+game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-53, -34, -227)
+end)
+
+maintab:Label("Beacon Activating Part.")
+
+local starter_gui = game:GetService("StarterGui")
+
+local function notify(title, text)
+	starter_gui:SetCore("SendNotification", {
+		Title = title,
+		Text = text,
+		Duration = 3
+	})
+end
+
+local orbit_radius = 40
+local orbit_speed = 2
+local orbit_height = 15
+
+local isToggledOn = false
+local currentIndex = 0
+local orbit_connection = nil
+
+local function stop_orbit()
+	if orbit_connection then
+		orbit_connection:Disconnect()
+		orbit_connection = nil
+	end
+end
+
+local function get_centers()
+	local start_corridor = workspace:FindFirstChild("StartCorridor")
+	local final_ring = start_corridor and start_corridor:FindFirstChild("FinalRing")
+	local platforms = final_ring and final_ring:FindFirstChild("LightPlatforms")
+	if not platforms then return {} end
+
+	local found = {}
+	for i = 1, 6 do
+		local light = platforms:FindFirstChild("Light" .. i)
+		local center = light and light:FindFirstChild("Center")
+		if center and center:IsA("Model") then
+			table.insert(found, center)
+		end
+	end
+	return found
+end
+
+maintab:Toggle("Activate Beacon", function(state)
+	if state == nil then
+		isToggledOn = not isToggledOn
+	else
+		isToggledOn = state
+	end
+
+	stop_orbit()
+
+	if not isToggledOn then
+		notify("Activate Beacon", "Disabled.")
+		return
+	end
+
+	local centers = get_centers()
+
+	if #centers == 0 then
+		isToggledOn = false
+		notify("error", "you arent on the four pillars part yet bro what")
+		return
+	end
+
+	currentIndex = (currentIndex % #centers) + 1
+	local centerModel = centers[currentIndex]
+	local angle = 0
+
+	notify("Activate Beacon", "Enabled.")
+
+	orbit_connection = game:GetService("RunService").Heartbeat:Connect(function(dt)
+		if not isToggledOn then
+			stop_orbit()
+			return
+		end
+
+		if not centerModel.Parent then
+			isToggledOn = false
+			stop_orbit()
+			return
+		end
+
+		local char = game:GetService("Players").LocalPlayer.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if not root then return end
+
+		angle = (angle + orbit_speed * dt) % (math.pi * 2)
+
+		local center = centerModel:GetPivot().Position
+		local offset = Vector3.new(math.cos(angle) * orbit_radius, orbit_height, math.sin(angle) * orbit_radius)
+		local position = center + offset
+
+		root.CFrame = CFrame.lookAt(position, Vector3.new(center.X, position.Y, center.Z))
+		root.AssemblyLinearVelocity = Vector3.zero
+		root.AssemblyAngularVelocity = Vector3.zero
+	end)
+end)
+
+local SlapPest = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("SlapPest")
+
+local slap_direction = vector.create(0.7370224595069885, 0.09164107590913773, 0.6696267127990723)
+local orb_name = "StaticOrb"
+local slap_existing = true
+
+local enabled = false
+local orb_connection = nil
+
+local function slap_orb(orb)
+	if not orb or orb.Name ~= orb_name then return false end
+	pcall(function()
+		SlapPest:FireServer(orb, slap_direction)
+	end)
+	return true
+end
+
+maintab:Toggle("Auto Slap Static", function(state)
+	if state == nil then
+		enabled = not enabled
+	else
+		enabled = state
+	end
+
+	if enabled then
+		if orb_connection then orb_connection:Disconnect() end
+
+		orb_connection = workspace.ChildAdded:Connect(function(child)
+			task.defer(slap_orb, child)
+		end)
+
+		local slapped = 0
+		if slap_existing then
+			for _, child in ipairs(workspace:GetChildren()) do
+				if slap_orb(child) then
+					slapped += 1
+				end
+			end
+		end
+
+		if slapped > 0 then
+			notify("Auto Slap Static", "Enabled. Slapped " .. slapped .. " existing.")
+		else
+			notify("Auto Slap Static", "Enabled.")
+		end
+	else
+		if orb_connection then
+			orb_connection:Disconnect()
+			orb_connection = nil
+		end
+		notify("Auto Slap Static", "Disabled.")
+	end
 end)
 
 misctab:Button("Infinite Yield", function()
