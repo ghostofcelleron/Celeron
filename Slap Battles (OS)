@@ -567,7 +567,7 @@ getgenv().legitslapaura = {
 	max_slaps_per_window = 2,
 	window_duration = 2,
 	cooldown_time = 0.65,
-	max_distance = 11,
+	max_distance = 12,
 	y_block_min = 314,
 	y_block_max = 350,
 	flick_tween_time = 0.1,
@@ -592,7 +592,8 @@ local function find_legit_remotes(glove_name)
 	local special_cases = {
 		killstreak = { "KSHit" },
 		zahando = { "zhramt" },
-		trap = { "traphi" }
+		trap = { "traphi" },
+		["god's hand"] = { "Godshand" }
 	}
 
 	if special_cases[n] then
@@ -848,11 +849,11 @@ combat:Toggle("Slap Aura (Legit)", function()
 			end
 
 			if not blocked_now and (y < getgenv().legitslapaura.y_block_min or y > getgenv().legitslapaura.y_block_max) then
-				local virtual_input = game:GetService("VirtualInputManager")
-				local mouse_location = game:GetService("UserInputService"):GetMouseLocation()
-				virtual_input:SendMouseButtonEvent(mouse_location.X, mouse_location.Y, 0, true, game, 0)
-				task.wait(getgenv().legitslapaura.click_hold_time)
-				virtual_input:SendMouseButtonEvent(mouse_location.X, mouse_location.Y, 0, false, game, 0)
+				if glove.Parent == char then
+					glove:Activate()
+					task.wait(getgenv().legitslapaura.click_hold_time)
+					glove:Deactivate()
+				end
 			end
 
 			if my_root.Parent then
@@ -930,7 +931,6 @@ task.spawn(function()
 		end
 	end
 end)
-
 
 local enabled = false
 local lastClick = 0
